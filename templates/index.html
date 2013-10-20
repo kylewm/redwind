@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="section group">
+  <div class="col span_2_of_3">
+
+    {% for post in posts %}
+    <article>
+      <header>
+        <h2><a href="#">{{ post.title }}</a></h2>
+      </header>
+      <div class="date">
+        {{ post.pub_date | strftime('%Y %B %d') }}
+      </div>
+      <p>
+        {{ post.body | markdown }}
+      </p>
+    </article>    
+    {% endfor %}
+  </div>
+
+  <div class="col span_1_of_3">
+    Kyle Mahan
+  </div>
+
+</div>
+
+
+{% endblock content %}
+

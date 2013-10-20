@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/col.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/3cols.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/5cols.css') }}">
+    <link rel="stylesheet" href="{{ url_for('pygments_css') }}">
+  </head>
+  <body>
+    <!--[if lt IE 7]>
+        <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+    
+    <div class="site-heading section group">
+      <span class="site-title">kylewm.com</span>
+      <nav>
+        <ul>
+          <li><a href="{{ url_for('index') }}">home</a></li>
+          <li><a href="#">articles</a></li>
+          <li><a href="#">photos</a></li>
+          <li><a href="#">about</a></li>
+          <li><a href="#">contact</a></li>
+        </ul>
+      </nav>
+    </div>
+    
+    <div class="wrapper">
+
+      {% block content %}{% endblock content %}
+
+      <div class="section group">
+        <footer class="col span_5_of_5">
+
+          <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a><br/>
+          This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US">Creative Commons Attribution 3.0 Unported License</a>.<br />
+          Built with <a href="http://pythonhosted.org/Frozen-Flask/">Frozen-Flask</a> and <a href="http://www.responsivegridsystem.com/">Responsive Grid System</a>.
+        </footer>
+      </div>
+
+    </div>
+    
+<script>
+  <!--piwik here--> 
+</script>
+</body>
+</html>
