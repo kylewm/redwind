@@ -21,7 +21,9 @@ def not_found(error):
 @app.route("/api/v1.0/posts", methods=["GET"])
 def get_posts():
     post_list = []
-    for post in db.session.query(Post).all():
+    for post in db.session.query(Post)\
+                          .order_by(Post.pub_date.desc())\
+                          .all():
         post_obj = {
             'id' : post.id,
             'title' : post.title,
@@ -31,7 +33,7 @@ def get_posts():
             'uri' : url_for("get_post", post_id=post.id, _external=True)
         }
         post_list.append(post_obj)
-    return jsonify({ 'posts' : post_list })
+    return jsonify(posts=post_list)
 
 @app.route("/api/v1.0/posts/<int:post_id>", methods=["GET"])
 def get_post(post_id):
@@ -46,14 +48,14 @@ def get_post(post_id):
         'tags' : [ tag.name for tag in post.tags ],
         'body' : post.body
     }
-    return jsonify({ 'post' : post_obj })
+    return jsonify(post_obj)
 
 @app.route("/api/v1.0/posts", methods=["POST"])
 @requires_auth
 def create_post():
-    if not request.json or not 'post' in request.json:
+    if not request.json or not 'title' in request.json:
         raise ApiException("Invalid create post", 400)
-    post_obj = request.json['post']
+    post_obj = request.json
     
     title = post_obj.get('title')
     slug = post_obj.get('slug') or slugify(title)
@@ -76,9 +78,9 @@ def create_post():
 @app.route("/api/v1.0/posts/<int:post_id>", methods=["PUT"])
 @requires_auth
 def update_post(post_id):
-    if not request.json or not 'post' in request.json:
-        raise ApiException("Invalid create post", 400)
-    post_obj = request.json['post']
+    if not request.json:
+        raise ApiException("Invalid edit post", 400)
+    post_obj = request.json
     
     title = post_obj.get('title')
     slug = post_obj.get('slug')
