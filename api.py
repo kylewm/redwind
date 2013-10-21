@@ -2,6 +2,8 @@ import re
 from unicodedata import normalize
 
 from app import app, db
+from auth import requires_auth
+
 from models import Post, User, Tag
 from flask import jsonify, abort, make_response, request, url_for
 
@@ -47,6 +49,7 @@ def get_post(post_id):
     return jsonify({ 'post' : post_obj })
 
 @app.route("/api/v1.0/posts", methods=["POST"])
+@requires_auth
 def create_post():
     if not request.json or not 'post' in request.json:
         raise ApiException("Invalid create post", 400)
@@ -71,6 +74,7 @@ def create_post():
 
 
 @app.route("/api/v1.0/posts/<int:post_id>", methods=["PUT"])
+@requires_auth
 def update_post(post_id):
     if not request.json or not 'post' in request.json:
         raise ApiException("Invalid create post", 400)
@@ -105,6 +109,7 @@ def update_post(post_id):
 
 
 @app.route("/api/v1.0/posts/<int:post_id>", methods=["DELETE"])
+@requires_auth
 def delete_post(post_id):
     post = db.session.query(Post)\
                      .filter_by(id=post_id)\
