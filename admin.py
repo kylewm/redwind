@@ -1,7 +1,7 @@
 from app import app, db
 
 from flask.ext.login import LoginManager, login_user, logout_user, current_user
-from flask.ext.admin import Admin, AdminIndexView
+from flask.ext.admin import Admin, BaseView, AdminIndexView, expose
 from flask.ext.admin.contrib.sqlamodel import ModelView
 from flask import Flask, url_for, redirect, render_template, request
 from wtforms import form, fields, validators
@@ -47,38 +47,45 @@ def init_login():
         return db.session.query(models.User).get(user_id)
 
 
-@app.route('/admin/login/', methods=('GET', 'POST'))
-def login_view():
-    form = LoginForm(request.form)
-    if form.validate():
-        user = form.get_user()
-        login_user(user)
+class LoginView(BaseView):
+    @expose('/', methods=('GET', 'POST'))
+    def login_view(self):
+        form = LoginForm(request.form)
+        if request.method == 'POST' and form.validate():
+            user = form.get_user()
+            login_user(user, remember=True)
+            return redirect(url_for('admin.index'))
+        return self.render('form.html', form=form)
+
+    def is_visible(self):
+        return not current_user.is_authenticated()
+
+class RegisterView(BaseView):
+    @expose('/', methods=('GET', 'POST'))
+    def register_view(self):
+        form = RegistrationForm(request.form)
+        if request.method == 'POST' and form.validate():
+            user = models.User()
+            form.populate_obj(user)
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            return redirect(url_for('admin.index'))
+        return self.render('form.html', form=form)
+
+    def is_visible(self):
+        return not current_user.is_authenticated()
+
+
+class LogoutView(BaseView):
+    @expose('/')
+    def logout_view(self):
+        logout_user()
         return redirect(url_for('admin.index'))
 
-    return render_template('form.html', form=form)
+    def is_visible(self):
+        return current_user.is_authenticated()
 
-
-@app.route('/admin/register/', methods=('GET', 'POST'))
-def register_view():
-    form = RegistrationForm(request.form)
-    if form.validate():
-        user = models.User()
-
-        form.populate_obj(user)
-
-        db.session.add(user)
-        db.session.commit()
-
-        login_user(user)
-        return redirect(url_for('admin.index'))
-
-    return render_template('form.html', form=form)
-
-
-@app.route('/admin/logout/')
-def logout_view():
-    logout_user()
-    return redirect(url_for('admin.index'))
 
 # Create customized model view class
 class AuthModelView(ModelView):
@@ -92,7 +99,9 @@ class AuthModelView(ModelView):
 #        return current_user.is_authenticated()
 
 admin = Admin(app, index_view=AdminIndexView())
-
 admin.add_view(AuthModelView(models.Post, db.session))
 admin.add_view(AuthModelView(models.Tag, db.session))
 admin.add_view(AuthModelView(models.User, db.session))
+admin.add_view(LoginView(name="Login"))
+admin.add_view(LogoutView(name="Logout"))
+admin.add_view(RegisterView(name="Register"))

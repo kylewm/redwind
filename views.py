@@ -6,7 +6,9 @@ from models import *
 
 @app.route('/')
 def index():
-    posts = Post.query.all()
+    posts = Post.query\
+                .order_by(Post.pub_date.desc())\
+                .all()
     return render_template('index.html', posts=posts)
 
 @app.route("/css/pygments.css")
@@ -17,5 +19,11 @@ def pygments_css():
     return app.response_class(pygments_css, mimetype='text/css')
     
 @app.template_filter('strftime')
-def _jinja2_filter_strftime(date, fmt='%Y %b %d'):
+def strftime_filter(date, fmt='%Y %b %d'):
     return date.strftime(fmt)
+
+@app.template_filter('markdown')
+def markdown_filter(data):
+    from flask import Markup
+    from markdown import markdown
+    return Markup(markdown(data, extensions=['codehilite']))
