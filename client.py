@@ -1,35 +1,44 @@
 import argparse
-import requests
 import os
 import json
 from tempfile import NamedTemporaryFile
 from subprocess import call
+import urllib.request
+
 
 EDITOR="emacs"
-POSTS_URL="http://localhost:5000/api/v1.0/posts"
+ROOT_URI="http://localhost:5000"
 USER="kyle"
-PASS="******"
+PASS="****"
 
-post_cache = None
+POSTS_URI=ROOT_URI + "/api/v1.0/posts"
 
-class ResponseException(Exception):
-    def __init__(self, code):
-        self.code = code
+auth_handler = urllib.request.HTTPBasicAuthHandler()
+auth_handler.add_password(realm='Groomsman', uri=ROOT_URI,
+                          user=USER, passwd=PASS)
+opener = urllib.request.build_opener(auth_handler)
 
-    def __repr__(self):
-        return "ResponseException: {}".format(self.code)
-
+def request_get(uri):
+    reply = opener.open(uri)
+    raw = reply.read().decode("UTF-8")
+    data = json.loads(raw)
+    return data
+    
+def request_post(uri, payload=None, method='POST'):
+    data = None
+    if payload:
+        data = json.dumps(payload).encode('UTF-8')
+    req = urllib.request.Request(url=uri, data=data,
+                                 headers={'Content-Type' : 'application/json'},
+                                 method=method)
+    reply = opener.open(req)
+    return reply.read()
+    
 def get_posts():
-    global post_cache
-    if post_cache:
-        return post_cache
-        
-    r = requests.get(POSTS_URL)
-    if r.status_code != requests.codes.ok:
-        raise ResponseException(r.status_code)
-
+    json = request_get(POSTS_URI)
     post_cache = {}
-    for index, post in enumerate(r.json()['posts']):
+
+    for index, post in enumerate(json['posts']):
         post_cache[index] = post
 
     return post_cache
@@ -51,24 +60,15 @@ def list(args):
         print("date:", post['pub_date'])
         print()
 
-def create(args):
-    pass
-
-def edit(args):
-    uri = get_post_uri(args.id)
-    r = requests.get(uri)
-
-    if r.status_code != requests.codes.ok:
-        raise ResponseException(r.status_code)
-
-    post = r.json()
-    
+def launch_editor(**kwargs):
     tempfile = None
     with NamedTemporaryFile(delete=False) as tf:
-        tf.write(bytes('title: {}\n'.format(post['title']), "UTF-8"))
-        tf.write(bytes('slug: {}\n'.format(post['slug']), "UTF-8"))
-        tf.write(bytes('pub_date: {}\n\n'.format(post['pub_date']), "UTF-8"))
-        tf.write(bytes(post['body'], "UTF-8"))
+        for key in kwargs:
+            if key != 'body':
+                tf.write(bytes('{}: {}\n'.format(key, kwargs[key]), "UTF-8"))
+
+        tf.write(bytes('\n', "UTF-8"))
+        tf.write(bytes(kwargs['body'], "UTF-8"))
         tempfile = tf.name
 
     call([EDITOR, tempfile])
@@ -80,20 +80,28 @@ def edit(args):
             if not line:
                 break
             key, value = line.split(':', 1)
-            payload[key] = value
-        payload['body'] = tf.read()
+            payload[key.strip()] = value.strip()
+        payload['body'] = tf.read().strip()
 
-    os.unlink(tempfile)
-    r = requests.put(uri, data=json.dumps(payload), auth=(USER, PASS), headers={'content-type': 'application/json'})
-    if r.status_code == requests.codes.created:
-        print("Success!")
-    else:
-        print("Failed with status code: ", r.status_code, "and response:", r.text)
+    return payload
+    
+def create(args):
+    edited = launch_editor(title="", body="")
+    request_post(POSTS_URI, edited)
+    print("Success!")
 
+def edit(args):
+    uri = get_post_uri(args.id)
+    post = request_get(uri)
+    edited = launch_editor(post)
+    request_post(uri, edited, method='PUT')
+    print("Success!")
 
-def delete(args):
-    pass
-
+def delete(args): 
+    uri = get_post_uri(args.id)
+    request_post(uri, method='DELETE')
+    print("Success!")
+   
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help="sub-command help")
@@ -106,5 +114,6 @@ if __name__ == '__main__':
     edit_parser.set_defaults(func=edit)
     delete_parser = subparsers.add_parser("delete", help="Delete an existing post")
     delete_parser.set_defaults(func=delete)
+    delete_parser.add_argument("id", type=int, help="Unique id of the post to delete")
     args = parser.parse_args()
     args.func(args)
