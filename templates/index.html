@@ -4,6 +4,8 @@
 
 <div class="section group">
   <div class="col span_2_of_3">
+
+    <a href="{{ url_for('new_post', post_type='article') }}">New Article</a>
     {% for post in articles %}
 
     <div class="post {{post.post_type}}">
@@ -21,6 +23,7 @@
   </div>
 
   <div class="col span_1_of_3">
+    <a href="{{ url_for('new_post', post_type='note') }}">New Note</a>
     {% for post in notes %}
 
     <div class="post {{post.post_type}}">
@@ -35,6 +38,7 @@
 
     {% endfor %}  
   </div>
+</div>
 
 {% endblock content %}
 

@@ -129,20 +129,14 @@ class Post(db.Model):
         if (len(split) > 1):
             text += Markup("<a href={}>Keep Reading...</a>".format(self.permalink_url))
         return text
-
-    @property
-    def edit_url(self):
-        return '/edit/{}'.format(self.id)
             
     @property
     def permalink_url(self):
-        if self.slug and self.pub_date:
-            year = self.pub_date.year
-            month = self.pub_date.month
-            day = self.pub_date.day
-            return "/{}/{}/{}/{}/{}".format(self.post_type, year, month, day, self.slug)
-        return "/{}/{}".format(self.post_type, self.id)
-
+        path_components = [self.post_type, str(self.pub_date.year), str(self.id)]
+        if self.slug:
+            path_components.append(self.slug)
+        return '/' + '/'.join(path_components)
+        
     @property
     def twitter_url(self):
         if self.twitter_status_id:

@@ -1,0 +1,6 @@
+
+class Configuration(object):
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://groomsman:password@localhost/groomsman'
+    DEBUG = True
+    SECRET_KEY = 'a secret key other than this one'
+    PYGMENTS_STYLE = 'tango'
