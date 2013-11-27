@@ -1,15 +1,36 @@
 from app import db
-from datetime import datetime
+import datetime
+from flask import Markup
 
 from werkzeug.security import generate_password_hash, \
      check_password_hash
 
+def markdown_filter(data):
+    from markdown import markdown
+    from smartypants import smartypants
+    return Markup(smartypants(markdown(data, extensions=['codehilite'])))
+
+def plain_text_filter(plain):
+    from flask import Markup
+    return Markup(plain.replace('\n', '<br/>'))
+
+_hash_cache = {}
+def get_md5_hash(inp):
+    result = _hash_cache.get(inp)
+    if not result:
+        import hashlib
+        result = hashlib.md5(inp.encode()).hexdigest()
+        _hash_cache[inp] = result
+    return result    
+        
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(80), unique=True)
     email = db.Column(db.String(120), unique=True)
     pw_hash = db.Column(db.String(256))
+    display_name = db.Column(db.String(80))
+    twitter_username = db.Column(db.String(80))
 
     def set_password(self, plaintext):
         self.pw_hash = generate_password_hash(plaintext)
@@ -29,6 +50,11 @@ class User(db.Model):
 
     def get_id(self):
         return self.id
+            
+    @property
+    def image_url(self):
+        return "http://gravatar.com/avatar/{}?s=64".format(get_md5_hash(self.email))
+
     def __init__(self, login, email, password):
         self.login = login
         self.email = email
@@ -59,21 +85,73 @@ class Post(db.Model):
     author = db.relationship('User',
                              backref=db.backref('posts', lazy='dynamic'))
     title = db.Column(db.String(256))
-    body = db.Column(db.Text)
+    content = db.Column(db.Text)
+    post_type = db.Column(db.String(64)) # note/article/etc.
+    content_format = db.Column(db.String(64)) # markdown/html/plain
+    in_reply_to = db.Column(db.String(256))
+    repost_source = db.Column(db.String(256))
+    twitter_status_id = db.Column(db.String(64))
     slug = db.Column(db.String(256))
     tags = db.relationship('Tag', secondary=tags_to_posts,
                            order_by=tags_to_posts.columns.position, 
                            backref='posts')
     
-    def __init__(self, title, slug, body, author, pub_date=None):
+    def __init__(self, title, slug, content, post_type, content_format, author, pub_date=None):
         self.title = title
         self.slug = slug
-        self.body = body
+        self.content = content
+        self.post_type = post_type
+        self.content_format = content_format
         self.author = author
         if pub_date is None:
-            self.pub_date = datetime.utcnow()
+            self.pub_date = datetime.datetime.utcnow()
         else:
             self.pub_date = pub_date
-        
+
+
+    def format_text(self, text):
+        if self.content_format == 'markdown':
+            return markdown_filter(text)
+        elif self.content_format == 'plain':
+            return plain_text_filter(text)
+        else:
+            return text
+
+    @property
+    def html_content(self):
+        return self.format_text(self.content)
+
+    @property
+    def html_excerpt(self):
+        text = self.html_content
+        split = text.split('<!-- more -->', 1)
+        text = split[0]
+        if (len(split) > 1):
+            text += Markup("<a href={}>Keep Reading...</a>".format(self.permalink_url))
+        return text
+
+    @property
+    def edit_url(self):
+        return '/edit/{}'.format(self.id)
+            
+    @property
+    def permalink_url(self):
+        if self.slug and self.pub_date:
+            year = self.pub_date.year
+            month = self.pub_date.month
+            day = self.pub_date.day
+            return "/{}/{}/{}/{}/{}".format(self.post_type, year, month, day, self.slug)
+        return "/{}/{}".format(self.post_type, self.id)
+
+    @property
+    def twitter_url(self):
+        if self.twitter_status_id:
+            return "http://twitter.com/{}/status/{}".format(
+                self.author.twitter_username,
+                self.twitter_status_id)
+
     def __repr__(self):
-        return 'post:{}'.format(self.title)
+        if self.title:
+            return 'post:{}'.format(self.title)
+        else:
+            return 'post:{}'.format(self.content[:20])

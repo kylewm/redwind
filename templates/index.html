@@ -4,28 +4,37 @@
 
 <div class="section group">
   <div class="col span_2_of_3">
+    {% for post in articles %}
 
-    {% for post in posts %}
-    <article>
-      <header>
-        <h2><a href="#">{{ post.title }}</a></h2>
-      </header>
+    <div class="post {{post.post_type}}">
+      <h2>{{ post.title }}</h2>
       <div class="date">
-        {{ post.pub_date | strftime('%Y %B %d') }}
+        <a href="{{ post.permalink_url }}">
+          {{ post.pub_date | strftime('%Y %B %d') }}
+        </a>
       </div>
-      <p>
-        {{ post.body | markdown }}
-      </p>
-    </article>    
-    {% endfor %}
+      {{ post.html_excerpt }}      
+      {% include "single_post_links.html" %}
+    </div>
+
+    {% endfor %}  
   </div>
 
   <div class="col span_1_of_3">
-    Kyle Mahan
+    {% for post in notes %}
+
+    <div class="post {{post.post_type}}">
+      <div class="date">
+        <a href="{{ post.permalink_url }}">
+          {{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}
+        </a>
+      </div>
+      {{ post.html_content }}
+      {% include "single_post_links.html" %}
+    </div>
+
+    {% endfor %}  
   </div>
-
-</div>
-
 
 {% endblock content %}
 

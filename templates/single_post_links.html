@@ -1,0 +1,23 @@
+
+<!-- article metadata -->
+<div class="links">
+  {% if post.twitter_url %}
+  <a href="{{ post.twitter_url }}">View on Twitter</a> 
+  {% endif %}
+
+  {% if post.in_reply_to %}
+  {% if post.twitter_url %} : {% endif %}
+  <a href="{{ post.in_reply_to }}">In Reply To</a>
+  {% endif %}
+
+  {% if post.repost_source %}
+  {% if post.in_reply_to or post.twitter_url %} : {% endif %}
+  <a href="{{ post.repost_source }}">Original</a> 
+  {% endif %}
+
+  {% if post.in_reply_to or post.twitter_url or post.repost_source %} : {% endif %}
+  <a href="{{ post.edit_url }}">Edit</a>
+  
+  
+</div>
+

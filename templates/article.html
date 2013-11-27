@@ -2,23 +2,21 @@
 
 {% block content %}
 
-<div class="datebox" style="">
-  <span class="day">
-    {{ page.date() | strftime('%d') }}
-  </span>
-  <span class="month-year">
-    {{ page.date() | strftime('%b %Y') }}
-  </span>
-</div>
-
-<article>
-  <header>
-    <h2>{{ page.title }}</h2>
-  </header>
-  <section>
-    {{ page.html() | safe }}
-  </section>
-</article>
+    <article>
+      {% if post.title %}
+      <header>
+        <h1>{{ post.title }}</h1>
+      </header>
+      {% endif %}
+      <div class="date">
+        <a href="{{ post.permalink_url }}">
+          {{ post.pub_date | strftime('%Y %B %d %H:%M %Z') }}
+        </a>
+        
+      </div>
+      {{ post.html_content }}
+      {% include "single_post_links.html" %}
+    </article>
 
 {% endblock content %}
 

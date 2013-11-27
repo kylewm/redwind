@@ -3,14 +3,13 @@ article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,su
 
 body {
     color: #333;
-    font-size: 100%;
     line-height: 1.75;
     font-family: 'Source Sans Pro', sans-serif;
 }
 
 code, pre {
     font-family: 'Droid Sans Mono', monospace;
-    font-size: 14px;
+    font-size: 0.9em;
 }
 
 pre {
@@ -45,10 +44,16 @@ p + p {margin-top: 32px;}
 li {font-size: 18px;}
 small, .small { font-size: 16px; }
 
-@media screen and (min-width: 640px) {
-  h1, .h1 { font-size: 48px; }
-  h2, .h2 { font-size: 32px; }
-  p, .p   { font-size: 20px; }
+.post+.article {
+    margin-top: 50px;
+}
+
+.post+.note {
+    margin-top: 20px;
+}
+
+.post .links {
+    font-size: 0.9em;
 }
 
 a { color: #09c; text-decoration: none; }
