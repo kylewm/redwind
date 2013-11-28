@@ -67,6 +67,7 @@ def handle_new_or_edit(request, post):
         
         if not post.id:
             db.session.add(post)
+        db.session.commit()
 
         # post or update this post on twitter
         if send_to_twitter:

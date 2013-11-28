@@ -31,7 +31,10 @@ def handle_new_or_edit(post):
     if match:
         args['in_reply_to_status_id'] = match.group(2)
 
-    api.statuses.update(**args)
+    result = api.statuses.update(**args)
+    if result:
+        status_id = result.get('id_str')
+        post.twitter_status_id = status_id
         
 def create_status(post):
     permalink = post.permalink_short_url
