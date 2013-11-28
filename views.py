@@ -23,14 +23,14 @@ def index():
 @app.route('/articles/page/<int:page>')
 def articles(page):
     pagination, articles = get_posts('article', page, 10)
-    return render_template('articles.html', pagination=pagination, articles=articles)
+    return render_template('articles.html', pagination=pagination, articles=articles, title="All Articles")
 
 
 @app.route('/notes', defaults={'page':1})
 @app.route('/notes/page/<int:page>')
 def notes(page):
     pagination, notes = get_posts('note', page, 30)
-    return render_template('notes.html', pagination=pagination, notes=notes)
+    return render_template('notes.html', pagination=pagination, notes=notes, title="All Notes")
 
 
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
@@ -41,7 +41,7 @@ def post_by_id(post_type, year, post_id, slug):
            .first()
     if not post:
         abort(404)
-    return render_template('article.html', post=post)
+    return render_template('article.html', post=post, title=post.title)
 
 @app.route('/admin/delete/<post_type>/<post_id>')
 @requires_auth
