@@ -132,7 +132,7 @@ class Post(db.Model):
     @property
     def permalink_url(self):
         path_components = [self.post_type, str(self.pub_date.year), str(self.id)]
-        if not self.slug:
+        if self.slug:
             path_components.append(self.slug)
         return 'http://kylewm.com/' + '/'.join(path_components)
         
