@@ -8,6 +8,6 @@ def prepare_deploy():
 
 def deploy():
     prepare_deploy()
-    with cd("cd /srv/www/groomsman/public_html"):
+    with cd("/srv/www/groomsman/public_html"):
         run("git pull origin master")
         run("sudo service groomsman restart")
