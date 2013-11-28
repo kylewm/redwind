@@ -1,5 +1,6 @@
 
 from fabric.api import local, settings, abort, run, cd
+from fabric.context_managers import prefix
 from fabric.contrib.console import confirm
 
 def prepare_deploy():
