@@ -10,3 +10,6 @@ def deploy():
     prepare_deploy()
     with cd("~/groomsman"):
         run("git pull origin master")
+        run(". venv/bin/activate")
+        run("pip install -r requirements.txt")
+        run("uwsgi --reload /tmp/groomsman.pid")
