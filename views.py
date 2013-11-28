@@ -6,6 +6,8 @@ from app import *
 from models import *
 from auth import requires_auth
 
+import twitter_plugin
+
 def get_posts(post_type, page, per_page):
     pagination = Post.query\
                      .filter_by(post_type=post_type)\
@@ -61,9 +63,15 @@ def handle_new_or_edit(request, post):
         post.slug = request.form.get('slug')
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
+        send_to_twitter = request.form.get("send_to_twitter")
         
         if not post.id:
             db.session.add(post)
+
+        # post or update this post on twitter
+        if send_to_twitter:
+            twitter_plugin.handle_new_or_edit(post)
+            
         db.session.commit()
         return redirect(post.permalink_url)
 

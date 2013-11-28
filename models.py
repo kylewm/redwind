@@ -14,15 +14,15 @@ def plain_text_filter(plain):
     from flask import Markup
     return Markup(plain.replace('\n', '<br/>'))
 
-_hash_cache = {}
 def get_md5_hash(inp):
-    result = _hash_cache.get(inp)
+    result = get_md5_hash.cache.get(inp)
     if not result:
         import hashlib
         result = hashlib.md5(inp.encode()).hexdigest()
-        _hash_cache[inp] = result
+        get_md5_hash.cache[inp] = result
     return result    
-        
+
+get_md5_hash.cache = {}
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -108,7 +108,6 @@ class Post(db.Model):
         else:
             self.pub_date = pub_date
 
-
     def format_text(self, text):
         if self.content_format == 'markdown':
             return markdown_filter(text)
@@ -133,9 +132,14 @@ class Post(db.Model):
     @property
     def permalink_url(self):
         path_components = [self.post_type, str(self.pub_date.year), str(self.id)]
-        if self.slug:
+        if not self.slug:
             path_components.append(self.slug)
-        return '/' + '/'.join(path_components)
+        return 'http://kylewm.com/' + '/'.join(path_components)
+        
+    @property
+    def permalink_short_url(self):
+        path_components = [self.post_type, str(self.pub_date.year), str(self.id)]
+        return 'http://kylewm.com/' + '/'.join(path_components)
         
     @property
     def twitter_url(self):
