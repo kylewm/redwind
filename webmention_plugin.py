@@ -7,5 +7,9 @@ def handle_new_or_edit(post):
     if url and in_reply_to:
         print "Sending webmention {} to {}".format(url, in_reply_to)
         sender = WebmentionSend(url, in_reply_to)
-        sender.send(verify=False)
-        print "Finished sending webmention"
+        success = sender.send(verify=False)
+        print "Finished sending webmention: ", success
+        if success:
+            print sender.response
+        else:
+            print sender.error
