@@ -1,4 +1,4 @@
-from app import db
+from app import app, db
 import datetime
 from flask import Markup
 
@@ -131,15 +131,17 @@ class Post(db.Model):
             
     @property
     def permalink_url(self):
-        path_components = [self.post_type, str(self.pub_date.year), str(self.id)]
+        site_url = app.config.get('SITE_URL') or 'http://localhost'
+        path_components = [site_url, self.post_type, str(self.pub_date.year), str(self.id)]
         if self.slug:
             path_components.append(self.slug)
-        return 'http://kylewm.com/' + '/'.join(path_components)
+        return '/'.join(path_components)
         
     @property
     def permalink_short_url(self):
-        path_components = [self.post_type, str(self.pub_date.year), str(self.id)]
-        return 'http://kylewm.com/' + '/'.join(path_components)
+        site_url = app.config.get('SITE_URL') or 'http://localhost'
+        path_components = [site_url, self.post_type, str(self.pub_date.year), str(self.id)]
+        return '/'.join(path_components)
         
     @property
     def twitter_url(self):

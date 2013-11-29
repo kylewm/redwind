@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/col.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/3cols.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/5cols.css') }}">
     <link rel="stylesheet" href="{{ url_for('pygments_css') }}">
   </head>
   <body>
@@ -35,21 +34,35 @@
     
     <div class="wrapper">
 
+      <div class="h-card section group">
+        <img class="u-photo" src="http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s=64"/>
+        <span class="p-name">Kyle Mahan</span> |
+        <a class="p-adr" href="http://www.openstreetmap.org/?node=150942279#map=19/37.58410/-122.36642">Burlingame, CA</a> |
+        <a class="u-url" href="http://kylewm.com">kylewm.com</a><br/>
+        <div class="p-note">Software engineer, open source-enthusiast, bicycler</div>
+
+        Social:
+        <a class="u-email" href="mailto:kyle@kylewm.com">email</a> |
+        <a rel="me" href="https://github.com/kylewm">github</a> | 
+        <a rel="me" href="http://microca.st/kylewm">pump.io</a> |
+        <a rel="me" href="http://old.quitter.se/kylewm">gnu social</a> |
+        <a rel="me" href="https://twitter.com/kyle_wm">twitter</a> | 
+        <a rel="me" href="http://www.flickr.com/photos/kindofblue115/">flickr</a> | 
+        <a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">linkedin</a>
+      </div>
+
       {% block content %}{% endblock content %}
 
-      <div class="section group">
-        <footer class="col span_5_of_5">
-
-          <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a><br/>
-          This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US">Creative Commons Attribution 3.0 Unported License</a>.<br />
-          Built with <a href="http://flask.pocoo.org/">Flask</a> and <a href="http://www.responsivegridsystem.com/">Responsive Grid System</a>. Designed for the <a href="http://indiewebcamp.com">#indieweb</a>.
-        </footer>
-      </div>
+      <footer class="section group">
+        <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a><br/>
+        This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US">Creative Commons Attribution 3.0 Unported License</a>.<br />
+        Built with <a href="http://flask.pocoo.org/">Flask</a> and <a href="http://www.responsivegridsystem.com/">Responsive Grid System</a>. Designed for the <a href="http://indiewebcamp.com">#indieweb</a>.
+      </footer>
 
     </div>
     
-<script>
-  <!--piwik here--> 
-</script>
-</body>
+    <script>
+      <!--piwik here--> 
+    </script>
+  </body>
 </html>

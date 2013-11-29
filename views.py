@@ -4,7 +4,7 @@ from functools import wraps
 
 from app import *
 from models import *
-from auth import requires_auth
+from auth import requires_auth, is_authenticated
 
 import twitter_plugin
 
@@ -19,21 +19,22 @@ def get_posts(post_type, page, per_page):
 def index():
     note_pagination, notes = get_posts('note', 1, 10)
     article_pagination, articles = get_posts('article', 1, 10)
-    return render_template('index.html', notes=notes, articles=articles)
+    return render_template('index.html', notes=notes, articles=articles,
+                           authenticated=is_authenticated())
 
 @app.route('/articles', defaults={'page':1})
 @app.route('/articles/page/<int:page>')
 def articles(page):
     pagination, articles = get_posts('article', page, 10)
-    return render_template('articles.html', pagination=pagination, articles=articles, title="All Articles")
-
+    return render_template('articles.html', pagination=pagination, articles=articles,
+                           title="All Articles", authenticated=is_authenticated())
 
 @app.route('/notes', defaults={'page':1})
 @app.route('/notes/page/<int:page>')
 def notes(page):
     pagination, notes = get_posts('note', page, 30)
-    return render_template('notes.html', pagination=pagination, notes=notes, title="All Notes")
-
+    return render_template('notes.html', pagination=pagination, notes=notes,
+                           title="All Notes", authenticated=is_authenticated())
 
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')
@@ -43,7 +44,8 @@ def post_by_id(post_type, year, post_id, slug):
            .first()
     if not post:
         abort(404)
-    return render_template('article.html', post=post, title=post.title)
+    return render_template('article.html', post=post, title=post.title,
+                           authenticated=is_authenticated())
 
 @app.route('/admin/delete/<post_type>/<post_id>')
 @requires_auth

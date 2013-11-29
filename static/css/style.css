@@ -60,8 +60,23 @@ small, .small { font-size: 0.8em; }
 }
 
 a { color: #09c; text-decoration: none; }
+.site-heading a { color: white; }
+
 a:hover { color: #069; }
-h1 a, h2 a { color: #333;}
+
+.wrapper {
+    margin-top: 75px;
+}
+
+.h-card {
+    border-bottom: solid 1px #ccc;
+    margin: 5px;
+    padding: 5px;
+}
+
+.h-card img {
+    float: left; margin: 10px;
+}
 
 .site-heading {
     position: fixed;
@@ -73,12 +88,7 @@ h1 a, h2 a { color: #333;}
     clear: both;
     -webkit-box-shadow:0 5px 8px rgba(0, 0, 0, 0.15);
     -moz-box-shadow:0 5px 8px rgba(0, 0, 0, 0.15);
-    box-shadow:0 5px 8px rgba(0, 0, 0, 0.15);
-    
-}
-
-.wrapper {
-    margin-top: 75px;
+    box-shadow:0 5px 8px rgba(0, 0, 0, 0.15);    
 }
 
 .site-heading .site-title {

@@ -5,37 +5,41 @@
 <div class="section group">
   <div class="col span_2_of_3">
 
+    {% if authenticated %}
     <a href="{{ url_for('new_post', post_type='article') }}">New Article</a>
-    {% for post in articles %}
+    {% endif %}
 
-    <div class="post {{post.post_type}}">
-      <h2>{{ post.title }}</h2>
-      <div class="date">
-        <a href="{{ post.permalink_url }}">
-          {{ post.pub_date | strftime('%Y %B %d') }}
-        </a>
+    {% for post in articles %}
+    <div class="post {{post.post_type}} h-entry">
+      <span class="p-name">{{ post.title }}</span><br/>
+      <a class="u-url" href="{{ post.permalink_url }}">
+        <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y %B %d') }}</time>
+      </a>
+      
+      <div class="p-summary">
+        {{ post.html_excerpt }}
       </div>
-      {{ post.html_excerpt }}      
+      
       {% include "single_post_links.html" %}
     </div>
-
     {% endfor %}  
+
   </div>
 
   <div class="col span_1_of_3">
+    {% if authenticated %}
     <a href="{{ url_for('new_post', post_type='note') }}">New Note</a>
+    {% endif %}
     {% for post in notes %}
-
-    <div class="post {{post.post_type}}">
-      <div class="date">
-        <a href="{{ post.permalink_url }}">
-          {{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}
-        </a>
+    <div class="post {{post.post_type}} h-entry">
+      <a class="u-url" href="{{ post.permalink_url }}">
+        <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y %B %d') }}</time>
+      </a>
+      <div class="e-content">
+        {{ post.html_content }}
       </div>
-      {{ post.html_content }}
       {% include "single_post_links.html" %}
     </div>
-
     {% endfor %}  
   </div>
 </div>
