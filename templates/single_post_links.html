@@ -7,7 +7,7 @@
 
   {% if post.in_reply_to %}
   {% if post.twitter_url %} | {% endif %}
-  <a href="{{ post.in_reply_to }}">In Reply To</a>
+  <a rel="in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
   {% endif %}
 
   {% if post.repost_source %}
@@ -20,7 +20,5 @@
   <a href="{{ url_for('edit_by_id', post_type=post.post_type, post_id=post.id) }}">Edit</a> |
   <a href="{{ url_for('delete_by_id', post_type=post.post_type, post_id=post.id) }}">Delete</a>
   {% endif %}
-  
-  
 </div>
 

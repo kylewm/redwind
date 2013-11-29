@@ -44,7 +44,8 @@ def post_by_id(post_type, year, post_id, slug):
            .first()
     if not post:
         abort(404)
-    return render_template('article.html', post=post, title=post.title,
+    template = 'article.html' if post_type == 'article' else 'note.html'
+    return render_template(template, post=post, title=post.title,
                            authenticated=is_authenticated())
 
 @app.route('/admin/delete/<post_type>/<post_id>')

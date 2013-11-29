@@ -5,17 +5,7 @@
 <div class="section group">
   <a href="{{ url_for('new_post', post_type='note') }}">New Note</a>
   {% for post in notes %}
-
-  <div class="post {{post.post_type}}">
-    <div class="date">
-      <a href="{{ post.permalink_url }}">
-        {{ post.pub_date | strftime('%Y %B %d') }}
-      </a>
-    </div>
-    {{ post.html_excerpt }}      
-    {% include "single_post_links.html" %}
-  </div>
-
+  {% include "single_note.html" %}
   {% endfor %}
   
   {% if pagination.has_prev %}
