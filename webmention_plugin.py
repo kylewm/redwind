@@ -3,9 +3,9 @@ from webmentiontools.urlinfo import UrlInfo
     
 def handle_new_or_edit(post):
     url = post.permalink_url
-    info = UrlInfo(url)
-    in_reply_to = info.inReplyTo()
-    
+    in_reply_to = post.in_reply_to
     if url and in_reply_to:
-        sender = WebmentionSend(url, in_reply_to, verify=False)
-        sender.send()
+        print "Sending webmention {} to {}".format(url, in_reply_to)
+        sender = WebmentionSend(url, in_reply_to)
+        sender.send(verify=False)
+        print "Finished sending webmention"
