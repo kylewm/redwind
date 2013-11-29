@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+{% block content %}
+
+{% if form.errors %}
+    <ul class="errors">
+        {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<form method="POST" action="/admin/login">
+    {{ form.csrf_token }}
+    <label>{{ form.username.label }}: {{ form.username() }}</label><br/>
+    <label>{{ form.password.label }}: {{ form.password() }}</label><br/>
+    <label>{{ form.remember() }} {{ form.remember.label }}</label><br/>
+    <input type="submit"/>    
+</form>
+
+{% endblock %}

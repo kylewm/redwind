@@ -28,11 +28,29 @@
           <li><a href="{{ url_for('index') }}">home</a></li>
           <li><a href="{{ url_for('articles') }}">articles</a></li>
           <li><a href="{{ url_for('notes') }}">notes</a></li>
+          {% if authenticated %}
+          <li><a href="{{ url_for('logout') }}">logout</a></li>
+          {% else %}
+          <li><a href="{{ url_for('login') }}">login</a></li>
+          {% endif %}
         </ul>
       </nav>
     </div>
     
     <div class="wrapper">
+
+      <div class="flashes">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul class=flashes>
+          {% for message in messages %}
+          <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+      </div>
+
 
       <div class="h-card section group">
         <img class="u-photo" src="http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s=64"/>

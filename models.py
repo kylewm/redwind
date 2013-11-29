@@ -49,7 +49,7 @@ class User(db.Model):
         return False
 
     def get_id(self):
-        return self.id
+        return self.login
             
     @property
     def image_url(self):
