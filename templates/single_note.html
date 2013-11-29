@@ -1,9 +1,9 @@
-    <div class="post {{post.post_type}} h-entry">
-      <a class="u-url" href="{{ post.permalink_url }}">
-        <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y %B %d') }}</time>
-      </a>
-      <div class="e-content">
-        {{ post.html_content }}
-      </div>
-      {% include "single_post_links.html" %}
-    </div>
+<div class="post {{post.post_type}} h-entry">
+  <a class="u-url" href="{{ post.permalink_url }}">
+    <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y %B %d') }}</time>
+  </a>
+  <div class="e-content">
+    {{ post.html_content }}
+  </div>
+  {% include "single_post_links.html" %}
+</div>
