@@ -7,5 +7,5 @@ def handle_new_or_edit(post):
     in_reply_to = info.inReplyTo()
     
     if url and in_reply_to:
-        sender = WebmentionSend(url, in_reply_to)
+        sender = WebmentionSend(url, in_reply_to, verify=False)
         sender.send()

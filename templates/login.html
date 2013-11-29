@@ -1,16 +1,6 @@
 {% extends "base.html" %}
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-
-{% block content %}
+{% block "content" %}
 
 {% if form.errors %}
     <ul class="errors">
