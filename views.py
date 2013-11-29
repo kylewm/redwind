@@ -13,6 +13,7 @@ from wtforms import TextField, StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired
 
 import twitter_plugin
+import webmention_plugin
 
 def get_posts(post_type, page, per_page):
     pagination = Post.query\
@@ -105,11 +106,14 @@ def handle_new_or_edit(request, post):
             db.session.add(post)
         db.session.commit()
 
+        # TODO everything else could be asynchronous
         # post or update this post on twitter
         if send_to_twitter:
             twitter_plugin.handle_new_or_edit(post)
-            
         db.session.commit()
+        webmention_plugin.handle_new_or_edit(post)
+        db.session.commit()
+        
         return redirect(post.permalink_url)
 
     return render_template('edit_post.html', post=post)
