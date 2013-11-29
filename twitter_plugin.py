@@ -4,7 +4,6 @@ import os
 
 TWITTER_PERMALINK_RE = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
 
-_api = None
 def get_api():
     if not get_api.cached: 
         CONSUMER_KEY = "Cm9wmVhNTgES6xm2mUwRtg"
@@ -22,19 +21,18 @@ get_api.cached = None
 
 def handle_new_or_edit(post):
     api = get_api()
-    args = {
-        'status' : create_status(post),
-        'trim_user' : True
-    }
-    
-    match = TWITTER_PERMALINK_RE.match(post.in_reply_to)
+    # check for RT's
+    match = TWITTER_PERMALINK_RE.match(post.repost_source)
     if match:
-        args['in_reply_to_status_id'] = match.group(2)
-
-    result = api.statuses.update(**args)
-    if result:
-        status_id = result.get('id_str')
-        post.twitter_status_id = status_id
+        api.statuses.retweet(id=match.group(2), trim_user=True)
+    else:
+        match = TWITTER_PERMALINK_RE.match(post.in_reply_to)
+        in_reply_to = match.group(2) if match else None
+        result = api.statuses.update(status=create_status(post),
+                                     in_reply_to_status_id=in_reply_to,
+                                     trim_user=True)
+        if result:
+            post.twitter_status_id = result.get('id_str')
         
 def create_status(post):
     permalink = post.permalink_short_url
