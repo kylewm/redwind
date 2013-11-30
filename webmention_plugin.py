@@ -1,4 +1,3 @@
-from webmentiontools.send import WebmentionSend
 from bs4 import BeautifulSoup
 import logging
 import re
