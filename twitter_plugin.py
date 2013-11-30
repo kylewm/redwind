@@ -1,6 +1,7 @@
 import twitter
 import re
 import os
+from app import app
 
 TWITTER_PERMALINK_RE = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
 

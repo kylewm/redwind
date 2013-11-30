@@ -1,3 +1,4 @@
+import logging
 
 from flask import request, redirect, url_for, render_template, flash, abort, Response
 from functools import wraps
@@ -13,7 +14,7 @@ from wtforms import TextField, StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired
 
 import twitter_plugin
-import webmention_plugin
+from webmention_plugin import mention_client
 
 def get_posts(post_type, page, per_page):
     pagination = Post.query\
@@ -108,11 +109,18 @@ def handle_new_or_edit(request, post):
 
         # TODO everything else could be asynchronous
         # post or update this post on twitter
-        if send_to_twitter:
-            twitter_plugin.handle_new_or_edit(post)
-        db.session.commit()
-        webmention_plugin.handle_new_or_edit(post)
-        db.session.commit()
+        try:
+            if send_to_twitter:
+                twitter_plugin.handle_new_or_edit(post)
+                db.session.commit()
+        except:
+            app.logger.exception('')
+
+        try:
+            mention_client.handle_new_or_edit(post)
+            db.session.commit()
+        except:
+            app.logger.exception('')
         
         return redirect(post.permalink_url)
 
