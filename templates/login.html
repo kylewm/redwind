@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block "content" %}
+{% block content %}
 
 {% if form.errors %}
     <ul class="errors">
@@ -14,9 +14,9 @@
 
 <form method="POST" action="/admin/login">
     {{ form.csrf_token }}
-    <label>{{ form.username.label }}: {{ form.username() }}</label><br/>
-    <label>{{ form.password.label }}: {{ form.password() }}</label><br/>
-    <label>{{ form.remember() }} {{ form.remember.label }}</label><br/>
+    <label><span class="heading">{{ form.username.label }}: </span>{{ form.username() }}</label><br/>
+    <label><span class="heading">{{ form.password.label }}: </span>{{ form.password() }}</label><br/>
+    <label><span class="heading"></span>{{ form.remember() }} {{ form.remember.label }}</label><br/>
     <input type="submit"/>    
 </form>
 

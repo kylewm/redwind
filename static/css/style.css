@@ -132,6 +132,11 @@ ul, ol {margin-left: 2em;}
 ol li {list-style-type: decimal;}
 ul li {list-style-type: circle;}
 
+form .heading {
+    width: 150px;
+    display: inline-block;
+}
+
 @media only screen and (max-width: 480px) {
     .wrapper {
         width: 93%;
