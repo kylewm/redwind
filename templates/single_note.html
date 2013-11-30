@@ -2,7 +2,7 @@
   <a class="u-url" href="{{ post.permalink_url }}">
     <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y %B %d') }}</time>
   </a>
-  <div class="e-content">
+  <div class="p-name e-content">
     {{ post.html_content }}
   </div>
   {% include "single_post_links.html" %}
