@@ -1,5 +1,6 @@
 from app import app, db
 import datetime
+import re
 from flask import Markup
 
 from werkzeug.security import generate_password_hash, \
@@ -12,6 +13,8 @@ def markdown_filter(data):
 
 def plain_text_filter(plain):
     from flask import Markup
+    plain = re.sub(r'https?://([^ ]+)', r'<a href="\g<0>">\g<1></a>', plain)
+    plain = re.sub(r'@([a-zA-Z0-9_]+)', r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
     return Markup(plain.replace('\n', '<br/>'))
 
 def get_md5_hash(inp):
