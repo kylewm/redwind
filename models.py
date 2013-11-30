@@ -146,7 +146,7 @@ class Post(db.Model):
     @property
     def twitter_url(self):
         if self.twitter_status_id:
-            return "http://twitter.com/{}/status/{}".format(
+            return "https://twitter.com/{}/status/{}".format(
                 self.author.twitter_username,
                 self.twitter_status_id)
 
