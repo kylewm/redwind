@@ -6,7 +6,8 @@ from fabric.contrib.console import confirm
 env.hosts = [ 'groomsman@orin.kylewm.com' ]
 
 def prepare_deploy():
-    local("git add -p && git commit")
+    local("git add -p")
+    local("git commit")
     local("git push origin master")
 
 def update_server():
