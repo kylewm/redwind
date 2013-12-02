@@ -1,23 +1,25 @@
 
 <!-- article metadata -->
 <div class="links">
+  
+  <a class="u-url" href="{{ post.permalink_url }}">
+    <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}</time>
+  </a>
+
   {% if post.twitter_url %}
-  <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">View on Twitter</a> 
+  | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">View on Twitter</a> 
   {% endif %}
 
   {% if post.in_reply_to %}
-  {% if post.twitter_url %} | {% endif %}
-  <a rel="in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
+  | <a rel="in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
   {% endif %}
 
   {% if post.repost_source %}
-  {% if post.in_reply_to or post.twitter_url %} | {% endif %}
-  <a href="{{ post.repost_source }}">Source</a> 
+  | <a href="{{ post.repost_source }}">Source</a> 
   {% endif %}
 
   {% if authenticated %}
-  {% if post.in_reply_to or post.twitter_url or post.repost_source %} | {% endif %}
-  <a href="{{ url_for('edit_by_id', post_type=post.post_type, post_id=post.id) }}">Edit</a> |
+  | <a href="{{ url_for('edit_by_id', post_type=post.post_type, post_id=post.id) }}">Edit</a> |
   <a href="{{ url_for('delete_by_id', post_type=post.post_type, post_id=post.id) }}">Delete</a>
   {% endif %}
 </div>

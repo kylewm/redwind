@@ -5,12 +5,9 @@
 {% for post in posts %}
 
 <div class="post {{post.post_type}} h-entry">
-  <a class="u-url" href="{{ post.permalink_url }}">
-    <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y %B %d') }}</time>
-    {% if post.title %}
-    <div class="p-name">{{ post.title }}</div>
-    {% endif %}
-  </a>
+  {% if post.title %}
+  <a class="u-url p-name" href="{{ post.permalink_url }}">{{ post.title }}</a>
+  {% endif %}
   
   <div class="e-content">
     {{ post.html_excerpt }}
