@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 {% for post in posts %}
 
 <div class="post {{post.post_type}} h-entry">
@@ -9,7 +10,6 @@
     {% if post.title %}
     <div class="p-name">{{ post.title }}</div>
     {% endif %}
-
   </a>
   
   <div class="e-content">
@@ -19,6 +19,9 @@
   {% include "single_post_links.html" %}
 </div>
 
-{% endfor %}  
+{% endfor %}
+
+{% include "page_arrows.html" %}
+
 {% endblock content %}
 

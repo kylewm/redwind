@@ -1,36 +1,40 @@
-<html>
-  <head>
+{% extends "base.html" %}
+
+{% block content %}
+
     <style type="text/css">
       .heading {
       width: 100px;
       display: inline-block;
       }
   </style>
-  </head>
-  <body>
 
   <form method="POST">
 
-      {% if post.post_type == 'article' %}
       <label><span class="heading">Title</span><input name="title" size="60" value="{{ post.title or '' }}"/></label><br/>
       <label><span class="heading">Slug</span><input name="slug" size="60" value="{{post.slug or ''}}"/></label><br/>
-      {% endif %}
-      
       <label><span class="heading">Date</span><input name="date" size="60" value="{{post.pub_date}}"/></label><br/>
+      <label><span class="heading">In Reply To (URL)</span><input name="in_reply_to" size="60" value="{{post.in_reply_to or ''}}"/></label><br/>
+      <label><span class="heading">Repost (URL)</span><input name="repost_source" size="60" value="{{post.repost_source or ''}}"/></label><br/>
 
-      <label><span class="heading">In Reply To</span><input name="in_reply_to" size="60" value="{{post.in_reply_to or ''}}"/></label><br/>
-
-      <label><span class="heading">Repost</span><input name="repost_source" size="60" value="{{post.repost_source or ''}}"/></label><br/>
-
-      <label><span class="heading"></span><input type="checkbox" name="send_to_twitter" value="true"/>Send to Twitter</label><br/>
-      
-      <label><span class="heading">Content</span>
-        <textarea name="content" rows="{{ 30 if post.post_type == 'article' else 5 }}" cols="80">{{ post.content }}</textarea>
+      <label>Content
+        <textarea name="content" rows="{{ 30 if post.post_type == 'article' else 5 }}" cols="80" style="width:100%">{{ post.content }}</textarea>
       </label>
 
+      <select name="content_format" style="float:left">
+        <option {% if post.content_format == "markdown" %}selected{% endif %}>markdown</option>
+        <option {% if post.content_format == "plain" %}selected{% endif %}>plain</option>
+        <option {% if post.content_format == "html" %}selected{% endif %}>html</option>
+      </select>
 
-    <input type="submit"/>
+      <label style="float:right"><input type="checkbox" name="send_to_twitter" value="true"/>Send to Twitter</label>
+      
+
+      
+      <div style="clear: both; text-align:center">
+        <input type="submit" value="Submit Post"/>
+      </div>
 
   </form>
-  </body>
-</html>
+
+{% endblock %}

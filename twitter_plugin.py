@@ -144,7 +144,7 @@ class TwitterClient:
                 components.append(permalink_url)
 
         status = self.run_shorten_algorithm(components, target_length)
-        print("shortened for twitter {}".format(status))
+        print("shortened for twitter '{}'".format(status))
         return status
 
 

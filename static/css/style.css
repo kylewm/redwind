@@ -70,12 +70,18 @@ a:hover { color: #069; }
 
 .h-card {
     border-bottom: solid 1px #ccc;
-    margin: 5px 5px 20px 5px;
-    padding: 5px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
 }
 
 .h-card img {
     float: left; margin: 10px;
+}
+
+.recent-articles {
+    border-bottom: solid 1px #ccc;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
 }
 
 .site-heading {
@@ -109,7 +115,7 @@ nav li {
     list-style-type: none;
     display: inline-block;
     font-size: 18px;
-    width: 70px;
+    min-width: 70px;
     text-align: center;
 }
 
@@ -135,6 +141,10 @@ ul li {list-style-type: circle;}
 form .heading {
     width: 150px;
     display: inline-block;
+}
+
+form input {
+    margin: 3px;
 }
 
 @media only screen and (max-width: 480px) {

@@ -27,32 +27,28 @@ def get_posts(post_type, page, per_page):
     pagination  = query.paginate(page, per_page)
     return pagination, pagination.items
 
-@app.route('/')
-def index():
+def render_posts(title, post_type, page, per_page):
     _, articles = get_posts('article', 1, 5)
-    pagination, posts = get_posts(None, 1, 30)
+    pagination, posts = get_posts(post_type, page, per_page)
     return render_template('posts.html', pagination=pagination,
                            posts=posts, articles=articles,
-                           authenticated=current_user.is_authenticated())
+                           post_type=post_type, title=title,
+                           authenticated=current_user.is_authenticated())    
+
+@app.route('/', defaults={'page':1})
+@app.route('/page/<int:page>')
+def index(page):
+    return render_posts(None, None, page, 30)
 
 @app.route('/articles', defaults={'page':1})
 @app.route('/articles/page/<int:page>')
 def articles(page):
-    _, articles = get_posts('article', 1, 5)
-    pagination, posts = get_posts('article', page, 10)
-    return render_template('posts.html', pagination=pagination,
-                           posts=posts, articles=articles,
-                           title="All Articles", authenticated=current_user.is_authenticated())
+    return render_posts('All Articles', 'article', page, 10)
 
 @app.route('/notes', defaults={'page':1})
 @app.route('/notes/page/<int:page>')
 def notes(page):
-    _, articles = get_posts('article', 1, 5)
-    pagination, posts = get_posts('note', page, 30)
-    return render_template('posts.html', pagination=pagination,
-                           posts=posts, articles=articles,
-                           title="All Notes", authenticated=current_user.is_authenticated())
-
+    return render_posts('All Notes', 'note', page, 30)
 
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')
@@ -111,6 +107,7 @@ def handle_new_or_edit(request, post):
         post.slug = request.form.get('slug')
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
+        post.content_format = request.form.get('content_format', 'plain')
         send_to_twitter = request.form.get("send_to_twitter")
         
         if not post.id:
@@ -134,7 +131,8 @@ def handle_new_or_edit(request, post):
         
         return redirect(post.permalink_url)
 
-    return render_template('edit_post.html', post=post)
+    return render_template('edit_post.html', post=post,
+                           authenticated=current_user.is_authenticated())
       
 @app.route('/admin/new/<post_type>', methods = ['GET','POST'])
 @login_required
@@ -162,3 +160,10 @@ def pygments_css():
 @app.template_filter('strftime')
 def strftime_filter(date, fmt='%Y %b %d'):
     return date.strftime(fmt)
+
+def url_for_other_page(page):
+    args = request.view_args.copy()
+    args['page'] = page
+    return url_for(request.endpoint, **args)
+
+app.jinja_env.globals['url_for_other_page'] = url_for_other_page
