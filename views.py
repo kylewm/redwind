@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from flask import request, redirect, url_for, render_template, flash, abort, Response
 from functools import wraps
@@ -108,8 +109,15 @@ def handle_new_or_edit(request, post):
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
         post.content_format = request.form.get('content_format', 'plain')
+        pub_date = request.form.get('date', '').strip()
+        if pub_date:
+            post.pub_date = datetime.strptime('%Y-%m-%d %H:%M', pub_date)
+        else:
+            post.pub_date = datetime.now()
+        
         send_to_twitter = request.form.get("send_to_twitter")
         
+
         if not post.id:
             db.session.add(post)
         db.session.commit()
