@@ -1,0 +1,26 @@
+Level 22: The Wallcrawler
+2
+8
+1
+The Wallcrawler walks in a line until it hits a wall. Then it turns and walks whichever way keeps its outstretched hand in contact with the wall. Change its outstretched hand by clicking again.
+00000000000000000000
+0.......s...66.....0
+000.........66.....0
+0b0.........66.....0
+0.000.......66.....0
+0...0......0000....0
+000.0......0..0....0
+066.0......0..0r...0
+066........0..0....0
+066........0000....0
+066.............0000
+066.............BR.0
+066.....>.......BRf0
+066.............BR.0
+066.............BR.0
+066.............BR.0
+066.............3330
+066.............3330
+066.............3330
+00000000000000000000
+
