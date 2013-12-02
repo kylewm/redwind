@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+import time
 
 from flask import request, redirect, url_for, render_template, flash, abort, Response
 from functools import wraps
@@ -111,7 +112,7 @@ def handle_new_or_edit(request, post):
         post.content_format = request.form.get('content_format', 'plain')
         pub_date = request.form.get('date', '').strip()
         if pub_date:
-            post.pub_date = datetime.strptime('%Y-%m-%d %H:%M', pub_date)
+            post.pub_date = time.strptime('%Y-%m-%d %H:%M', pub_date)
         else:
             post.pub_date = datetime.now()
         
