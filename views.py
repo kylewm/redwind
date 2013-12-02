@@ -13,35 +13,44 @@ from flask_wtf import Form
 from wtforms import TextField, StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired
 
-import twitter_plugin
-from webmention_plugin import mention_client
+from twitter_plugin import TwitterClient
+from webmention_plugin import MentionClient
+
+twitter_client = TwitterClient(app)
+mention_client = MentionClient(app)
 
 def get_posts(post_type, page, per_page):
-    pagination = Post.query\
-                     .filter_by(post_type=post_type)\
-                     .order_by(Post.pub_date.desc())\
-                     .paginate(page, per_page)
+    query = Post.query
+    if post_type:
+        query = query.filter_by(post_type=post_type)
+    query = query.order_by(Post.pub_date.desc())
+    pagination  = query.paginate(page, per_page)
     return pagination, pagination.items
 
 @app.route('/')
 def index():
-    note_pagination, notes = get_posts('note', 1, 10)
-    article_pagination, articles = get_posts('article', 1, 10)
-    return render_template('index.html', notes=notes, articles=articles,
+    _, articles = get_posts('article', 1, 5)
+    pagination, posts = get_posts(None, 1, 30)
+    return render_template('posts.html', pagination=pagination,
+                           posts=posts, articles=articles,
                            authenticated=current_user.is_authenticated())
 
 @app.route('/articles', defaults={'page':1})
 @app.route('/articles/page/<int:page>')
 def articles(page):
-    pagination, articles = get_posts('article', page, 10)
-    return render_template('articles.html', pagination=pagination, articles=articles,
+    _, articles = get_posts('article', 1, 5)
+    pagination, posts = get_posts('article', page, 10)
+    return render_template('posts.html', pagination=pagination,
+                           posts=posts, articles=articles,
                            title="All Articles", authenticated=current_user.is_authenticated())
 
 @app.route('/notes', defaults={'page':1})
 @app.route('/notes/page/<int:page>')
 def notes(page):
-    pagination, notes = get_posts('note', page, 30)
-    return render_template('notes.html', pagination=pagination, notes=notes,
+    _, articles = get_posts('article', 1, 5)
+    pagination, posts = get_posts('note', page, 30)
+    return render_template('posts.html', pagination=pagination,
+                           posts=posts, articles=articles,
                            title="All Notes", authenticated=current_user.is_authenticated())
 
 
@@ -53,8 +62,9 @@ def post_by_id(post_type, year, post_id, slug):
            .first()
     if not post:
         abort(404)
-    template = 'article.html' if post_type == 'article' else 'note.html'
-    return render_template(template, post=post, title=post.title,
+    _, articles = get_posts('article', 1, 5)
+    return render_template('post.html', post=post, title=post.title,
+                           articles=articles,
                            authenticated=current_user.is_authenticated())
 
 
@@ -111,7 +121,7 @@ def handle_new_or_edit(request, post):
         # post or update this post on twitter
         try:
             if send_to_twitter:
-                twitter_plugin.handle_new_or_edit(post)
+                twitter_client.handle_new_or_edit(post)
                 db.session.commit()
         except:
             app.logger.exception('')

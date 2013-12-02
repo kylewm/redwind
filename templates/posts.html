@@ -1,12 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% for post in posts %}
+
 <div class="post {{post.post_type}} h-entry">
-  <h2 class="p-name">{{ post.title }}</h2>
   <a class="u-url" href="{{ post.permalink_url }}">
     <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y %B %d') }}</time>
+    {% if post.title %}
+    <div class="p-name">{{ post.title }}</div>
+    {% endif %}
+
   </a>
   
   <div class="e-content">
-    {{ post.html_content }}
+    {{ post.html_excerpt }}
   </div>
   
   {% include "single_post_links.html" %}
 </div>
+
+{% endfor %}  
+{% endblock content %}
+

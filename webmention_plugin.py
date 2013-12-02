@@ -2,10 +2,10 @@ from bs4 import BeautifulSoup
 import logging
 import re
 import requests
-from app import app
 
 class MentionClient:
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.cached_responses = {}
     
     def get_source_url(self, post):
@@ -105,6 +105,3 @@ class MentionClient:
         response = requests.post(endpoint, data=payload, headers=headers)
         app.logger.debug("Pingback to %s response status code %s. Message %s", target_url, response.status_code, response.text)
         return True # TODO detect errors
-
-
-mention_client = MentionClient()
