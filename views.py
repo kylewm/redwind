@@ -112,7 +112,7 @@ def handle_new_or_edit(request, post):
         post.content_format = request.form.get('content_format', 'plain')
         pub_date = request.form.get('date', '').strip()
         if pub_date:
-            post.pub_date = time.strptime('%Y-%m-%d %H:%M', pub_date)
+            post.pub_date = time.strptime(pub_date, '%Y-%m-%d %H:%M')
         else:
             post.pub_date = datetime.now()
         
