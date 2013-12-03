@@ -26,7 +26,7 @@
         {{ post.html_content }}
       </div>
     </content>
-    <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/note</object-type>
+    <object-type xmlns="http://activitystrea.ms/specs/atom/1.0/">http://activitystrea.ms/schema/1.0/post</object-type>
   </entry>
 
 {% endfor %}
