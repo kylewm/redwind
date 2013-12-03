@@ -10,6 +10,10 @@
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
 
+    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('all_atom') }}" />
+    <link rel="notes alternate" type="application/atom+xml" href="{{ url_for('notes_atom') }}" />
+    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom') }}" />
+    
     <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/col.css') }}">

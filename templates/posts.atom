@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
   <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
   <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"/>
-  <link href="http://kylewm.com/all.atom" rel="self"/>
+  <link href="{{ request.base_url }}" rel="self"/>
   <link rel="hub" href="http://pubsubhubbub.appspot.com/"/>
   <id>http://kylewm.com/all.atom</id>
   <author>
@@ -19,7 +19,7 @@
     <link href="{{ post.permalink_url }}" rel="alternate" type="text/html"/>
     <id>{{ post.permalink_url }}</id>
     <title type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">{{ post.title or post.html_content | atom_sanitize }}</div>
+      <div xmlns="http://www.w3.org/1999/xhtml">{{ (post.title or post.html_content) | atom_sanitize }}</div>
     </title>
     <content type="xhtml" xml:base="http://kylewm.com/" xml:space="preserve">
       <div xmlns="http://www.w3.org/1999/xhtml">

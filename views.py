@@ -50,11 +50,22 @@ def articles(page):
 def notes(page):
     return render_posts('All Notes', 'note', page, 30)
 
+def render_posts_atom(title, post_type, count):
+    _, posts = get_posts(post_type, 1, count)
+    return make_response(render_template('posts.atom', title=title, posts=posts), 200,
+                         { 'Content-Type' : 'application/atom+xml' })
+
 @app.route("/all.atom")
 def all_atom():
-    pagination, posts = get_posts(None, 1, 30)
-    return make_response(render_template('posts.atom', title='All Posts', posts=posts), 200,
-                         { 'Content-Type' : 'application/atom+xml' })
+    return render_posts_atom('All Posts', None, 30)
+
+@app.route("/notes.atom")
+def notes_atom():
+    return render_posts_atom('Notes', 'note', 10)
+
+@app.route("/articles.atom")
+def articles_atom():
+    return render_posts_atom('Articles', 'article', 30)
 
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')
@@ -182,8 +193,14 @@ app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 @app.template_filter('atom_sanitize')
 def atom_sanitize(content):
+    if hasattr(content, 'unescape'):
+        content = content.unescape()
+
     soup = BeautifulSoup(content)
     for tag in soup.find_all('script'):
         tag.replace_with(soup.new_string('removed script tag', Comment))
-    return soup
+
+    result = Markup(soup)
+    return result
+
                 
