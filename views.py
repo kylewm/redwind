@@ -1,22 +1,20 @@
-import logging
-from datetime import datetime
-import time
-
-from flask import request, redirect, url_for, render_template, flash, abort, make_response
-from functools import wraps
-
 from app import *
 from models import *
 from auth import login_mgr, load_user
-
-from flask.ext.login import login_required, login_user, logout_user, current_user
-from flask_wtf import Form
-
-from wtforms import TextField, StringField, PasswordField, BooleanField
-from wtforms.validators import DataRequired
-
 from twitter_plugin import TwitterClient
 from webmention_plugin import MentionClient
+
+import logging
+from datetime import datetime
+import time
+from functools import wraps
+
+from flask import request, redirect, url_for, render_template, flash, abort, make_response
+from flask.ext.login import login_required, login_user, logout_user, current_user
+from flask_wtf import Form
+from wtforms import TextField, StringField, PasswordField, BooleanField
+from wtforms.validators import DataRequired
+from bs4 import BeautifulSoup, Comment
 
 twitter_client = TwitterClient(app)
 mention_client = MentionClient(app)
@@ -123,7 +121,6 @@ def handle_new_or_edit(request, post):
             post.pub_date = datetime.now()
         
         send_to_twitter = request.form.get("send_to_twitter")
-        
 
         if not post.id:
             db.session.add(post)
@@ -182,3 +179,11 @@ def url_for_other_page(page):
     return url_for(request.endpoint, **args)
 
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
+
+@app.template_filter('atom_sanitize')
+def atom_sanitize(content):
+    soup = BeautifulSoup(content)
+    for tag in soup.find_all('script'):
+        tag.replace_with(soup.new_string('removed script tag', Comment))
+    return soup
+                

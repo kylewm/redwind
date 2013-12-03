@@ -19,14 +19,14 @@
     <link href="{{ post.permalink_url }}" rel="alternate" type="text/html"/>
     <id>{{ post.permalink_url }}</id>
     <title type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">{{ post.title or post.html_content }}</div>
+      <div xmlns="http://www.w3.org/1999/xhtml">{{ post.title or post.html_content | atom_sanitize }}</div>
     </title>
     <content type="xhtml" xml:base="http://kylewm.com/" xml:space="preserve">
       <div xmlns="http://www.w3.org/1999/xhtml">
-        {{ post.html_content }}
+        {{ post.html_content | atom_sanitize }}
       </div>
     </content>
-    <object-type xmlns="http://activitystrea.ms/specs/atom/1.0/">http://activitystrea.ms/schema/1.0/post</object-type>
+    <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/{{ post.post_type }}</object-type>
   </entry>
 
 {% endfor %}
