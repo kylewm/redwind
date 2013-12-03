@@ -61,11 +61,11 @@ def all_atom():
 
 @app.route("/notes.atom")
 def notes_atom():
-    return render_posts_atom('Notes', 'note', 10)
+    return render_posts_atom('Notes', 'note', 30)
 
 @app.route("/articles.atom")
 def articles_atom():
-    return render_posts_atom('Articles', 'article', 30)
+    return render_posts_atom('Articles', 'article', 10)
 
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')
@@ -191,15 +191,17 @@ def url_for_other_page(page):
 
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
+@app.template_filter('html_to_plain')
+def html_to_plain(content):
+    soup = BeautifulSoup(str(content))
+    text= soup.get_text()
+    return Markup.escape(text)
+
 @app.template_filter('atom_sanitize')
 def atom_sanitize(content):
-    if hasattr(content, 'unescape'):
-        content = content.unescape()
-
-    soup = BeautifulSoup(content)
+    soup = BeautifulSoup(str(content))
     for tag in soup.find_all('script'):
         tag.replace_with(soup.new_string('removed script tag', Comment))
-
     result = Markup(soup)
     return result
 
