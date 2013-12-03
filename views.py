@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 import time
 
-from flask import request, redirect, url_for, render_template, flash, abort, Response
+from flask import request, redirect, url_for, render_template, flash, abort, make_response
 from functools import wraps
 
 from app import *
@@ -51,6 +51,12 @@ def articles(page):
 @app.route('/notes/page/<int:page>')
 def notes(page):
     return render_posts('All Notes', 'note', page, 30)
+
+@app.route("/all.atom")
+def all_atom():
+    pagination, posts = get_posts(None, 1, 30)
+    return make_response(render_template('posts.atom', title='All Posts', posts=posts), 200,
+                         { 'Content-Type' : 'application/atom+xml' })
 
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')

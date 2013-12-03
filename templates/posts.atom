@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
+  <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
+  <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"/>
+  <link href="http://kylewm.com/all.atom" rel="self"/>
+  <link rel="hub" href="http://pubsubhubbub.appspot.com/"/>
+  <id>http://kylewm.com/all.atom</id>
+  <author>
+    <name>Kyle</name>
+    <uri>http://kylewm.com</uri>
+  </author>
+  <updated>{{ posts[0].pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
+
+  {% for post in posts %}
+
+  <entry>
+    <updated>{{ post.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
+    <published>{{ post.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</published>
+    <link href="{{ post.permalink_url }}" rel="alternate" type="text/html"/>
+    <id>{{ post.permalink_url }}</id>
+    <title type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">{{ post.title or post.html_content }}</div>
+    </title>
+    <content type="xhtml" xml:base="http://kylewm.com/" xml:space="preserve">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        {{ post.html_content }}
+      </div>
+    </content>
+    <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/note</object-type>
+  </entry>
+
+{% endfor %}
+</feed>
