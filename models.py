@@ -21,6 +21,11 @@ def repost_preview_filter(url):
     if m:
         return """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
             .format(m.group(1))
+
+    m = re.match(r'https?://instagram.com/p/(\w+)/?#?', url)
+    if m:
+        return """<iframe src="//instagram.com/p/{}/embed/" width="612" height="710" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
+            .format(m.group(1)
         
 
 def get_md5_hash(inp):
