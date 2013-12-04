@@ -9,13 +9,19 @@ from werkzeug.security import generate_password_hash, \
 def markdown_filter(data):
     from markdown import markdown
     from smartypants import smartypants
-    return Markup(smartypants(markdown(data, extensions=['codehilite'])))
+    return smartypants(markdown(data, extensions=['codehilite']))
 
 def plain_text_filter(plain):
-    from flask import Markup
     plain = re.sub(r'(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)', r'<a href="\g<0>">\g<1></a>', plain)
     plain = re.sub(r'@([a-zA-Z0-9_]+)', r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
-    return Markup(plain.replace('\n', '<br/>'))
+    return plain.replace('\n', '<br/>')
+
+def repost_preview_filter(url):
+    m = re.match(r'https?://(?:www.)?youtube.com/watch\?v=(\w+)', url)
+    if m:
+        return """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
+            .format(m.group(1))
+        
 
 def get_md5_hash(inp):
     result = get_md5_hash.cache.get(inp)
@@ -121,16 +127,23 @@ class Post(db.Model):
 
     @property
     def html_content(self):
-        return self.format_text(self.content)
+        text = self.format_text(self.content)
+        if self.repost_source:
+            preview = repost_preview_filter(self.repost_source)
+            if preview: text += preview
+        return Markup(text)
 
     @property
     def html_excerpt(self):
         text = self.html_content
         split = text.split('<!-- more -->', 1)
         text = split[0]
-        if (len(split) > 1):
-            text += Markup("<a href={}>Keep Reading...</a>".format(self.permalink_url))
-        return text
+        if self.repost_source:
+            preview = repost_preview_filter(self.repost_source)
+            if preview: text += preview
+        if len(split) > 1:
+            text += "<a href={}>Keep Reading...</a>".format(self.permalink_url)
+        return Markup(text)
             
     @property
     def permalink_url(self):
