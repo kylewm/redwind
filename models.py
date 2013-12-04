@@ -13,19 +13,19 @@ def markdown_filter(data):
 
 def plain_text_filter(plain):
     plain = re.sub(r'(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)', r'<a href="\g<0>">\g<1></a>', plain)
-    plain = re.sub(r'@([a-zA-Z0-9_]+)', r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
+    plain = re.sub(r'@([a-zA-Z0-9_]+)', r'<a href="http://twitter\.com/\g<1>">\g<0></a>', plain)
     return plain.replace('\n', '<br/>')
 
 def repost_preview_filter(url):
-    m = re.match(r'https?://(?:www.)?youtube.com/watch\?v=(\w+)', url)
+    m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
     if m:
         return """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
             .format(m.group(1))
 
-    m = re.match(r'https?://instagram.com/p/(\w+)/?#?', url)
+    m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
     if m:
         return """<iframe src="//instagram.com/p/{}/embed/" width="612" height="710" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
-            .format(m.group(1)
+            .format(m.group(1))
         
 
 def get_md5_hash(inp):
