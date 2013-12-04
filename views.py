@@ -1,22 +1,20 @@
-import logging
-from datetime import datetime
-import time
-
-from flask import request, redirect, url_for, render_template, flash, abort, Response
-from functools import wraps
-
 from app import *
 from models import *
 from auth import login_mgr, load_user
-
-from flask.ext.login import login_required, login_user, logout_user, current_user
-from flask_wtf import Form
-
-from wtforms import TextField, StringField, PasswordField, BooleanField
-from wtforms.validators import DataRequired
-
 from twitter_plugin import TwitterClient
 from webmention_plugin import MentionClient
+
+import logging
+from datetime import datetime
+import time
+from functools import wraps
+
+from flask import request, redirect, url_for, render_template, flash, abort, make_response
+from flask.ext.login import login_required, login_user, logout_user, current_user
+from flask_wtf import Form
+from wtforms import TextField, StringField, PasswordField, BooleanField
+from wtforms.validators import DataRequired
+from bs4 import BeautifulSoup, Comment
 
 twitter_client = TwitterClient(app)
 mention_client = MentionClient(app)
@@ -51,6 +49,23 @@ def articles(page):
 @app.route('/notes/page/<int:page>')
 def notes(page):
     return render_posts('All Notes', 'note', page, 30)
+
+def render_posts_atom(title, post_type, count):
+    _, posts = get_posts(post_type, 1, count)
+    return make_response(render_template('posts.atom', title=title, posts=posts), 200,
+                         { 'Content-Type' : 'application/atom+xml' })
+
+@app.route("/all.atom")
+def all_atom():
+    return render_posts_atom('All Posts', None, 30)
+
+@app.route("/notes.atom")
+def notes_atom():
+    return render_posts_atom('Notes', 'note', 30)
+
+@app.route("/articles.atom")
+def articles_atom():
+    return render_posts_atom('Articles', 'article', 10)
 
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')
@@ -117,7 +132,6 @@ def handle_new_or_edit(request, post):
             post.pub_date = datetime.now()
         
         send_to_twitter = request.form.get("send_to_twitter")
-        
 
         if not post.id:
             db.session.add(post)
@@ -176,3 +190,19 @@ def url_for_other_page(page):
     return url_for(request.endpoint, **args)
 
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
+
+@app.template_filter('html_to_plain')
+def html_to_plain(content):
+    soup = BeautifulSoup(str(content))
+    text= soup.get_text()
+    return Markup.escape(text)
+
+@app.template_filter('atom_sanitize')
+def atom_sanitize(content):
+    soup = BeautifulSoup(str(content))
+    for tag in soup.find_all('script'):
+        tag.replace_with(soup.new_string('removed script tag', Comment))
+    result = Markup(soup)
+    return result
+
+                
