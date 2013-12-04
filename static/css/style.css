@@ -47,12 +47,8 @@ p + p {margin-top: 1em;}
 li {font-size: 1em;}
 small, .small { font-size: 0.8em; }
 
-.post+.article {
-    margin-top: 50px;
-}
-
-.post+.note {
-    margin-top: 20px;
+.post+.post {
+    margin-top: 40px;
 }
 
 .post .links {
