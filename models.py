@@ -24,7 +24,7 @@ def repost_preview_filter(url):
 
     m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
     if m:
-        return """<iframe src="//instagram.com/p/{}/embed/" width="612" height="710" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
+        return """<iframe src="//instagram.com/p/{}/embed/" width="400" height="500" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
             .format(m.group(1))
         
 
