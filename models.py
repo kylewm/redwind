@@ -17,16 +17,27 @@ def plain_text_filter(plain):
     return plain.replace('\n', '<br/>')
 
 def repost_preview_filter(url):
+    #youtube embeds
     m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
     if m:
         return """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
             .format(m.group(1))
 
+    #instagram embeds
     m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
     if m:
         return """<iframe src="//instagram.com/p/{}/embed/" width="400" height="500" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
             .format(m.group(1))
+
+    #fallback
+    m = re.match(r'https?://(.*)', url)
+    if m:
+        return """<a href="{}">{}</a>""".format(url, m.group(1))
         
+    # TODO when the post is first created, we should fetch the
+    # reposted URL and save some information about it (i.e.,
+    # information we can't get from the page title, whether it is an
+    # image, etc.)
 
 def get_md5_hash(inp):
     result = get_md5_hash.cache.get(inp)

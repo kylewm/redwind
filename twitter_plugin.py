@@ -3,38 +3,8 @@ import re
 import os
 from datetime import datetime, timedelta
 
-class TweetText:
-    def __init__(self, text, can_shorten=True, can_drop=True):
-        self.text = text
-        self.length = len(self.text)
-        self.can_shorten = can_shorten
-        self.can_drop = can_drop
-
-    def shorten(self, length):
-        if len(self.text) <= length:
-            return self
-        elif length-3 <= 0:
-            return None
-        else:
-            return TweetText(self.text[:length-3].strip() + '...',
-                             can_shorten=False, can_drop=self.can_drop)
-
-    def __repr__(self):
-        return "text({})".format(self.text)
-
-class TweetUrl:
-    def __init__(self, text, length, can_drop):
-        self.text = text
-        self.length = length
-        self.can_drop = can_drop
-        self.can_shorten = False
-        
-    def __repr__(self):
-        return "url({})".format(self.text)
-
 class TwitterClient:
-    PERMALINK_RE = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
-
+    
     def __init__(self, app):
         self.app = app
         self.cached_api = None
@@ -42,20 +12,20 @@ class TwitterClient:
         self.config_fetch_date = None
 
     def handle_new_or_edit(self, post):
+        permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         api = self.get_api()
         # check for RT's
-        match = TwitterClient.PERMALINK_RE.match(post.repost_source)
+        match = permalink_re.match(post.repost_source)
         if match:
             api.statuses.retweet(id=match.group(2), trim_user=True)
         else:
-            match = TwitterClient.PERMALINK_RE.match(post.in_reply_to)
+            match = permalink_re.match(post.in_reply_to)
             in_reply_to = match.group(2) if match else None
             result = api.statuses.update(status=self.create_status(post),
                                          in_reply_to_status_id=in_reply_to,
                                          trim_user=True)
             if result:
                 post.twitter_status_id = result.get('id_str')
-
 
     def get_api(self):
         if not self.cached_api: 
@@ -67,9 +37,8 @@ class TwitterClient:
                                     MY_TWITTER_CREDS)
             oauth_token, oauth_secret = twitter.read_token_file(MY_TWITTER_CREDS)
             self.cached_api = twitter.Twitter(auth=twitter.OAuth(oauth_token, oauth_secret,
-                                                      CONSUMER_KEY, CONSUMER_SECRET))
+                                                                 CONSUMER_KEY, CONSUMER_SECRET))
         return self.cached_api
-
 
     def get_help_configuration(self):
         if not self.cached_config or (datetime.now() - self.config_fetch_date) > timedelta(days=1):
@@ -77,6 +46,25 @@ class TwitterClient:
             self.cached_config = api.help.configuration()
             self.config_fetch_date = datetime.now()
         return self.cached_config
+
+    class TextSpan:
+        def __init__(self, text, length, can_shorten=True, can_drop=True):
+            self.text = text
+            self.length = length
+            self.can_shorten = can_shorten
+            self.can_drop = can_drop
+
+        def shorten(self, length):
+            if len(self.text) <= length:
+                return self
+            elif length-3 <= 0:
+                return None
+            else:
+                return TextSpan(self.text[:length-3].strip() + '...',
+                                can_shorten=False, can_drop=self.can_drop)
+
+        def __repr__(self):
+            return "text({})".format(self.text)
 
     def estimate_length(self, components):
         return sum(c.length for c in components) + len(components) - 1
@@ -109,7 +97,6 @@ class TwitterClient:
             return twitter_config.get('short_url_length_https'
                                       if url.startswith('https')
                                       else 'short_url_length')
-
         return 30
         
     def split_out_urls(self, text):
@@ -117,13 +104,16 @@ class TwitterClient:
         while text:
             m = re.search(r'https?://[a-zA-Z0-9_\.\-():@#$%&?/=]+', text)
             if m:
+                head = text[:m.start()].strip()
                 url = m.group(0)
-                components.append(TweetText(text[:m.start()].strip()))
-                components.append(TweetUrl(url, self.get_url_length(url),
-                                           can_drop=True))
+
+                components.append(TextSpan(head, len(head)))
+                components.append(TextSpan(url, self.get_url_length(url),
+                                           can_shorten=False, can_drop=True))
                 text = text[m.end():]
             else:
-                components.append(TweetText(text.strip()))
+                tail = text.strip()
+                components.append(TextSpan(tail, len(tail)))
                 text = None
         return components
 
@@ -131,20 +121,23 @@ class TwitterClient:
         """Create a <140 status message suitable for twitter
         """
         target_length = 140
-        permalink_url = TweetUrl(post.permalink_url,
+        permalink_url = TextSpan(post.permalink_url,
                                  self.get_url_length(post.permalink_url),
+                                 can_shorten=False,
                                  can_drop=False)
         
         if post.title:
-            components = [ TweetText(post.title), permalink_url ]
+            components = [ TextSpan(post.title, len(post.title)), permalink_url ]
                            
         else:
             components = self.split_out_urls(post.content)
-            if self.estimate_length(components) > target_length:
+            # include a link to the original message if the note is longer than
+            # 140 characters, or if we are resharing another URL.
+            if self.estimate_length(components) > target_length or post.repost_source:
                 components.append(permalink_url)
 
         status = self.run_shorten_algorithm(components, target_length)
-        print("shortened for twitter '{}'".format(status))
+        self.app.info("shortened for twitter '%s'", status)
         return status
 
 

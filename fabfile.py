@@ -5,18 +5,24 @@ from fabric.contrib.console import confirm
 
 env.hosts = [ 'groomsman@orin.kylewm.com' ]
 
-def prepare_deploy():
+def commit():
     local("git add -p && git commit")
+
+def push():
     local("git push origin master")
 
-def update_server():
+def pull():
+    with cd("~/groomsman"):
+        run("git pull origin master")
+
+def restart():
     with cd("~/groomsman"):
         with prefix("source venv/bin/activate"):
-            run("git pull origin master")
             run("pip install -r requirements.txt")
             run("uwsgi --reload /tmp/groomsman.pid")
 
 def deploy():
-    prepare_deploy()
-    update_server()
-    
+    commit()
+    push()
+    pull()
+    restart()
