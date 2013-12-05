@@ -115,7 +115,7 @@ class TwitterClient:
     def split_out_urls(self, text):
         components = []
         while text:
-            m = re.search(r'https?://[a-zA-Z0-9_\.\-():@#$%&?/]+', text)
+            m = re.search(r'https?://[a-zA-Z0-9_\.\-():@#$%&?/=]+', text)
             if m:
                 url = m.group(0)
                 components.append(TweetText(text[:m.start()].strip()))
