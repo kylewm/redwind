@@ -3,6 +3,7 @@ from models import *
 from auth import login_mgr, load_user
 from twitter_plugin import TwitterClient
 from webmention_plugin import MentionClient
+from push_plugin import PushClient
 
 import logging
 from datetime import datetime
@@ -18,6 +19,7 @@ from bs4 import BeautifulSoup, Comment
 
 twitter_client = TwitterClient(app)
 mention_client = MentionClient(app)
+push_client = PushClient(app)
 
 def get_posts(post_type, page, per_page):
     query = Post.query
@@ -143,6 +145,11 @@ def handle_new_or_edit(request, post):
             if send_to_twitter:
                 twitter_client.handle_new_or_edit(post)
                 db.session.commit()
+        except:
+            app.logger.exception('')
+
+        try:
+            push_client.handle_new_or_edit(post)
         except:
             app.logger.exception('')
 
