@@ -130,24 +130,27 @@ class Post(db.Model):
         else:
             return text
 
+    def add_preview(self, text):
+        if self.repost_source:
+            preview = repost_preview_filter(self.repost_source)
+            if preview:
+                text += '<div>' + preview + '</div>'
+        return text
+        
+
     @property
     def html_content(self):
         text = self.format_text(self.content)
-        if self.repost_source:
-            preview = repost_preview_filter(self.repost_source)
-            if preview: text += preview
+        text = self.add_preview(text)
         return Markup(text)
 
     @property
     def html_excerpt(self):
-        text = self.html_content
+        text = self.format_text(self.content)
         split = text.split('<!-- more -->', 1)
-        text = split[0]
-        if self.repost_source:
-            preview = repost_preview_filter(self.repost_source)
-            if preview: text += preview
+        text = self.add_preview(split[0])
         if len(split) > 1:
-            text += "<a href={}>Keep Reading...</a>".format(self.permalink_url)
+            text += "<br/><a href={}>Keep Reading...</a>".format(self.permalink_url)
         return Markup(text)
             
     @property
