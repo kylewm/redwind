@@ -47,22 +47,6 @@ class TwitterClient:
             self.config_fetch_date = datetime.now()
         return self.cached_config
 
-    class TextSpan:
-        def __init__(self, text, length, can_shorten=True, can_drop=True):
-            self.text = text
-            self.length = length
-            self.can_shorten = can_shorten
-            self.can_drop = can_drop
-
-        def shorten(self, length):
-            if len(self.text) <= length:
-                return self
-            elif length-3 <= 0:
-                return None
-            else:
-                return TextSpan(self.text[:length-3].strip() + '...',
-                                can_shorten=False, can_drop=self.can_drop)
-
         def __repr__(self):
             return "text({})".format(self.text)
 
@@ -139,6 +123,24 @@ class TwitterClient:
         status = self.run_shorten_algorithm(components, target_length)
         self.app.info("shortened for twitter '%s'", status)
         return status
+
+
+
+class TextSpan:
+    def __init__(self, text, length, can_shorten=True, can_drop=True):
+        self.text = text
+        self.length = length
+        self.can_shorten = can_shorten
+        self.can_drop = can_drop
+
+    def shorten(self, length):
+        if len(self.text) <= length:
+            return self
+        elif length-3 <= 0:
+            return None
+        else:
+            return TextSpan(self.text[:length-3].strip() + '...',
+                            can_shorten=False, can_drop=self.can_drop)
 
 
 #from app import app
