@@ -139,7 +139,8 @@ class TextSpan:
         elif length-3 <= 0:
             return None
         else:
-            return TextSpan(self.text[:length-3].strip() + '...',
+            new_text = self.text[:length-3].strip() + '...'
+            return TextSpan(new_text, len(new_text),
                             can_shorten=False, can_drop=self.can_drop)
 
 
