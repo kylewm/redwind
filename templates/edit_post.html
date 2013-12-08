@@ -21,20 +21,25 @@
         <textarea name="content" rows="{{ 30 if post.post_type == 'article' else 5 }}" cols="80" style="width:100%">{{ post.content }}</textarea>
       </label>
 
-      <select name="content_format" style="float:left">
+      <select name="content_format">
         <option {% if post.content_format == "markdown" %}selected{% endif %}>markdown</option>
         <option {% if post.content_format == "plain" %}selected{% endif %}>plain</option>
         <option {% if post.content_format == "html" %}selected{% endif %}>html</option>
       </select>
 
-      <label style="float:right"><input type="checkbox" name="send_to_twitter" value="true"/>Send to Twitter</label>
-      
-
-      
-      <div style="clear: both; text-align:center">
-        <input type="submit" value="Submit Post"/>
-      </div>
-
+      <label><input type="checkbox" name="send_to_twitter" value="true"/>Send to Twitter</label><br/>
+      <input type="submit" value="Submit Post"/>
   </form>
+
+
+  <form name="upload" enctype="multipart/form-data">
+      <input type="file" name="file" />
+  </form>
+  <div id="uploads">
+    
+  </div>
+
+  <script type="text/javascript" src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+  <script type="text/javascript" src="/static/js/upload.js"></script>
 
 {% endblock %}

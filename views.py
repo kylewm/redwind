@@ -5,33 +5,136 @@ from twitter_plugin import TwitterClient
 from webmention_plugin import MentionClient
 from push_plugin import PushClient
 
-import logging
 from datetime import datetime
-import time
 from functools import wraps
+import logging
+import time
+import os
 
-from flask import request, redirect, url_for, render_template, flash, abort, make_response
+from flask import request, redirect, url_for, render_template,\
+    flash, abort, make_response, jsonify
 from flask.ext.login import login_required, login_user, logout_user, current_user
 from flask_wtf import Form
 from wtforms import TextField, StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired
 from bs4 import BeautifulSoup, Comment
 
+from werkzeug import secure_filename
+
 twitter_client = TwitterClient(app)
 mention_client = MentionClient(app)
 push_client = PushClient(app)
 
-def get_posts(post_type, page, per_page):
-    query = Post.query
-    if post_type:
-        query = query.filter_by(post_type=post_type)
-    query = query.order_by(Post.pub_date.desc())
-    pagination  = query.paginate(page, per_page)
-    return pagination, pagination.items
+
+class DisplayPost:
+
+    @classmethod
+    def get_posts(cls, post_type, page, per_page):
+        query = Post.query
+        if post_type:
+            query = query.filter_by(post_type=post_type)
+        query = query.order_by(Post.pub_date.desc())
+        pagination  = query.paginate(page, per_page)
+        return pagination, (cls(post) for post in pagination.items)
+
+    @classmethod
+    def get_post(cls, post_id):
+        post = Post.query.filter_by(id=post_id).first()
+        return cls(post) if post else None
+
+    def __init__(self, wrapped):
+        self.wrapped = wrapped
+
+    def __getattr__(self, attr):
+        return getattr(self.wrapped, attr)
+        
+    def markdown_filter(self, data):
+        from markdown import markdown
+        from smartypants import smartypants
+        return smartypants(markdown(data, extensions=['codehilite']))
+
+    def plain_text_filter(self, plain):
+        plain = re.sub(r'(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)', r'<a href="\g<0>">\g<1></a>', plain)
+        plain = re.sub(r'@([a-zA-Z0-9_]+)', r'<a href="http://twitter\.com/\g<1>">\g<0></a>', plain)
+        return plain.replace('\n', '<br/>')
+
+    def repost_preview_filter(self, url):
+        #youtube embeds
+        m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
+        if m:
+            return """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
+                .format(m.group(1))
+
+        #instagram embeds
+        m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
+        if m:
+            return """<iframe src="//instagram.com/p/{}/embed/" width="400" height="500" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
+                .format(m.group(1))
+
+        #fallback
+        m = re.match(r'https?://(.*)', url)
+        if m:
+            return """<a href="{}">{}</a>""".format(url, m.group(1))
+
+        # TODO when the post is first created, we should fetch the
+        # reposted URL and save some information about it (i.e.,
+        # information we can't get from the page title, whether it is an
+        # image, etc.)
+
+    def format_text(self, text):
+        if self.content_format == 'markdown':
+            return self.markdown_filter(text)
+        elif self.content_format == 'plain':
+            return self.plain_text_filter(text)
+        else:
+            return text
+
+    def add_preview(self, text):
+        if self.repost_source:
+            preview = self.repost_preview_filter(self.repost_source)
+            if preview:
+                text += '<div>' + preview + '</div>'
+        return text
+
+    @property
+    def html_content(self):
+        text = self.format_text(self.content)
+        text = self.add_preview(text)
+        return Markup(text)
+
+    @property
+    def html_excerpt(self):
+        text = self.format_text(self.content)
+        split = text.split('<!-- more -->', 1)
+        text = self.add_preview(split[0])
+        if len(split) > 1:
+            text += "<br/><a href={}>Keep Reading...</a>".format(self.permalink_url)
+        return Markup(text)
+            
+    @property
+    def permalink_url(self):
+        site_url = app.config.get('SITE_URL') or 'http://localhost'
+        path_components = [site_url, self.post_type, str(self.pub_date.year), str(self.id)]
+        if self.slug:
+            path_components.append(self.slug)
+        return '/'.join(path_components)
+        
+    @property
+    def permalink_short_url(self):
+        site_url = app.config.get('SITE_URL') or 'http://localhost'
+        path_components = [site_url, self.post_type, str(self.pub_date.year), str(self.id)]
+        return '/'.join(path_components)
+        
+    @property
+    def twitter_url(self):
+        if self.twitter_status_id:
+            return "https://twitter.com/{}/status/{}".format(
+                self.author.twitter_username,
+                self.twitter_status_id)
 
 def render_posts(title, post_type, page, per_page):
-    _, articles = get_posts('article', 1, 5)
-    pagination, posts = get_posts(post_type, page, per_page)
+    _, articles = DisplayPost.get_posts('article', 1, 5)
+    pagination, posts = DisplayPost.get_posts(post_type, page, per_page)
     return render_template('posts.html', pagination=pagination,
                            posts=posts, articles=articles,
                            post_type=post_type, title=title,
@@ -53,7 +156,7 @@ def notes(page):
     return render_posts('All Notes', 'note', page, 30)
 
 def render_posts_atom(title, post_type, count):
-    _, posts = get_posts(post_type, 1, count)
+    _, posts = DisplayPost.get_posts(post_type, 1, count)
     return make_response(render_template('posts.atom', title=title, posts=posts), 200,
                          { 'Content-Type' : 'application/atom+xml' })
 
@@ -72,17 +175,13 @@ def articles_atom():
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug':None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')
 def post_by_id(post_type, year, post_id, slug):
-    post = Post.query\
-           .filter(Post.post_type == post_type, Post.id == post_id)\
-           .first()
+    post = DisplayPost.get_post(post_id)
     if not post:
         abort(404)
-    _, articles = get_posts('article', 1, 5)
+    _, articles = DisplayPost.get_posts('article', 1, 5)
     return render_template('post.html', post=post, title=post.title,
                            articles=articles,
                            authenticated=current_user.is_authenticated())
-
-
 
 class LoginForm(Form):
     username = StringField('username', validators=[DataRequired()])
@@ -111,7 +210,7 @@ def logout():
 @app.route('/admin/delete/<post_type>/<post_id>')
 @login_required
 def delete_by_id(post_type, post_id):
-    post = Post.query.filter(Post.id == post_id).first()
+    post = Post.query.filter_by(id=post_id).first()
     if not post:
         abort(404)
     db.session.delete(post)
@@ -141,23 +240,23 @@ def handle_new_or_edit(request, post):
 
         # TODO everything else could be asynchronous
         # post or update this post on twitter
-        try:
-            if send_to_twitter:
+        if send_to_twitter:
+            try:
                 twitter_client.handle_new_or_edit(post)
                 db.session.commit()
-        except:
-            app.logger.exception('')
+            except:
+                app.logger.exception('posting to twitter')
 
         try:
             push_client.handle_new_or_edit(post)
         except:
-            app.logger.exception('')
+            app.logger.exception('posting to PuSH')
 
         try:
             mention_client.handle_new_or_edit(post)
             db.session.commit()
         except:
-            app.logger.exception('')
+            app.logger.exception('sending webmentions')
         
         return redirect(post.permalink_url)
 
@@ -175,17 +274,10 @@ def new_post(post_type):
 @app.route('/admin/edit/<post_type>/<post_id>', methods=['GET', 'POST'])
 @login_required
 def edit_by_id(post_type, post_id):
-    post = Post.query.filter(Post.id == post_id).first()
+    post = Post.query.filter_by(id=post_id).first()
     if not post:
         abort(404)
     return handle_new_or_edit(request, post)
-
-@app.route("/css/pygments.css")
-def pygments_css():
-    import pygments.formatters
-    pygments_css = (pygments.formatters.HtmlFormatter(style=app.config['PYGMENTS_STYLE'])
-                    .get_style_defs('.codehilite'))
-    return app.response_class(pygments_css, mimetype='text/css')
     
 @app.template_filter('strftime')
 def strftime_filter(date, fmt='%Y %b %d'):
@@ -212,4 +304,16 @@ def atom_sanitize(content):
     result = Markup(soup)
     return result
 
-                
+
+@app.route('/admin/upload', methods=['POST'])
+def receive_upload():
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    now = datetime.now()
+    directory = os.path.join('static', 'uploads',
+                             str(now.year), str(now.month).zfill(2))
+    path = os.path.join(directory, filename)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    file.save(path)
+    return jsonify({ 'path' : '/' + path })

@@ -39,16 +39,6 @@ def repost_preview_filter(url):
     # information we can't get from the page title, whether it is an
     # image, etc.)
 
-def get_md5_hash(inp):
-    result = get_md5_hash.cache.get(inp)
-    if not result:
-        import hashlib
-        result = hashlib.md5(inp.encode()).hexdigest()
-        get_md5_hash.cache[inp] = result
-    return result    
-
-get_md5_hash.cache = {}
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(80), unique=True)
@@ -76,10 +66,6 @@ class User(db.Model):
     def get_id(self):
         return self.login
             
-    @property
-    def image_url(self):
-        return "http://gravatar.com/avatar/{}?s=64".format(get_md5_hash(self.email))
-
     def __init__(self, login, email, password):
         self.login = login
         self.email = email
@@ -147,7 +133,6 @@ class Post(db.Model):
             if preview:
                 text += '<div>' + preview + '</div>'
         return text
-        
 
     @property
     def html_content(self):

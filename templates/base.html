@@ -18,31 +18,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/col.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/3cols.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pygments_css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pygments.css') }}">
   </head>
   <body>
     <!--[if lt IE 7]>
         <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
-    
-    <div class="site-heading section group">
-      <span class="site-title"><a href="{{ url_for('index') }}">kylewm.com</a></span>
-      <nav>
-        <ul>
-          <li><a href="{{ url_for('index') }}">home</a></li>
-          <li><a href="{{ url_for('articles') }}">articles</a></li>
-          <li><a href="{{ url_for('notes') }}">notes</a></li>
-          {% if authenticated %}
-          <li><a href="{{ url_for('logout') }}">logout</a></li>
-          {% else %}
-          <li><a href="{{ url_for('login') }}">login</a></li>
-          {% endif %}
-        </ul>
-      </nav>
-    </div>
-    
+        
     <div class="wrapper">
-
       <div class="flashes">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -59,16 +42,27 @@
 
         <!-- main content -->
         <div class="col span_2_of_3">
-          {% if authenticated %}
-          <a href="{{ url_for('new_post', post_type='article') }}">new article</a> | <a href="{{ url_for('new_post', post_type='note') }}">new note</a>
-          {% endif %}
-
           {% block content %}{% endblock content %}
         </div>
 
         <!-- sidebar -->
         <div class="col span_1_of_3">
 
+          <nav>
+            <ul>
+              <li><a href="{{ url_for('index') }}">everything</a></li>
+              <li><a href="{{ url_for('articles') }}">articles</a></li>
+              <li><a href="{{ url_for('notes') }}">notes</a></li>
+              {% if authenticated %}
+              <li><a href="{{ url_for('logout') }}">logout</a></li>
+              <li><a href="{{ url_for('new_post', post_type='article') }}">new article</a></li>
+              <li><a href="{{ url_for('new_post', post_type='note') }}">new note</a></li>
+              {% else %}
+              <li><a href="{{ url_for('login') }}">login</a></li>
+              {% endif %}
+            </ul>
+          </nav>
+          
           {% include "hcard.html" %}
 
           {% if articles %}
