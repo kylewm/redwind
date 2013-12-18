@@ -9,7 +9,7 @@
     <name>Kyle</name>
     <uri>http://kylewm.com</uri>
   </author>
-  <updated>{{ next(posts).pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
+  <updated>{{ posts.next().pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
 
   {% for post in posts %}
 
