@@ -35,7 +35,7 @@ class DisplayPost:
             query = query.filter_by(post_type=post_type)
         query = query.order_by(Post.pub_date.desc())
         pagination  = query.paginate(page, per_page)
-        return pagination, (cls(post) for post in pagination.items)
+        return pagination, [cls(post) for post in pagination.items]
 
     @classmethod
     def get_post(cls, post_id):
