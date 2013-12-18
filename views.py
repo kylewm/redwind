@@ -54,8 +54,8 @@ class DisplayPost:
         return smartypants(markdown(data, extensions=['codehilite']))
 
     def plain_text_filter(self, plain):
-        plain = re.sub(r'(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)', r'<a href="\g<0>">\g<1></a>', plain)
-        plain = re.sub(r'@([a-zA-Z0-9_]+)', r'<a href="http://twitter\.com/\g<1>">\g<0></a>', plain)
+        plain = re.sub(r'\b(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)', r'<a href="\g<0>">\g<1></a>', plain)
+        plain = re.sub(r'(?<!\w)@([a-zA-Z0-9_]+)', r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
         return plain.replace('\n', '<br/>')
 
     def repost_preview_filter(self, url):
