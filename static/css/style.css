@@ -76,7 +76,7 @@ a:hover {
 
 nav {
     text-align: center;
-    border-bottom: solid 1px #ccc;
+    border-bottom: solid 1px #777;
     margin-bottom: 20px;
     padding-bottom: 20px;
 }
@@ -91,7 +91,7 @@ nav li {
 }
 
 .h-card {
-    border-bottom: solid 1px #ccc;
+    border-bottom: solid 1px #777;
     margin-bottom: 20px;
     padding-bottom: 20px;
 }
@@ -106,7 +106,7 @@ nav li {
 }
 
 .recent-articles {
-    border-bottom: solid 1px #ccc;
+    border-bottom: solid 1px #777;
     margin-bottom: 20px;
     padding-bottom: 20px;
 }
