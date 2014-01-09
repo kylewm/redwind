@@ -24,8 +24,34 @@
     <!--[if lt IE 7]>
         <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
-        
+    
     <div class="wrapper">
+
+      <header>
+        <div class="section group">
+          <div class="col span_1_of_3">
+            <p class="site-name">kylewm.com</p>
+          </div>
+          <div class="col span_2_of_3">
+            <nav>
+              <ul>
+                <li><a href="{{ url_for('index') }}">everything</a></li>
+                <li><a href="{{ url_for('articles') }}">articles</a></li>
+                <li><a href="{{ url_for('notes') }}">notes</a></li>
+                {% if authenticated %}
+                <li><a href="{{ url_for('logout') }}">logout</a></li>
+                <li><a href="{{ url_for('new_post', post_type='article') }}">new article</a></li>
+                <li><a href="{{ url_for('new_post', post_type='note') }}">new note</a></li>
+                {% else %}
+                <li><a href="{{ url_for('login') }}">login</a></li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      
       <div class="flashes">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -38,8 +64,8 @@
         {% endwith %}
       </div>
 
-      <div class="section group">
 
+      <div class="section group">
         <!-- main content -->
         <div class="col span_2_of_3">
           {% block content %}{% endblock content %}
@@ -47,48 +73,35 @@
 
         <!-- sidebar -->
         <div class="col span_1_of_3">
+          <div class="sidebar">
+            {% include "hcard.html" %}
 
-          <nav>
-            <ul>
-              <li><a href="{{ url_for('index') }}">everything</a></li>
-              <li><a href="{{ url_for('articles') }}">articles</a></li>
-              <li><a href="{{ url_for('notes') }}">notes</a></li>
-              {% if authenticated %}
-              <li><a href="{{ url_for('logout') }}">logout</a></li>
-              <li><a href="{{ url_for('new_post', post_type='article') }}">new article</a></li>
-              <li><a href="{{ url_for('new_post', post_type='note') }}">new note</a></li>
-              {% else %}
-              <li><a href="{{ url_for('login') }}">login</a></li>
-              {% endif %}
-            </ul>
-          </nav>
-          
-          {% include "hcard.html" %}
+            {% if articles %}
+            <div class="recent-articles">
+              <b>Recent Articles</b>
+              {% for article in articles %}
+              <ul>
+                <li>
+                  <a href="{{article.permalink_url}}">{{ article.title }}</a>
+                </li>
+              </ul>
+              {% endfor %}
+            </div>
+            {% endif %}
 
-          {% if articles %}
-          <div class="recent-articles">
-            <b>Recent Articles</b>
-            {% for article in articles %}
-            <ul>
-              <li>
-                <a href="{{article.permalink_url}}">{{ article.title }}</a>
-              </li>
-            </ul>
-            {% endfor %}
-          </div>
-          {% endif %}
 
-          <footer>
+                    <footer>
             <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a><br/>
             Built with <a href="http://github.com/kylewm/groomsman">Groomsman</a>, powered by <a href="http://flask.pocoo.org/">Flask</a> and <a href="http://www.responsivegridsystem.com/">Responsive Grid System</a>. Designed for the <a href="http://indiewebcamp.com">#indieweb</a>.
           </footer>
-          
+</div>
+
         </div>
+        
       </div>
     </div>
 
-  <script type="text/javascript" src="//code.jquery.com/jquery-1.10.2.min.js"></script>
-  <script type="text/javascript" src="/static/js/responsive.js"></script>
+    <script type="text/javascript" src="//code.jquery.com/jquery-1.10.2.min.js"></script>
 
   </body>
 </html>

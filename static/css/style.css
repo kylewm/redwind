@@ -74,11 +74,17 @@ a:hover {
     margin-top: 30px;
 }
 
+header {
+}
+
+header .site-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    display: inline-block;
+}
+
 nav {
-    text-align: center;
-    border-bottom: solid 1px #777;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
+    text-align: right;
 }
 
 nav li {
@@ -91,7 +97,7 @@ nav li {
 }
 
 .h-card {
-    border-bottom: solid 1px #777;
+    border-bottom: solid 1px #333;
     margin-bottom: 20px;
     padding-bottom: 20px;
 }
@@ -106,7 +112,7 @@ nav li {
 }
 
 .recent-articles {
-    border-bottom: solid 1px #777;
+    border-bottom: solid 1px #333;
     margin-bottom: 20px;
     padding-bottom: 20px;
 }
@@ -129,6 +135,20 @@ footer {
     color: #777;
     text-align: center;
     font-size: small;
+}
+
+.post {
+    border: 1px solid #333;
+    border-radius: 15px;
+    box-shadow: 3px 3px 0px #222;
+    padding: 10px;
+}
+
+.sidebar {
+    border: 1px solid #333;
+    border-radius: 15px;
+    box-shadow: 3px 3px 0px #222;
+    padding: 10px;
 }
 
 footer a:visited, footer a:link, footer a:hover {
