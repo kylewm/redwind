@@ -10,36 +10,89 @@
   </style>
 
   <form method="POST">
+    <label><input type="checkbox" name="send_to_twitter" value="true" checked/>Send to Twitter</label>
 
-      <label><span class="heading">Title</span><input name="title" size="60" value="{{ post.title or '' }}"/></label><br/>
-      <label><span class="heading">Slug</span><input name="slug" size="60" value="{{ post.slug or ''}}"/></label><br/>
-      <label><span class="heading">Date</span><input name="date" size="60" value="{{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}"/></label><br/>
-      <label><span class="heading">In Reply To (URL)</span><input name="in_reply_to" size="60" value="{{post.in_reply_to or ''}}"/></label><br/>
-      <label><span class="heading">Repost (URL)</span><input name="repost_source" size="60" value="{{post.repost_source or ''}}"/></label><br/>
+    <input style="float: right; padding: 10px;" type="submit" value="Submit Post"/>
 
-      <label>Content
-        <textarea name="content" rows="{{ 30 if post.post_type == 'article' else 5 }}" cols="80" style="width:100%">{{ post.content }}</textarea>
-      </label>
+    <div class="title">
+      <label><span class="heading">Title</span><input name="title" size="60" value="{{ post.title or '' }}"/></label>
+    </div>
 
+    <div class="slug">
+      <label><span class="heading">Slug</span><input name="slug" size="60" value="{{ post.slug or ''}}"/></label>
+    </div>
+
+    <div class="date">
+      <label><span class="heading">Date</span><input name="date" size="60" value="{{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}"/></label>
+    </div>
+
+    <div class="in_reply_to">
+      <label><span class="heading">In Reply To (URL)</span><input name="in_reply_to" size="60" value="{{post.in_reply_to or ''}}"/></label>
+    </div>
+
+    <div class="repost_source">
+      <label><span class="heading">Repost (URL)</span><input name="repost_source" size="60" value="{{post.repost_source or ''}}"/></label>
+    </div>
+
+    <div class="content">
+    <textarea name="content" rows="{{ 30 if post.post_type == 'article' else 5 }}" cols="80" style="width:100%">{{ post.content }}</textarea>
+    </div>
+
+    <div class="content_format">
+    <label><span class="heading">Format</span>
       <select name="content_format">
         <option {% if post.content_format == "markdown" %}selected{% endif %}>markdown</option>
         <option {% if post.content_format == "plain" %}selected{% endif %}>plain</option>
         <option {% if post.content_format == "html" %}selected{% endif %}>html</option>
       </select>
-
-      <label><input type="checkbox" name="send_to_twitter" value="true"/>Send to Twitter</label><br/>
-      <input type="submit" value="Submit Post"/>
-  </form>
-
-
-  <form name="upload" enctype="multipart/form-data">
-      <input type="file" name="file" />
-  </form>
-  <div id="uploads">
+    </label>
+    </div>
     
+    
+  </form>
+
+  <div class="upload_form" style="border: solid 1px #333; margin-top: 10px;">
+    <b>Uploads:</b>
+    <form name="upload" enctype="multipart/form-data">
+      <input type="file" name="file" />
+    </form>
+    <div id="uploads">
+    
+    </div>
   </div>
 
-  <script type="text/javascript" src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+
+
+
+  <a class="basic">Basic...</a><a class="advanced">Advanced...</a>
+
   <script type="text/javascript" src="/static/js/upload.js"></script>
+  <script type="text/javascript">
+    
+    ADVANCED_CONTROLS = [ ".slug", ".date", ".in_reply_to", ".repost_source", ".content_format", ".upload_form" ];
+
+    function showBasic() {
+        console.log("Showing basic controls only");
+        ADVANCED_CONTROLS.forEach(function (element, index, array ) {
+            $(element).hide();
+        });
+        $(".advanced").show();
+        $(".basic").hide();
+    }
+
+    function showAdvanced() {
+        console.log("Showing advanced controls");
+        ADVANCED_CONTROLS.forEach(function (element, index, array ) {
+            $(element).show();
+        });
+        $(".advanced").hide();
+        $(".basic").show();
+    }
+
+    $(".basic").click(showBasic);
+    $(".advanced").click(showAdvanced);
+    showBasic();
+    
+  </script>
 
 {% endblock %}
