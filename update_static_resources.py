@@ -2,7 +2,10 @@ import requests
 import pygments.formatters
 import shutil
 
-PYGMENTS_STYLE = 'tango'
+#['fruity', 'perldoc', 'trac', 'native', 'autumn', 'emacs', 'vs',
+#'rrt', 'colorful', 'monokai', 'pastie', 'default', 'borland',
+#'manni', 'vim', 'bw', 'friendly', 'tango', 'murphy']
+PYGMENTS_STYLE = 'native'
 pygments_css = (pygments.formatters.HtmlFormatter(style=PYGMENTS_STYLE)
                 .get_style_defs('.codehilite'))
 with open('static/css/pygments.css', 'w') as f:
