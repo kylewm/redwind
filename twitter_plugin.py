@@ -29,8 +29,8 @@ class TwitterClient:
 
     def get_api(self):
         if not self.cached_api: 
-            CONSUMER_KEY = "Cm9wmVhNTgES6xm2mUwRtg"
-            CONSUMER_SECRET = "CvtRQR9LzP2QF0JhNGmb9ZHKi6PwQrf2uz7ghbplCFo"
+            CONSUMER_KEY = app.config['TWITTER_CONSUMER_KEY']
+            CONSUMER_SECRET = app.config['TWITTER_CONSUMER_SECRET']
             MY_TWITTER_CREDS = os.path.expanduser('~/.groomsman/twitter_credentials')
             if not os.path.exists(MY_TWITTER_CREDS):
                 twitter.oauth_dance("groomsman-kylewm.com", CONSUMER_KEY, CONSUMER_SECRET,
