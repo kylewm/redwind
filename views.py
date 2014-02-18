@@ -197,7 +197,10 @@ def login():
         user = load_user(form.username.data)
         login_user(user, remember=form.remember.data)
         flash("Logged in successfully.")
-        return redirect(request.args.get("next") or url_for("index"))
+
+        next_enc = request.args.get("next")
+        next_url = urllib.parse.unquote(next_enc) if next_enc else url_for("index")
+        return redirect(next_url)
         
     return render_template("login.html", form=form)
 
@@ -326,8 +329,7 @@ def receive_upload():
 @app.route('/admin/authorize_facebook')
 @login_required
 def authorize_facebook():
-    import requests
-    import urllib.parse
+    import urllib.parse, urllib.request, json
     
     params = {"client_id" : app.config.get('FACEBOOK_APP_ID'),
               "redirect_uri" : app.config.get('SITE_URL') + '/admin/authorize_facebook' }
@@ -336,8 +338,9 @@ def authorize_facebook():
     if code:
         params["code"] = code
         params["client_secret"] = app.config.get('FACEBOOK_APP_SECRET')
-        r = requests.get("https://graph.facebook.com/oauth/access_token", args=params)
-        payload = r.json()
+        r = urllib.request.openurl("https://graph.facebook.com/oauth/access_token?" \
+                                   + urllib.parse.urlencode(params))
+        payload = json.loads(r.read())
         access_token = payload.get("access_token")
         current_user.facebook_access_token = access_token
         db.session.commit()
