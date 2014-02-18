@@ -340,8 +340,8 @@ def authorize_facebook():
         params["client_secret"] = app.config.get('FACEBOOK_APP_SECRET')
         r = urllib.request.urlopen("https://graph.facebook.com/oauth/access_token?" \
                                    + urllib.parse.urlencode(params))
-        payload = json.loads(r.read())
-        access_token = payload.get("access_token")
+        payload = urllib.parse.parse_qs(r.read())
+        access_token = payload["access_token"][-1]
         current_user.facebook_access_token = access_token
         db.session.commit()
         
