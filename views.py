@@ -344,7 +344,7 @@ def authorize_facebook():
         access_token = payload[b"access_token"]
         current_user.facebook_access_token = access_token
         db.session.commit()
-        
+        return redirect(url_for('settings'))
     else:
         return redirect("https://graph.facebook.com/oauth/authorize?" \
                         + urllib.parse.urlencode(params))

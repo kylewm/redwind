@@ -7,7 +7,9 @@
   <li> email: {{ user.email}} </li>
   <li> full name: {{ user.display_name }} </li>
   <li> twitter: {{ user.twitter_username }} </li>
-  <li> facebook token: {{ user.facebook_access_token }} </li>
+  <li> facebook token: {{ user.facebook_access_token | truncate(8) }} </li>
+  <li> <a href="{{ url_for('authorize_facebook') }}">authorize facebook</a></li>
+  
 </ul>
 
 {% endblock %}
