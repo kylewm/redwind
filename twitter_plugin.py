@@ -2,6 +2,7 @@ import twitter
 import re
 import os
 from datetime import datetime, timedelta
+from app import app
 
 class TwitterClient:
     

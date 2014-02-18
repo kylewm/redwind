@@ -333,12 +333,14 @@ def authorize_facebook():
     import urllib.parse, urllib.request, json
     
     params = {"client_id" : app.config.get('FACEBOOK_APP_ID'),
-              "redirect_uri" : app.config.get('SITE_URL') + '/admin/authorize_facebook' }
+              "redirect_uri" : app.config.get('SITE_URL') + '/admin/authorize_facebook',
+              "scope" : "publish_stream" }
 
     code = request.args.get('code')
     if code:
         params["code"] = code
         params["client_secret"] = app.config.get('FACEBOOK_APP_SECRET')
+ 
         r = urllib.request.urlopen("https://graph.facebook.com/oauth/access_token?" \
                                    + urllib.parse.urlencode(params))
         payload = urllib.parse.parse_qs(r.read())

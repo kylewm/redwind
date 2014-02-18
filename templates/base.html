@@ -42,9 +42,10 @@
                 <li><a href="{{ url_for('articles') }}">articles</a></li>
                 <li><a href="{{ url_for('notes') }}">notes</a></li>
                 {% if authenticated %}
-                <li><a href="{{ url_for('logout') }}">logout</a></li>
                 <li><a href="{{ url_for('new_post', post_type='article') }}">new article</a></li>
                 <li><a href="{{ url_for('new_post', post_type='note') }}">new note</a></li>
+                <li><a href="{{ url_for('settings') }}">settings</a></li>
+                <li><a href="{{ url_for('logout') }}">logout</a></li>
                 {% else %}
                 <li><a href="{{ url_for('login') }}">login</a></li>
                 {% endif %}
