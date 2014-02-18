@@ -1,6 +1,8 @@
 import twitter
+from twitter.api import TwitterHTTPError
 import re
 import os
+import traceback
 from datetime import datetime, timedelta
 from app import app
 
@@ -18,7 +20,20 @@ class TwitterClient:
         # check for RT's
         match = permalink_re.match(post.repost_source)
         if match:
-            api.statuses.retweet(id=match.group(2), trim_user=True)
+            tweet_id = match.group(2)
+
+            try:
+                api.statuses.retweet(id=tweet_id, trim_user=True)
+            except TwitterHTTPError:
+                traceback.print_exc()
+
+            if not post.content:
+                embed_response = api.statuses.oembed(_id=tweet_id)
+                embed_code = embed_response.get('html')
+                if embed_code:
+                    post.content = embed_code
+                    post.content_format = "html"
+                
         else:
             match = permalink_re.match(post.in_reply_to)
             in_reply_to = match.group(2) if match else None
