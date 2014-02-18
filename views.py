@@ -213,7 +213,8 @@ def logout():
 @app.route('/admin/settings')
 @login_required
 def settings():
-    return render_template("settings.html", user=current_user)
+    return render_template("settings.html", user=current_user,
+                           authenticated=current_user.is_authenticated()))
     
 @app.route('/admin/delete/<post_type>/<post_id>')
 @login_required
