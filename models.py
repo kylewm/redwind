@@ -46,7 +46,8 @@ class User(db.Model):
     pw_hash = db.Column(db.String(256))
     display_name = db.Column(db.String(80))
     twitter_username = db.Column(db.String(80))
-
+    facebook_access_token = db.Column(db.String(256))
+    
     def set_password(self, plaintext):
         self.pw_hash = generate_password_hash(plaintext)
 

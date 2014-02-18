@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<ul>
+  <li> user: {{ user.login }} </li>
+  <li> email: {{ user.email}} </li>
+  <li> full name: {{ user.display_name }} </li>
+  <li> twitter: {{ user.twitter_username }} </li>
+  <li> facebook token: {{ user.facebook_access_token }} </li>
+</ul>
+
+{% endblock %}

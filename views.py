@@ -207,6 +207,11 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/admin/settings')
+@login_required
+def settings():
+    return render_template("settings.html", user=current_user)
+    
 @app.route('/admin/delete/<post_type>/<post_id>')
 @login_required
 def delete_by_id(post_type, post_id):
@@ -304,8 +309,8 @@ def atom_sanitize(content):
     result = Markup(soup)
     return result
 
-
 @app.route('/admin/upload', methods=['POST'])
+@login_required
 def receive_upload():
     file = request.files['file']
     filename = secure_filename(file.filename)
@@ -317,3 +322,26 @@ def receive_upload():
         os.makedirs(directory)
     file.save(path)
     return jsonify({ 'path' : '/' + path })
+
+@app.route('/admin/authorize_facebook')
+@login_required
+def authorize_facebook():
+    import requests
+    import urllib.parse
+    
+    params = {"client_id" : app.config.get('FACEBOOK_APP_ID'),
+              "redirect_uri" : app.config.get('SITE_URL') + '/admin/authorize_facebook' }
+
+    code = request.args.get('code')
+    if code:
+        params["code"] = code
+        params["client_secret"] = app.config.get('FACEBOOK_APP_SECRET')
+        r = requests.get("https://graph.facebook.com/oauth/access_token", args=params)
+        payload = r.json()
+        access_token = payload.get("access_token")
+        current_user.facebook_access_token = access_token
+        db.session.commit()
+        
+    else:
+        return redirect("https://graph.facebook.com/oauth/authorize?" \
+                        + urllib.parse.urlencode(params))
