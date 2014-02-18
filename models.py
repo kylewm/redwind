@@ -16,29 +16,6 @@ def plain_text_filter(plain):
     plain = re.sub(r'@([a-zA-Z0-9_]+)', r'<a href="http://twitter\.com/\g<1>">\g<0></a>', plain)
     return plain.replace('\n', '<br/>')
 
-def repost_preview_filter(url):
-    #youtube embeds
-    m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
-    if m:
-        return """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
-            .format(m.group(1))
-
-    #instagram embeds
-    m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
-    if m:
-        return """<iframe src="//instagram.com/p/{}/embed/" width="400" height="500" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
-            .format(m.group(1))
-
-    #fallback
-    m = re.match(r'https?://(.*)', url)
-    if m:
-        return """<a href="{}">{}</a>""".format(url, m.group(1))
-        
-    # TODO when the post is first created, we should fetch the
-    # reposted URL and save some information about it (i.e.,
-    # information we can't get from the page title, whether it is an
-    # image, etc.)
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(80), unique=True)
@@ -98,10 +75,12 @@ class Post(db.Model):
                              backref=db.backref('posts', lazy='dynamic'))
     title = db.Column(db.String(256))
     content = db.Column(db.Text)
+    
     post_type = db.Column(db.String(64)) # note/article/etc.
     content_format = db.Column(db.String(64)) # markdown/html/plain
     in_reply_to = db.Column(db.String(256))
     repost_source = db.Column(db.String(256))
+    repost_preview = db.Column(db.Text)
     twitter_status_id = db.Column(db.String(64))
     slug = db.Column(db.String(256))
     tags = db.relationship('Tag', secondary=tags_to_posts,
@@ -128,26 +107,9 @@ class Post(db.Model):
         else:
             return text
 
-    def add_preview(self, text):
-        if self.repost_source:
-            preview = repost_preview_filter(self.repost_source)
-            if preview:
-                text += '<div>' + preview + '</div>'
-        return text
-
     @property
     def html_content(self):
         text = self.format_text(self.content)
-        text = self.add_preview(text)
-        return Markup(text)
-
-    @property
-    def html_excerpt(self):
-        text = self.format_text(self.content)
-        split = text.split('<!-- more -->', 1)
-        text = self.add_preview(split[0])
-        if len(split) > 1:
-            text += "<br/><a href={}>Keep Reading...</a>".format(self.permalink_url)
         return Markup(text)
             
     @property

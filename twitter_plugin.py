@@ -14,6 +14,15 @@ class TwitterClient:
         self.cached_config = None
         self.config_fetch_date = None
 
+    def repost_preview(self, url):
+        permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
+        match = permalink_re.match(url)
+        if match:
+            api = self.get_api()
+            tweet_id = match.group(2)
+            embed_response = api.statuses.oembed(_id=tweet_id)
+            return embed_response.get('html')
+        
     def handle_new_or_edit(self, post):
         permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         api = self.get_api()
@@ -21,19 +30,7 @@ class TwitterClient:
         match = permalink_re.match(post.repost_source)
         if match:
             tweet_id = match.group(2)
-
-            try:
-                api.statuses.retweet(id=tweet_id, trim_user=True)
-            except TwitterHTTPError:
-                traceback.print_exc()
-
-            if not post.content:
-                embed_response = api.statuses.oembed(_id=tweet_id)
-                embed_code = embed_response.get('html')
-                if embed_code:
-                    post.content = embed_code
-                    post.content_format = "html"
-                
+            api.statuses.retweet(id=tweet_id, trim_user=True)                
         else:
             match = permalink_re.match(post.in_reply_to)
             in_reply_to = match.group(2) if match else None

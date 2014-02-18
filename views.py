@@ -71,11 +71,15 @@ class DisplayPost:
             return """<iframe src="//instagram.com/p/{}/embed/" width="400" height="500" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
                 .format(m.group(1))
 
+        preview = twitter_client.repost_preview(url)
+        if preview:
+            return preview
+
         #fallback
         m = re.match(r'https?://(.*)', url)
         if m:
             return """<a href="{}">{}</a>""".format(url, m.group(1))
-
+            
         # TODO when the post is first created, we should fetch the
         # reposted URL and save some information about it (i.e.,
         # information we can't get from the page title, whether it is an
@@ -90,10 +94,17 @@ class DisplayPost:
             return text
 
     def add_preview(self, text):
-        if self.repost_source:
+        preview = self.repost_preview
+        
+        if not preview and self.repost_source:
             preview = self.repost_preview_filter(self.repost_source)
             if preview:
-                text += '<div>' + preview + '</div>'
+                self.repost_preview = preview
+                db.session.commit()
+
+        if preview:
+            text += '<div>' + preview + '</div>'
+            
         return text
 
     @property
@@ -340,7 +351,7 @@ def authorize_facebook():
     if code:
         params["code"] = code
         params["client_secret"] = app.config.get('FACEBOOK_APP_SECRET')
- 
+  
         r = urllib.request.urlopen("https://graph.facebook.com/oauth/access_token?" \
                                    + urllib.parse.urlencode(params))
         payload = urllib.parse.parse_qs(r.read())
