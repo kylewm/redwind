@@ -25,7 +25,7 @@ class TwitterClient:
             return embed_response.get('html')
         
     def handle_new_or_edit(self, post):
-        if not self.is_twitter_authorized(user):
+        if not self.is_twitter_authorized(post.author):
             return
 
         permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
@@ -45,7 +45,7 @@ class TwitterClient:
                 post.twitter_status_id = result.get('id_str')
 
     def is_twitter_authorized(self, user):
-        return user.twitter_oauth_token and user.twitter.oauth_token_secret            
+        return user.twitter_oauth_token and user.twitter_oauth_token_secret            
                 
     def get_api(self, user):
         if not self.cached_api: 
