@@ -11,9 +11,6 @@ SQLAlchemy==0.8.2
 WTForms==1.0.5
 Werkzeug==0.9.4
 beautifulsoup4==4.3.2
-distribute==0.6.49
-docopt==0.6.1
-ecdsa==0.10
 -e git+git@github.com:pythonforfacebook/facebook-sdk.git@e65d06158e48388b3932563f1483ca77065951b3#egg=facebook_sdk-master
 itsdangerous==0.23
 pycrypto==2.6.1

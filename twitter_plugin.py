@@ -14,6 +14,8 @@ class TwitterClient:
         self.config_fetch_date = None
 
     def repost_preview(self, user, url):
+        if not self.is_twitter_authorized(user):
+            return
         permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         match = permalink_re.match(url)
         if match:
@@ -23,6 +25,9 @@ class TwitterClient:
             return embed_response.get('html')
         
     def handle_new_or_edit(self, post):
+        if not self.is_twitter_authorized(user):
+            return
+
         permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         api = self.get_api(post.author)
         # check for RT's
@@ -39,6 +44,9 @@ class TwitterClient:
             if result:
                 post.twitter_status_id = result.get('id_str')
 
+    def is_twitter_authorized(self, user):
+        return user.twitter_oauth_token and user.twitter.oauth_token_secret            
+                
     def get_api(self, user):
         if not self.cached_api: 
             consumer_key = self.app.config['TWITTER_CONSUMER_KEY']

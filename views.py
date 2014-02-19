@@ -364,22 +364,22 @@ def authorize_twitter():
     import urllib.parse, urllib.request, json
     key = app.config['TWITTER_CONSUMER_KEY']
     secret = app.config['TWITTER_CONSUMER_SECRET']
-
+    callback_url = app.config.get('SITE_URL') + '/admin/authorize_twitter2'
+    
     try:
         t = twitter.Twitter(auth=twitter.OAuth('', '', key, secret), format='', api_version='')
-        r = t.oauth.request_token(oauth_callback=app.config.get('SITE_URL') + '/admin/authorize_twitter2')
+        r = t.oauth.request_token(oauth_callback=callback_url)
         payload = urllib.parse.parse_qs(r)
         request_token = payload["oauth_token"][-1]
         return redirect('https://api.twitter.com/oauth/authenticate?'\
                         + urllib.parse.urlencode({"oauth_token" : request_token}))
-    except TwitterHTTPError as e:
+    except twitter.TwitterHTTPError as e:
         return make_response(str(e))
 
 @app.route('/admin/authorize_twitter2')
 def authorize_twitter2():
     """Receive the request token from Twitter and convert it to an access token"""
     import twitter
-    from twitter import TwitterHTTPError
     import urllib.parse, urllib.request, json
     key = app.config['TWITTER_CONSUMER_KEY']
     secret = app.config['TWITTER_CONSUMER_SECRET']
@@ -397,7 +397,7 @@ def authorize_twitter2():
         current_user.twitter_oauth_token_secret = oauth_token_secret
         db.session.commit()
         return redirect(url_for('settings'))
-    except TwitterHTTPError as e:
+    except twitter.TwitterHTTPError as e:
         return make_response(str(e))
 
 @app.route('/admin/authorize_facebook')
