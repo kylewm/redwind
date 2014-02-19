@@ -3,3 +3,7 @@ test.db
 test.json
 config.py
 static/uploads
+*~
+build
+src
+venv

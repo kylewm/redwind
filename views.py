@@ -4,6 +4,7 @@ from auth import login_mgr, load_user
 from twitter_plugin import TwitterClient
 from webmention_plugin import MentionClient
 from push_plugin import PushClient
+from facebook_plugin import FacebookClient
 
 from datetime import datetime
 from functools import wraps
@@ -22,6 +23,7 @@ from bs4 import BeautifulSoup, Comment
 from werkzeug import secure_filename
 
 twitter_client = TwitterClient(app)
+facebook_client = FacebookClient(app)
 mention_client = MentionClient(app)
 push_client = PushClient(app)
 
@@ -62,23 +64,26 @@ class DisplayPost:
         #youtube embeds
         m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
         if m:
-            return """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
+            preview = """<iframe width="560" height="315" src="//www.youtube.com/embed/{}" frameborder="0" allowfullscreen></iframe>"""\
                 .format(m.group(1))
+            return preview, True
 
         #instagram embeds
         m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
         if m:
-            return """<iframe src="//instagram.com/p/{}/embed/" width="400" height="500" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
+            preview = """<iframe src="//instagram.com/p/{}/embed/" width="400" height="500" frameborder="0" scrolling="no" allowtransparency="true"></iframe>"""\
                 .format(m.group(1))
+            return preview, True
 
-        preview = twitter_client.repost_preview(url)
+        preview = twitter_client.repost_preview(current_user, url)
         if preview:
-            return preview
+            return preview, True
 
         #fallback
         m = re.match(r'https?://(.*)', url)
         if m:
-            return """<a href="{}">{}</a>""".format(url, m.group(1))
+            preview = """<a href="{}">{}</a>""".format(url, m.group(1))
+            return preview, False
             
         # TODO when the post is first created, we should fetch the
         # reposted URL and save some information about it (i.e.,
@@ -97,9 +102,9 @@ class DisplayPost:
         preview = self.repost_preview
         
         if not preview and self.repost_source:
-            preview = self.repost_preview_filter(self.repost_source)
-            if preview:
-                self.repost_preview = preview
+            preview, cache = self.repost_preview_filter(self.repost_source)
+            if preview and cache:
+                self.wrapped.repost_preview = preview
                 db.session.commit()
 
         if preview:
@@ -142,6 +147,11 @@ class DisplayPost:
             return "https://twitter.com/{}/status/{}".format(
                 self.author.twitter_username,
                 self.twitter_status_id)
+    @property
+    def facebook_url(self):
+        if self.facebook_post_id:
+            return "https://facebook.com/{}".format(
+                self.facebook_post_id)
 
 def render_posts(title, post_type, page, per_page):
     _, articles = DisplayPost.get_posts('article', 1, 5)
@@ -253,6 +263,7 @@ def handle_new_or_edit(request, post):
             post.pub_date = datetime.now()
         
         send_to_twitter = request.form.get("send_to_twitter")
+        send_to_facebook = request.form.get("send_to_facebook")    
 
         if not post.id:
             db.session.add(post)
@@ -267,6 +278,12 @@ def handle_new_or_edit(request, post):
             except:
                 app.logger.exception('posting to twitter')
 
+        if send_to_facebook:
+            try:
+                facebook_client.handle_new_or_edit(post)
+                db.session.commit()
+            except:
+                app.logger.exception('posting to twitter')
         try:
             push_client.handle_new_or_edit(post)
         except:
@@ -337,6 +354,51 @@ def receive_upload():
         os.makedirs(directory)
     file.save(path)
     return jsonify({ 'path' : '/' + path })
+
+
+@app.route('/admin/authorize_twitter')
+@login_required    
+def authorize_twitter():
+    """Get an access token from Twitter and redirect to the authentication page"""
+    import twitter
+    import urllib.parse, urllib.request, json
+    key = app.config['TWITTER_CONSUMER_KEY']
+    secret = app.config['TWITTER_CONSUMER_SECRET']
+
+    try:
+        t = twitter.Twitter(auth=twitter.OAuth('', '', key, secret), format='', api_version='')
+        r = t.oauth.request_token(oauth_callback=app.config.get('SITE_URL') + '/admin/authorize_twitter2')
+        payload = urllib.parse.parse_qs(r)
+        request_token = payload["oauth_token"][-1]
+        return redirect('https://api.twitter.com/oauth/authenticate?'\
+                        + urllib.parse.urlencode({"oauth_token" : request_token}))
+    except TwitterHTTPError as e:
+        return make_response(str(e))
+
+@app.route('/admin/authorize_twitter2')
+def authorize_twitter2():
+    """Receive the request token from Twitter and convert it to an access token"""
+    import twitter
+    from twitter import TwitterHTTPError
+    import urllib.parse, urllib.request, json
+    key = app.config['TWITTER_CONSUMER_KEY']
+    secret = app.config['TWITTER_CONSUMER_SECRET']
+
+    request_token = request.args.get('oauth_token')
+    oauth_verifier = request.args.get('oauth_verifier')
+
+    try:
+        t = twitter.Twitter(auth=twitter.OAuth(request_token, '', key, secret), format='', api_version='')
+        r = t.oauth.access_token(oauth_verifier=oauth_verifier)
+        payload = urllib.parse.parse_qs(r)
+        oauth_token = payload["oauth_token"][-1]
+        oauth_token_secret = payload["oauth_token_secret"][-1]
+        current_user.twitter_oauth_token = oauth_token
+        current_user.twitter_oauth_token_secret = oauth_token_secret
+        db.session.commit()
+        return redirect(url_for('settings'))
+    except TwitterHTTPError as e:
+        return make_response(str(e))
 
 @app.route('/admin/authorize_facebook')
 @login_required

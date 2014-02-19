@@ -4,7 +4,6 @@ import re
 import os
 import traceback
 from datetime import datetime, timedelta
-from app import app
 
 class TwitterClient:
     
@@ -14,18 +13,18 @@ class TwitterClient:
         self.cached_config = None
         self.config_fetch_date = None
 
-    def repost_preview(self, url):
+    def repost_preview(self, user, url):
         permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         match = permalink_re.match(url)
         if match:
-            api = self.get_api()
+            api = self.get_api(user)
             tweet_id = match.group(2)
             embed_response = api.statuses.oembed(_id=tweet_id)
             return embed_response.get('html')
         
     def handle_new_or_edit(self, post):
         permalink_re = re.compile("https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
-        api = self.get_api()
+        api = self.get_api(post.author)
         # check for RT's
         match = permalink_re.match(post.repost_source)
         if match:
@@ -40,22 +39,19 @@ class TwitterClient:
             if result:
                 post.twitter_status_id = result.get('id_str')
 
-    def get_api(self):
+    def get_api(self, user):
         if not self.cached_api: 
-            CONSUMER_KEY = app.config['TWITTER_CONSUMER_KEY']
-            CONSUMER_SECRET = app.config['TWITTER_CONSUMER_SECRET']
-            MY_TWITTER_CREDS = os.path.expanduser('~/.groomsman/twitter_credentials')
-            if not os.path.exists(MY_TWITTER_CREDS):
-                twitter.oauth_dance("groomsman-kylewm.com", CONSUMER_KEY, CONSUMER_SECRET,
-                                    MY_TWITTER_CREDS)
-            oauth_token, oauth_secret = twitter.read_token_file(MY_TWITTER_CREDS)
+            consumer_key = self.app.config['TWITTER_CONSUMER_KEY']
+            consumer_secret = self.app.config['TWITTER_CONSUMER_SECRET']
+            oauth_token = user.twitter_oauth_token
+            oauth_secret = user.twitter_oauth_token_secret
             self.cached_api = twitter.Twitter(auth=twitter.OAuth(oauth_token, oauth_secret,
-                                                                 CONSUMER_KEY, CONSUMER_SECRET))
+                                                                 consumer_key, consumer_secret))
         return self.cached_api
 
-    def get_help_configuration(self):
+    def get_help_configuration(self, user):
         if not self.cached_config or (datetime.now() - self.config_fetch_date) > timedelta(days=1):
-            api = self.get_api()
+            api = self.get_api(user)
             self.cached_config = api.help.configuration()
             self.config_fetch_date = datetime.now()
         return self.cached_config
@@ -88,8 +84,8 @@ class TwitterClient:
                         
         return ' '.join(c.text for c in shortened_comps)
 
-    def url_to_span(self, url, can_drop=True):
-        twitter_config = self.get_help_configuration()
+    def url_to_span(self, user, url, can_drop=True):
+        twitter_config = self.get_help_configuration(user)
         if twitter_config:
             url_length = twitter_config.get('short_url_length_https'
                                             if url.startswith('https')
@@ -102,7 +98,7 @@ class TwitterClient:
     def text_to_span(self, text, can_shorten=True, can_drop=True):
         return TextSpan(text, len(text), can_shorten=can_shorten, can_drop=can_drop)    
         
-    def split_out_urls(self, text):
+    def split_out_urls(self, user, text):
         components = []
         while text:
             m = re.search(r'https?://[a-zA-Z0-9_\.\-():@#$%&?/=]+', text)
@@ -111,7 +107,7 @@ class TwitterClient:
                 url = m.group(0)
 
                 components.append(self.text_to_span(head))
-                components.append(self.url_to_span(url))
+                components.append(self.url_to_span(user, url))
                 text = text[m.end():]
             else:
                 tail = text.strip()
@@ -126,19 +122,19 @@ class TwitterClient:
         
         if post.title:
             components = [ self.text_to_span(post.title),
-                           self.url_to_span(post.permalink, can_drop=False) ]
+                           self.url_to_span(post.author, post.permalink, can_drop=False) ]
                            
         else:
-            components = self.split_out_urls(post.content)
+            components = self.split_out_urls(post.author, post.content)
 
             # include the re-shared link
             if post.repost_source:
-                components.append(self.url_to_span(post.repost_source, can_drop=False))
+                components.append(self.url_to_span(post.author, post.repost_source, can_drop=False))
             
             # include a link to the original message if the note is longer than
             # 140 characters, and we aren't resharing another URL.
             if self.estimate_length(components) > target_length:
-                components.append(self.url_to_span(post.permalink_url, can_drop=False))
+                components.append(self.url_to_span(post.author, post.permalink_url, can_drop=False))
 
         status = self.run_shorten_algorithm(components, target_length)
         self.app.logger.info("shortened for twitter '%s'", status)
@@ -163,6 +159,10 @@ class TextSpan:
             return TextSpan(new_text, len(new_text),
                             can_shorten=False, can_drop=self.can_drop)
 
+    def __repr__(self):
+        return "span({}={}, {}, {}".format(self.text, self.length,
+                                           "can shorten" if self.can_shorten else "cannot shorten",
+                                           "can drop" if self.can_drop else "cannot drop")
 
 #from app import app
 #twitter_client = TwitterClient(app)

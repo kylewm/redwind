@@ -2,7 +2,7 @@ from app import app, db
 import datetime
 import re
 from flask import Markup
-
+from bs4 import BeautifulSoup
 from werkzeug.security import generate_password_hash, \
      check_password_hash
 
@@ -23,7 +23,10 @@ class User(db.Model):
     pw_hash = db.Column(db.String(256))
     display_name = db.Column(db.String(80))
     twitter_username = db.Column(db.String(80))
+    facebook_username = db.Column(db.String(80))
     facebook_access_token = db.Column(db.String(512))
+    twitter_oauth_token = db.Column(db.String(512))
+    twitter_oauth_token_secret = db.Column(db.String(512))
     
     def set_password(self, plaintext):
         self.pw_hash = generate_password_hash(plaintext)
@@ -82,6 +85,7 @@ class Post(db.Model):
     repost_source = db.Column(db.String(256))
     repost_preview = db.Column(db.Text)
     twitter_status_id = db.Column(db.String(64))
+    facebook_post_id = db.Column(db.String(64))
     slug = db.Column(db.String(256))
     tags = db.relationship('Tag', secondary=tags_to_posts,
                            order_by=tags_to_posts.columns.position, 
@@ -99,19 +103,18 @@ class Post(db.Model):
         else:
             self.pub_date = pub_date
 
-    def format_text(self, text):
+    def format_content_as_html(self):
         if self.content_format == 'markdown':
-            return markdown_filter(text)
+            return markdown_filter(self.content)
         elif self.content_format == 'plain':
-            return plain_text_filter(text)
+            return plain_text_filter(self.content)
         else:
-            return text
-
+            return self.content
+    
     @property
     def html_content(self):
-        text = self.format_text(self.content)
-        return Markup(text)
-            
+        return Markup(self.format_content_as_html())
+
     @property
     def permalink_url(self):
         site_url = app.config.get('SITE_URL') or 'http://localhost'

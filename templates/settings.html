@@ -3,11 +3,20 @@
 {% block content %}
 
 <ul>
-  <li> user: {{ user.login }} </li>
-  <li> email: {{ user.email}} </li>
-  <li> full name: {{ user.display_name }} </li>
-  <li> twitter: {{ user.twitter_username }} </li>
-  <li> facebook token: <input value="{{user.facebook_access_token}}"/> <a href="{{ url_for('authorize_facebook') }}">authorize</a></li>
+  <li> User: {{ user.login }} </li>
+  <li> Email: {{ user.email}} </li>
+  <li> Full Name: {{ user.display_name }} </li>
+  <li> Twitter: {{ user.twitter_username }} </li>
+  <li> Facebook:  <br/>
+    token: <input value="{{user.facebook_access_token}}"/><br/>
+    <a href="{{ url_for('authorize_facebook') }}">Authorize Facebook</a><br/>
+  </li>
+  
+  <li> Twitter:<br/>
+    token: <input value="{{user.twitter_oauth_token}}"/><br/>
+    secret: <input value="{{user.twitter_oauth_token_secret}}"/><br/>
+    <a href="{{ url_for('authorize_twitter') }}">Authorize Twitter</a>
+  </li>
   
 </ul>
 

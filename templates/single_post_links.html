@@ -1,4 +1,5 @@
 
+
 <!-- article metadata -->
 <div class="links">
   
@@ -7,7 +8,11 @@
   </a>
 
   {% if post.twitter_url %}
-  | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">View on Twitter</a> 
+  | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">on Twitter</a> 
+  {% endif %}
+
+  {% if post.facebook_url %}
+  | <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">on Facebook</a> 
   {% endif %}
 
   {% if post.in_reply_to %}
