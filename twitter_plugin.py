@@ -1,9 +1,54 @@
+from app import *
+from flask.ext.login import login_required, current_user
+from flask import request, redirect, url_for
+
 import twitter
-from twitter.api import TwitterHTTPError
 import re
 import os
 import traceback
+import urllib.parse
 from datetime import datetime, timedelta
+
+@app.route('/admin/authorize_twitter')
+@login_required    
+def authorize_twitter():
+    """Get an access token from Twitter and redirect to the authentication page"""
+    key = app.config['TWITTER_CONSUMER_KEY']
+    secret = app.config['TWITTER_CONSUMER_SECRET']
+    callback_url = app.config.get('SITE_URL') + '/admin/authorize_twitter2'
+    
+    try:
+        t = twitter.Twitter(auth=twitter.OAuth('', '', key, secret), format='', api_version='')
+        r = t.oauth.request_token(oauth_callback=callback_url)
+        payload = urllib.parse.parse_qs(r)
+        request_token = payload["oauth_token"][-1]
+        return redirect('https://api.twitter.com/oauth/authenticate?'\
+                        + urllib.parse.urlencode({"oauth_token" : request_token}))
+    except twitter.TwitterHTTPError as e:
+        return make_response(str(e))
+
+@app.route('/admin/authorize_twitter2')
+def authorize_twitter2():
+    """Receive the request token from Twitter and convert it to an access token"""
+    key = app.config['TWITTER_CONSUMER_KEY']
+    secret = app.config['TWITTER_CONSUMER_SECRET']
+
+    request_token = request.args.get('oauth_token')
+    oauth_verifier = request.args.get('oauth_verifier')
+
+    try:
+        t = twitter.Twitter(auth=twitter.OAuth(request_token, '', key, secret), format='', api_version='')
+        r = t.oauth.access_token(oauth_verifier=oauth_verifier)
+        payload = urllib.parse.parse_qs(r)
+        oauth_token = payload["oauth_token"][-1]
+        oauth_token_secret = payload["oauth_token_secret"][-1]
+        current_user.twitter_oauth_token = oauth_token
+        current_user.twitter_oauth_token_secret = oauth_token_secret
+        db.session.commit()
+        return redirect(url_for('settings'))
+    except twitter.TwitterHTTPError as e:
+        return make_response(str(e))
+
 
 class TwitterClient:
     
