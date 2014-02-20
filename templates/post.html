@@ -18,5 +18,9 @@
   {% include "single_post_links.html" %}
 </div>
 
+{% for mention in post.mentions %}
+{{ mention.source }}<br/>
+{% endfor %}
+
 {% endblock content %}
 

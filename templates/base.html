@@ -10,9 +10,11 @@
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
 
-    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('all_atom') }}" title="Kyle Mahan: All" />
-    <link rel="notes alternate" type="application/atom+xml" href="{{ url_for('notes_atom') }}" title="Kyle Mahan: Notes" />
-    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom') }}" title="Kyle Mahan: Articles" />
+    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('all_atom', _external=True) }}" title="Kyle Mahan: All" />
+    <link rel="notes alternate" type="application/atom+xml" href="{{ url_for('notes_atom', _external=True) }}" title="Kyle Mahan: Notes" />
+    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom', _external=True) }}" title="Kyle Mahan: Articles" />
+
+    <link rel="webmention" href="{{ url_for('receive_webmention', _external=True) }}"/>
     
     <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
