@@ -75,7 +75,7 @@ class DisplayPost:
                 .format(m.group(1))
             return preview, True
 
-        preview = twitter_client.repost_preview(current_user, url)
+        preview = twitter_client.repost_preview(self.author, url)
         if preview:
             return preview, True
 
