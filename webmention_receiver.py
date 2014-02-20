@@ -24,7 +24,9 @@ def receive_webmention():
         abort(400)
 
     # confirm that source actually refers to the post
-    if not confirm_source_links_to_target(source, target):
+    source_response = requests.get(source)
+
+    if not confirm_source_links_to_target(source, source_response, target):
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
@@ -32,18 +34,30 @@ def receive_webmention():
 
     app.logger.debug("Webmention from %s to %s verified", source, target)
 
+    source_content = extract_source_content(source_response)
+    mention = Mention(source, target_post, source_content)
+    db.session.add(mention)
+    db.session.commit()
+
     return make_response("Successfully processed mention, thanks!")
 
 
-def confirm_source_links_to_target(source_url, target_url):
-    response = requests.get(source_url)
-    if response.status_code != 200:
+def extract_source_content(source_response):
+    if source_response.status_code == 200:
+        soup = BeautifulSoup(source_response.text)
+        found = soup.find(attrs={"class": "h-entry"})
+        if found:
+            return found.text
+
+
+def confirm_source_links_to_target(source_url, source_response, target_url):
+    if source_response.status_code != 200:
         app.logger.warn(
             "Received unexpected response from webmention source: %s",
-            response.text)
+            source_response.text)
         return None
 
-    soup = BeautifulSoup(response.text)
+    soup = BeautifulSoup(source_response.text)
     for link in soup.find_all('a'):
         link_target = link.get('href')
         if link_target == target_url:

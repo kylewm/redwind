@@ -90,7 +90,8 @@ class MentionClient:
         headers = {'content-type': 'application/x-www-form-urlencoded',
                    'accept': 'application/json'}
         response = requests.post(endpoint, data=payload, headers=headers)
-        #from https://github.com/vrypan/webmention-tools/blob/master/webmentiontools/send.py
+        #from https://github.com/vrypan/webmention-tools/blob/master/
+        #webmentiontools/send.py
         if response.status_code / 100 != 2:
             self.app.logger.warn(
                 "Failed to send webmention for %s. Response status code: %s",
@@ -118,7 +119,10 @@ class MentionClient:
         endpoint = self.find_pingback_endpoint(target_url)
         source_url = self.get_source_url(post)
 
-        payload = """<?xml version="1.0" encoding="iso-8859-1"?><methodCall><methodName>pingback.ping</methodName><params><param><value><string>{}</string></value></param><param><value><string>{}</string></value></param></params></methodCall>"""\
+        payload = """<?xml version="1.0" encoding="iso-8859-1"?><methodCall>"""
+        """<methodName>pingback.ping</methodName><params><param><value>"""
+        """<string>{}</string></value></param><param><value>"""
+        """<string>{}</string></value></param></params></methodCall>"""\
             .format(source_url, target_url)
         headers = {'content-type': 'application/xml'}
         response = requests.post(endpoint, data=payload, headers=headers)
