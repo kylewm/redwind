@@ -5,6 +5,7 @@ from twitter_plugin import TwitterClient
 from webmention_plugin import MentionClient
 from push_plugin import PushClient
 from facebook_plugin import FacebookClient
+import webmention_receiver
 
 from datetime import datetime
 from functools import wraps
