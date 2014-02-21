@@ -95,6 +95,7 @@ class Post(db.Model):
     tags = db.relationship('Tag', secondary=tags_to_posts,
                            order_by=tags_to_posts.columns.position,
                            backref='posts')
+    mentions = db.relationship('Mention', backref='post')
 
     def __init__(self, title, slug, content, post_type, content_format,
                  author, pub_date=None):
@@ -144,6 +145,14 @@ class Post(db.Model):
                 self.author.twitter_username,
                 self.twitter_status_id)
 
+    @property
+    def replies(self):
+        return [mention for mention in self.mentions if mention.is_reply]
+
+    @property
+    def references(self):
+        return [mention for mention in self.mentions if not mention.is_reply]
+
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.title)
@@ -156,6 +165,7 @@ class Post(db.Model):
 #	source VARCHAR(256),
 #	post_id INTEGER,
 #	content TEXT,
+#       is_reply BOOL,
 #	PRIMARY KEY (id),
 #	FOREIGN KEY(post_id) REFERENCES post (id)
 #)
@@ -164,11 +174,16 @@ class Mention(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     source = db.Column(db.String(256))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-    post = db.relationship('Post',
-                           backref=db.backref('mentions', lazy='dynamic'))
     content = db.Column(db.Text)
+    is_reply = db.Column(db.Boolean)
+    author_name = db.Column(db.String(256))
+    author_url = db.Column(db.String(256))
 
-    def __init__(self, source, post, content):
+    def __init__(self, source, post, content, is_reply,
+                 author_name, author_url):
         self.source = source
         self.post = post
         self.content = content
+        self.is_reply = is_reply
+        self.author_name = author_name
+        self.author_url = author_url

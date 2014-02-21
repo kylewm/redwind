@@ -2,25 +2,64 @@
 
 {% block content %}
 
-<div class="post {{post.post_type}} h-entry">
+  <div class="post {{post.post_type}} h-entry">
 
-  {% if post.title %}
-  <h2 class="p-name">{{ post.title }}</h2>
-  <div class="e-content">
-    {{ post.html_content }}
+    {% if post.title %}
+      <h2 class="p-name">{{ post.title }}</h2>
+      <div class="e-content">
+        {{ post.html_content }}
+      </div>
+    {% else %}
+      <div class="p-name e-content">
+        {{ post.html_content }}
+      </div>
+    {% endif %}
+
+    {% include "single_post_links.html" %}
+
+    {% if post.replies %}
+      <div class="replies">
+        <b>Replies</b>
+        {% for reply in post.replies %}
+          <div class="p-comment">
+            <p class="e-content">{{ reply.content }}</p>
+            {% if reply.author_name %}
+              {% if reply.author_url %}
+                <a class="p-author h-card" href="{{reply.author_url}}">
+                  {{ reply.author_name }}
+                </a>
+              {% else %}
+                <span class="p-author">{{ reply.author_name }}</span>
+              {% endif %} | 
+            {% endif %}
+            <a class="u-url" href="{{ reply.source }}">Source</a>
+          </div>
+        {% endfor %}
+      </div>    
+    {% endif %}
+
+    {% if post.references %}
+      <div class="references">
+        <b>References</b>
+        {% for ref in post.references %}
+          <div class="p-comment">
+            <p class="e-content">{{ ref.content }}</p>
+            {% if ref.author_name %}
+              {% if ref.author_url %}
+                <a class="p-author h-card" href="{{ref.author_url}}">
+                  {{ ref.author_name }}
+                </a>
+              {% else %}
+                <span class="p-author">{{ ref.author_name }}</span>
+              {% endif %} |
+            {% endif %}
+            <a class="u-url" href="{{ ref.source }}">Source</a>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
   </div>
-  {% else %}
-  <div class="p-name e-content">
-    {{ post.html_content }}
-  </div>
-  {% endif %}
-
-  {% include "single_post_links.html" %}
-</div>
-
-{% for mention in post.mentions %}
-{{ mention.source }}<br/>
-{% endfor %}
-
+  
 {% endblock content %}
 

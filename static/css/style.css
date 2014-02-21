@@ -61,6 +61,20 @@ small, .small {
     font-size: 0.9em;
 }
 
+.replies {
+    margin-top: 20px;
+    font-size: 0.8em;
+}
+
+.references {
+    margin-top: 20px;
+    font-size: 0.8em;
+}
+
+.p-comment + .p-comment {
+    margin-top: 20px;
+}
+
 a {
     color: #268bd2;
     text-decoration: none;
