@@ -37,7 +37,8 @@ def receive_webmention():
             "Giving up", source, target)
         abort(400)
 
-    is_reply = 'in-reply-to' in link_to_target.get('rel')
+    link_rel = link_to_target.get('rel')
+    is_reply = link_rel and 'in-reply-to' in link_rel
 
     app.logger.debug("Webmention from %s to %s, verified (%s).",
                      source, target, "reply" if is_reply else "mention")
