@@ -1,7 +1,6 @@
-from app import *
-from models import *
-
-from flask import request, redirect, jsonify, abort, make_response
+from app import app, db
+from models import Post, Mention
+from flask import request, abort, make_response
 import urllib.parse
 import requests
 
@@ -26,31 +25,87 @@ def receive_webmention():
     # confirm that source actually refers to the post
     source_response = requests.get(source)
 
-    if not confirm_source_links_to_target(source, source_response, target):
+    if source_response.status_code / 100 != 2:
+        app.logger.warn(
+            "Webmention could not read source post: %s. Giving up", source)
+        abort(400)
+
+    link_to_target = find_link_to_target(source, source_response, target)
+    if not link_to_target:
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
         abort(400)
 
-    app.logger.debug("Webmention from %s to %s verified", source, target)
+    is_reply = 'in-reply-to' in link_to_target.get('rel')
 
-    source_content = extract_source_content(source_response)
-    mention = Mention(source, target_post, source_content)
+    app.logger.debug("Webmention from %s to %s, verified (%s).",
+                     source, target, "reply" if is_reply else "mention")
+
+    soup = BeautifulSoup(source_response.text)
+    hentry = soup.find(class_="h-entry")
+
+    if not hentry:
+        app.logger.warn(
+            "Webmention could not find h-entry on source page: %s. Giving up",
+            source)
+        abort(400)
+
+    source_content = extract_source_content(hentry)
+    author_name, author_url = determine_author(soup, hentry)
+
+    mention = Mention(source, target_post, source_content, is_reply,
+                      author_name, author_url)
     db.session.add(mention)
     db.session.commit()
 
-    return make_response("Successfully processed mention, thanks!")
+    return make_response("Received mention, thanks!")
 
 
-def extract_source_content(source_response):
-    if source_response.status_code == 200:
-        soup = BeautifulSoup(source_response.text)
-        found = soup.find(attrs={"class": "h-entry"})
-        if found:
-            return found.text
+def determine_author(soup, hentry):
+    pauthor = hentry.find(class_='p-author')
+    if pauthor:
+        hcard = pauthor.find(class_='h-card')
+        if hcard:
+            return parse_hcard_for_author(hcard)
+        return pauthor.text, pauthor.get('href')
+
+    # use top-level h-card
+    hcard = soup.find(class_='h-card')
+    if hcard:
+        return parse_hcard_for_author(hcard)
+
+    # use page title
+    title = soup.find('title')
+    if title:
+        return title.text, None
 
 
-def confirm_source_links_to_target(source_url, source_response, target_url):
+def parse_hcard_for_author(hcard):
+    pname = hcard.find(class_='p-name')
+    if pname:
+        author = pname.text
+    else:
+        author = hcard.text
+    uurl = hcard.find(class_='u-url')
+    if uurl:
+        url = uurl.get('href') or uurl.text
+    else:
+        url = hcard.get('href')
+    return author, url
+
+
+def extract_source_content(hentry):
+    econtent = hentry.find(class_='e-content')
+    if econtent:
+        return econtent.text
+    pname = hentry.find(class_='p-name')
+    if pname:
+        return pname.text
+    return hentry.text
+
+
+def find_link_to_target(source_url, source_response, target_url):
     if source_response.status_code != 200:
         app.logger.warn(
             "Received unexpected response from webmention source: %s",
@@ -61,7 +116,7 @@ def confirm_source_links_to_target(source_url, source_response, target_url):
     for link in soup.find_all('a'):
         link_target = link.get('href')
         if link_target == target_url:
-            return True
+            return link
 
 
 def find_target_post(target_url):
