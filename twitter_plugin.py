@@ -109,10 +109,9 @@ class TwitterClient:
                                    consumer_key, consumer_secret))
         return self.cached_api
 
-    def get_help_configuration(self, user):
-        time_since_refresh = datetime.now() - self.config_fetch_date
+    def get_help_configuration(self, user): 
         if (not self.cached_config
-                or time_since_refresh > timedelta(days=1)):
+                or datetime.now() - self.config_fetch_date > timedelta(days=1)):
             api = self.get_api(user)
             self.cached_config = api.help.configuration()
             self.config_fetch_date = datetime.now()
@@ -184,7 +183,7 @@ class TwitterClient:
 
         if post.title:
             components = [self.text_to_span(post.title),
-                          self.url_to_span(post.author, post.permalink,
+                          self.url_to_span(post.author, post.permalink_url,
                                            can_drop=False)]
 
         else:
