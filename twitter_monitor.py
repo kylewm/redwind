@@ -114,7 +114,7 @@ def poll():
             check_for_replies(t)
             wait = max(wait / 2, wait_min)
         except TwitterHTTPError as e:
-            print("got an error, waiting longer")
+            print("got an error {}, waiting longer", e)
             wait = min(wait * 2, wait_max)
         print("waiting for {} seconds".format(wait))
         time.sleep(wait)
