@@ -319,6 +319,8 @@ def edit_by_id(post_type, post_id):
     
 @app.template_filter('strftime')
 def strftime_filter(date, fmt='%Y %b %d'):
+    if not date:
+        return "????"
     return date.strftime(fmt)
 
 def url_for_other_page(page):
