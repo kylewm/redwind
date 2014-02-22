@@ -9,10 +9,12 @@
 
 
   {% if post.replies %}
-    | {{ post.replies | length }} replies
+    {% set reply_count = post.replies | length %}
+    | <a href="{{ post.permalink_url }}#replies">{{ reply_count }} {% if reply_count == 1 %}reply{% else %}replies{% endif %}</a>
   {% endif %}
   {% if post.references %}
-    | {{ post.references | length }} references
+    {% set ref_count = post.references | length %}
+    | <a href="{{ post.permalink_url }}#refs">{{ ref_count }} {% if ref_count == 1 %}reference{% else %}references{% endif %}</a>
   {% endif %}
 
 

@@ -109,9 +109,11 @@ class TwitterClient:
                                    consumer_key, consumer_secret))
         return self.cached_api
 
-    def get_help_configuration(self, user): 
+    def get_help_configuration(self, user):
+        stale_limit = timedelta(days=1)
+
         if (not self.cached_config
-                or datetime.now() - self.config_fetch_date > timedelta(days=1)):
+                or datetime.now() - self.config_fetch_date > stale_limit):
             api = self.get_api(user)
             self.cached_config = api.help.configuration()
             self.config_fetch_date = datetime.now()

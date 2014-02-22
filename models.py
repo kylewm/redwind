@@ -105,10 +105,7 @@ class Post(db.Model):
         self.post_type = post_type
         self.content_format = content_format
         self.author = author
-        if pub_date is None:
-            self.pub_date = datetime.datetime.utcnow()
-        else:
-            self.pub_date = pub_date
+        self.pub_date = pub_date or datetime.datetime.utcnow()
 
     def format_content_as_html(self):
         if self.content_format == 'markdown':
@@ -157,7 +154,7 @@ class Post(db.Model):
         if self.title:
             return 'post:{}'.format(self.title)
         else:
-            return 'post:{}'.format(self.content[:20])
+            return 'post:{}'.format(self.content[:140])
 
 
 #CREATE TABLE mention (
@@ -178,12 +175,14 @@ class Mention(db.Model):
     is_reply = db.Column(db.Boolean)
     author_name = db.Column(db.String(256))
     author_url = db.Column(db.String(256))
+    pub_date = db.Column(db.DateTime)
 
     def __init__(self, source, post, content, is_reply,
-                 author_name, author_url):
+                 author_name, author_url, pub_date=None):
         self.source = source
         self.post = post
         self.content = content
         self.is_reply = is_reply
         self.author_name = author_name
         self.author_url = author_url
+        self.pub_date = pub_date or datetime.utcnow()
