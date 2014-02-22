@@ -104,7 +104,7 @@ def check_for_replies(t):
 
 
 def poll():
-    wait_min = 30
+    wait_min = 60
     wait_max = 15*60
     wait = 60
 
