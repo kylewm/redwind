@@ -100,7 +100,7 @@ def check_for_replies(t):
     db.session.commit()
 
     with open(ID_FILE_NAME, 'w') as idfile:
-          idfile.write('\n'.join(oldest, most_recent))
+          idfile.write('\n'.join((oldest, most_recent)))
 
 
 def poll():
@@ -114,7 +114,7 @@ def poll():
             check_for_replies(t)
             wait = max(wait / 2, wait_min)
         except TwitterHTTPError as e:
-            print("got an error {}, waiting longer", e)
+            print("got an error, waiting longer", e)
             wait = min(wait * 2, wait_max)
         print("waiting for {} seconds".format(wait))
         time.sleep(wait)
