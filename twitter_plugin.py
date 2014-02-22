@@ -1,6 +1,6 @@
-from app import *
+from app import app, db
 from flask.ext.login import login_required, current_user
-from flask import request, redirect, url_for
+from flask import request, redirect, url_for, make_response
 
 import twitter
 import re
