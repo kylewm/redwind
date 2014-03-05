@@ -34,9 +34,17 @@
     <div class="repost_source">
       <label><span class="heading">Repost (URL)</span><input name="repost_source" size="60" value="{{post.repost_source or ''}}"/></label>
     </div>
-
+    
     <div class="content">
     <textarea name="content" rows="{{ 30 if post.post_type == 'article' else 5 }}" cols="80" style="width:100%">{{ post.content }}</textarea>
+    </div>
+
+    <div class="twitter_status_id">
+      <label><span class="heading">Twitter Status ID</span><input name="twitter_status_id" size="60" value="{{post.twitter_status_id or ''}}"></label>
+    </div>
+
+    <div class="facebook_post_id">
+      <label><span class="heading">Facebook Post ID</span><input name="facebook_post_id" size="60" value="{{post.facebook_post_id or ''}}"></label>
     </div>
 
     <div class="content_format">
@@ -48,7 +56,6 @@
       </select>
     </label>
     </div>
-    
     
   </form>
 
@@ -70,7 +77,7 @@
   <script type="text/javascript" src="/static/js/upload.js"></script>
   <script type="text/javascript">
     
-    ADVANCED_CONTROLS = [ ".slug", ".date", ".in_reply_to", ".repost_source", ".content_format", ".upload_form" ];
+    ADVANCED_CONTROLS = [ ".slug", ".date", ".in_reply_to", ".repost_source", ".content_format", ".upload_form", ".twitter_status_id", ".facebook_post_id" ];
 
     function showBasic() {
         console.log("Showing basic controls only");

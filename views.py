@@ -266,6 +266,14 @@ def handle_new_or_edit(request, post):
         send_to_twitter = request.form.get("send_to_twitter")
         send_to_facebook = request.form.get("send_to_facebook")    
 
+        twitter_status_id = request.form.get("twitter_status_id")
+        if not send_to_twitter and twitter_status_id:
+            post.twitter_status_id = twitter_status_id
+            
+        facebook_post_id = request.form.get("facebook_post_id")
+        if not send_to_facebook and facebook_post_id:
+            post.facebook_post_id = facebook_post_id
+
         if not post.id:
             db.session.add(post)
         db.session.commit()
@@ -285,6 +293,7 @@ def handle_new_or_edit(request, post):
                 db.session.commit()
             except:
                 app.logger.exception('posting to twitter')
+                
         try:
             push_client.handle_new_or_edit(post)
         except:
