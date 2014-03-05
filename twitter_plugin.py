@@ -1,6 +1,6 @@
-from app import *
+from app import app, db
 from flask.ext.login import login_required, current_user
-from flask import request, redirect, url_for
+from flask import request, redirect, url_for, make_response
 
 import twitter
 import re
@@ -110,9 +110,10 @@ class TwitterClient:
         return self.cached_api
 
     def get_help_configuration(self, user):
-        time_since_refresh = datetime.now() - self.config_fetch_date
+        stale_limit = timedelta(days=1)
+
         if (not self.cached_config
-                or time_since_refresh > timedelta(days=1)):
+                or datetime.now() - self.config_fetch_date > stale_limit):
             api = self.get_api(user)
             self.cached_config = api.help.configuration()
             self.config_fetch_date = datetime.now()
@@ -184,7 +185,7 @@ class TwitterClient:
 
         if post.title:
             components = [self.text_to_span(post.title),
-                          self.url_to_span(post.author, post.permalink,
+                          self.url_to_span(post.author, post.permalink_url,
                                            can_drop=False)]
 
         else:

@@ -76,7 +76,7 @@ class DisplayPost:
                 .format(m.group(1))
             return preview, True
 
-        preview = twitter_client.repost_preview(current_user, url)
+        preview = twitter_client.repost_preview(self.author, url)
         if preview:
             return preview, True
 
@@ -328,6 +328,8 @@ def edit_by_id(post_type, post_id):
     
 @app.template_filter('strftime')
 def strftime_filter(date, fmt='%Y %b %d'):
+    if not date:
+        return "????"
     return date.strftime(fmt)
 
 def url_for_other_page(page):

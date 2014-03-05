@@ -7,25 +7,36 @@
     <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}</time>
   </a>
 
+
+  {% if post.replies %}
+    {% set reply_count = post.replies | length %}
+    | <a href="{{ post.permalink_url }}#replies">{{ reply_count }} {% if reply_count == 1 %}reply{% else %}replies{% endif %}</a>
+  {% endif %}
+  {% if post.references %}
+    {% set ref_count = post.references | length %}
+    | <a href="{{ post.permalink_url }}#refs">{{ ref_count }} {% if ref_count == 1 %}reference{% else %}references{% endif %}</a>
+  {% endif %}
+
+
   {% if post.twitter_url %}
-  | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">on Twitter</a> 
+    | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">on Twitter</a> 
   {% endif %}
 
   {% if post.facebook_url %}
-  | <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">on Facebook</a> 
+    | <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">on Facebook</a> 
   {% endif %}
 
   {% if post.in_reply_to %}
-  | <a rel="in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
+    | <a rel="in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
   {% endif %}
 
   {% if post.repost_source %}
-  | <a href="{{ post.repost_source }}">Source</a> 
+    | <a href="{{ post.repost_source }}">Source</a> 
   {% endif %}
 
   {% if authenticated %}
-  | <a href="{{ url_for('edit_by_id', post_type=post.post_type, post_id=post.id) }}">Edit</a> |
-  <a href="{{ url_for('delete_by_id', post_type=post.post_type, post_id=post.id) }}">Delete</a>
+    | <a href="{{ url_for('edit_by_id', post_type=post.post_type, post_id=post.id) }}">Edit</a> |
+    <a href="{{ url_for('delete_by_id', post_type=post.post_type, post_id=post.id) }}">Delete</a>
   {% endif %}
 </div>
 

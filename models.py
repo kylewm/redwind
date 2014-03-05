@@ -95,6 +95,7 @@ class Post(db.Model):
     tags = db.relationship('Tag', secondary=tags_to_posts,
                            order_by=tags_to_posts.columns.position,
                            backref='posts')
+    mentions = db.relationship('Mention', backref='post')
 
     def __init__(self, title, slug, content, post_type, content_format,
                  author, pub_date=None):
@@ -104,10 +105,7 @@ class Post(db.Model):
         self.post_type = post_type
         self.content_format = content_format
         self.author = author
-        if pub_date is None:
-            self.pub_date = datetime.datetime.utcnow()
-        else:
-            self.pub_date = pub_date
+        self.pub_date = pub_date or datetime.datetime.utcnow()
 
     def format_content_as_html(self):
         if self.content_format == 'markdown':
@@ -144,11 +142,19 @@ class Post(db.Model):
                 self.author.twitter_username,
                 self.twitter_status_id)
 
+    @property
+    def replies(self):
+        return [mention for mention in self.mentions if mention.is_reply]
+
+    @property
+    def references(self):
+        return [mention for mention in self.mentions if not mention.is_reply]
+
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.title)
         else:
-            return 'post:{}'.format(self.content[:20])
+            return 'post:{}'.format(self.content[:140])
 
 
 #CREATE TABLE mention (
@@ -156,6 +162,7 @@ class Post(db.Model):
 #	source VARCHAR(256),
 #	post_id INTEGER,
 #	content TEXT,
+#       is_reply BOOL,
 #	PRIMARY KEY (id),
 #	FOREIGN KEY(post_id) REFERENCES post (id)
 #)
@@ -164,11 +171,18 @@ class Mention(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     source = db.Column(db.String(256))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-    post = db.relationship('Post',
-                           backref=db.backref('mentions', lazy='dynamic'))
     content = db.Column(db.Text)
+    is_reply = db.Column(db.Boolean)
+    author_name = db.Column(db.String(256))
+    author_url = db.Column(db.String(256))
+    pub_date = db.Column(db.DateTime)
 
-    def __init__(self, source, post, content):
+    def __init__(self, source, post, content, is_reply,
+                 author_name, author_url, pub_date=None):
         self.source = source
         self.post = post
         self.content = content
+        self.is_reply = is_reply
+        self.author_name = author_name
+        self.author_url = author_url
+        self.pub_date = pub_date or datetime.utcnow()
