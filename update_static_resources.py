@@ -11,7 +11,16 @@ pygments_css = (pygments.formatters.HtmlFormatter(style=PYGMENTS_STYLE)
 with open('static/css/pygments.css', 'w') as f:
     f.write(pygments_css)
 
-response = requests.get("http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s=64", stream=True)
-with open('static/img/users/kyle.jpg', 'wb') as f:
-    shutil.copyfileobj(response.raw, f)
-del response
+
+def curl(url, file):
+        
+    response = requests.get(url, stream=True)
+    with open(file, 'wb') as f:
+        shutil.copyfileobj(response.raw, f)
+        del response
+
+curl('http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s=64',
+     'static/img/users/kyle.jpg')
+
+curl('http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s=128',
+     'static/img/users/kyle_large.jpg')
