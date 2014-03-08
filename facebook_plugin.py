@@ -36,6 +36,7 @@ class FacebookClient:
             
     def handle_new_or_edit(self, post):
         graph = facebook.GraphAPI(post.author.facebook_access_token)
-        response = graph.put_object("me", "feed", name=post.title, message=post.content, link=post.repost_source, actions={ "name" : "See Original", "link" : post.permalink_url])
+        response = graph.put_object("me", "feed", name=post.title, message=post.content,
+                                    link=post.repost_source, actions={ "name" : "See Original", "link" : post.permalink_url })
         post.facebook_post_id = response['id']
 
