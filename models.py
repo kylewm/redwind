@@ -158,4 +158,4 @@ class Mention(db.Model):
         self.is_reply = is_reply
         self.author_name = author_name
         self.author_url = author_url
-        self.pub_date = pub_date or datetime.utcnow()
+        self.pub_date = pub_date or datetime.datetime.utcnow()

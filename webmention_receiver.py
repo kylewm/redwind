@@ -25,7 +25,7 @@ def receive_webmention():
     # confirm that source actually refers to the post
     source_response = requests.get(source)
 
-    if source_response.status_code / 100 != 2:
+    if source_response.status_code // 100 != 2:
         app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
         abort(400)

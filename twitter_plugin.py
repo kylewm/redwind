@@ -199,10 +199,10 @@ class TwitterClient:
 
             # include a link to the original message if the note is longer than
             # 140 characters, and we aren't resharing another URL.
-            if self.estimate_length(components) > target_length:
-                components.append(self.url_to_span(post.author,
-                                                   post.permalink_url,
-                                                   can_drop=False))
+            #if self.estimate_length(components) > target_length:
+            components.append(self.url_to_span(post.author,
+                                               post.permalink_url,
+                                               can_drop=False))
 
         status = self.run_shorten_algorithm(components, target_length)
         self.app.logger.info("shortened for twitter '%s'", status)

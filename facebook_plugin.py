@@ -3,6 +3,7 @@ from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for
 
 import facebook
+import json
 
 @app.route('/admin/authorize_facebook')
 @login_required
@@ -33,10 +34,15 @@ def authorize_facebook():
 class FacebookClient:
     def __init__(self, app):
         self.app = app
-            
+
     def handle_new_or_edit(self, post):
+        app.logger.debug("publishing to facebook")
         graph = facebook.GraphAPI(post.author.facebook_access_token)
+        actions = { "name" : "See Original", "link" : post.permalink_url }
+        privacy = { "value" : "EVERYONE" }
         response = graph.put_object("me", "feed", name=post.title, message=post.content,
-                                    link=post.repost_source, actions={ "name" : "See Original", "link" : post.permalink_url })
+                                    link=post.repost_source or post.permalink_url,
+                                    actions=json.dumps(actions), privacy=json.dumps(privacy))
+        app.logger.debug("published to facebook. response {}".format(response))
         post.facebook_post_id = response['id']
 

@@ -153,8 +153,10 @@ class DisplayPost:
     @property
     def facebook_url(self):
         if self.facebook_post_id:
-            return "https://facebook.com/{}".format(
-                self.facebook_post_id)
+            split = self.facebook_post_id.split('_', 1)
+            if split and len(split) == 2:
+                user_id, post_id = split
+                return "https://facebook.com/{}/posts/{}".format(user_id, post_id)
 
 def render_posts(title, post_type, page, per_page):
     _, articles = DisplayPost.get_posts('article', 1, 5)
@@ -280,31 +282,29 @@ def handle_new_or_edit(request, post):
             db.session.add(post)
         db.session.commit()
 
-        display_post = DisplayPost(post)        
-        
         # TODO everything else could be asynchronous
         # post or update this post on twitter
         if send_to_twitter:
             try:
-                twitter_client.handle_new_or_edit(display_post)
+                twitter_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
                 app.logger.exception('posting to twitter')
 
         if send_to_facebook:
             try:
-                facebook_client.handle_new_or_edit(display_post)
+                facebook_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
-                app.logger.exception('posting to twitter')
+                app.logger.exception('posting to facebook')
                 
         try:
-            push_client.handle_new_or_edit(display_post)
+            push_client.handle_new_or_edit(post)
         except:
             app.logger.exception('posting to PuSH')
 
         try:
-            mention_client.handle_new_or_edit(display_post)
+            mention_client.handle_new_or_edit(post)
             db.session.commit()
         except:
             app.logger.exception('sending webmentions')

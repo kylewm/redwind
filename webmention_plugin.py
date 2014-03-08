@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 
 import re
 import requests
+import views
 
 
 class MentionClient:
@@ -22,9 +23,11 @@ class MentionClient:
         if post.repost_source:
             target_urls.append(post.repost_source)
 
-        self.app.logger.debug("search post content {}".format(post.html_content))
+
+        html_content = views.DisplayPost(post).html_content
+        self.app.logger.debug("search post content {}".format(html_content))
             
-        soup = BeautifulSoup(post.html_content)
+        soup = BeautifulSoup(html_content)
         for link in soup.find_all('a'):
             link_target = link.get('href')
             if link_target:
