@@ -4,6 +4,11 @@
 
   <div class="post {{post.post_type}} h-entry">
 
+    <div class="p-author">
+      <img class="u-photo" src="{{ url_for('static', filename='img/users/kyle.jpg', _external=True) }}"/>
+      <span class="p-name">Kyle Mahan</span> / <a class="u-url" href="http://kylewm.com">kylewm.com</a>
+    </div>
+
     {% if post.title %}
       <h2 class="p-name">{{ post.title }}</h2>
       <div class="e-content">
