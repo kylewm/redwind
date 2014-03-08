@@ -59,7 +59,8 @@ class DisplayPost:
     def plain_text_filter(self, plain):
         plain = re.sub(r'\b(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)', r'<a href="\g<0>">\g<1></a>', plain)
         plain = re.sub(r'(?<!\w)@([a-zA-Z0-9_]+)', r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
-        return plain.replace('\n', '<br/>')
+        plain = plain.replace('\n', '<br/>')
+        return plain
 
     def repost_preview_filter(self, url):
         #youtube embeds
@@ -117,8 +118,9 @@ class DisplayPost:
     def html_content(self):
         text = self.format_text(self.content)
         text = self.add_preview(text)
-        return Markup(text)
-
+        markup = Markup(text)
+        return markup
+        
     @property
     def html_excerpt(self):
         text = self.format_text(self.content)
@@ -278,29 +280,31 @@ def handle_new_or_edit(request, post):
             db.session.add(post)
         db.session.commit()
 
+        display_post = DisplayPost(post)        
+        
         # TODO everything else could be asynchronous
         # post or update this post on twitter
         if send_to_twitter:
             try:
-                twitter_client.handle_new_or_edit(post)
+                twitter_client.handle_new_or_edit(display_post)
                 db.session.commit()
             except:
                 app.logger.exception('posting to twitter')
 
         if send_to_facebook:
             try:
-                facebook_client.handle_new_or_edit(post)
+                facebook_client.handle_new_or_edit(display_post)
                 db.session.commit()
             except:
                 app.logger.exception('posting to twitter')
                 
         try:
-            push_client.handle_new_or_edit(post)
+            push_client.handle_new_or_edit(display_post)
         except:
             app.logger.exception('posting to PuSH')
 
         try:
-            mention_client.handle_new_or_edit(post)
+            mention_client.handle_new_or_edit(display_post)
             db.session.commit()
         except:
             app.logger.exception('sending webmentions')

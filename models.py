@@ -4,21 +4,6 @@ import re
 from flask import Markup
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
-def markdown_filter(data):
-    from markdown import markdown
-    from smartypants import smartypants
-    return smartypants(markdown(data, extensions=['codehilite']))
-
-
-def plain_text_filter(plain):
-    plain = re.sub(r'(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)',
-                   r'<a href="\g<0>">\g<1></a>', plain)
-    plain = re.sub(r'@([a-zA-Z0-9_]+)',
-                   r'<a href="http://twitter\.com/\g<1>">\g<0></a>', plain)
-    return plain.replace('\n', '<br/>')
-
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(80), unique=True)
@@ -106,18 +91,6 @@ class Post(db.Model):
         self.content_format = content_format
         self.author = author
         self.pub_date = pub_date or datetime.datetime.utcnow()
-
-    def format_content_as_html(self):
-        if self.content_format == 'markdown':
-            return markdown_filter(self.content)
-        elif self.content_format == 'plain':
-            return plain_text_filter(self.content)
-        else:
-            return self.content
-
-    @property
-    def html_content(self):
-        return Markup(self.format_content_as_html())
 
     @property
     def permalink_url(self):

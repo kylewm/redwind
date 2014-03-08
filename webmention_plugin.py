@@ -22,10 +22,13 @@ class MentionClient:
         if post.repost_source:
             target_urls.append(post.repost_source)
 
+        self.app.logger.debug("search post content {}".format(post.html_content))
+            
         soup = BeautifulSoup(post.html_content)
         for link in soup.find_all('a'):
             link_target = link.get('href')
             if link_target:
+                self.app.logger.debug("found link {} with href {}".format(link, link_target))
                 target_urls.append(link_target)
 
         return target_urls
@@ -38,7 +41,9 @@ class MentionClient:
         return response
 
     def handle_new_or_edit(self, post):
-        for target_url in self.get_target_urls(post):
+        target_urls = self.get_target_urls(post)
+        self.app.logger.debug("Sending webmentions to these urls {}".format(" ; ".join(target_urls)))
+        for target_url in target_urls:
             self.send_mention(post, target_url)
 
     def send_mention(self, post, target_url):
