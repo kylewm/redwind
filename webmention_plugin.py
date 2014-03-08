@@ -92,7 +92,7 @@ class MentionClient:
         response = requests.post(endpoint, data=payload, headers=headers)
         #from https://github.com/vrypan/webmention-tools/blob/master/
         #webmentiontools/send.py
-        if response.status_code / 100 != 2:
+        if response.status_code // 100 != 2:
             self.app.logger.warn(
                 "Failed to send webmention for %s. Response status code: %s",
                 target_url, response.status_code)

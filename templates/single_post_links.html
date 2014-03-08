@@ -27,7 +27,7 @@
   {% endif %}
 
   {% if post.in_reply_to %}
-    | <a rel="in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
+    | <a rel="in-reply-to" class="u-in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
   {% endif %}
 
   {% if post.repost_source %}
