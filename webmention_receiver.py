@@ -20,6 +20,8 @@ def receive_webmention():
 
 
 def process_webmention(source, target):
+    app.logger.debug("processing webmention from %s to %s", source, target)
+    
     # confirm that source actually refers to the post
     source_response = requests.get(source)
 
@@ -78,10 +80,13 @@ def try_find_original_source(source, source_text, target):
     soup = BeautifulSoup(source_text)
     hentry = soup.find(class_='h-entry')
     if hentry:
+        app.logger.debug('webmention, original source: found h-entry: {}'.format(hentry))
         permalink = hentry.find(class_='u-url')
         if permalink:
+            app.logger.debug('webmention, original source: found permalink: {}'.format(permalink))
             permalink_url = permalink.get('href') or permalink.text
             if permalink_url != source:
+                app.logger.debug('webmention, original source: found permalink url: {}'.format(permalink_url))
                 result = process_webmention(permalink_url, target)
                 if result:
                     return result
