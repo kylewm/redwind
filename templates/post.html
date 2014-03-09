@@ -4,11 +4,11 @@
 
   <div class="post {{post.post_type}} h-entry">
 
-    <div style="display: inline-block; float: left;">
+    <div style="width: 75px; float: left;">
       {% include "hcard_author.html" %}
     </div>
 
-    <div style="display: inline-block">
+    <div style="width: calc(100% - 75px); float:left">
       {% if post.title %}
         <h2 class="p-name">{{ post.title }}</h2>
         <div class="e-content">
