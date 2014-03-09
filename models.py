@@ -1,8 +1,7 @@
 from app import app, db
 import datetime
-import re
-from flask import Markup
 from werkzeug.security import generate_password_hash, check_password_hash
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -159,3 +158,6 @@ class Mention(db.Model):
         self.author_name = author_name
         self.author_url = author_url
         self.pub_date = pub_date or datetime.datetime.utcnow()
+
+    def __repr__(self):
+        return "Mention[{} from {}]".format(self.id, self.source)

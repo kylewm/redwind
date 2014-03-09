@@ -1,7 +1,5 @@
-from functools import wraps
-from app import app, db
+from app import app
 from models import User
-from flask import request, Response
 from flask.ext.login import LoginManager
 
 login_mgr = LoginManager(app)

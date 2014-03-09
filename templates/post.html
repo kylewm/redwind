@@ -4,74 +4,78 @@
 
   <div class="post {{post.post_type}} h-entry">
 
-    {% include "hcard_author.html" %}
+    <div style="display: inline-block; float: left;">
+      {% include "hcard_author.html" %}
+    </div>
 
-    {% if post.title %}
-      <h2 class="p-name">{{ post.title }}</h2>
-      <div class="e-content">
-        {{ post.html_content }}
-      </div>
-    {% else %}
-      <div class="p-name e-content">
-        {{ post.html_content }}
-      </div>
-    {% endif %}
+    <div style="display: inline-block">
+      {% if post.title %}
+        <h2 class="p-name">{{ post.title }}</h2>
+        <div class="e-content">
+          {{ post.html_content }}
+        </div>
+      {% else %}
+        <div class="p-name e-content">
+          {{ post.html_content }}
+        </div>
+      {% endif %}
 
-    {% include "single_post_links.html" %}
+      {% include "single_post_links.html" %}
 
-    {% if post.replies %}
-      <div class="replies">
-        <a name="replies"></a><b>Replies</b>
-        {% for reply in post.replies %}
-        
-          <div class="p-comment">
-            <p class="e-content">{{ reply.content }}</p>
-            <time class="dt-published" datetime="{{ reply.pub_date | strftime('%Y-%m-%d %H:%M')}}"><a class="u-url" href="{{ reply.source }}">{{ reply.pub_date | strftime('%Y-%m-%d %H:%M') }}</a></time>
-            {% if reply.author_name %} |
-              {% if reply.author_url %}
-                <a class="p-author h-card" href="{{reply.author_url}}">
-                  {{ reply.author_name }}
-                </a>
-              {% else %}
-                <span class="p-author">{{ reply.author_name }}</span>
+      {% if post.replies %}
+        <div class="replies">
+          <a name="replies"></a><b>Replies</b>
+          {% for reply in post.replies %}
+            
+            <div class="p-comment">
+              <p class="e-content">{{ reply.content }}</p>
+              <time class="dt-published" datetime="{{ reply.pub_date | strftime('%Y-%m-%d %H:%M')}}"><a class="u-url" href="{{ reply.source }}">{{ reply.pub_date | strftime('%Y-%m-%d %H:%M') }}</a></time>
+              {% if reply.author_name %} |
+                {% if reply.author_url %}
+                  <a class="p-author h-card" href="{{reply.author_url}}">
+                    {{ reply.author_name }}
+                  </a>
+                {% else %}
+                  <span class="p-author">{{ reply.author_name }}</span>
+                {% endif %}
               {% endif %}
-            {% endif %}
-            {% if authenticated %}
-              | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
-            {% endif %}    
-          </div>
-          
-        {% endfor %}
-      </div>    
-    {% endif %}
+              {% if authenticated %}
+                | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
+              {% endif %}    
+            </div>
+            
+          {% endfor %}
+        </div>    
+      {% endif %}
 
-    {% if post.references %}
-      <div class="references">
-        <a name="refs"></a><b>References</b>
-        {% for ref in post.references %}
-          <div class="p-comment">
-            <p class="e-content">
-              <a class="u-url" href="{{ ref.source }}">{{ ref.source }}</a>
-            </p>
+      {% if post.references %}
+        <div class="references">
+          <a name="refs"></a><b>References</b>
+          {% for ref in post.references %}
+            <div class="p-comment">
+              <p class="e-content">
+                <a class="u-url" href="{{ ref.source }}">{{ ref.source }}</a>
+              </p>
 
-            <time class="dt-published" datetime="{{ ref.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ ref.pub_date | strftime('%Y-%m-%d %H:%M') }}</time> |
-            {% if ref.author_name %}
-              {% if ref.author_url %}
-                <a class="p-author h-card" href="{{ref.author_url}}">
-                  {{ ref.author_name }}
-                </a>
-              {% else %}
-                <span class="p-author">{{ ref.author_name }}</span>
+              <time class="dt-published" datetime="{{ ref.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ ref.pub_date | strftime('%Y-%m-%d %H:%M') }}</time> |
+              {% if ref.author_name %}
+                {% if ref.author_url %}
+                  <a class="p-author h-card" href="{{ref.author_url}}">
+                    {{ ref.author_name }}
+                  </a>
+                {% else %}
+                  <span class="p-author">{{ ref.author_name }}</span>
+                {% endif %}
               {% endif %}
-            {% endif %}
-            {% if authenticated %}
-              | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=ref.id) }}">Delete</a>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
+              {% if authenticated %}
+                | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=ref.id, redirect=post.permalink_url) }}">Delete</a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>  
   </div>
-  
-{% endblock content %}
+    
+  {% endblock content %}
 

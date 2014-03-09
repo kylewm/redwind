@@ -7,22 +7,9 @@ import requests
 from bs4 import BeautifulSoup
 
 
-@app.route('/webmention', methods=["POST"])
-def receive_webmention():
-    source = request.form.get('source')
-    target = request.form.get('target')
-
-    app.logger.debug("Webmention from %s to %s received", source, target)
-
-    result = process_webmention(source, target)
-    if not result:
-        abort(404)
-    return result
-
-
 def process_webmention(source, target):
     app.logger.debug("processing webmention from %s to %s", source, target)
-    
+
     # confirm that source actually refers to the post
     source_response = requests.get(source)
 
@@ -73,12 +60,15 @@ def process_webmention(source, target):
 
     return make_response("Received mention, thanks!")
 
+
 def extract_permalink(hentry):
     permalink = hentry.find(class_='u-url')
     if permalink:
-        app.logger.debug('webmention, original source: found permalink: {}'.format(permalink))
+        app.logger.debug('webmention, original source: found permalink: {}'
+                         .format(permalink))
         permalink_url = permalink.get('href') or permalink.text
         return permalink_url
+
 
 def determine_author(soup, hentry):
     pauthor = hentry.find(class_='p-author')

@@ -131,11 +131,6 @@ nav li {
     padding-bottom: 20px;
 }
 
-.h-entry .h-card {
-    float: left;
-    margin-right: 10px;
-}
-
 .pager-left {
     padding: 5px;
     border-radius: 5px;
