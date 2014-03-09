@@ -116,11 +116,11 @@ nav li {
     padding-bottom: 20px;
 }
 
-.h-card .p-name {
+.sidebar .h-card .p-name {
     font-weight: bold;
 }
 
-.h-card img {
+.sidebar .h-card img {
     float: left;
     margin: 10px 10px 0px 10px;
 }
@@ -129,6 +129,11 @@ nav li {
     border-bottom: solid 1px #ddd;
     margin-bottom: 20px;
     padding-bottom: 20px;
+}
+
+.h-entry .h-card {
+    float: left;
+    margin-right: 10px;
 }
 
 .pager-left {

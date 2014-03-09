@@ -1,11 +1,10 @@
-{% extends "base.html" %}
+{% extends "base_with_sidebar.html" %}
 
-{% block content %}
+{% block content2 %}
 
   {% for post in posts %}
 
     <div class="post {{post.post_type}} h-entry">
-
       {% if post.title %}
         <a class="u-url p-name" href="{{ post.permalink_url }}">{{ post.title }}</a>
         <div class="e-content">
@@ -24,5 +23,5 @@
 
 {% include "page_arrows.html" %}
 
-{% endblock content %}
+{% endblock content2 %}
 

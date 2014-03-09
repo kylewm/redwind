@@ -245,6 +245,7 @@ def settings():
 @app.route('/admin/delete/<post_type>/<post_id>')
 @login_required
 def delete_by_id(post_type, post_id):
+
     if post_type == 'mention':
         post = Mention.query.filter_by(id=post_id).first()
     else:
@@ -255,7 +256,8 @@ def delete_by_id(post_type, post_id):
         
     db.session.delete(post)
     db.session.commit()
-    return redirect(url_for('index'))
+
+    return redirect(request.form.get('redirect') or url_for('index'))
 
 def handle_new_or_edit(request, post):    
     if request.method == 'POST':

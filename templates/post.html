@@ -4,10 +4,7 @@
 
   <div class="post {{post.post_type}} h-entry">
 
-    <div class="p-author h-card">
-      <img class="u-photo" src="{{ url_for('static', filename='img/users/kyle.jpg', _external=True) }}"/>
-      <span class="p-name">Kyle Mahan</span> / <a class="u-url" href="http://kylewm.com">kylewm.com</a>
-    </div>
+    {% include "hcard_author.html" %}
 
     {% if post.title %}
       <h2 class="p-name">{{ post.title }}</h2>
@@ -26,6 +23,7 @@
       <div class="replies">
         <a name="replies"></a><b>Replies</b>
         {% for reply in post.replies %}
+        
           <div class="p-comment">
             <p class="e-content">{{ reply.content }}</p>
             <time class="dt-published" datetime="{{ reply.pub_date | strftime('%Y-%m-%d %H:%M')}}"><a class="u-url" href="{{ reply.source }}">{{ reply.pub_date | strftime('%Y-%m-%d %H:%M') }}</a></time>
@@ -39,9 +37,8 @@
               {% endif %}
             {% endif %}
             {% if authenticated %}
-              | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id) }}">Delete</a>
-            {% endif %}
-    
+              | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
+            {% endif %}    
           </div>
           
         {% endfor %}

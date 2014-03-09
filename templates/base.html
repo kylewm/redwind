@@ -75,38 +75,7 @@
 
 
       <div class="section group">
-        <!-- main content -->
-        <div class="col span_2_of_3">
           {% block content %}{% endblock content %}
-        </div>
-
-        <!-- sidebar -->
-        <div class="col span_1_of_3">
-          <div class="sidebar">
-            {% include "hcard.html" %}
-
-            {% if articles %}
-            <div class="recent-articles">
-              <b>Recent Articles</b>
-              {% for article in articles %}
-              <ul>
-                <li>
-                  <a href="{{article.permalink_url}}">{{ article.title }}</a>
-                </li>
-              </ul>
-              {% endfor %}
-            </div>
-            {% endif %}
-
-
-                    <footer>
-            <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a><br/>
-            Built with <a href="http://github.com/kylewm/groomsman">Groomsman</a>, powered by <a href="http://flask.pocoo.org/">Flask</a> and <a href="http://www.responsivegridsystem.com/">Responsive Grid System</a>. Designed for the <a href="http://indiewebcamp.com">#indieweb</a>.
-          </footer>
-</div>
-
-        </div>
-        
       </div>
     </div>   
   </body>
