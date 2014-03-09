@@ -79,10 +79,12 @@ def try_find_original_source(source, source_text, target):
     hentry = soup.find(class_='h-entry')
     if hentry:
         permalink = hentry.find(class_='u-url')
-        if permalink != source:
-            result = process_webmention(permalink, target)
-            if result:
-                return result
+        if permalink:
+            permalink_url = permalink.get('href') or permalink.text
+            if permalink_url != source:
+                result = process_webmention(permalink_url, target)
+                if result:
+                    return result
 
 
 def determine_author(soup, hentry):
