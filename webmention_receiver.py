@@ -46,7 +46,7 @@ def process_webmention(source, target):
         return None
 
     is_reply = ('in-reply-to' in link_to_target.get('rel', [])
-                or 'u-in-reply-to' in link_target.get('class', []))
+                or 'u-in-reply-to' in link_to_target.get('class', []))
 
     app.logger.debug("Webmention from %s to %s, verified (%s).",
                      source, target, "reply" if is_reply else "mention")
