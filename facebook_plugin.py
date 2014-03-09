@@ -41,7 +41,7 @@ class FacebookClient:
         actions = { "name" : "See Original", "link" : post.permalink_url }
         privacy = { "value" : "EVERYONE" }
         response = graph.put_object("me", "feed", name=post.title, message=post.content,
-                                    link=post.repost_source or post.permalink_url,
+                                    link=post.repost_source,
                                     actions=json.dumps(actions), privacy=json.dumps(privacy))
         app.logger.debug("published to facebook. response {}".format(response))
         post.facebook_post_id = response['id']
