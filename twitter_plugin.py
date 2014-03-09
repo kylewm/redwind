@@ -6,7 +6,7 @@ import twitter
 import re
 import urllib.parse
 from datetime import datetime, timedelta
-
+from models import ShortLink
 
 @app.route('/admin/authorize_twitter')
 @login_required
@@ -146,7 +146,7 @@ class TwitterClient:
 
         return ' '.join(c.text for c in shortened_comps)
 
-    def url_to_span(self, user, url, can_drop=True):
+    def url_to_span(self, user, url, prefix='', postfix='', can_drop=True):
         twitter_config = self.get_help_configuration(user)
         if twitter_config:
             url_length = twitter_config.get('short_url_length_https'
@@ -155,7 +155,10 @@ class TwitterClient:
         else:
             url_length = 30
 
-        return TextSpan(url, url_length, can_shorten=False, can_drop=can_drop)
+        app.logger.debug("assuming url length {}".format(url_length))
+        return TextSpan(prefix + url + postfix,
+                        len(prefix) + url_length + len(postfix),
+                        can_shorten=False, can_drop=can_drop)
 
     def text_to_span(self, text, can_shorten=True, can_drop=True):
         return TextSpan(text, len(text), can_shorten=can_shorten,
@@ -183,6 +186,10 @@ class TwitterClient:
         """
         target_length = 140
 
+        #short_link = ShortLink(post)
+        #db.session.add(short_link)
+        #db.session.commit()
+
         if post.title:
             components = [self.text_to_span(post.title),
                           self.url_to_span(post.author, post.permalink_url,
@@ -197,15 +204,20 @@ class TwitterClient:
                                                    post.repost_source,
                                                    can_drop=False))
 
-            # include a link to the original message if the note is longer than
-            # 140 characters, and we aren't resharing another URL.
-            #if self.estimate_length(components) > target_length:
             components.append(self.url_to_span(post.author,
                                                post.permalink_url,
                                                can_drop=False))
 
+            if self.estimate_length(components)+2 <= target_length:
+                components.pop()
+                components.append(self.url_to_span(post.author,
+                                                   post.permalink_url,
+                                                   prefix='(', postfix=')',
+                                                   can_drop=False))
+
         status = self.run_shorten_algorithm(components, target_length)
-        self.app.logger.info("shortened for twitter '%s'", status)
+        self.app.logger.debug("shortened to (%d) for twitter '%s'",
+                              len(status), status)
         return status
 
 

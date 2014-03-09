@@ -1,5 +1,7 @@
 from app import app, db
+
 import datetime
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -101,13 +103,6 @@ class Post(db.Model):
         return '/'.join(path_components)
 
     @property
-    def permalink_short_url(self):
-        site_url = app.config.get('SITE_URL') or 'http://localhost'
-        path_components = [site_url, self.post_type, str(self.pub_date.year),
-                           str(self.id)]
-        return '/'.join(path_components)
-
-    @property
     def twitter_url(self):
         if self.twitter_status_id:
             return "https://twitter.com/{}/status/{}".format(
@@ -127,6 +122,21 @@ class Post(db.Model):
             return 'post:{}'.format(self.title)
         else:
             return 'post:{}'.format(self.content[:140])
+
+
+class ShortLink(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+    def __init__(self, post):
+        self.post = post
+
+    @property
+    def url(self):
+        import base62
+        encoded_id = self.post.post_type[0] + base62.encode(self.id)
+        site_url = app.config.get('SHORT_SITE_URL')
+        return '/'.join((site_url, encoded_id))
 
 
 #CREATE TABLE mention (
