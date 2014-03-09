@@ -14,28 +14,39 @@ def receive_webmention():
 
     app.logger.debug("Webmention from %s to %s received", source, target)
 
-    # confirm that target is a valid link to a post
-    target_post = find_target_post(target)
+    success = process_webmention(source, target):
+    if not success:
+        abort(404)
 
-    if not target_post:
-        app.logger.warn(
-            "Webmention could not find target post: %s. Giving up", target)
-        abort(400)
 
+def process_webmention(source, target):
     # confirm that source actually refers to the post
     source_response = requests.get(source)
 
     if source_response.status_code // 100 != 2:
         app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
-        abort(400)
+        return None
+
+    # mutually recursive with process_webmention
+    result = try_find_original_source(source, source_response.text, target)
+    if result:
+        return result
+
+    # confirm that target is a valid link to a post
+    target_post = find_target_post(target)
+
+    if not target_post:
+        app.logger.warn(
+            "Webmention could not find target post: %s. Giving up", target)
+        return None
 
     link_to_target = find_link_to_target(source, source_response, target)
     if not link_to_target:
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
-        abort(400)
+        return None
 
     link_rel = link_to_target.get('rel')
     is_reply = link_rel and 'in-reply-to' in link_rel
@@ -50,7 +61,7 @@ def receive_webmention():
         app.logger.warn(
             "Webmention could not find h-entry on source page: %s. Giving up",
             source)
-        abort(400)
+        return None
 
     source_content = extract_source_content(hentry)
     author_name, author_url = determine_author(soup, hentry)
@@ -63,12 +74,22 @@ def receive_webmention():
     return make_response("Received mention, thanks!")
 
 
+def try_find_original_source(source, source_text, target):
+    soup = BeautifulSoup(source_text)
+    hentry = soup.find(class_='h-entry')
+    if hentry:
+        permalink = hentry.find(class_='u-url')
+        if permalink != source:
+            result = process_webmention(permalink, target)
+            if result:
+                return result
+
+
 def determine_author(soup, hentry):
     pauthor = hentry.find(class_='p-author')
     if pauthor:
-        hcard = pauthor.find(class_='h-card')
-        if hcard:
-            return parse_hcard_for_author(hcard)
+        if 'h-card' in pauthor['class']:
+            return parse_hcard_for_author(pauthor)
         return pauthor.text, pauthor.get('href')
 
     # use top-level h-card
