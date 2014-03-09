@@ -13,7 +13,6 @@ with open('static/css/pygments.css', 'w') as f:
 
 
 def curl(url, file):
-        
     response = requests.get(url, stream=True)
     with open(file, 'wb') as f:
         shutil.copyfileobj(response.raw, f)
