@@ -30,11 +30,6 @@ def process_webmention(source, target):
             "Webmention could not read source post: %s. Giving up", source)
         return None
 
-    # mutually recursive with process_webmention
-    result = try_find_original_source(source, source_response.text, target)
-    if result:
-        return result
-
     # confirm that target is a valid link to a post
     target_post = find_target_post(target)
 
@@ -65,10 +60,12 @@ def process_webmention(source, target):
             source)
         return None
 
+    permalink = extract_permalink(hentry)
     source_content = extract_source_content(hentry)
     author_name, author_url = determine_author(soup, hentry)
 
-    mention = Mention(source, target_post, source_content, is_reply,
+    mention = Mention(permalink or source, target_post,
+                      source_content, is_reply,
                       author_name, author_url)
     db.session.add(mention)
     db.session.commit()
@@ -76,21 +73,12 @@ def process_webmention(source, target):
     return make_response("Received mention, thanks!")
 
 
-def try_find_original_source(source, source_text, target):
-    soup = BeautifulSoup(source_text)
-    hentry = soup.find(class_='h-entry')
-    if hentry:
-        app.logger.debug('webmention, original source: found h-entry: {}'.format(hentry))
-        permalink = hentry.find(class_='u-url')
-        if permalink:
-            app.logger.debug('webmention, original source: found permalink: {}'.format(permalink))
-            permalink_url = permalink.get('href') or permalink.text
-            if permalink_url != source:
-                app.logger.debug('webmention, original source: found permalink url: {}'.format(permalink_url))
-                result = process_webmention(permalink_url, target)
-                if result:
-                    return result
-
+def extract_permalink(hentry):
+    permalink = hentry.find(class_='u-url')
+    if permalink:
+        app.logger.debug('webmention, original source: found permalink: {}'.format(permalink))
+        permalink_url = permalink.get('href') or permalink.text
+        return permalink_url
 
 def determine_author(soup, hentry):
     pauthor = hentry.find(class_='p-author')
