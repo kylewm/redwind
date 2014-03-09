@@ -14,9 +14,10 @@ def receive_webmention():
 
     app.logger.debug("Webmention from %s to %s received", source, target)
 
-    success = process_webmention(source, target)
-    if not success:
+    result = process_webmention(source, target)
+    if not result:
         abort(404)
+    return result
 
 
 def process_webmention(source, target):
