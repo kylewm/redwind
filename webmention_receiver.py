@@ -45,8 +45,8 @@ def process_webmention(source, target):
             "Giving up", source, target)
         return None
 
-    link_rel = link_to_target.get('rel')
-    is_reply = link_rel and 'in-reply-to' in link_rel
+    is_reply = ('in-reply-to' in link_to_target.get('rel', [])
+                or 'u-in-reply-to' in link_target.get('class', []))
 
     app.logger.debug("Webmention from %s to %s, verified (%s).",
                      source, target, "reply" if is_reply else "mention")
@@ -71,7 +71,6 @@ def process_webmention(source, target):
     db.session.commit()
 
     return make_response("Received mention, thanks!")
-
 
 def extract_permalink(hentry):
     permalink = hentry.find(class_='u-url')
