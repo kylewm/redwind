@@ -245,9 +245,14 @@ def settings():
 @app.route('/admin/delete/<post_type>/<post_id>')
 @login_required
 def delete_by_id(post_type, post_id):
-    post = Post.query.filter_by(id=post_id).first()
+    if post_type == 'mention':
+        post = Mention.query.filter_by(id=post_id).first()
+    else:
+        post = Post.query.filter_by(id=post_id).first()
+        
     if not post:
         abort(404)
+        
     db.session.delete(post)
     db.session.commit()
     return redirect(url_for('index'))

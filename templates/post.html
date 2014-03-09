@@ -38,7 +38,12 @@
                 <span class="p-author">{{ reply.author_name }}</span>
               {% endif %}
             {% endif %}
+            {% if authenticated %}
+              | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id) }}">Delete</a>
+            {% endif %}
+    
           </div>
+          
         {% endfor %}
       </div>    
     {% endif %}
@@ -48,7 +53,10 @@
         <a name="refs"></a><b>References</b>
         {% for ref in post.references %}
           <div class="p-comment">
-            <p class="e-content">{{ ref.content }}</p>
+            <p class="e-content">
+              <a class="u-url" href="{{ ref.source }}">{{ ref.source }}</a>
+            </p>
+
             <time class="dt-published" datetime="{{ ref.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ ref.pub_date | strftime('%Y-%m-%d %H:%M') }}</time> |
             {% if ref.author_name %}
               {% if ref.author_url %}
@@ -59,8 +67,9 @@
                 <span class="p-author">{{ ref.author_name }}</span>
               {% endif %} |
             {% endif %}
-            <a class="u-url" href="{{ ref.source }}">Source</a>
-
+            {% if authenticated %}
+              | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=ref.id) }}">Delete</a>
+            {% endif %}
           </div>
         {% endfor %}
       </div>
