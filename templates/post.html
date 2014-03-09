@@ -65,7 +65,7 @@
                 </a>
               {% else %}
                 <span class="p-author">{{ ref.author_name }}</span>
-              {% endif %} |
+              {% endif %}
             {% endif %}
             {% if authenticated %}
               | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=ref.id) }}">Delete</a>
