@@ -93,7 +93,8 @@ class DisplayPost:
         #fallback
         m = re.match(r'https?://(.*)', url)
         if m:
-            preview = """<a href="{}">{}</a>""".format(url, m.group(1))
+            preview = """<a href="{}" class="u-repost u-repost-of">{}</a>"""\
+                .format(url, m.group(1))
             return preview, False
 
         # TODO when the post is first created, we should fetch the
