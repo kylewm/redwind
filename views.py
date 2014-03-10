@@ -144,17 +144,11 @@ class DisplayPost:
     @property
     def permalink_url(self):
         site_url = app.config.get('SITE_URL') or 'http://localhost'
-        path_components = [site_url, self.post_type, str(self.pub_date.year),
-                           str(self.id)]
+        path_components = [site_url, self.post_type,
+                           self.date_str, str(self.date_index)]
         if self.slug:
             path_components.append(self.slug)
-        return '/'.join(path_components)
 
-    @property
-    def permalink_short_url(self):
-        site_url = app.config.get('SITE_URL') or 'http://localhost'
-        path_components = [site_url, self.post_type, str(self.pub_date.year),
-                           str(self.id)]
         return '/'.join(path_components)
 
     @property
@@ -223,15 +217,25 @@ def articles_atom():
     return render_posts_atom('Articles', 'article', 10)
 
 
+@app.route('/<post_type>/<date_str>/<int:date_index>',
+           defaults={'slug': None})
+@app.route('/<post_type>/<date_str>/<int:date_index>/<slug>')
+def post_by_date(post_type, date_str, date_index, slug):
+    post = Post.query.filter_by(date_str=date_str,
+                                date_index=date_index).first()
+    if not post:
+        abort(404)
+    return render_template('post.html', post=post, title=post.title,
+                           authenticated=current_user.is_authenticated())
+
+
 @app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug': None})
 @app.route('/<post_type>/<int:year>/<post_id>/<slug>')
 def post_by_id(post_type, year, post_id, slug):
     post = DisplayPost.get_post(post_id)
     if not post:
         abort(404)
-    _, articles = DisplayPost.get_posts('article', 1, 5)
     return render_template('post.html', post=post, title=post.title,
-                           articles=articles,
                            authenticated=current_user.is_authenticated())
 
 
@@ -362,7 +366,13 @@ def handle_new_or_edit(request, post):
 def new_post(post_type):
     author = User.query.first()
     content_format = 'plain' if post_type == 'note' else 'markdown'
-    post = Post('', '', '', post_type, content_format, author, None)
+
+    date = datetime.datetime.now()
+    date_str = date.strftime('%y%m%d')
+    date_index = 1 + Post.query.filter_by(date_str=date_str).count()
+
+    post = Post('', '', '', post_type, content_format, author,
+                date, date_str, date_index)
     return handle_new_or_edit(request, post)
 
 

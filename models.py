@@ -82,32 +82,21 @@ class Post(db.Model):
                            order_by=tags_to_posts.columns.position,
                            backref='posts')
     mentions = db.relationship('Mention', backref='post')
+    date_str = db.Column(db.String(8))
+    date_index = db.Column(db.Integer)
 
     def __init__(self, title, slug, content, post_type, content_format,
-                 author, pub_date=None):
+                 author, pub_date, date_str, date_index):
         self.title = title
         self.slug = slug
         self.content = content
         self.post_type = post_type
         self.content_format = content_format
         self.author = author
-        self.pub_date = pub_date or datetime.datetime.utcnow()
 
-    @property
-    def permalink_url(self):
-        site_url = app.config.get('SITE_URL') or 'http://localhost'
-        path_components = [site_url, self.post_type, str(self.pub_date.year),
-                           str(self.id)]
-        if self.slug:
-            path_components.append(self.slug)
-        return '/'.join(path_components)
-
-    @property
-    def twitter_url(self):
-        if self.twitter_status_id:
-            return "https://twitter.com/{}/status/{}".format(
-                self.author.twitter_username,
-                self.twitter_status_id)
+        self.pub_date = pub_date
+        self.date_str = date_str
+        self.date_index = date_index
 
     @property
     def mentions_categorized(self):
