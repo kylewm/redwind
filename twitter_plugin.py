@@ -6,7 +6,8 @@ import twitter
 import re
 import urllib.parse
 from datetime import datetime, timedelta
-from models import ShortLink
+#from models import ShortLink
+
 
 @app.route('/admin/authorize_twitter')
 @login_required
@@ -192,7 +193,8 @@ class TwitterClient:
 
         if post.title:
             components = [self.text_to_span(post.title),
-                          self.url_to_span(post.author, post.permalink_url,
+                          self.url_to_span(post.author,
+                                           post.permalink_url,
                                            can_drop=False)]
 
         else:

@@ -136,32 +136,6 @@ class DisplayPost:
                 . format(self.permalink_url)
         return Markup(text)
 
-    @property
-    def permalink_url(self):
-        site_url = app.config.get('SITE_URL') or 'http://localhost'
-        path_components = [site_url, self.post_type,
-                           self.date_str, str(self.date_index)]
-        if self.slug:
-            path_components.append(self.slug)
-
-        return '/'.join(path_components)
-
-    @property
-    def twitter_url(self):
-        if self.twitter_status_id:
-            return "https://twitter.com/{}/status/{}".format(
-                self.author.twitter_username,
-                self.twitter_status_id)
-
-    @property
-    def facebook_url(self):
-        if self.facebook_post_id:
-            split = self.facebook_post_id.split('_', 1)
-            if split and len(split) == 2:
-                user_id, post_id = split
-                return "https://facebook.com/{}/posts/{}"\
-                    .format(user_id, post_id)
-
 
 def render_posts(title, post_type, page, per_page):
     _, articles = DisplayPost.get_posts('article', 1, 5)
@@ -358,7 +332,7 @@ def handle_new_or_edit(request, post):
         except:
             app.logger.exception('sending webmentions')
 
-        return redirect(DisplayPost(post).permalink_url)
+        return redirect(post.permalink_url)
 
     return render_template('edit_post.html', post=post,
                            authenticated=current_user.is_authenticated())

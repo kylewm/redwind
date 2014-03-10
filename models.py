@@ -104,6 +104,32 @@ class Post(db.Model):
             cat[mention.mention_type].append(mention)
         return cat
 
+    @property
+    def permalink_url(self):
+        site_url = app.config.get('SITE_URL') or 'http://localhost'
+        path_components = [site_url, self.post_type,
+                           self.date_str, str(self.date_index)]
+        if self.slug:
+            path_components.append(self.slug)
+
+        return '/'.join(path_components)
+
+    @property
+    def twitter_url(self):
+        if self.twitter_status_id:
+            return "https://twitter.com/{}/status/{}".format(
+                self.author.twitter_username,
+                self.twitter_status_id)
+
+    @property
+    def facebook_url(self):
+        if self.facebook_post_id:
+            split = self.facebook_post_id.split('_', 1)
+            if split and len(split) == 2:
+                user_id, post_id = split
+                return "https://facebook.com/{}/posts/{}"\
+                    .format(user_id, post_id)
+
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.title)

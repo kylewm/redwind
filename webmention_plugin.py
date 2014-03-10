@@ -23,15 +23,15 @@ class MentionClient:
         if post.repost_source:
             target_urls.append(post.repost_source)
 
-
         html_content = views.DisplayPost(post).html_content
         self.app.logger.debug("search post content {}".format(html_content))
-            
+
         soup = BeautifulSoup(html_content)
         for link in soup.find_all('a'):
             link_target = link.get('href')
             if link_target:
-                self.app.logger.debug("found link {} with href {}".format(link, link_target))
+                self.app.logger.debug("found link {} with href {}"
+                                      .format(link, link_target))
                 target_urls.append(link_target)
 
         return target_urls
