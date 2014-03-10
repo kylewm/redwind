@@ -305,7 +305,7 @@ def handle_new_or_edit(request, post):
         post.content_format = request.form.get('content_format', 'plain')
         pub_date = request.form.get('date', '').strip()
         if pub_date:
-            post.pub_date = time.strptime(pub_date, '%Y-%m-%d %H:%M')
+            post.pub_date = datetime.strptime(pub_date, '%Y-%m-%d %H:%M')
         else:
             post.pub_date = datetime.now()
 
@@ -358,7 +358,7 @@ def handle_new_or_edit(request, post):
         except:
             app.logger.exception('sending webmentions')
 
-        return redirect(post.permalink_url)
+        return redirect(DisplayPost(post).permalink_url)
 
     return render_template('edit_post.html', post=post,
                            authenticated=current_user.is_authenticated())
