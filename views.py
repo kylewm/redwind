@@ -11,16 +11,12 @@ import webmention_receiver
 from datetime import datetime
 import os
 import re
-import urllib
 import requests
 
 from flask import request, redirect, url_for, render_template,\
     flash, abort, make_response, jsonify, Markup
 from flask.ext.login import login_required, login_user,\
     logout_user, current_user
-from flask_wtf import Form
-from wtforms import StringField, PasswordField, BooleanField
-from wtforms.validators import DataRequired
 from bs4 import BeautifulSoup, Comment
 
 from werkzeug import secure_filename
@@ -205,49 +201,33 @@ def post_by_date(post_type, date_str, date_index, slug):
                            authenticated=current_user.is_authenticated())
 
 
-class LoginForm(Form):
-    username = StringField('username', validators=[DataRequired()])
-    password = PasswordField('password', validators=[DataRequired()])
-    remember = BooleanField('remember')
+@app.route("/indieauth")
+def indie_auth():
+    token = request.args.get('token')
+    response = requests.get('http://indieauth.com/verify',
+                            params={'token': token})
 
+    if response.status_code == 200:
+        domain = response.json().get('me')
+        user = load_user(domain)
+        if user:
+            login_user(user, remember=True)
+            flash('Logged in {} with domain {}'.format(user.login, domain))
+        else:
+            flash('No user for domain {}'.format(domain))
 
-@app.route("/admin/login", methods=["GET", "POST"])
-def login():
-    form = LoginForm()
+    else:
+        respjson = response.json()
+        flash('Login failed {}: {}'.format(respjson.get('error'),
+                                           respjson.get('error_description')))
 
-    if form.validate_on_submit():
-        # login and validate the user...
-        user = load_user(form.username.data)
-        login_user(user, remember=form.remember.data)
-        flash("Logged in successfully.")
-
-        next_enc = request.args.get("next")
-        next_url = (urllib.parse.unquote(next_enc)
-                    if next_enc else url_for("index"))
-        return redirect(next_url)
-
-    return render_template("login.html", form=form)
+    return redirect(url_for('index'))
 
 
 @app.route("/admin/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
-
-
-@app.route("/indieauth")
-def indie_auth():
-    token = request.args.get('token')
-    response = requests.get('http://indieauth.com/verify',
-                            params={'token': token})
-    if response.status_code == 200:
-        domain = response.json().get('me')
-        flash('Logged in as {}'.format(domain))
-    else:
-        respjson = response.json()
-        flash('Login failed {}: {}'.format(respjson.get('error'),
-                                           respjson.get('error_description')))
     return redirect(url_for('index'))
 
 

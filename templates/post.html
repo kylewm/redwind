@@ -4,9 +4,7 @@
 
   <div class="post {{post.post_type}} h-entry">
 
-    <div style="float: left; width: 75px;">
-      {% include "hcard_author.html" %}
-    </div>
+    {% include "hcard_author.html" %}
     
     <div style="float:left; width: calc(100% - 75px)">
       {% if post.title %}
@@ -29,32 +27,31 @@
           {% for reply in post.mentions %}            
             <div class="p-comment">
 
-              <div style="float:left; width:50px">
-                {% if reply.author_name %}
-                  {% if reply.author_url %} <a class="p-author h-card" href="{{reply.author_url}}">
-                  {% else %} <p class="p-author h-card"> {% endif %}
+              <div class="p-author h-card">
 
-                  <img src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}" width="48px" alt="{{reply.author_name}}"/><br/>
-
-                  {{reply.author_name}}
-
-                  {% if reply.author_url %} </a>
-                  {% else %} </p> {% endif %}
-                  
-                {% endif %}
-              </div>
-
-              <div style="float:left; width: calc(100%-50px)">
-                <p class="e-content">{{ reply.content }}</p>
+                <div style="position: relative; float: left; width: 48px; height: 64px; margin-right: 6px;">
+                  <img class="u-photo" src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}" width="48px" alt="{{reply.author_name}}"/>
+                </div>
                 
-                <time class="dt-published" datetime="{{ reply.pub_date | strftime('%Y-%m-%d %H:%M')}}">
-                  <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %H:%M') }}</a>
-                </time>
-
-                {% if authenticated %}
-                  | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
-                {% endif %}    
+                {% if reply.author_name %}
+                  {% if reply.author_url %} <a class="p-name u-url" href="{{reply.author_url}}">
+                  {% else %} <span class="p-name"> {% endif %}
+                  {{reply.author_name}}
+                  {% if reply.author_url %} </a>
+                  {% else %} </span> {% endif %}
+                {% endif %}
+                
               </div>
+
+              <p class="e-content">{{ reply.content }}</p>
+              
+              <time class="dt-published" datetime="{{ reply.pub_date | strftime('%Y-%m-%d %H:%M')}}">
+                <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %H:%M') }}</a>
+              </time>
+
+              {% if authenticated %}
+                | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
+              {% endif %}    
 
               <div style="clear:both"></div>
             </div>

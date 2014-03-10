@@ -5,9 +5,11 @@ import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from collections import defaultdict
 
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(80), unique=True)
+    domain = db.Column(db.String(120), unique=True)
     email = db.Column(db.String(120), unique=True)
     pw_hash = db.Column(db.String(256))
     display_name = db.Column(db.String(80))
@@ -34,7 +36,7 @@ class User(db.Model):
         return False
 
     def get_id(self):
-        return self.login
+        return self.domain
 
     def __init__(self, login, email, password):
         self.login = login
@@ -42,7 +44,7 @@ class User(db.Model):
         self.set_password(password)
 
     def __repr__(self):
-        return 'user:{}'.format(self.login)
+        return '<User:{}>'.format(self.login)
 
 
 class Tag(db.Model):
