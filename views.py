@@ -248,7 +248,7 @@ def indie_auth():
         respjson = response.json()
         flash('Login failed {}: {}'.format(respjson.get('error'),
                                            respjson.get('error_description')))
-    redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 
 @app.route('/admin/settings')
