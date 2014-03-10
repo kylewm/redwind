@@ -7,7 +7,7 @@
     <div style="float: left; width: 75px;">
       {% include "hcard_author.html" %}
     </div>
-
+    
     <div style="float:left; width: calc(100% - 75px)">
       {% if post.title %}
         <h2 class="p-name">{{ post.title }}</h2>
@@ -34,7 +34,7 @@
                   {% if reply.author_url %} <a class="p-author h-card" href="{{reply.author_url}}">
                   {% else %} <p class="p-author h-card"> {% endif %}
 
-                  <img src="{{reply.author_image}}" width="48px" alt="{{reply.author_name}}"/><br/>
+                  <img src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}" width="48px" alt="{{reply.author_name}}"/><br/>
 
                   {{reply.author_name}}
 

@@ -95,10 +95,7 @@ class Post(db.Model):
         self.post_type = post_type
         self.content_format = content_format
         self.author = author
-
         self.pub_date = pub_date
-        self.date_str = date_str
-        self.date_index = date_index
 
     @property
     def mentions_categorized(self):
