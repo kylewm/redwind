@@ -87,7 +87,7 @@ def determine_author(soup, hentry):
     if pauthor:
         if 'h-card' in pauthor['class']:
             return parse_hcard_for_author(pauthor)
-        return pauthor.text, pauthor.get('href')
+        return pauthor.text, pauthor.get('href'), None
 
     # use top-level h-card
     hcard = soup.find(class_='h-card')
@@ -97,7 +97,7 @@ def determine_author(soup, hentry):
     # use page title
     title = soup.find('title')
     if title:
-        return title.text, None
+        return title.text, None, None
 
 
 def parse_hcard_for_author(hcard):
@@ -106,12 +106,18 @@ def parse_hcard_for_author(hcard):
         author = pname.text
     else:
         author = hcard.text
+
     uurl = hcard.find(class_='u-url')
     if uurl:
-        url = uurl.get('href') or uurl.text
+        url = uurl.get('href', uurl.text)
     else:
         url = hcard.get('href')
-    return author, url
+
+    uphoto = hcard.find(class_='u-photo')
+    if uphoto:
+        img = uphoto.get('src') or uphoto.get('href')
+
+    return author, url, img
 
 
 def extract_source_content(hentry):
