@@ -1,6 +1,6 @@
 from app import app, db
 from models import Post, Mention
-from flask import request, abort, make_response
+from flask import make_response
 import urllib.parse
 import requests
 
@@ -33,11 +33,23 @@ def process_webmention(source, target):
             "Giving up", source, target)
         return None
 
-    is_reply = ('in-reply-to' in link_to_target.get('rel', [])
-                or 'u-in-reply-to' in link_to_target.get('class', []))
+    to_target_rels = link_to_target.get('rel', [])
+    to_target_classes = link_to_target.get('class', [])
+
+    if ('in-reply-to' in to_target_rels or
+            'u-in-reply-to' in to_target_classes):
+        mention_type = 'reply'
+    elif ('u-like' in to_target_classes
+          or 'u-like-of' in to_target_classes):
+        mention_type = 'like'
+    elif ('u-repost' in to_target_classes
+          or 'u-repost-of' in to_target_classes):
+        mention_type = 'repost'
+    else:
+        mention_type = 'reference'
 
     app.logger.debug("Webmention from %s to %s, verified (%s).",
-                     source, target, "reply" if is_reply else "mention")
+                     source, target, mention_type)
 
     soup = BeautifulSoup(source_response.text)
     hentry = soup.find(class_="h-entry")
@@ -50,11 +62,11 @@ def process_webmention(source, target):
 
     permalink = extract_permalink(hentry)
     source_content = extract_source_content(hentry)
-    author_name, author_url = determine_author(soup, hentry)
+    author_name, author_url, author_image = determine_author(soup, hentry)
 
-    mention = Mention(permalink or source, target_post,
-                      source_content, is_reply,
-                      author_name, author_url)
+    mention = Mention(source, permalink, target_post,
+                      source_content, mention_type,
+                      author_name, author_url, author_image)
     db.session.add(mention)
     db.session.commit()
 

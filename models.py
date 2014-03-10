@@ -3,7 +3,7 @@ from app import app, db
 import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from collections import defaultdict
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -110,12 +110,11 @@ class Post(db.Model):
                 self.twitter_status_id)
 
     @property
-    def replies(self):
-        return [mention for mention in self.mentions if mention.is_reply]
-
-    @property
-    def references(self):
-        return [mention for mention in self.mentions if not mention.is_reply]
+    def mentions_categorized(self):
+        cat = defaultdict(list)
+        for mention in self.mentions:
+            cat[mention.mention_type].append(mention)
+        return cat
 
     def __repr__(self):
         if self.title:
@@ -152,22 +151,26 @@ class ShortLink(db.Model):
 class Mention(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     source = db.Column(db.String(256))
+    permalink = db.Column(db.String(256))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     content = db.Column(db.Text)
-    is_reply = db.Column(db.Boolean)
+    mention_type = db.Column(db.String(64))
     author_name = db.Column(db.String(256))
     author_url = db.Column(db.String(256))
+    author_image = db.Column(db.String(256))
     pub_date = db.Column(db.DateTime)
 
-    def __init__(self, source, post, content, is_reply,
-                 author_name, author_url, pub_date=None):
+    def __init__(self, source, permalink, post, content, mention_type,
+                 author_name, author_url, author_image, pub_date=None):
         self.source = source
+        self.permalink = permalink
         self.post = post
         self.content = content
-        self.is_reply = is_reply
+        self.mention_type = mention_type
         self.author_name = author_name
         self.author_url = author_url
+        self.author_image = author_image
         self.pub_date = pub_date or datetime.datetime.utcnow()
 
     def __repr__(self):
-        return "Mention[{} from {}]".format(self.id, self.source)
+        return "<Mention: {} from {}>".format(self.mention_type, self.source)

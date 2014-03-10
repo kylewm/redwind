@@ -4,11 +4,11 @@
 
   <div class="post {{post.post_type}} h-entry">
 
-    <div style="width: 75px; float: left;">
+    <div style="float: left; width: 75px;">
       {% include "hcard_author.html" %}
     </div>
 
-    <div style="width: calc(100% - 75px); float:left">
+    <div style="float:left; width: calc(100% - 75px)">
       {% if post.title %}
         <h2 class="p-name">{{ post.title }}</h2>
         <div class="e-content">
@@ -22,60 +22,48 @@
 
       {% include "single_post_links.html" %}
 
-      {% if post.replies %}
+      {% if post.mentions %}
         <div class="replies">
-          <a name="replies"></a><b>Replies</b>
-          {% for reply in post.replies %}
-            
+          <a name="mentions"></a>
+
+          {% for reply in post.mentions %}            
             <div class="p-comment">
-              <p class="e-content">{{ reply.content }}</p>
-              <time class="dt-published" datetime="{{ reply.pub_date | strftime('%Y-%m-%d %H:%M')}}"><a class="u-url" href="{{ reply.source }}">{{ reply.pub_date | strftime('%Y-%m-%d %H:%M') }}</a></time>
-              {% if reply.author_name %} |
-                {% if reply.author_url %}
-                  <a class="p-author h-card" href="{{reply.author_url}}">
-                    {{ reply.author_name }}
-                  </a>
-                {% else %}
-                  <span class="p-author">{{ reply.author_name }}</span>
+
+              <div style="float:left; width:50px">
+                {% if reply.author_name %}
+                  {% if reply.author_url %} <a class="p-author h-card" href="{{reply.author_url}}">
+                  {% else %} <p class="p-author h-card"> {% endif %}
+
+                  <img src="{{reply.author_image}}" width="48px" alt="{{reply.author_name}}"/><br/>
+
+                  {{reply.author_name}}
+
+                  {% if reply.author_url %} </a>
+                  {% else %} </p> {% endif %}
+                  
                 {% endif %}
-              {% endif %}
-              {% if authenticated %}
-                | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
-              {% endif %}    
+              </div>
+
+              <div style="float:left; width: calc(100%-50px)">
+                <p class="e-content">{{ reply.content }}</p>
+                
+                <time class="dt-published" datetime="{{ reply.pub_date | strftime('%Y-%m-%d %H:%M')}}">
+                  <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %H:%M') }}</a>
+                </time>
+
+                {% if authenticated %}
+                  | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
+                {% endif %}    
+              </div>
+
+              <div style="clear:both"></div>
             </div>
             
           {% endfor %}
         </div>    
       {% endif %}
-
-      {% if post.references %}
-        <div class="references">
-          <a name="refs"></a><b>References</b>
-          {% for ref in post.references %}
-            <div class="p-comment">
-              <p class="e-content">
-                <a class="u-url" href="{{ ref.source }}">{{ ref.source }}</a>
-              </p>
-
-              <time class="dt-published" datetime="{{ ref.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ ref.pub_date | strftime('%Y-%m-%d %H:%M') }}</time> |
-              {% if ref.author_name %}
-                {% if ref.author_url %}
-                  <a class="p-author h-card" href="{{ref.author_url}}">
-                    {{ ref.author_name }}
-                  </a>
-                {% else %}
-                  <span class="p-author">{{ ref.author_name }}</span>
-                {% endif %}
-              {% endif %}
-              {% if authenticated %}
-                | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=ref.id, redirect=post.permalink_url) }}">Delete</a>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
     </div>  
   </div>
-    
-  {% endblock content %}
+  
+{% endblock content %}
 

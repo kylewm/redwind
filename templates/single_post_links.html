@@ -7,13 +7,9 @@
     <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}</time>
   </a>
 
-  {% if post.replies %}
-    {% set reply_count = post.replies | length %}
-    | <a href="{{ post.permalink_url }}#replies">{{ reply_count }} {% if reply_count == 1 %}reply{% else %}replies{% endif %}</a>
-  {% endif %}
-  {% if post.references %}
-    {% set ref_count = post.references | length %}
-    | <a href="{{ post.permalink_url }}#refs">{{ ref_count }} {% if ref_count == 1 %}reference{% else %}references{% endif %}</a>
+  {% if post.mentions %}
+    {% set reply_count = post.mentions | length %}
+    | <a href="{{ post.permalink_url }}#mentions">{{ reply_count }} {% if reply_count == 1 %}mention{% else %}mentions{% endif %}</a>
   {% endif %}
 
   {% if post.twitter_url %}
