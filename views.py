@@ -185,14 +185,7 @@ def articles_atom():
 @app.route('/<post_type>/<date_str>/<int:date_index>', defaults={'slug': None})
 @app.route('/<post_type>/<date_str>/<int:date_index>/<slug>')
 def post_by_date(post_type, date_str, date_index, slug):
-    post = Post.query.filter_by(post_type=post_type,
-                                date_str=date_str,
-                                date_index=date_index).first()
-
-    if not post and (date_str == '2013' or date_str == '2014'):
-        # unfortunate hack to catch old style /year/id urls
-        post = Post.query.filter_by(id=date_index).first()
-
+    post = Post.lookup_post_by_date(post_type, date_str, date_index)
     if not post:
         abort(404)
 

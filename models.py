@@ -89,6 +89,17 @@ class Post(db.Model):
                            backref='posts')
     mentions = db.relationship('Mention', backref='post')
 
+    @classmethod
+    def lookup_post_by_date(cls, post_type, date_str, date_index):
+        post = cls.query.filter_by(post_type=post_type,
+                                   date_str=date_str,
+                                   date_index=date_index).first()
+
+        if not post and (date_str == '2013' or date_str == '2014'):
+            # unfortunate hack to catch old style /year/id urls
+            post = Post.query.filter_by(id=date_index).first()
+        return post
+
     def __init__(self, title, slug, content, post_type, content_format,
                  author, pub_date):
         self.title = title

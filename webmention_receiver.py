@@ -155,19 +155,19 @@ def find_target_post(target_url):
         return None
 
     endpoint, args = urls.match(parsed_url.path)
-    if endpoint != 'post_by_id':
+    if endpoint != 'post_by_date':
         app.logger.warn("Webmention target is not a post: %s", parsed_url.path)
         return None
 
-    if not 'post_id' in args:
-        app.logger.warn(
-            "Webmention target is not a valid permalink: %s", target_url)
-        return None
+    post_type = args.get('post_type')
+    date_str = args.get('date_str')
+    date_index = args.get('date_index')
 
-    post_id = args['post_id']
-    post = Post.query.filter_by(id=post_id).first()
+    post = Post.lookup_post_by_date(post_type, date_str, date_index)
+
     if not post:
         app.logger.warn(
-            "Webmention target points to unknown post_id: %s", post_id)
+            "Webmention target points to unknown post: %s, %s, %d",
+            post_type, date_str, date_index)
 
     return post
