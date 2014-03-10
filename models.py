@@ -64,6 +64,11 @@ tags_to_posts = db.Table(
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # date_str and date_index together make up a unique
+    # (algorithmic) identifier
+    date_str = db.Column(db.String(8))
+    date_index = db.Column(db.Integer)
+    slug = db.Column(db.String(256))
     pub_date = db.Column(db.DateTime)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     author = db.relationship('User',
@@ -77,16 +82,13 @@ class Post(db.Model):
     repost_preview = db.Column(db.Text)
     twitter_status_id = db.Column(db.String(64))
     facebook_post_id = db.Column(db.String(64))
-    slug = db.Column(db.String(256))
     tags = db.relationship('Tag', secondary=tags_to_posts,
                            order_by=tags_to_posts.columns.position,
                            backref='posts')
     mentions = db.relationship('Mention', backref='post')
-    date_str = db.Column(db.String(8))
-    date_index = db.Column(db.Integer)
 
     def __init__(self, title, slug, content, post_type, content_format,
-                 author, pub_date, date_str, date_index):
+                 author, pub_date):
         self.title = title
         self.slug = slug
         self.content = content

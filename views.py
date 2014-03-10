@@ -43,11 +43,6 @@ class DisplayPost:
         pagination = query.paginate(page, per_page)
         return pagination, [cls(post) for post in pagination.items]
 
-    @classmethod
-    def get_post(cls, post_id):
-        post = Post.query.filter_by(id=post_id).first()
-        return cls(post) if post else None
-
     def __init__(self, wrapped):
         self.wrapped = wrapped
 
@@ -217,25 +212,26 @@ def articles_atom():
     return render_posts_atom('Articles', 'article', 10)
 
 
-@app.route('/<post_type>/<date_str>/<int:date_index>',
-           defaults={'slug': None})
+@app.route('/<post_type>/<date_str>/<int:date_index>', defaults={'slug': None})
 @app.route('/<post_type>/<date_str>/<int:date_index>/<slug>')
 def post_by_date(post_type, date_str, date_index, slug):
     post = Post.query.filter_by(date_str=date_str,
                                 date_index=date_index).first()
+
+    print("Post by date_str={}, date_index={}: {}"
+          .format(date_str, date_index, post))
+
+    if not post and (date_str == '2013' or date_str == '2014'):
+        # unfortunate hack to catch old style /year/id urls
+        post = Post.query.filter_by(id=date_index).first()
+        print("Post by id={}: {}"
+              .format(date_index, post))
+
     if not post:
         abort(404)
-    return render_template('post.html', post=post, title=post.title,
-                           authenticated=current_user.is_authenticated())
 
-
-@app.route('/<post_type>/<int:year>/<post_id>', defaults={'slug': None})
-@app.route('/<post_type>/<int:year>/<post_id>/<slug>')
-def post_by_id(post_type, year, post_id, slug):
-    post = DisplayPost.get_post(post_id)
-    if not post:
-        abort(404)
-    return render_template('post.html', post=post, title=post.title,
+    dpost = DisplayPost(post)
+    return render_template('post.html', post=dpost, title=dpost.title,
                            authenticated=current_user.is_authenticated())
 
 
@@ -313,6 +309,13 @@ def handle_new_or_edit(request, post):
         else:
             post.pub_date = datetime.now()
 
+        # generate the date/index identifier
+        if not post.date_str:
+            post.date_str = post.pub_date.strftime('%y%m%d')
+            post.date_index = 1 + (Post.query
+                                   .filter_by(date_str=post.date_str)
+                                   .count())
+
         send_to_twitter = request.form.get("send_to_twitter")
         send_to_facebook = request.form.get("send_to_facebook")
 
@@ -367,12 +370,9 @@ def new_post(post_type):
     author = User.query.first()
     content_format = 'plain' if post_type == 'note' else 'markdown'
 
-    date = datetime.datetime.now()
-    date_str = date.strftime('%y%m%d')
-    date_index = 1 + Post.query.filter_by(date_str=date_str).count()
-
+    date = datetime.now()
     post = Post('', '', '', post_type, content_format, author,
-                date, date_str, date_index)
+                date)
     return handle_new_or_edit(request, post)
 
 
