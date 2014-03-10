@@ -9,10 +9,10 @@ from facebook_plugin import FacebookClient
 import webmention_receiver
 
 from datetime import datetime
-import time
 import os
 import re
 import urllib
+import requests
 
 from flask import request, redirect, url_for, render_template,\
     flash, abort, make_response, jsonify, Markup
@@ -189,17 +189,13 @@ def articles_atom():
 @app.route('/<post_type>/<date_str>/<int:date_index>', defaults={'slug': None})
 @app.route('/<post_type>/<date_str>/<int:date_index>/<slug>')
 def post_by_date(post_type, date_str, date_index, slug):
-    post = Post.query.filter_by(date_str=date_str,
+    post = Post.query.filter_by(post_type=post_type,
+                                date_str=date_str,
                                 date_index=date_index).first()
-
-    print("Post by date_str={}, date_index={}: {}"
-          .format(date_str, date_index, post))
 
     if not post and (date_str == '2013' or date_str == '2014'):
         # unfortunate hack to catch old style /year/id urls
         post = Post.query.filter_by(id=date_index).first()
-        print("Post by id={}: {}"
-              .format(date_index, post))
 
     if not post:
         abort(404)
@@ -238,6 +234,20 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.route("/indieauth")
+def indie_auth():
+    token = request.args.get('token')
+    response = requests.get('http://indieauth.com/verify', {'token': token})
+    if response.status_code == 200:
+        domain = response.json().get('me')
+        flash('Logged in as {}'.format(domain))
+    else:
+        respjson = response.json()
+        flash('Login failed {}: {}'.format(respjson.get('error'),
+                                           respjson.get('error_description')))
+    redirect(url_for('index'))
 
 
 @app.route('/admin/settings')
