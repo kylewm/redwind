@@ -239,7 +239,8 @@ def logout():
 @app.route("/indieauth")
 def indie_auth():
     token = request.args.get('token')
-    response = requests.get('http://indieauth.com/verify', {'token': token})
+    response = requests.get('http://indieauth.com/verify',
+                            params={'token': token})
     if response.status_code == 200:
         domain = response.json().get('me')
         flash('Logged in as {}'.format(domain))
