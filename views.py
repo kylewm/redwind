@@ -134,11 +134,9 @@ class DisplayPost:
 
 
 def render_posts(title, post_type, page, per_page):
-    _, articles = DisplayPost.get_posts('article', 1, 5)
     pagination, posts = DisplayPost.get_posts(post_type, page, per_page)
     return render_template('posts.html', pagination=pagination,
-                           posts=posts, articles=articles,
-                           post_type=post_type, title=title,
+                           posts=posts, post_type=post_type, title=title,
                            authenticated=current_user.is_authenticated())
 
 
