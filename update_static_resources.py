@@ -18,8 +18,7 @@ def curl(url, file):
         shutil.copyfileobj(response.raw, f)
         del response
 
-curl('http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s=64',
-     'static/img/users/kyle.jpg')
 
-curl('http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s=128',
-     'static/img/users/kyle_large.jpg')
+for s in [ 60, 76, 114, 152 ]:
+    curl('http://www.gravatar.com/avatar/767447312a2f39bec228c3925e3edf74?s={}'.format(s),
+         'static/img/users/kyle{}.jpg'.format(s))
