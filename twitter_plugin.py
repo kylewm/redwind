@@ -1,12 +1,40 @@
 from app import app, db
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response
+from rauth import OAuth1Service
+import requests
 
-import twitter
+#import twitter
+
+
 import re
 import urllib.parse
 from datetime import datetime, timedelta
 #from models import ShortLink
+
+
+def get_auth_service():
+    if not get_auth_service.cached:
+        key = app.config['TWITTER_CONSUMER_KEY']
+        secret = app.config['TWITTER_CONSUMER_SECRET']
+        get_auth_service.cached = OAuth1Service(
+            name='twitter',
+            consumer_key=key,
+            consumer_secret=secret,
+            request_token_url='https://api.twitter.com/oauth/request_token',
+            access_token_url='https://api.twitter.com/oauth/access_token',
+            authorize_url='https://api.twitter.com/oauth/authorize',
+            base_url='https://api.twitter.com/1.1/')
+    return get_auth_service.cached
+
+get_auth_service.cached = None
+
+
+def get_auth_session(user):
+    service = get_auth_service()
+    session = service.get_session((user.twitter_oauth_token,
+                                   user.twitter_oauth_token_secret))
+    return session
 
 
 @app.route('/admin/authorize_twitter')
@@ -14,20 +42,18 @@ from datetime import datetime, timedelta
 def authorize_twitter():
     """Get an access token from Twitter and redirect to the
        authentication page"""
-    key = app.config['TWITTER_CONSUMER_KEY']
-    secret = app.config['TWITTER_CONSUMER_SECRET']
-    callback_url = app.config.get('SITE_URL') + '/admin/authorize_twitter2'
-
+    global token_to_secret
+    callback_url = url_for('authorize_twitter2', _external=True)
     try:
-        t = twitter.Twitter(auth=twitter.OAuth('', '', key, secret),
-                            format='', api_version='')
-        r = t.oauth.request_token(oauth_callback=callback_url)
-        payload = urllib.parse.parse_qs(r)
-        request_token = payload["oauth_token"][-1]
+        twitter = get_auth_service()
+        request_token, request_token_secret = twitter.get_request_token(
+            params={'oauth_callback': callback_url})
+        token_to_secret[request_token] = request_token_secret
+
         return redirect(
             'https://api.twitter.com/oauth/authenticate?'
             + urllib.parse.urlencode({"oauth_token": request_token}))
-    except twitter.TwitterHTTPError as e:
+    except requests.RequestException as e:
         return make_response(str(e))
 
 
@@ -35,24 +61,22 @@ def authorize_twitter():
 def authorize_twitter2():
     """Receive the request token from Twitter and convert it to an
        access token"""
-    key = app.config['TWITTER_CONSUMER_KEY']
-    secret = app.config['TWITTER_CONSUMER_SECRET']
-
+    global token_to_secret
     request_token = request.args.get('oauth_token')
     oauth_verifier = request.args.get('oauth_verifier')
 
     try:
-        t = twitter.Twitter(auth=twitter.OAuth(request_token, '', key, secret),
-                            format='', api_version='')
-        r = t.oauth.access_token(oauth_verifier=oauth_verifier)
-        payload = urllib.parse.parse_qs(r)
-        oauth_token = payload["oauth_token"][-1]
-        oauth_token_secret = payload["oauth_token_secret"][-1]
-        current_user.twitter_oauth_token = oauth_token
-        current_user.twitter_oauth_token_secret = oauth_token_secret
+        twitter = get_auth_service()
+        access_token, access_token_secret = twitter.get_access_token(
+            request_token, None,
+            params={'oauth_verifier': oauth_verifier})
+
+        current_user.twitter_oauth_token = access_token
+        current_user.twitter_oauth_token_secret = access_token_secret
+
         db.session.commit()
         return redirect(url_for('settings'))
-    except twitter.TwitterHTTPError as e:
+    except requests.RequestException as e:
         return make_response(str(e))
 
 
@@ -66,14 +90,18 @@ class TwitterClient:
     def repost_preview(self, user, url):
         if not self.is_twitter_authorized(user):
             return
+
         permalink_re = re.compile(
             "https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         match = permalink_re.match(url)
         if match:
-            api = self.get_api(user)
+            api = get_auth_session(user)
             tweet_id = match.group(2)
-            embed_response = api.statuses.oembed(_id=tweet_id)
-            return embed_response.get('html')
+            embed_response = api.get('statuses/oembed.json',
+                                     params={'id': tweet_id})
+
+            if embed_response.status_code // 2 == 100:
+                return embed_response.json().get('html')
 
     def handle_new_or_edit(self, post):
         if not self.is_twitter_authorized(post.author):
@@ -81,43 +109,36 @@ class TwitterClient:
 
         permalink_re = re.compile(
             "https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
-        api = self.get_api(post.author)
+        api = get_auth_session(post.author)
         # check for RT's
         match = permalink_re.match(post.repost_source)
         if match:
             tweet_id = match.group(2)
-            api.statuses.retweet(id=tweet_id, trim_user=True)
+            api.post('statuses/retweet/{}.json'.format(tweet_id),
+                     params={'trim_user': True})
         else:
             match = permalink_re.match(post.in_reply_to)
             in_reply_to = match.group(2) if match else None
-            result = api.statuses.update(status=self.create_status(post),
-                                         in_reply_to_status_id=in_reply_to,
-                                         trim_user=True)
-            if result:
-                post.twitter_status_id = result.get('id_str')
+            result = api.post('statuses/update.json',
+                              data={'status': self.create_status(post),
+                                    'in_reply_to_status_id': in_reply_to,
+                                    'trim_user': True})
+            if result.status_code // 2 == 100:
+                post.twitter_status_id = result.json().get('id_str')
 
     def is_twitter_authorized(self, user):
         return user.twitter_oauth_token and user.twitter_oauth_token_secret
-
-    def get_api(self, user):
-        if not self.cached_api:
-            consumer_key = self.app.config['TWITTER_CONSUMER_KEY']
-            consumer_secret = self.app.config['TWITTER_CONSUMER_SECRET']
-            oauth_token = user.twitter_oauth_token
-            oauth_secret = user.twitter_oauth_token_secret
-            self.cached_api = twitter.Twitter(
-                auth=twitter.OAuth(oauth_token, oauth_secret,
-                                   consumer_key, consumer_secret))
-        return self.cached_api
 
     def get_help_configuration(self, user):
         stale_limit = timedelta(days=1)
 
         if (not self.cached_config
                 or datetime.now() - self.config_fetch_date > stale_limit):
-            api = self.get_api(user)
-            self.cached_config = api.help.configuration()
-            self.config_fetch_date = datetime.now()
+            api = get_auth_session(user)
+            response = api.get('help/configuration.json')
+            if response.status_code // 2 == 100:
+                self.cached_config = response.json()
+                self.config_fetch_date = datetime.now()
         return self.cached_config
 
         def __repr__(self):
@@ -196,7 +217,6 @@ class TwitterClient:
                           self.url_to_span(post.author,
                                            post.permalink_url,
                                            can_drop=False)]
-
         else:
             components = self.split_out_urls(post.author, post.content)
 

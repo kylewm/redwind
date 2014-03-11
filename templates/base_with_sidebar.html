@@ -12,19 +12,6 @@
   <div class="sidebar">
     {% include "hcard.html" %}
 
-    {% if articles %}
-      <div class="recent-articles">
-        <b>Recent Articles</b>
-        {% for article in articles %}
-          <ul>
-            <li>
-              <a href="{{article.permalink_url}}">{{ article.title }}</a>
-            </li>
-          </ul>
-        {% endfor %}
-      </div>
-    {% endif %}
-
     {% include "footer.html" %}
   </div>
 </div>
