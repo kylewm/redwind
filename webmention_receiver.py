@@ -131,14 +131,16 @@ def extract_source_content(hentry):
 
 
 def find_link_to_target(source_url, source_response, target_url):
-    if source_response.status_code != 200:
+    if source_response.status_code // 2 != 100:
         app.logger.warn(
             "Received unexpected response from webmention source: %s",
             source_response.text)
         return None
 
+    # Don't worry about Microformats for now; just see if there is a
+    # link anywhere that points back to the target
     soup = BeautifulSoup(source_response.text)
-    for link in soup.find_all('a'):
+    for link in soup.find_all(['a', 'link']):
         link_target = link.get('href')
         if link_target == target_url:
             return link

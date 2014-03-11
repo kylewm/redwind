@@ -42,13 +42,11 @@ def get_auth_session(user):
 def authorize_twitter():
     """Get an access token from Twitter and redirect to the
        authentication page"""
-    global token_to_secret
     callback_url = url_for('authorize_twitter2', _external=True)
     try:
         twitter = get_auth_service()
         request_token, request_token_secret = twitter.get_request_token(
             params={'oauth_callback': callback_url})
-        token_to_secret[request_token] = request_token_secret
 
         return redirect(
             'https://api.twitter.com/oauth/authenticate?'
@@ -61,7 +59,6 @@ def authorize_twitter():
 def authorize_twitter2():
     """Receive the request token from Twitter and convert it to an
        access token"""
-    global token_to_secret
     request_token = request.args.get('oauth_token')
     oauth_verifier = request.args.get('oauth_verifier')
 
@@ -133,12 +130,12 @@ class TwitterClient:
         stale_limit = timedelta(days=1)
 
         if (not self.cached_config
-                or datetime.now() - self.config_fetch_date > stale_limit):
+                or datetime.utcnow() - self.config_fetch_date > stale_limit):
             api = get_auth_session(user)
             response = api.get('help/configuration.json')
             if response.status_code // 2 == 100:
                 self.cached_config = response.json()
-                self.config_fetch_date = datetime.now()
+                self.config_fetch_date = datetime.utcnow()
         return self.cached_config
 
         def __repr__(self):

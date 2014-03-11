@@ -11,6 +11,7 @@ Werkzeug==0.9.4
 beautifulsoup4==4.3.2
 itsdangerous==0.23
 pycrypto==2.6.1
+pytz==2013.9
 rauth==0.6.2
 requests==1.2.3
 smartypants==1.8.3
