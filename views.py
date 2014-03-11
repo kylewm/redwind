@@ -268,9 +268,12 @@ def handle_new_or_edit(request, post):
         # generate the date/index identifier
         if not post.date_str:
             post.date_str = post.pub_date.strftime('%y%m%d')
-            post.date_index = 1 + (Post.query
-                                   .filter_by(date_str=post.date_str)
-                                   .count())
+            post.date_index = 1
+            same_day_posts = Post.query\
+                                 .filter_by(date_str=post.date_str)\
+                                 .all()
+            if same_day_posts:
+                post.date_index += max(post.date_index for post in same_day_posts)
 
         send_to_twitter = request.form.get("send_to_twitter")
         send_to_facebook = request.form.get("send_to_facebook")
