@@ -12,6 +12,7 @@ from datetime import datetime
 import os
 import re
 import requests
+from pytz import timezone
 
 from flask import request, redirect, url_for, render_template,\
     flash, abort, make_response, jsonify, Markup
@@ -21,6 +22,7 @@ from bs4 import BeautifulSoup, Comment
 
 from werkzeug import secure_filename
 
+TIMEZONE = timezone('US/Pacific')
 
 twitter_client = TwitterClient(app)
 facebook_client = FacebookClient(app)
@@ -345,9 +347,9 @@ def edit_by_id(post_type, post_id):
 
 @app.template_filter('strftime')
 def strftime_filter(date, fmt='%Y %b %d'):
-    if not date:
-        return "????"
-    return date.strftime(fmt)
+    if date:
+        localdate = TIMEZONE.localize(date)
+        return localdate.strftime(fmt)
 
 
 def url_for_other_page(page):

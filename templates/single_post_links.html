@@ -4,7 +4,7 @@
 <div class="links">
   
   <a class="u-url" href="{{ post.permalink_url }}">
-    <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M')}}">{{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}</time>
+    <time class="dt-published" datetime="{{ post.pub_date | strftime('%Y-%m-%d %H:%M %Z (%z)') }}">{{ post.pub_date | strftime('%Y-%m-%d %H:%M %Z (%z)') }}</time>
   </a>
 
   {% if post.mentions %}
