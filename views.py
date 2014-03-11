@@ -119,10 +119,13 @@ class DisplayPost:
 
     @property
     def html_content(self):
+        return Markup(self.get_html_content(True))
+
+    def get_html_content(self, include_preview=True):
         text = self.format_text(self.content)
-        text = self.add_preview(text)
-        markup = Markup(text)
-        return markup
+        if include_preview:
+            text = self.add_preview(text)
+        return text
 
     @property
     def html_excerpt(self):
@@ -261,10 +264,7 @@ def handle_new_or_edit(request, post):
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
         post.content_format = request.form.get('content_format', 'plain')
-        pub_date = request.form.get('date', '').strip()
-        if pub_date:
-            post.pub_date = datetime.strptime(pub_date, '%Y-%m-%d %H:%M')
-        else:
+        if not post.pub_date:
             post.pub_date = datetime.utcnow()
 
         # generate the date/index identifier
@@ -299,6 +299,7 @@ def handle_new_or_edit(request, post):
                 twitter_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
+                flash("error while posting to twitter")
                 app.logger.exception('posting to twitter')
 
         if send_to_facebook:
@@ -306,17 +307,20 @@ def handle_new_or_edit(request, post):
                 facebook_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
+                flash("error while posting to facebook")
                 app.logger.exception('posting to facebook')
 
         try:
             push_client.handle_new_or_edit(post)
         except:
+            flash("error while sending PuSH")
             app.logger.exception('posting to PuSH')
 
         try:
             mention_client.handle_new_or_edit(post)
             db.session.commit()
         except:
+            flash("error sending webmentions")
             app.logger.exception('sending webmentions')
 
         return redirect(post.permalink_url)

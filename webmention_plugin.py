@@ -23,7 +23,7 @@ class MentionClient:
         if post.repost_source:
             target_urls.append(post.repost_source)
 
-        html_content = views.DisplayPost(post).html_content
+        html_content = views.DisplayPost(post).get_html_content(include_preview=False)
         self.app.logger.debug("search post content {}".format(html_content))
 
         soup = BeautifulSoup(html_content)

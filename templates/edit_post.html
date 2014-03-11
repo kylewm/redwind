@@ -23,10 +23,6 @@
       <label><span class="heading">Slug</span><input name="slug" size="60" value="{{ post.slug or ''}}"/></label>
     </div>
 
-    <div class="date">
-      <label><span class="heading">Date</span><input name="date" size="60" value="{{ post.pub_date | strftime('%Y-%m-%d %H:%M') }}"/></label>
-    </div>
-
     <div class="in_reply_to">
       <label><span class="heading">In Reply To (URL)</span><input name="in_reply_to" size="60" value="{{post.in_reply_to or ''}}"/></label>
     </div>
