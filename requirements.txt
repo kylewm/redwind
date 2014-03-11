@@ -9,9 +9,10 @@ Pygments==1.6
 SQLAlchemy==0.8.2
 Werkzeug==0.9.4
 beautifulsoup4==4.3.2
+facebook-sdk==1.0.0-alpha
 itsdangerous==0.23
 pycrypto==2.6.1
-requests==2.0.0
+rauth==0.6.2
+requests==1.2.3
 smartypants==1.8.3
-twitter==1.10.2
 uWSGI==1.9.20
