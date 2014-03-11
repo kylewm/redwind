@@ -9,7 +9,6 @@ Pygments==1.6
 SQLAlchemy==0.8.2
 Werkzeug==0.9.4
 beautifulsoup4==4.3.2
-facebook-sdk==1.0.0-alpha
 itsdangerous==0.23
 pycrypto==2.6.1
 rauth==0.6.2
