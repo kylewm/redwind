@@ -13,16 +13,11 @@ from datetime import datetime, timedelta
 #from models import ShortLink
 
 
-token_to_secret = {}
-cached_service = None
-
-
 def get_auth_service():
-    global cached_service
-    if not cached_service:
+    if not get_auth_service.cached:
         key = app.config['TWITTER_CONSUMER_KEY']
         secret = app.config['TWITTER_CONSUMER_SECRET']
-        cached_service = OAuth1Service(
+        get_auth_service.cached = OAuth1Service(
             name='twitter',
             consumer_key=key,
             consumer_secret=secret,
@@ -30,7 +25,9 @@ def get_auth_service():
             access_token_url='https://api.twitter.com/oauth/access_token',
             authorize_url='https://api.twitter.com/oauth/authorize',
             base_url='https://api.twitter.com/1.1/')
-    return cached_service
+    return get_auth_service.cached
+
+get_auth_service.cached = None
 
 
 def get_auth_session(user):
@@ -45,6 +42,7 @@ def get_auth_session(user):
 def authorize_twitter():
     """Get an access token from Twitter and redirect to the
        authentication page"""
+    global token_to_secret
     callback_url = url_for('authorize_twitter2', _external=True)
     try:
         twitter = get_auth_service()
@@ -63,15 +61,14 @@ def authorize_twitter():
 def authorize_twitter2():
     """Receive the request token from Twitter and convert it to an
        access token"""
+    global token_to_secret
     request_token = request.args.get('oauth_token')
     oauth_verifier = request.args.get('oauth_verifier')
-    request_secret = token_to_secret[request_token]
-    del token_to_secret[request_token]
 
     try:
         twitter = get_auth_service()
         access_token, access_token_secret = twitter.get_access_token(
-            request_token, request_secret,
+            request_token, None,
             params={'oauth_verifier': oauth_verifier})
 
         current_user.twitter_oauth_token = access_token
