@@ -47,9 +47,6 @@ def authorize_twitter():
         request_token, request_token_secret = twitter.get_request_token(
             params={'oauth_callback': callback_url})
 
-        with open('.twitter_request', 'w') as f:
-            f.write(json.dumps([request_token, request_token_secret]))
-
         return redirect(twitter.get_authorize_url(request_token))
     except requests.RequestException as e:
         return make_response(str(e))
@@ -63,14 +60,9 @@ def authorize_twitter2():
     oauth_verifier = request.args.get('oauth_verifier')
 
     try:
-        with open('.twitter_request', 'r') as f:
-            request_token, request_token_secret = json.loads(f.read())
-
-        assert(oauth_token == request_token)
-
         twitter = get_auth_service()
         access_token, access_token_secret = twitter.get_access_token(
-            request_token, request_token_secret,
+            oauth_token,'', method='POST',
             params={'oauth_verifier': oauth_verifier})
 
         current_user.twitter_oauth_token = access_token
