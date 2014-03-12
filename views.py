@@ -193,6 +193,12 @@ def post_by_date(post_type, year, month, day, index, slug):
     if not post:
         abort(404)
 
+    if not slug and post.slug:
+        return redirect(
+            url_for('post_by_date', post_type=post_type,
+                    year=year, month=month, day=day, index=index,
+                    slug=post.slug))
+
     dpost = DisplayPost(post)
     return render_template('post.html', post=dpost, title=dpost.title,
                            authenticated=current_user.is_authenticated())
