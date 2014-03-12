@@ -279,12 +279,12 @@ def handle_new_or_edit(request, post):
             post.pub_date = datetime.utcnow()
 
         # generate the date/index identifier
-        if not post.date_str:
-            post.date_str = post.pub_date.strftime('%y%m%d')
+        if not post.date_index:
             post.date_index = 1
             same_day_posts = Post.query\
-                                 .filter_by(date_str=post.date_str)\
-                                 .all()
+                             .filter(Post.post_type == post.post_type,
+                                     cast(Post.pub_date, db.Date) == post.pub_date.date())\
+                             .all()
             if same_day_posts:
                 post.date_index += max(post.date_index for post in same_day_posts)
 

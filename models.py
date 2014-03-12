@@ -66,9 +66,6 @@ tags_to_posts = db.Table(
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # date_str and date_index together make up a unique
-    # (algorithmic) identifier
-    date_str = db.Column(db.String(8))
     date_index = db.Column(db.Integer)
     slug = db.Column(db.String(256))
     pub_date = db.Column(db.DateTime)
