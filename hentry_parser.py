@@ -75,8 +75,11 @@ if __name__ == '__main__':
         'https://brid-gy.appspot.com/comment/googleplus/109622249060170703374/'
         'z12vyphidxaodbb0223qdj0pwkvuytpja04/'
         'z12vyphidxaodbb0223qdj0pwkvuytpja04.1334830661177000',
-        'http://tantek.com/2014/030/t1/'
-        'handmade-art-indieweb-reply-webmention-want']
+
+        'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
+
+        'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
+        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088']
 
     for url in urls:
         txt = requests.get(url).content

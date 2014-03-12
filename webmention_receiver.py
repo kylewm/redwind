@@ -1,7 +1,6 @@
-from app import app, db
+from app import app
 
 from models import Post, Mention
-from flask import make_response
 from werkzeug.exceptions import NotFound
 import urllib.parse
 import requests
@@ -29,7 +28,9 @@ def process_webmention(source, target):
             "Webmention could not find target post: %s. Giving up", target)
         return None
 
-    link_to_target = find_link_to_target(source, source_response, target)
+    link_to_target = find_link_to_target(source, source_response,
+                                         [target, target_post.permalink_url,
+                                          target_post.short_permalink_url])
     if not link_to_target:
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
@@ -66,7 +67,7 @@ def process_webmention(source, target):
     return mentions
 
 
-def find_link_to_target(source_url, source_response, target_url):
+def find_link_to_target(source_url, source_response, target_urls):
     if source_response.status_code // 2 != 100:
         app.logger.warn(
             "Received unexpected response from webmention source: %s",
@@ -78,15 +79,17 @@ def find_link_to_target(source_url, source_response, target_url):
     soup = BeautifulSoup(source_response.text)
     for link in soup.find_all(['a', 'link']):
         link_target = link.get('href')
-        if link_target == target_url:
+        if link_target in target_urls:
             return link
 
 
 def find_target_post(target_url):
-    response = requests.get(target_url)
     # follow redirects if necessary
+    response = requests.get(target_url)
     if response.status_code // 2 == 100:
         target_url = response.url
+
+    app.logger.debug("looking for target post at %s", target_url)
 
     urls = app.url_map.bind(app.config['SITE_URL'])
     parsed_url = urllib.parse.urlparse(target_url)
@@ -126,7 +129,6 @@ def find_target_post(target_url):
 
     if not post:
         app.logger.warn(
-            "Webmention target points to unknown post: %s, %s, %d",
-            post_type, year, month, day, index)
+            "Webmention target points to unknown post: {}".format(args)),
 
     return post

@@ -445,5 +445,9 @@ def receive_webmention():
                          source, target)
         abort(400)
 
+    for mention in mentions:
+        db.session.add(mention)
+    db.session.commit()
+
     return make_response("Received webmention from {} to {}"
                          .format(source, target))
