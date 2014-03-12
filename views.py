@@ -180,10 +180,21 @@ def articles_atom():
     return render_posts_atom('Articles', 'article', 10)
 
 
-@app.route('/<post_type>/<date_str>/<int:date_index>', defaults={'slug': None})
-@app.route('/<post_type>/<date_str>/<int:date_index>/<slug>')
-def post_by_date(post_type, date_str, date_index, slug):
-    post = Post.lookup_post_by_date(post_type, date_str, date_index)
+@app.route('/<post_type>/<int:year>/<int:month>/<int:day>/<int:index>', defaults={'slug': None})
+@app.route('/<post_type>/<int:year>/<int:month>/<int:day>/<int:index>/<slug>')
+def post_by_date(post_type, year, month, day, index, slug):
+    post = Post.lookup_post_by_date(post_type, year, month, day, index)
+    if not post:
+        abort(404)
+
+    dpost = DisplayPost(post)
+    return render_template('post.html', post=dpost, title=dpost.title,
+                           authenticated=current_user.is_authenticated())
+
+@app.route('/<post_type>/<int:dbid>', defaults={'slug': None})
+@app.route('/<post_type>/<int:dbid>/<slug>')
+def post_by_id(post_type, dbid, slug):
+    post = Post.lookup_post_by_id(dbid)
     if not post:
         abort(404)
 

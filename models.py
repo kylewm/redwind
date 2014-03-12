@@ -4,7 +4,7 @@ import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from collections import defaultdict
-
+from sqlalchemy import cast
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -90,14 +90,18 @@ class Post(db.Model):
     mentions = db.relationship('Mention', backref='post')
 
     @classmethod
-    def lookup_post_by_date(cls, post_type, date_str, date_index):
-        post = cls.query.filter_by(post_type=post_type,
-                                   date_str=date_str,
-                                   date_index=date_index).first()
+    def lookup_post_by_id(cls, dbid):
+        post = cls.query.filter_by(id=dbid).first()
+        return post
 
-        if not post and (date_str == '2013' or date_str == '2014'):
-            # unfortunate hack to catch old style /year/id urls
-            post = Post.query.filter_by(id=date_index).first()
+    @classmethod
+    def lookup_post_by_date(cls, post_type, year, month, day, index):
+        date = datetime.date(year, month, day)
+        post = cls.query\
+                  .filter(Post.post_type == post_type,
+                          cast(Post.pub_date, db.Date) == date,
+                          Post.date_index==index)\
+                  .first()
         return post
 
     def __init__(self, title, slug, content, post_type, content_format,
@@ -120,8 +124,11 @@ class Post(db.Model):
     @property
     def permalink_url(self):
         site_url = app.config.get('SITE_URL') or 'http://localhost'
-        path_components = [site_url, self.post_type,
-                           self.date_str, str(self.date_index)]
+        
+        path_components = [site_url,
+                           self.post_type,
+                           self.pub_date.strftime('%Y/%m/%d'),
+                           str(self.date_index)]
         if self.slug:
             path_components.append(self.slug)
 
