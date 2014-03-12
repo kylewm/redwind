@@ -223,4 +223,6 @@ class Mention(db.Model):
         self.pub_date = pub_date or datetime.datetime.utcnow()
 
     def __repr__(self):
-        return "<Mention: {} from {}>".format(self.mention_type, self.source)
+        return "<Mention: type={}, source={}, permalink={}, author=({}, {}, {})>"\
+            .format(self.mention_type, self.source, self.permalink,
+                    self.author_name, self.author_url, self.author_image)
