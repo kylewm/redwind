@@ -439,7 +439,11 @@ def receive_webmention():
 
     app.logger.debug("Webmention from %s to %s received", source, target)
 
-    result = webmention_receiver.process_webmention(source, target)
-    if not result:
-        abort(404)
-    return result
+    mentions = webmention_receiver.process_webmention(source, target)
+    if not mentions:
+        app.logger.debug("Could not find any mentions in request %s to %s",
+                         source, target)
+        abort(400)
+
+    return make_response("Received webmention from {} to {}"
+                         .format(source, target))

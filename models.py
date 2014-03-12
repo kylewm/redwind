@@ -148,7 +148,6 @@ class Post(db.Model):
         cite = '({} {}{}{})'.format(app.config.get('SHORT_SITE_CITE'),
                                     tag, base60.encode(ordinal),
                                     base60.encode(self.date_index))
-        print("short cite", cite)
         return cite
 
     @property

@@ -1,10 +1,13 @@
 from app import app, db
+
 from models import Post, Mention
 from flask import make_response
+from werkzeug.exceptions import NotFound
 import urllib.parse
 import requests
 
 from bs4 import BeautifulSoup
+import hentry_parser
 
 
 def process_webmention(source, target):
@@ -33,26 +36,7 @@ def process_webmention(source, target):
             "Giving up", source, target)
         return None
 
-    to_target_rels = link_to_target.get('rel', [])
-    to_target_classes = link_to_target.get('class', [])
-
-    if ('in-reply-to' in to_target_rels or
-            'u-in-reply-to' in to_target_classes):
-        mention_type = 'reply'
-    elif ('u-like' in to_target_classes
-          or 'u-like-of' in to_target_classes):
-        mention_type = 'like'
-    elif ('u-repost' in to_target_classes
-          or 'u-repost-of' in to_target_classes):
-        mention_type = 'repost'
-    else:
-        mention_type = 'reference'
-
-    app.logger.debug("Webmention from %s to %s, verified (%s).",
-                     source, target, mention_type)
-
-    soup = BeautifulSoup(source_response.text)
-    hentry = soup.find(class_="h-entry")
+    hentry = hentry_parser.parse(source_response.text)
 
     if not hentry:
         app.logger.warn(
@@ -60,74 +44,26 @@ def process_webmention(source, target):
             source)
         return None
 
-    permalink = extract_permalink(hentry)
-    source_content = extract_source_content(hentry)
-    author_name, author_url, author_image = determine_author(soup, hentry)
+    reftypes = set()
+    for ref in hentry.references:
+        if (ref.url == target_post.permalink_url
+                or ref.url == target_post.short_permalink_url):
+            reftypes.add(ref.reftype)
 
-    mention = Mention(source, permalink, target_post,
-                      source_content, mention_type,
-                      author_name, author_url, author_image)
-    db.session.add(mention)
-    db.session.commit()
+    # if it's not a reply, repost, or like, it's just a reference
+    if not reftypes:
+        reftypes.add('reference')
 
-    return make_response("Received mention, thanks!")
+    mentions = []
+    for reftype in reftypes:
+        mention = Mention(source, hentry.permalink, target_post,
+                          hentry.content, reftype,
+                          hentry.author and hentry.author.name,
+                          hentry.author and hentry.author.url,
+                          hentry.author and hentry.author.photo)
+        mentions.append(mention)
 
-
-def extract_permalink(hentry):
-    permalink = hentry.find(class_='u-url')
-    if permalink:
-        app.logger.debug('webmention, original source: found permalink: {}'
-                         .format(permalink))
-        permalink_url = permalink.get('href') or permalink.text
-        return permalink_url
-
-
-def determine_author(soup, hentry):
-    pauthor = hentry.find(class_='p-author')
-    if pauthor:
-        if 'h-card' in pauthor['class']:
-            return parse_hcard_for_author(pauthor)
-        return pauthor.text, pauthor.get('href'), None
-
-    # use top-level h-card
-    hcard = soup.find(class_='h-card')
-    if hcard:
-        return parse_hcard_for_author(hcard)
-
-    # use page title
-    title = soup.find('title')
-    if title:
-        return title.text, None, None
-
-
-def parse_hcard_for_author(hcard):
-    pname = hcard.find(class_='p-name')
-    if pname:
-        author = pname.text
-    else:
-        author = hcard.text
-
-    uurl = hcard.find(class_='u-url')
-    if uurl:
-        url = uurl.get('href', uurl.text)
-    else:
-        url = hcard.get('href')
-
-    uphoto = hcard.find(class_='u-photo')
-    if uphoto:
-        img = uphoto.get('src') or uphoto.get('href')
-
-    return author, url, img
-
-
-def extract_source_content(hentry):
-    econtent = hentry.find(class_='e-content')
-    if econtent:
-        return econtent.text
-    pname = hentry.find(class_='p-name')
-    if pname:
-        return pname.text
-    return hentry.text
+    return mentions
 
 
 def find_link_to_target(source_url, source_response, target_url):
@@ -147,6 +83,11 @@ def find_link_to_target(source_url, source_response, target_url):
 
 
 def find_target_post(target_url):
+    response = requests.get(target_url)
+    # follow redirects if necessary
+    if response.status_code // 2 == 100:
+        target_url = response.url
+
     urls = app.url_map.bind(app.config['SITE_URL'])
     parsed_url = urllib.parse.urlparse(target_url)
 
@@ -156,9 +97,15 @@ def find_target_post(target_url):
             target_url)
         return None
 
-    endpoint, args = urls.match(parsed_url.path)
-    if endpoint != 'post_by_date':
-        app.logger.warn("Webmention target is not a post: %s", parsed_url.path)
+    try:
+        endpoint, args = urls.match(parsed_url.path)
+        if endpoint != 'post_by_date':
+            app.logger.warn("Webmention target is not a post: %s",
+                            parsed_url.path)
+            return None
+    except NotFound:
+        app.logger.debug("Webmention could not find target for %s",
+                         parsed_url.path)
         return None
 
     post_type = args.get('post_type')
@@ -172,6 +119,6 @@ def find_target_post(target_url):
     if not post:
         app.logger.warn(
             "Webmention target points to unknown post: %s, %s, %d",
-            post_type, date_str, date_index)
+            post_type, year, month, day, index)
 
     return post

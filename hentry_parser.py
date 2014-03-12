@@ -1,5 +1,5 @@
-#import sys
-#sys.path.append('mf2py')
+import sys
+sys.path.append('mf2py')
 
 from collections import namedtuple
 from mf2py.parser import Parser
@@ -9,7 +9,7 @@ Reference = namedtuple('Reference', ['url', 'reftype'])
 Entry = namedtuple('Entry', ['author', 'permalink', 'references', 'content'])
 
 
-def parse_hentry(txt):
+def parse(txt):
     def parse_references(objs, reftype):
         refs = []
         for obj in objs:
@@ -41,6 +41,8 @@ def parse_hentry(txt):
             references.append(Reference(url, 'like'))
         elif rel in ('reply', 'reply-to', 'in-reply-to'):
             references.append(Reference(url, 'reply'))
+        elif rel in ('repost', 'repost-of'):
+            references.append(Reference(url, 'repost'))
 
     for item in d['items']:
         if 'h-entry' in item['type']:
@@ -52,6 +54,8 @@ def parse_hentry(txt):
                 hentry['properties'].get('in-reply-to', []), 'reply')
             references += parse_references(
                 hentry['properties'].get('like-of', []), 'like')
+            references += parse_references(
+                hentry['properties'].get('repost-of', []), 'repost')
             content = ''.join(content['value'].strip() for content
                               in hentry['properties'].get('content', []))
             author = parse_author(
@@ -73,5 +77,5 @@ if __name__ == '__main__':
 
     for url in urls:
         txt = requests.get(url).content
-        print(parse_hentry(txt))
+        print(parse(txt))
         print()
