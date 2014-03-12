@@ -1,5 +1,8 @@
 import sys
-sys.path.append('mf2py')
+import os
+path = os.path.join(os.path.dirname(__file__), 'mf2py')
+if path not in sys.path:
+    sys.path.append(path)
 
 from collections import namedtuple
 from mf2py.parser import Parser
