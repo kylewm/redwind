@@ -189,7 +189,6 @@ def articles_atom():
 @app.route('/<post_type>/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>', defaults={'slug': None})
 @app.route('/<post_type>/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
-    print("by date")
     post = Post.lookup_post_by_date(post_type, year, month, day, index)
     if not post:
         abort(404)
@@ -201,7 +200,6 @@ def post_by_date(post_type, year, month, day, index, slug):
 
 @app.route('/<post_type>/<string(length=6):yymmdd>/<int:index>')
 def post_by_old_date(post_type, yymmdd, index):
-    print("by old date")
     year = int('20' + yymmdd[0:2])
     month = int(yymmdd[2:4])
     day = int(yymmdd[4:6])
@@ -213,14 +211,12 @@ def post_by_old_date(post_type, yymmdd, index):
            defaults={'slug': None})
 @app.route('/<post_type>/<int(max=2014):year>/<int:dbid>/<slug>')
 def post_by_id(post_type, year, dbid, slug):
-    print("by id")
     post = Post.lookup_post_by_id(dbid)
     if not post:
         abort(404)
-
-    dpost = DisplayPost(post)
-    return render_template('post.html', post=dpost, title=dpost.title,
-                           authenticated=current_user.is_authenticated())
+    return redirect(url_for('post_by_date', post_type=post.post_type,
+                            year=post.pub_date.year, month=post.pub_date.month,
+                            day=post.pub_date.day, index=post.date_index))
 
 
 @app.route("/indieauth")
