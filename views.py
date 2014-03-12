@@ -186,9 +186,10 @@ def articles_atom():
     return render_posts_atom('Articles', 'article', 10)
 
 
-@app.route('/<post_type>/<int:year>/<int:month>/<int:day>/<int:index>', defaults={'slug': None})
-@app.route('/<post_type>/<int:year>/<int:month>/<int:day>/<int:index>/<slug>')
+@app.route('/<post_type>/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>', defaults={'slug': None})
+@app.route('/<post_type>/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
+    print("by date")
     post = Post.lookup_post_by_date(post_type, year, month, day, index)
     if not post:
         abort(404)
@@ -197,9 +198,22 @@ def post_by_date(post_type, year, month, day, index, slug):
     return render_template('post.html', post=dpost, title=dpost.title,
                            authenticated=current_user.is_authenticated())
 
-@app.route('/<post_type>/<int:year>/<int:dbid>', defaults={'slug': None})
-@app.route('/<post_type>/<int:year>/<int:dbid>/<slug>')
+
+@app.route('/<post_type>/<string(length=6):yymmdd>/<int:index>')
+def post_by_old_date(post_type, yymmdd, index):
+    print("by old date")
+    year = int('20' + yymmdd[0:2])
+    month = int(yymmdd[2:4])
+    day = int(yymmdd[4:6])
+    return redirect(url_for('post_by_date', post_type=post_type,
+                            year=year, month=month, day=day, index=index))
+
+
+@app.route('/<post_type>/<int(max=2014):year>/<int:dbid>',
+           defaults={'slug': None})
+@app.route('/<post_type>/<int(max=2014):year>/<int:dbid>/<slug>')
 def post_by_id(post_type, year, dbid, slug):
+    print("by id")
     post = Post.lookup_post_by_id(dbid)
     if not post:
         abort(404)
