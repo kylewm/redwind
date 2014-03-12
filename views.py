@@ -12,6 +12,7 @@ from datetime import datetime
 import os
 import re
 import requests
+import pytz
 
 from flask import request, redirect, url_for, render_template,\
     flash, abort, make_response, jsonify, Markup
@@ -21,6 +22,7 @@ from bs4 import BeautifulSoup, Comment
 
 from werkzeug import secure_filename
 
+TIMEZONE = pytz.timezone('US/Pacific')
 
 twitter_client = TwitterClient(app)
 facebook_client = FacebookClient(app)
@@ -117,10 +119,13 @@ class DisplayPost:
 
     @property
     def html_content(self):
+        return Markup(self.get_html_content(True))
+
+    def get_html_content(self, include_preview=True):
         text = self.format_text(self.content)
-        text = self.add_preview(text)
-        markup = Markup(text)
-        return markup
+        if include_preview:
+            text = self.add_preview(text)
+        return text
 
     @property
     def html_excerpt(self):
@@ -270,11 +275,8 @@ def handle_new_or_edit(request, post):
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
         post.content_format = request.form.get('content_format', 'plain')
-        pub_date = request.form.get('date', '').strip()
-        if pub_date:
-            post.pub_date = datetime.strptime(pub_date, '%Y-%m-%d %H:%M')
-        else:
-            post.pub_date = datetime.now()
+        if not post.pub_date:
+            post.pub_date = datetime.utcnow()
 
         # generate the date/index identifier
         if not post.date_str:
@@ -308,6 +310,7 @@ def handle_new_or_edit(request, post):
                 twitter_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
+                flash("error while posting to twitter")
                 app.logger.exception('posting to twitter')
 
         if send_to_facebook:
@@ -315,17 +318,20 @@ def handle_new_or_edit(request, post):
                 facebook_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
+                flash("error while posting to facebook")
                 app.logger.exception('posting to facebook')
 
         try:
             push_client.handle_new_or_edit(post)
         except:
+            flash("error while sending PuSH")
             app.logger.exception('posting to PuSH')
 
         try:
             mention_client.handle_new_or_edit(post)
             db.session.commit()
         except:
+            flash("error sending webmentions")
             app.logger.exception('sending webmentions')
 
         return redirect(post.permalink_url)
@@ -340,7 +346,7 @@ def new_post(post_type):
     author = User.query.first()
     content_format = 'plain' if post_type == 'note' else 'markdown'
 
-    date = datetime.now()
+    date = datetime.utcnow()
     post = Post('', '', '', post_type, content_format, author,
                 date)
     return handle_new_or_edit(request, post)
@@ -357,9 +363,16 @@ def edit_by_id(post_type, post_id):
 
 @app.template_filter('strftime')
 def strftime_filter(date, fmt='%Y %b %d'):
-    if not date:
-        return "????"
-    return date.strftime(fmt)
+    if date:
+        localdate = pytz.utc.localize(date).astimezone(TIMEZONE)
+        return localdate.strftime(fmt)
+
+
+@app.template_filter('isotime')
+def isotime_filter(date):
+    if date:
+        utctime = pytz.utc.localize(date)
+        return utctime.isoformat('T')
 
 
 def url_for_other_page(page):
@@ -391,7 +404,7 @@ def atom_sanitize(content):
 def receive_upload():
     file = request.files['file']
     filename = secure_filename(file.filename)
-    now = datetime.now()
+    now = datetime.utcnow()
     directory = os.path.join('static', 'uploads',
                              str(now.year), str(now.month).zfill(2))
     path = os.path.join(directory, filename)
