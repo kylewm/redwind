@@ -197,9 +197,9 @@ def post_by_date(post_type, year, month, day, index, slug):
     return render_template('post.html', post=dpost, title=dpost.title,
                            authenticated=current_user.is_authenticated())
 
-@app.route('/<post_type>/<int:dbid>', defaults={'slug': None})
-@app.route('/<post_type>/<int:dbid>/<slug>')
-def post_by_id(post_type, dbid, slug):
+@app.route('/<post_type>/<int:year>/<int:dbid>', defaults={'slug': None})
+@app.route('/<post_type>/<int:year>/<int:dbid>/<slug>')
+def post_by_id(post_type, year, dbid, slug):
     post = Post.lookup_post_by_id(dbid)
     if not post:
         abort(404)
