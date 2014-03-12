@@ -99,22 +99,30 @@ def find_target_post(target_url):
 
     try:
         endpoint, args = urls.match(parsed_url.path)
-        if endpoint != 'post_by_date':
-            app.logger.warn("Webmention target is not a post: %s",
-                            parsed_url.path)
-            return None
     except NotFound:
         app.logger.debug("Webmention could not find target for %s",
                          parsed_url.path)
         return None
 
-    post_type = args.get('post_type')
-    year = args.get('year')
-    month = args.get('month')
-    day = args.get('day')
-    index = args.get('index')
+    if endpoint == 'post_by_date':
+        post_type = args.get('post_type')
+        year = args.get('year')
+        month = args.get('month')
+        day = args.get('day')
+        index = args.get('index')
+        post = Post.lookup_post_by_date(post_type, year, month, day, index)
 
-    post = Post.lookup_post_by_date(post_type, year, month, day, index)
+    elif endpoint == 'post_by_old_date':
+        post_type = args.get('post_type')
+        yymmdd = args.get('yymmdd')
+        year = int('20' + yymmdd[0:2])
+        month = int(yymmdd[2:4])
+        day = int(yymmdd[4:6])
+        post = Post.lookup_post_by_date(post_type, year, month, day, index)
+
+    elif endpoint == 'post_by_id':
+        dbid = args.get('dbid')
+        post = Post.lookup_post_by_id(dbid)
 
     if not post:
         app.logger.warn(
