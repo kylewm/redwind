@@ -13,6 +13,7 @@ import os
 import re
 import requests
 import pytz
+from sqlalchemy import cast as sqlcast
 
 from flask import request, redirect, url_for, render_template,\
     flash, abort, make_response, jsonify, Markup
@@ -283,7 +284,7 @@ def handle_new_or_edit(request, post):
             post.date_index = 1
             same_day_posts = Post.query\
                              .filter(Post.post_type == post.post_type,
-                                     cast(Post.pub_date, db.Date) == post.pub_date.date())\
+                                     sqlcast(Post.pub_date, db.Date) == post.pub_date.date())\
                              .all()
             if same_day_posts:
                 post.date_index += max(post.date_index for post in same_day_posts)
