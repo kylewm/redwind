@@ -3,9 +3,8 @@ from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response
 from rauth import OAuth1Service
 import requests
-
+import json
 #import twitter
-
 
 import re
 import urllib.parse
@@ -48,9 +47,7 @@ def authorize_twitter():
         request_token, request_token_secret = twitter.get_request_token(
             params={'oauth_callback': callback_url})
 
-        return redirect(
-            'https://api.twitter.com/oauth/authenticate?'
-            + urllib.parse.urlencode({"oauth_token": request_token}))
+        return redirect(twitter.get_authorize_url(request_token))
     except requests.RequestException as e:
         return make_response(str(e))
 
@@ -59,13 +56,13 @@ def authorize_twitter():
 def authorize_twitter2():
     """Receive the request token from Twitter and convert it to an
        access token"""
-    request_token = request.args.get('oauth_token')
+    oauth_token = request.args.get('oauth_token')
     oauth_verifier = request.args.get('oauth_verifier')
 
     try:
         twitter = get_auth_service()
         access_token, access_token_secret = twitter.get_access_token(
-            request_token, None,
+            oauth_token,'', method='POST',
             params={'oauth_verifier': oauth_verifier})
 
         current_user.twitter_oauth_token = access_token
@@ -111,17 +108,22 @@ class TwitterClient:
         match = permalink_re.match(post.repost_source)
         if match:
             tweet_id = match.group(2)
-            api.post('statuses/retweet/{}.json'.format(tweet_id),
-                     params={'trim_user': True})
+            result = api.post('statuses/retweet/{}.json'.format(tweet_id),
+                                data={'trim_user': True})
+            if result.status_code // 2 != 100:
+                raise RuntimeError("{}: {}".format(str(result), str(result.content)))
         else:
+            data = {}
+            data['status'] = self.create_status(post)
+            data['trim_user'] = True
             match = permalink_re.match(post.in_reply_to)
-            in_reply_to = match.group(2) if match else None
-            result = api.post('statuses/update.json',
-                              data={'status': self.create_status(post),
-                                    'in_reply_to_status_id': in_reply_to,
-                                    'trim_user': True})
-            if result.status_code // 2 == 100:
-                post.twitter_status_id = result.json().get('id_str')
+            if match:
+                data['in_reply_to_status_id'] = match.group(2)
+            result = api.post('statuses/update.json', data=data)
+            
+            if result.status_code // 2 != 100:
+                raise RuntimeError("{}: {}".format(str(result), str(result.content)))
+            post.twitter_status_id = result.json().get('id_str')
 
     def is_twitter_authorized(self, user):
         return user.twitter_oauth_token and user.twitter_oauth_token_secret

@@ -13,6 +13,7 @@ import os
 import re
 import requests
 import pytz
+from sqlalchemy import cast as sqlcast
 
 from flask import request, redirect, url_for, render_template,\
     flash, abort, make_response, jsonify, Markup
@@ -119,10 +120,13 @@ class DisplayPost:
 
     @property
     def html_content(self):
+        return Markup(self.get_html_content(True))
+
+    def get_html_content(self, include_preview=True):
         text = self.format_text(self.content)
-        text = self.add_preview(text)
-        markup = Markup(text)
-        return markup
+        if include_preview:
+            text = self.add_preview(text)
+        return text
 
     @property
     def html_excerpt(self):
@@ -182,10 +186,21 @@ def articles_atom():
     return render_posts_atom('Articles', 'article', 10)
 
 
-@app.route('/<post_type>/<date_str>/<int:date_index>', defaults={'slug': None})
-@app.route('/<post_type>/<date_str>/<int:date_index>/<slug>')
-def post_by_date(post_type, date_str, date_index, slug):
-    post = Post.lookup_post_by_date(post_type, date_str, date_index)
+@app.route('/<post_type>/<int:year>/<int:month>/<int:day>/<int:index>', defaults={'slug': None})
+@app.route('/<post_type>/<int:year>/<int:month>/<int:day>/<int:index>/<slug>')
+def post_by_date(post_type, year, month, day, index, slug):
+    post = Post.lookup_post_by_date(post_type, year, month, day, index)
+    if not post:
+        abort(404)
+
+    dpost = DisplayPost(post)
+    return render_template('post.html', post=dpost, title=dpost.title,
+                           authenticated=current_user.is_authenticated())
+
+@app.route('/<post_type>/<int:dbid>', defaults={'slug': None})
+@app.route('/<post_type>/<int:dbid>/<slug>')
+def post_by_id(post_type, dbid, slug):
+    post = Post.lookup_post_by_id(dbid)
     if not post:
         abort(404)
 
@@ -261,19 +276,16 @@ def handle_new_or_edit(request, post):
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
         post.content_format = request.form.get('content_format', 'plain')
-        pub_date = request.form.get('date', '').strip()
-        if pub_date:
-            post.pub_date = datetime.strptime(pub_date, '%Y-%m-%d %H:%M')
-        else:
+        if not post.pub_date:
             post.pub_date = datetime.utcnow()
 
         # generate the date/index identifier
-        if not post.date_str:
-            post.date_str = post.pub_date.strftime('%y%m%d')
+        if not post.date_index:
             post.date_index = 1
             same_day_posts = Post.query\
-                                 .filter_by(date_str=post.date_str)\
-                                 .all()
+                             .filter(Post.post_type == post.post_type,
+                                     sqlcast(Post.pub_date, db.Date) == post.pub_date.date())\
+                             .all()
             if same_day_posts:
                 post.date_index += max(post.date_index for post in same_day_posts)
 
@@ -299,6 +311,7 @@ def handle_new_or_edit(request, post):
                 twitter_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
+                flash("error while posting to twitter")
                 app.logger.exception('posting to twitter')
 
         if send_to_facebook:
@@ -306,17 +319,20 @@ def handle_new_or_edit(request, post):
                 facebook_client.handle_new_or_edit(post)
                 db.session.commit()
             except:
+                flash("error while posting to facebook")
                 app.logger.exception('posting to facebook')
 
         try:
             push_client.handle_new_or_edit(post)
         except:
+            flash("error while sending PuSH")
             app.logger.exception('posting to PuSH')
 
         try:
             mention_client.handle_new_or_edit(post)
             db.session.commit()
         except:
+            flash("error sending webmentions")
             app.logger.exception('sending webmentions')
 
         return redirect(post.permalink_url)

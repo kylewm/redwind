@@ -162,10 +162,12 @@ def find_target_post(target_url):
         return None
 
     post_type = args.get('post_type')
-    date_str = args.get('date_str')
-    date_index = args.get('date_index')
+    year = args.get('year')
+    month = args.get('month')
+    day = args.get('day')
+    index = args.get('index')
 
-    post = Post.lookup_post_by_date(post_type, date_str, date_index)
+    post = Post.lookup_post_by_date(post_type, year, month, day, index)
 
     if not post:
         app.logger.warn(
