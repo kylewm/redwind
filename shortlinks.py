@@ -8,7 +8,9 @@ TAG_TO_TYPE = {
     'a': 'article',
     'r': 'reply'}
 
-START_ORDINAL = date(1970, 1, 1).toordinal()
+TYPE_TO_TAG = {v: k for k, v in TAG_TO_TYPE.items()}
+
+BASE_ORDINAL = date(1970, 1, 1).toordinal()
 
 
 @app.route('/short/<string(minlength=5,maxlength=6):tag>')
@@ -24,7 +26,19 @@ def shortlink(tag):
     if not post_type or not ordinal or not index:
         abort(404)
 
-    pub_date = date.fromordinal(START_ORDINAL + ordinal)
+    pub_date = date_from_ordinal(ordinal)
     return redirect(url_for('post_by_date', post_type=post_type,
                             year=pub_date.year, month=pub_date.month,
                             day=pub_date.day, index=index))
+
+
+def date_to_ordinal(date0):
+    return date0.toordinal() - BASE_ORDINAL
+
+
+def date_from_ordinal(ordinal):
+    return date.fromordinal(ordinal + BASE_ORDINAL)
+
+
+def tag_for_post_type(post_type):
+    return TYPE_TO_TAG.get(post_type)

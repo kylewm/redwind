@@ -1,6 +1,8 @@
 from app import app, db
 
 import datetime
+import shortlinks
+import base60
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from collections import defaultdict
@@ -97,7 +99,7 @@ class Post(db.Model):
         post = cls.query\
                   .filter(Post.post_type == post_type,
                           cast(Post.pub_date, db.Date) == date,
-                          Post.date_index==index)\
+                          Post.date_index == index)\
                   .first()
         return post
 
@@ -121,7 +123,7 @@ class Post(db.Model):
     @property
     def permalink_url(self):
         site_url = app.config.get('SITE_URL') or 'http://localhost'
-        
+
         path_components = [site_url,
                            self.post_type,
                            self.pub_date.strftime('%Y/%m/%d'),
@@ -130,6 +132,24 @@ class Post(db.Model):
             path_components.append(self.slug)
 
         return '/'.join(path_components)
+
+    @property
+    def short_permalink_url(self):
+        tag = shortlinks.tag_for_post_type(self.post_type)
+        ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
+        return '{}/{}{}{}'.format(app.config.get('SHORT_SITE_URL'),
+                                  tag, base60.encode(ordinal),
+                                  base60.encode(self.date_index))
+
+    @property
+    def short_cite(self):
+        tag = shortlinks.tag_for_post_type(self.post_type)
+        ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
+        cite = '({} {}{}{})'.format(app.config.get('SHORT_SITE_CITE'),
+                                    tag, base60.encode(ordinal),
+                                    base60.encode(self.date_index))
+        print("short cite", cite)
+        return cite
 
     @property
     def twitter_url(self):

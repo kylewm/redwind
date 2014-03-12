@@ -2,10 +2,13 @@
 
 <!-- article metadata -->
 <div class="links">
-  
+
   <a class="u-url" href="{{ post.permalink_url }}">
     <time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</time>
   </a>
+  <span value="{{ post.short_cite}}" >
+    {{ post.short_cite }}
+  </span>
 
   {% if post.mentions %}
     {% set reply_count = post.mentions | length %}
@@ -13,11 +16,11 @@
   {% endif %}
 
   {% if post.twitter_url %}
-    | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">on Twitter</a> 
+    | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">on Twitter</a>
   {% endif %}
 
   {% if post.facebook_url %}
-    | <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">on Facebook</a> 
+    | <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">on Facebook</a>
   {% endif %}
 
   {% if post.in_reply_to %}
@@ -25,7 +28,7 @@
   {% endif %}
 
   {% if post.repost_source %}
-    | <a href="{{ post.repost_source }}">Source</a> 
+    | <a href="{{ post.repost_source }}">Source</a>
   {% endif %}
 
   {% if authenticated %}
@@ -33,4 +36,3 @@
     <a href="{{ url_for('delete_by_id', post_type='post', post_id=post.id) }}">Delete</a>
   {% endif %}
 </div>
-

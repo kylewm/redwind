@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+
+    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('all_atom', _external=True) }}" title="Kyle Mahan: All" />
+    <link rel="notes alternate" type="application/atom+xml" href="{{ url_for('notes_atom', _external=True) }}" title="Kyle Mahan: Notes" />
+    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom', _external=True) }}" title="Kyle Mahan: Articles" />
+
+    <link rel="webmention" href="{{ url_for('receive_webmention', _external=True) }}"/>
+
+    <link rel="openid.delegate" href="http://kylewm.com/" />
+    <link rel="openid.server" href="https://indieauth.com/openid" />
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/users/kyle.jpg') }}"/>
+    
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/col.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/3cols.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pygments.css') }}">
+
+    <script type="text/javascript" src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+
+  </head>
+  <body>
+    <!--[if lt IE 7]>
+        <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+    
+    <div class="wrapper">
+
+      <header>
+        <div class="section group">
+          <div class="col span_1_of_3">
+            <p class="site-name">kylewm.com</p>
+          </div>
+          <div class="col span_2_of_3">
+            <nav>
+              <ul>
+                <li><a href="{{ url_for('index') }}">everything</a></li>
+                <li><a href="{{ url_for('articles') }}">articles</a></li>
+                <li><a href="{{ url_for('notes') }}">notes</a></li>
+                {% if authenticated %}
+                <li><a href="{{ url_for('new_post', post_type='article') }}">new article</a></li>
+                <li><a href="{{ url_for('new_post', post_type='note') }}">new note</a></li>
+                <li><a href="{{ url_for('settings') }}">settings</a></li>
+                <li><a href="{{ url_for('logout') }}">logout</a></li>
+                {% else %}
+                <li>
+                  <form action="http://indieauth.com/auth" method="get">
+                    <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+                    <button type="submit">Sign In</button>
+                    <input type="hidden" name="redirect_uri" value="{{ url_for('indie_auth', _external=True) }}" />
+                  </form>
+                </li>
+
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      
+      <div class="flashes">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul class=flashes>
+          {% for message in messages %}
+          <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+
+      <div class="section group">
+          {% block content %}{% endblock content %}
+      </div>
+    </div>   
+  </body>
+</html>
