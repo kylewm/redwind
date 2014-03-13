@@ -50,7 +50,7 @@ class MentionClient:
 
     def handle_new_or_edit(self, post):
         target_urls = self.get_target_urls(post)
-        self.app.logger.debug("Sending webmentions to these urls {}"\
+        self.app.logger.debug("Sending webmentions to these urls {}"
                               .format(" ; ".join(target_urls)))
         for target_url in target_urls:
             self.send_mention(post, target_url)
@@ -104,8 +104,7 @@ class MentionClient:
         headers = {'content-type': 'application/x-www-form-urlencoded',
                    'accept': 'application/json'}
         response = requests.post(endpoint, data=payload, headers=headers)
-        #from https://github.com/vrypan/webmention-tools/blob/master/
-        #webmentiontools/send.py
+        #from https://github.com/vrypan/webmention-tools/blob/master/webmentiontools/send.py
         if response.status_code // 100 != 2:
             self.app.logger.warn(
                 "Failed to send webmention for %s. Response status code: %s",
