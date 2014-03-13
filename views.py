@@ -98,7 +98,9 @@ class DisplayPost:
         return None, False
 
     def format_text(self, text):
-        if self.content_format == 'markdown':
+        if not text:
+            return ''
+        elif self.content_format == 'markdown':
             return self.markdown_filter(text)
         elif self.content_format == 'plain':
             return self.plain_text_filter(text)
