@@ -50,7 +50,8 @@ class MentionClient:
 
     def handle_new_or_edit(self, post):
         target_urls = self.get_target_urls(post)
-        self.app.logger.debug("Sending webmentions to these urls {}".format(" ; ".join(target_urls)))
+        self.app.logger.debug("Sending webmentions to these urls {}"\
+                              .format(" ; ".join(target_urls)))
         for target_url in target_urls:
             self.send_mention(post, target_url)
 

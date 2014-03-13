@@ -472,8 +472,16 @@ def receive_webmention():
                          source, target)
         abort(400)
 
+    # de-dup on incoming url
+    if mentions:
+        for existing in Mention.query.filter_by(
+                post_id=mentions[0].post_id,
+                permalink=mentions[0].permalink).all():
+            db.session.remove(existing)
+
     for mention in mentions:
         db.session.add(mention)
+
     db.session.commit()
 
     return make_response("Received webmention from {} to {}"
