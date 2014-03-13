@@ -95,6 +95,7 @@ class DisplayPost:
         # reposted URL and save some information about it (i.e.,
         # information we can't get from the page title, whether it is an
         # image, etc.)
+        return None, False
 
     def format_text(self, text):
         if self.content_format == 'markdown':

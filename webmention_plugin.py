@@ -18,10 +18,10 @@ class MentionClient:
 
         # send mentions to 'in_reply_to' as well as all linked urls
         if post.in_reply_to:
-            target_urls.append(post.in_reply_to)
+            target_urls.append(post.in_reply_to.strip())
 
         if post.repost_source:
-            target_urls.append(post.repost_source)
+            target_urls.append(post.repost_source.strip())
 
         html_content = views.DisplayPost(post).get_html_content(include_preview=False)
         self.app.logger.debug("search post content {}".format(html_content))
@@ -32,7 +32,7 @@ class MentionClient:
             if link_target:
                 self.app.logger.debug("found link {} with href {}"
                                       .format(link, link_target))
-                target_urls.append(link_target)
+                target_urls.append(link_target.strip())
 
         return target_urls
 
