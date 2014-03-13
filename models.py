@@ -78,8 +78,9 @@ class Post(db.Model):
     content = db.Column(db.Text)
     post_type = db.Column(db.String(64))  # note/article/etc.
     content_format = db.Column(db.String(64))  # markdown/html/plain
-    in_reply_to = db.Column(db.String(256))
-    repost_source = db.Column(db.String(256))
+    in_reply_to = db.Column(db.String(2048))
+    repost_source = db.Column(db.String(2048))
+    like_of = db.Column(db.String(2048))
     repost_preview = db.Column(db.Text)
     twitter_status_id = db.Column(db.String(64))
     facebook_post_id = db.Column(db.String(64))
@@ -103,15 +104,10 @@ class Post(db.Model):
                   .first()
         return post
 
-    def __init__(self, title, slug, content, post_type, content_format,
-                 author, pub_date):
-        self.title = title
-        self.slug = slug
-        self.content = content
+    def __init__(self, post_type, content_format, author):
         self.post_type = post_type
         self.content_format = content_format
         self.author = author
-        self.pub_date = pub_date
 
     @property
     def mentions_categorized(self):
@@ -200,14 +196,14 @@ class ShortLink(db.Model):
 
 class Mention(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    source = db.Column(db.String(256))
-    permalink = db.Column(db.String(256))
+    source = db.Column(db.String(2048))
+    permalink = db.Column(db.String(2048))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     content = db.Column(db.Text)
     mention_type = db.Column(db.String(64))
     author_name = db.Column(db.String(256))
-    author_url = db.Column(db.String(256))
-    author_image = db.Column(db.String(256))
+    author_url = db.Column(db.String(2048))
+    author_image = db.Column(db.String(2048))
     pub_date = db.Column(db.DateTime)
 
     def __init__(self, source, permalink, post, content, mention_type,

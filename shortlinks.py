@@ -6,7 +6,9 @@ from datetime import date
 TAG_TO_TYPE = {
     'n': 'note',
     'a': 'article',
-    'r': 'reply'}
+    'r': 'reply',
+    's': 'share',
+    'l': 'like'}
 
 TYPE_TO_TAG = {v: k for k, v in TAG_TO_TYPE.items()}
 

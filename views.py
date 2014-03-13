@@ -139,6 +139,31 @@ class DisplayPost:
                 . format(self.permalink_url)
         return Markup(text)
 
+    @property
+    def likes(self):
+        return [mention for mention in self.mentions
+                if mention.mention_type == 'like']
+
+    @property
+    def non_likes(self):
+        return [mention for mention in self.mentions
+                if mention.mention_type != 'like']
+
+    @property
+    def reposts(self):
+        return [mention for mention in self.mentions
+                if mention.mention_type == 'repost']
+
+    @property
+    def replies(self):
+        return [mention for mention in self.mentions
+                if mention.mention_type == 'reply']
+
+    @property
+    def references(self):
+        return [mention for mention in self.mentions
+                if mention.mention_type == 'reference']
+
 
 def render_posts(title, post_type, page, per_page):
     pagination, posts = DisplayPost.get_posts(post_type, page, per_page)
@@ -293,6 +318,7 @@ def handle_new_or_edit(request, post):
         post.slug = request.form.get('slug')
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
+        post.like_of = request.form.get('like_of', '')
         post.content_format = request.form.get('content_format', 'plain')
         if not post.pub_date:
             post.pub_date = datetime.utcnow()
@@ -301,9 +327,9 @@ def handle_new_or_edit(request, post):
         if not post.date_index:
             post.date_index = 1
             same_day_posts = Post.query\
-                             .filter(Post.post_type == post.post_type,
-                                     sqlcast(Post.pub_date, db.Date) == post.pub_date.date())\
-                             .all()
+                                 .filter(Post.post_type == post.post_type,
+                                         sqlcast(Post.pub_date, db.Date) == post.pub_date.date())\
+                                 .all()
             if same_day_posts:
                 post.date_index += max(post.date_index for post in same_day_posts)
 
@@ -362,14 +388,12 @@ def handle_new_or_edit(request, post):
 @app.route('/admin/new/<post_type>', methods=['GET', 'POST'])
 @login_required
 def new_post(post_type):
+    if post_type not in ['article', 'note', 'share', 'like', 'reply']:
+        abort(404)
     author = User.query.first()
-    content_format = 'plain' if post_type == 'note' else 'markdown'
-
-    date = datetime.utcnow()
-    post = Post('', '', '', post_type, content_format, author,
-                date)
+    content_format = 'markdown' if post_type == 'article' else 'plain'
+    post = Post(post_type, content_format, author)
     return handle_new_or_edit(request, post)
-
 
 @app.route('/admin/edit/<post_type>/<post_id>', methods=['GET', 'POST'])
 @login_required

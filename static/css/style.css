@@ -63,7 +63,12 @@ small, .small {
 }
 
 .replies {
-    margin-top: 40px;
+    margin-top: 20px;
+    font-size: 0.8em;
+}
+
+.likes {
+    margin-top: 20px;
     font-size: 0.8em;
 }
 
@@ -173,6 +178,10 @@ footer {
     position: absolute; left: -35px;
     font-size: small;
     text-align: right;
+}
+
+.syndication-icon {
+    vertical-align: middle;
 }
 
 footer a:visited, footer a:link, footer a:hover {

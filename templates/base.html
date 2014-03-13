@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/users/kyle76.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/users/kyle114.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/kyle152.jpg') }}"/>
-    
+
     <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/col.css') }}">
@@ -36,7 +36,7 @@
     <!--[if lt IE 7]>
         <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
-    
+
     <div class="wrapper">
 
       <header>
@@ -51,8 +51,6 @@
                 <li><a href="{{ url_for('articles') }}">articles</a></li>
                 <li><a href="{{ url_for('notes') }}">notes</a></li>
                 {% if authenticated %}
-                <li><a href="{{ url_for('new_post', post_type='article') }}">new article</a></li>
-                <li><a href="{{ url_for('new_post', post_type='note') }}">new note</a></li>
                 <li><a href="{{ url_for('settings') }}">settings</a></li>
                 <li><a href="{{ url_for('logout') }}">logout</a></li>
                 {% else %}
@@ -66,12 +64,22 @@
 
                 {% endif %}
               </ul>
+              {% if authenticated %}
+              <ul>
+                new:
+                <li><a href="{{ url_for('new_post', post_type='article') }}">article</a></li>
+                <li><a href="{{ url_for('new_post', post_type='note') }}">note</a></li>
+                <li><a href="{{ url_for('new_post', post_type='reply') }}">reply</a></li>
+                <li><a href="{{ url_for('new_post', post_type='share') }}">share</a></li>
+                <li><a href="{{ url_for('new_post', post_type='like') }}">like</a></li>
+              </ul>
+              {% endif %}
             </nav>
           </div>
         </div>
       </header>
 
-      
+
       <div class="flashes">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
