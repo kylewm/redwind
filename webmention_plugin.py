@@ -23,7 +23,12 @@ class MentionClient:
         if post.repost_source:
             target_urls.append(post.repost_source.strip())
 
-        html_content = views.DisplayPost(post).get_html_content(include_preview=False)
+        if post.like_of:
+            target_urls.append(post.like_of.strip())
+
+        html_content = views.DisplayPost(post)\
+                            .get_html_content(include_preview=False)
+
         self.app.logger.debug("search post content {}".format(html_content))
 
         soup = BeautifulSoup(html_content)
