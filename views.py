@@ -34,10 +34,10 @@ push_client = PushClient(app)
 class DisplayPost:
 
     @classmethod
-    def get_posts(cls, post_type, page, per_page):
+    def get_posts(cls, post_types, page, per_page):
         query = Post.query
-        if post_type:
-            query = query.filter_by(post_type=post_type)
+        if post_types:
+            query = query.filter(Post.post_type.in_(post_types))
         query = query.order_by(Post.pub_date.desc())
         pagination = query.paginate(page, per_page)
         return pagination, [cls(post) for post in pagination.items]
@@ -167,33 +167,34 @@ class DisplayPost:
                 if mention.mention_type == 'reference']
 
 
-def render_posts(title, post_type, page, per_page):
-    pagination, posts = DisplayPost.get_posts(post_type, page, per_page)
+def render_posts(title, post_types, page, per_page):
+    pagination, posts = DisplayPost.get_posts(post_types, page, per_page)
     return render_template('posts.html', pagination=pagination,
-                           posts=posts, post_type=post_type, title=title,
+                           posts=posts, title=title,
                            authenticated=current_user.is_authenticated())
 
 
 @app.route('/', defaults={'page': 1})
 @app.route('/page/<int:page>')
 def index(page):
-    return render_posts(None, None, page, 30)
+    # leave out replies and likes
+    return render_posts(None, ('article', 'note', 'share'), page, 30)
 
 
 @app.route('/articles', defaults={'page': 1})
 @app.route('/articles/page/<int:page>')
 def articles(page):
-    return render_posts('All Articles', 'article', page, 10)
+    return render_posts('All Articles', ('article',), page, 10)
 
 
-@app.route('/notes', defaults={'page': 1})
-@app.route('/notes/page/<int:page>')
-def notes(page):
-    return render_posts('All Notes', 'note', page, 30)
+@app.route('/everything', defaults={'page': 1})
+@app.route('/everything/page/<int:page>')
+def everything(page):
+    return render_posts('Everything', None, page, 30)
 
 
-def render_posts_atom(title, post_type, count):
-    _, posts = DisplayPost.get_posts(post_type, 1, count)
+def render_posts_atom(title, post_types, count):
+    _, posts = DisplayPost.get_posts(post_types, 1, count)
     return make_response(render_template('posts.atom', title=title,
                                          posts=posts), 200,
                          {'Content-Type': 'application/atom+xml'})
@@ -201,17 +202,17 @@ def render_posts_atom(title, post_type, count):
 
 @app.route("/all.atom")
 def all_atom():
-    return render_posts_atom('All Posts', None, 30)
+    return render_posts_atom('All Posts', ('article', 'note', 'share'), 30)
 
 
 @app.route("/notes.atom")
 def notes_atom():
-    return render_posts_atom('Notes', 'note', 30)
+    return render_posts_atom('Notes', ('note',), 30)
 
 
 @app.route("/articles.atom")
 def articles_atom():
-    return render_posts_atom('Articles', 'article', 10)
+    return render_posts_atom('Articles', ('article',), 10)
 
 
 @app.route('/<post_type>/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>', defaults={'slug': None})

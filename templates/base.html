@@ -45,9 +45,10 @@
           <div class="col span_2_of_3">
             <nav>
               <ul>
-                <li><a href="{{ url_for('index') }}">everything</a></li>
+                <li><a href="{{ url_for('index') }}">stream</a></li>
                 <li><a href="{{ url_for('articles') }}">articles</a></li>
-                <li><a href="{{ url_for('notes') }}">notes</a></li>
+                <li><a href="{{ url_for('everything') }}">everything</a></li>
+
                 {% if authenticated %}
                 <li><a href="{{ url_for('settings') }}">settings</a></li>
                 <li><a href="{{ url_for('logout') }}">logout</a></li>
@@ -64,7 +65,7 @@
               </ul>
               {% if authenticated %}
               <ul>
-                new:
+                <li>new:</li>
                 <li><a href="{{ url_for('new_post', post_type='article') }}">article</a></li>
                 <li><a href="{{ url_for('new_post', post_type='note') }}">note</a></li>
                 <li><a href="{{ url_for('new_post', post_type='reply') }}">reply</a></li>
