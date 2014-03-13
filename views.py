@@ -201,7 +201,7 @@ def post_by_date(post_type, year, month, day, index, slug):
                     slug=post.slug))
 
     dpost = DisplayPost(post)
-    print("rendering post", post.short_cite, post.short_permalink_url)
+    #print("rendering post", post.short_cite, post.short_permalink_url)
     return render_template('post.html', post=dpost, title=dpost.title,
                            authenticated=current_user.is_authenticated())
 

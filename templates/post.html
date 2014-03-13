@@ -4,9 +4,10 @@
 
   <div class="post {{post.post_type}} h-entry">
 
+    {% include "admin_post_controls.html" %}
     {% include "hcard_author.html" %}
 
-    <div style="margin-left: 58px">
+    <div style="margin-top: 0.5em; margin-left: 56px">
       {% if post.title %}
         <h2 class="p-name">{{ post.title }}</h2>
         <div class="e-content">
@@ -18,7 +19,10 @@
         </div>
       {% endif %}
 
-      {% include "single_post_links.html" %}
+      <div class="links">
+        {% include "single_post_links.html" %}
+        {% include "syndication_links.html" %}
+      </div>
 
       {% if post.mentions %}
         <div class="replies">

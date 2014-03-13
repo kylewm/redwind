@@ -1,0 +1,14 @@
+{% if post.twitter_url or post.facebook_url %}
+  ... elsewhere
+  {% if post.twitter_url %}
+    <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">
+      <img src="{{ url_for('static', filename='img/social/16/twitter_16.png') }}" alt="Twitter" />
+    </a>
+  {% endif %}
+
+  {% if post.facebook_url %}
+    <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">
+      <img src="{{ url_for('static', filename='img/social/16/facebook_16.png') }}" alt="Facebook" />
+    </a>
+  {% endif %}
+{% endif %}

@@ -1,7 +1,9 @@
-
-
-<!-- article metadata -->
-<div class="links">
+  {% if post.in_reply_to %}
+    <a rel="in-reply-to" class="u-in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a><br/>
+  {% endif %}
+  {% if post.repost_source %}
+    <a href="{{ post.repost_source }}">Source</a><br/>
+  {% endif %}
 
   <a class="u-url" href="{{ post.permalink_url }}">
     <time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</time>
@@ -9,30 +11,3 @@
   <span value="{{ post.short_cite}}" >
     {{ post.short_cite }}
   </span>
-
-  {% if post.mentions %}
-    {% set reply_count = post.mentions | length %}
-    | <a href="{{ post.permalink_url }}#mentions">{{ reply_count }} {% if reply_count == 1 %}mention{% else %}mentions{% endif %}</a>
-  {% endif %}
-
-  {% if post.twitter_url %}
-    | <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">on Twitter</a>
-  {% endif %}
-
-  {% if post.facebook_url %}
-    | <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">on Facebook</a>
-  {% endif %}
-
-  {% if post.in_reply_to %}
-    | <a rel="in-reply-to" class="u-in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a>
-  {% endif %}
-
-  {% if post.repost_source %}
-    | <a href="{{ post.repost_source }}">Source</a>
-  {% endif %}
-
-  {% if authenticated %}
-    | <a href="{{ url_for('edit_by_id', post_type='post', post_id=post.id) }}">Edit</a> |
-    <a href="{{ url_for('delete_by_id', post_type='post', post_id=post.id) }}">Delete</a>
-  {% endif %}
-</div>
