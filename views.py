@@ -331,10 +331,14 @@ def handle_new_or_edit(request, post):
             post.date_index = 1
             same_day_posts = Post.query\
                                  .filter(Post.post_type == post.post_type,
-                                         sqlcast(Post.pub_date, db.Date) == post.pub_date.date())\
+                                         sqlcast(Post.pub_date, db.Date)
+                                         == post.pub_date.date())\
                                  .all()
             if same_day_posts:
-                post.date_index += max(post.date_index for post in same_day_posts)
+                post.date_index += max(post.date_index for post
+                                       in same_day_posts)
+
+        post.repost_preview = None
 
         send_to_twitter = request.form.get("send_to_twitter")
         send_to_facebook = request.form.get("send_to_facebook")
@@ -385,6 +389,7 @@ def handle_new_or_edit(request, post):
         return redirect(post.permalink_url)
 
     return render_template('edit_post.html', post=post,
+                           advanced=request.args.get('advanced'),
                            authenticated=current_user.is_authenticated())
 
 
@@ -396,7 +401,25 @@ def new_post(post_type):
     author = User.query.first()
     content_format = 'markdown' if post_type == 'article' else 'plain'
     post = Post(post_type, content_format, author)
+    post.content = ''
+
+    if post_type == 'reply':
+        in_reply_to = request.args.get('in_reply_to')
+        if in_reply_to:
+            post.in_reply_to = request.args.get('in_reply_to')
+
+    if post_type == 'share':
+        repost_source = request.args.get('repost_source')
+        if repost_source:
+            post.repost_source = repost_source
+
+    if post_type == 'like':
+        like_of = request.args.get('like_of')
+        if like_of:
+            post.like_of = like_of
+
     return handle_new_or_edit(request, post)
+
 
 @app.route('/admin/edit/<post_type>/<post_id>', methods=['GET', 'POST'])
 @login_required

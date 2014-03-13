@@ -10,8 +10,8 @@
   </style>
 
   <form method="POST">
-    <label><input type="checkbox" name="send_to_twitter" value="true" {% if post.id is none %}checked{% endif %}/>Share on Twitter</label>
-    <label><input type="checkbox" name="send_to_facebook" value="true" {% if post.id is none %}checked{% endif %}/>Share on Facebook</label>
+    <label><input type="checkbox" name="send_to_twitter" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Twitter</label>
+    <label><input type="checkbox" name="send_to_facebook" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Facebook</label>
 
     <input style="float: right; padding: 10px;" type="submit" value="Submit Post"/>
 
