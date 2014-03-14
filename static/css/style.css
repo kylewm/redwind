@@ -46,6 +46,10 @@ p + p {
     margin-top: 50px;
 }
 
+.post .reply-context {
+   font-size: 0.8em;
+}
+
 .post .links {
     font-size: 0.8em;
     margin-top: 0.2em;
