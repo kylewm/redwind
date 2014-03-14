@@ -64,7 +64,7 @@
 
               </div>
 
-              <p class="e-content">{{ reply.content }}</p>
+              <p class="e-content">{{ reply.content | safe }}</p>
 
               <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
                 <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
