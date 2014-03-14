@@ -22,3 +22,7 @@ class PushClient:
             self.publish('http://kylewm.com/articles.atom')
         elif post.post_type == 'note':
             self.publish('http://kylewm.com/notes.atom')
+
+    def handle_new_mentions(self, mentions):
+        if mentions:
+            self.publish('http://kylewm.com/mention.atom')
