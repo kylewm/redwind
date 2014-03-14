@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 import re
 import requests
@@ -77,7 +78,8 @@ class MentionClient:
         response = self.get_response(target_url)
         endpoint = (self.find_webmention_endpoint_in_headers(response.headers)
                     or self.find_webmention_endpoint_in_html(response.text))
-        return endpoint
+
+        return urljoin(target_url, endpoint)
 
     def find_webmention_endpoint_in_headers(self, headers):
         if 'link' in headers:
