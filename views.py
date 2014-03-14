@@ -355,6 +355,7 @@ def handle_new_or_edit(request, post):
 
         send_to_twitter = request.form.get("send_to_twitter")
         send_to_facebook = request.form.get("send_to_facebook")
+        send_webmentions = request.form.get("send_webmentions")
 
         twitter_status_id = request.form.get("twitter_status_id")
         if not send_to_twitter and twitter_status_id:
@@ -392,12 +393,13 @@ def handle_new_or_edit(request, post):
             flash("error while sending PuSH")
             app.logger.exception('posting to PuSH')
 
-        try:
-            mention_client.handle_new_or_edit(post)
-            db.session.commit()
-        except:
-            flash("error sending webmentions")
-            app.logger.exception('sending webmentions')
+        if send_webmentions:
+            try:
+                mention_client.handle_new_or_edit(post)
+                db.session.commit()
+            except:
+                flash("error sending webmentions")
+                app.logger.exception('sending webmentions')
 
         return redirect(post.permalink_url)
 
