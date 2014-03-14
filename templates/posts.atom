@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
   <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
-  <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"/>
-  <link href="{{ request.base_url }}" rel="self"/>
-  <link rel="hub" href="http://pubsubhubbub.appspot.com/"/>
+  <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"></link>
+  <link href="{{ request.base_url }}" rel="self"></link>
+  <link rel="hub" href="http://pubsubhubbub.appspot.com/"></link>
   <id>http://kylewm.com/all.atom</id>
   <author>
     <name>Kyle</name>
