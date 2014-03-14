@@ -59,7 +59,9 @@ def parse(txt):
                 hentry['properties'].get('like-of', []), 'like')
             references += parse_references(
                 hentry['properties'].get('repost-of', []), 'repost')
-            content = ''.join(content['value'].strip() for content
+
+            # TODO: remove potentially harmful tags!
+            content = ''.join(content['html'].strip() for content
                               in hentry['properties'].get('content', []))
             author = parse_author(
                 hentry['properties'].get('author', []))
@@ -79,7 +81,8 @@ if __name__ == '__main__':
         'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
 
         'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
-        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088']
+        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
+        'https://snarfed.org/2014-03-10_re-kyle-mahan-5']
 
     for url in urls:
         txt = requests.get(url).content
