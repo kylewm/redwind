@@ -8,6 +8,8 @@
     {% include "hcard_author.html" %}
 
     <div style="margin-top: 0.5em; margin-left: 56px">
+      {% include "reply_context.html" %}
+
       {% if post.title %}
         <h2 class="p-name">{{ post.title }}</h2>
         <div class="e-content">

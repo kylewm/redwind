@@ -6,6 +6,7 @@
     <div class="post {{post.post_type}} h-entry">
 
       {% include "admin_post_controls.html" %}
+      {% include "reply_context.html" %}
 
       {% if post.title %}
         <a class="u-url p-name" href="{{ post.permalink_url }}">{{ post.title }}</a>

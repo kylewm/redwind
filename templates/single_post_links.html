@@ -1,12 +1,3 @@
-{% if post.in_reply_to %}
-  <a rel="in-reply-to" class="u-in-reply-to" href="{{ post.in_reply_to }}">In Reply To</a><br/>
-{% endif %}
-{% if post.repost_source %}
-  <a class="u-repost u-repost-of" href="{{ post.repost_source }}">Source</a><br/>
-{% endif %}
-{% if post.like_of %}
-  <a class="u-like u-like-of" href="{{ post.like_of }}">Liked</a><br/>
-{% endif %}
 
 <a class="u-url" href="{{ post.permalink_url }}">
   <time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</time>

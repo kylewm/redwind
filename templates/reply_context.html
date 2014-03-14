@@ -1,0 +1,9 @@
+<div class="reply-context">
+{% if post.in_reply_to %}
+  In reply to <a rel="in-reply-to" class="u-in-reply-to" href="{{ post.in_reply_to }}">this</a><br/>
+{% endif %}{% if post.repost_source %}
+  Shared from <a class="u-repost u-repost-of" href="{{ post.repost_source }}">here</a><br/>
+{% endif %}{% if post.like_of %}
+  Liked <a class="u-like u-like-of" href="{{ post.like_of }}">this</a><br/>
+{% endif %}
+ </div>
