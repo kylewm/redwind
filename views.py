@@ -13,6 +13,7 @@ import os
 import re
 import requests
 import pytz
+import unicodedata
 from sqlalchemy import cast as sqlcast
 
 from flask import request, redirect, url_for, render_template,\
@@ -312,19 +313,31 @@ def delete_by_id(post_type, post_id):
     return redirect(redirect_url)
 
 
+def slugify(s):
+    slug = unicodedata.normalize('NFKD', s).lower()
+    slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
+    slug = re.sub(r'[-]+', '-', slug)
+    return slug[:256]
+
+
 def handle_new_or_edit(request, post):
     if request.method == 'POST':
         # populate the Post object and save it to the database,
         # redirect to the view
         post.title = request.form.get('title', '')
         post.content = request.form.get('content')
-        post.slug = request.form.get('slug')
         post.in_reply_to = request.form.get('in_reply_to', '')
         post.repost_source = request.form.get('repost_source', '')
         post.like_of = request.form.get('like_of', '')
         post.content_format = request.form.get('content_format', 'plain')
         if not post.pub_date:
             post.pub_date = datetime.utcnow()
+
+        slug = request.form.get('slug')
+        if slug:
+            post.slug = slug
+        elif post.title and not post.slug:
+            post.slug = slugify(post.title)
 
         # generate the date/index identifier
         if not post.date_index:
