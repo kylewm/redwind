@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
+  <title>Kyle Mahan: Mentions</title>
+  <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"></link>
+  <link href="{{ request.base_url }}" rel="self"></link>
+  <link rel="hub" href="http://pubsubhubbub.appspot.com/"></link>
+  <id>http://kylewm.com/mentions.atom</id>
+  <author>
+    <name>Kyle</name>
+    <uri>http://kylewm.com</uri>
+  </author>
+  <updated>{{ mentions | first | attr('pub_date') | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
+
+  {% for mention in mentions %}
+
+  <entry>
+    <updated>{{ mention.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
+    <published>{{ mention.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</published>
+    <link href="{{ mention.post.permalink_url }}" rel="alternate" type="text/html"/>
+    <id>{{ mention.permalink }}</id>
+    <title type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        {{ mention.mention_type }} from {{ mention.author_name | atom_sanitize }} on {{ mention.post.title or mention.post.content | truncate(100) | atom_sanitize }}</div>
+    </title>
+    <content type="xhtml" xml:base="http://kylewm.com/" xml:space="preserve">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        {{ mention.content | atom_sanitize }}
+      </div>
+    </content>
+    <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/{{ mention.mention_type }}</object-type>
+  </entry>
+
+{% endfor %}
+</feed>

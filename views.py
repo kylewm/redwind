@@ -216,6 +216,17 @@ def articles_atom():
     return render_posts_atom('Articles', ('article',), 10)
 
 
+@app.route("/mentions.atom")
+def mentions_atom():
+    mentions = Mention\
+        .query\
+        .filter(Mention.post)\
+        .order_by(Mention.pub_date.desc())\
+        .limit(30).all()
+    return render_template("mentions.atom",
+                           mentions=mentions)
+
+
 @app.route('/<post_type>/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>', defaults={'slug': None})
 @app.route('/<post_type>/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
