@@ -541,7 +541,7 @@ def receive_webmention():
 
     db.session.commit()
 
-    push_client.handle_new_mention(mentions)
+    push_client.handle_new_mentions(mentions)
 
     return make_response("Received webmention from {} to {}"
                          .format(source, target))
