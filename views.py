@@ -143,28 +143,35 @@ class DisplayPost:
         return Markup(text)
 
     @property
+    def mentions_sorted_by_date(self):
+        def by_date(m):
+            return m.pub_date or\
+                datetime.datetime(datetime.MIN_YEAR, 1, 1)
+        return sorted(self.mentions, key=by_date)
+
+    @property
     def likes(self):
-        return [mention for mention in self.mentions
+        return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type == 'like']
 
     @property
     def non_likes(self):
-        return [mention for mention in self.mentions
+        return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type != 'like']
 
     @property
     def reposts(self):
-        return [mention for mention in self.mentions
+        return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type == 'repost']
 
     @property
     def replies(self):
-        return [mention for mention in self.mentions
+        return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type == 'reply']
 
     @property
     def references(self):
-        return [mention for mention in self.mentions
+        return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type == 'reference']
 
 
