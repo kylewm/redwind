@@ -337,7 +337,8 @@ def do_send_to_twitter(post_id):
         post = Post.query.filter_by(id=post_id).first()
         twitter_client.handle_new_or_edit(post)
         db.session.commit()
-    except:
+    except Exception as e:
+        flash("error posting to Twitter {}".format(e))
         app.logger.exception('posting to twitter')
 
 
@@ -346,7 +347,8 @@ def do_send_to_facebook(post_id):
         post = Post.query.filter_by(id=post_id).first()
         facebook_client.handle_new_or_edit(post)
         db.session.commit()
-    except:
+    except Exception as e:
+        flash("error posting to Facebook {}".format(e))
         app.logger.exception('posting to facebook')
 
 
@@ -355,7 +357,8 @@ def do_send_webmentions(post_id):
         post = Post.query.filter_by(id=post_id).first()
         mention_client.handle_new_or_edit(post)
         db.session.commit()
-    except:
+    except Exception as e:
+        flash("error sending webmentions {}".format(e))
         app.logger.exception('sending webmentions')
 
 
@@ -363,7 +366,8 @@ def do_send_push_notification(post_id):
     try:
         post = Post.query.filter_by(id=post_id).first()
         push_client.handle_new_or_edit(post)
-    except:
+    except Exception as e:
+        flash("error posting to PuSH notification {}".format(e))
         app.logger.exception('posting to PuSH')
 
 
@@ -425,19 +429,15 @@ def handle_new_or_edit(request, post):
         # TODO everything else could be asynchronous
         # post or update this post on twitter
         if send_to_twitter:
-            t = threading.Thread(target=lambda: do_send_to_twitter(post.id))
-            t.start()
+            do_send_to_twitter(post.id)
 
         if send_to_facebook:
-            t = threading.Thread(target=lambda: do_send_to_facebook(post.id))
-            t.start()
+            do_send_to_facebook(post.id)
 
-        t = threading.Thread(target=lambda: do_send_push_notification(post.id))
-        t.start()
+        do_send_push_notification(post.id)
 
         if send_webmentions:
-            t = threading.Thread(target=lambda: do_send_webmentions(post.id))
-            t.start()
+            do_send_webmentions(post.id)
 
         return redirect(post.permalink_url)
 
