@@ -18,7 +18,7 @@ import threading
 from sqlalchemy import cast as sqlcast
 
 from flask import request, redirect, url_for, render_template,\
-    flash, abort, make_response, jsonify, Markup
+    flash, abort, make_response, jsonify, Markup, Response
 from flask.ext.login import login_required, login_user,\
     logout_user, current_user
 from bs4 import BeautifulSoup, Comment
@@ -356,7 +356,6 @@ def do_send_webmentions(post_id):
     try:
         post = Post.query.filter_by(id=post_id).first()
         mention_client.handle_new_or_edit(post)
-        db.session.commit()
     except Exception as e:
         flash("error sending webmentions {}".format(e))
         app.logger.exception('sending webmentions')
@@ -565,3 +564,23 @@ def receive_webmention():
 
     return make_response("Received webmention from {} to {}"
                          .format(source, target))
+
+
+@app.route('/mf2')
+def convert_mf2():
+    from mf2py.parser import Parser
+    import json
+    import pprint
+
+    url = request.args.get('url')
+    fmt = request.args.get('format')
+
+    response = requests.get(url)
+    p = Parser(doc=response.content)
+
+    if fmt == 'json':
+        json = json.dumps(p.to_dict())
+        return Response(response=json, status=200, mimetype='application/json')
+    else:
+        pretty = json.dumps(p.to_dict(), indent=4)
+        return Response((pretty), status=200, mimetype='text/plain')
