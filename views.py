@@ -14,6 +14,7 @@ import re
 import requests
 import pytz
 import unicodedata
+import threading
 from sqlalchemy import cast as sqlcast
 
 from flask import request, redirect, url_for, render_template,\
@@ -331,14 +332,48 @@ def delete_by_id(post_type, post_id):
     return redirect(redirect_url)
 
 
-def slugify(s):
-    slug = unicodedata.normalize('NFKD', s).lower()
-    slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
-    slug = re.sub(r'[-]+', '-', slug)
-    return slug[:256]
+def do_send_to_twitter(post_id):
+    try:
+        post = Post.query.filter_by(id=post_id).first()
+        twitter_client.handle_new_or_edit(post)
+        db.session.commit()
+    except:
+        app.logger.exception('posting to twitter')
+
+
+def do_send_to_facebook(post_id):
+    try:
+        post = Post.query.filter_by(id=post_id).first()
+        facebook_client.handle_new_or_edit(post)
+        db.session.commit()
+    except:
+        app.logger.exception('posting to facebook')
+
+
+def do_send_webmentions(post_id):
+    try:
+        post = Post.query.filter_by(id=post_id).first()
+        mention_client.handle_new_or_edit(post)
+        db.session.commit()
+    except:
+        app.logger.exception('sending webmentions')
+
+
+def do_send_push_notification(post_id):
+    try:
+        post = Post.query.filter_by(id=post_id).first()
+        push_client.handle_new_or_edit(post)
+    except:
+        app.logger.exception('posting to PuSH')
 
 
 def handle_new_or_edit(request, post):
+    def slugify(s):
+        slug = unicodedata.normalize('NFKD', s).lower()
+        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
+        slug = re.sub(r'[-]+', '-', slug)
+        return slug[:256]
+
     if request.method == 'POST':
         # populate the Post object and save it to the database,
         # redirect to the view
@@ -390,34 +425,19 @@ def handle_new_or_edit(request, post):
         # TODO everything else could be asynchronous
         # post or update this post on twitter
         if send_to_twitter:
-            try:
-                twitter_client.handle_new_or_edit(post)
-                db.session.commit()
-            except:
-                flash("error while posting to twitter")
-                app.logger.exception('posting to twitter')
+            t = threading.Thread(target=lambda: do_send_to_twitter(post.id))
+            t.start()
 
         if send_to_facebook:
-            try:
-                facebook_client.handle_new_or_edit(post)
-                db.session.commit()
-            except:
-                flash("error while posting to facebook")
-                app.logger.exception('posting to facebook')
+            t = threading.Thread(target=lambda: do_send_to_facebook(post.id))
+            t.start()
 
-        try:
-            push_client.handle_new_or_edit(post)
-        except:
-            flash("error while sending PuSH")
-            app.logger.exception('posting to PuSH')
+        t = threading.Thread(target=lambda: do_send_push_notification(post.id))
+        t.start()
 
         if send_webmentions:
-            try:
-                mention_client.handle_new_or_edit(post)
-                db.session.commit()
-            except:
-                flash("error sending webmentions")
-                app.logger.exception('sending webmentions')
+            t = threading.Thread(target=lambda: do_send_webmentions(post.id))
+            t.start()
 
         return redirect(post.permalink_url)
 
