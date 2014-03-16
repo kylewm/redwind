@@ -93,12 +93,12 @@ class DisplayPost:
         #if preview:
         #    return preview, True
 
-        #fallback
-        m = re.match(r'https?://(.*)', url)
-        if m:
-            preview = """<a href="{}" class="u-repost u-repost-of">{}</a>"""\
-                .format(url, m.group(1))
-            return preview, False
+        #fallback (this is included in the template now)
+        #m = re.match(r'https?://(.*)', url)
+        #if m:
+        #    preview = """<a href="{}" class="u-repost u-repost-of">{}</a>"""\
+        #        .format(url, m.group(1))
+        #    return preview, False
 
         # TODO when the post is first created, we should fetch the
         # reposted URL and save some information about it (i.e.,
