@@ -7,7 +7,7 @@ mentions = (Mention.query.all())
 for mention in mentions:
     if mention.post and 'snarfed' in mention.source:
         source = mention.source
-        target = mention.post.permalink_url
+        target = mention.post.permalink
         new_mentions = process_webmention(source, target)
         print("processing", mention)
         print("re-processed", new_mentions)

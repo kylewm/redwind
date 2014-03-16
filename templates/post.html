@@ -2,29 +2,14 @@
 
 {% block content %}
 
-  <div class="post {{post.post_type}} h-entry">
+  <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
 
     {% include "admin_post_controls.html" %}
     {% include "hcard_author.html" %}
 
     <div style="margin-top: 0.5em; margin-left: 56px">
-      {% include "reply_context.html" %}
 
-      {% if post.title %}
-        <h2 class="p-name">{{ post.title }}</h2>
-        <div class="e-content">
-          {{ post.html_content }}
-        </div>
-      {% else %}
-        <div class="p-name e-content">
-          {{ post.html_content }}
-        </div>
-      {% endif %}
-
-      <div class="links">
-        {% include "single_post_links.html" %}
-        {% include "syndication_links.html" %}
-      </div>
+      {% include "post_content.html" %}
 
       <a name="mentions"></a>
 
@@ -71,7 +56,7 @@
               </time>
 
               {% if authenticated %}
-                | <a href="{{ url_for('delete_by_id', post_type='mention', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
+                | <a href="{{ url_for('delete_mention_by_id', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
               {% endif %}
 
               <div style="clear:both"></div>

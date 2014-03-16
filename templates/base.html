@@ -66,11 +66,11 @@
               {% if authenticated %}
               <ul>
                 <li>new:</li>
-                <li><a href="{{ url_for('new_post', post_type='article') }}">article</a></li>
-                <li><a href="{{ url_for('new_post', post_type='note') }}">note</a></li>
-                <li><a href="{{ url_for('new_post', post_type='reply') }}">reply</a></li>
-                <li><a href="{{ url_for('new_post', post_type='share') }}">share</a></li>
-                <li><a href="{{ url_for('new_post', post_type='like') }}">like</a></li>
+                <li><a href="{{ url_for('new_post', type='article') }}">article</a></li>
+                <li><a href="{{ url_for('new_post', type='note') }}">note</a></li>
+                <li><a href="{{ url_for('new_post', type='reply') }}">reply</a></li>
+                <li><a href="{{ url_for('new_post', type='share') }}">share</a></li>
+                <li><a href="{{ url_for('new_post', type='like') }}">like</a></li>
               </ul>
               {% endif %}
             </nav>
@@ -96,23 +96,5 @@
           {% block content %}{% endblock content %}
       </div>
     </div>
-
-<!-- Piwik -->
-<script type="text/javascript">
-  var _paq = _paq || [];
-  _paq.push(['trackPageView']);
-  _paq.push(['enableLinkTracking']);
-  (function() {
-    var u=(("https:" == document.location.protocol) ? "https" : "http") + "://piwik.kylewm.com/";
-    _paq.push(['setTrackerUrl', u+'piwik.php']);
-    _paq.push(['setSiteId', 1]);
-    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0]; g.type='text/javascript';
-    g.defer=true; g.async=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-  })();
-
-</script>
-<noscript><p><img src="http://piwik.kylewm.com/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
-<!-- End Piwik Code -->
-
   </body>
 </html>

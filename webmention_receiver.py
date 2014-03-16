@@ -36,8 +36,8 @@ def process_webmention(source, target):
     #            target_post.date_index)
 
     link_to_target = find_link_to_target(source, source_response,
-                                         [target, target_post.permalink_url,
-                                          target_post.short_permalink_url])
+                                         [target, target_post.permalink,
+                                          target_post.short_permalink])
     if not link_to_target:
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
@@ -54,8 +54,8 @@ def process_webmention(source, target):
 
     reftypes = set()
     for ref in hentry.references:
-        if (ref.url == target_post.permalink_url
-                or ref.url == target_post.short_permalink_url):
+        if (ref.url == target_post.permalink
+                or ref.url == target_post.short_permalink):
             reftypes.add(ref.reftype)
 
     # if it's not a reply, repost, or like, it's just a reference

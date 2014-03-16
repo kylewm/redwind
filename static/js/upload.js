@@ -7,9 +7,9 @@ $(":file").change(function() {
 
         var formData = new FormData();
         formData.append('file', file);
-        
+
         $.ajax({
-            url: '/admin/upload',
+            url: '/api/upload_file',
             type: 'POST',
             success: completeHandler,
             data: formData,

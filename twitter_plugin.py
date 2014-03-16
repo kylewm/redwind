@@ -219,7 +219,7 @@ class TwitterClient:
         if post.title:
             components = [self.text_to_span(post.title),
                           self.url_to_span(post.author,
-                                           post.permalink_url,
+                                           post.permalink,
                                            can_drop=False)]
 
         else:
@@ -239,7 +239,7 @@ class TwitterClient:
             if self.estimate_length(components) > target_length:
                 components.pop()
                 components.append(self.url_to_span(post.author,
-                                                   post.permalink_url,
+                                                   post.permalink,
                                                    can_drop=False))
 
         status = self.run_shorten_algorithm(components, target_length)

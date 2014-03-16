@@ -41,7 +41,7 @@ class FacebookClient:
         app.logger.debug('publishing to facebook')
 
         actions = {'name': 'See Original',
-                   'link': post.permalink_url}
+                   'link': post.permalink}
         privacy = {'value': 'EVERYONE'}
 
         post_args = {'access_token': post.author.facebook_access_token,

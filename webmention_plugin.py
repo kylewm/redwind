@@ -12,7 +12,7 @@ class MentionClient:
         self.cached_responses = {}
 
     def get_source_url(self, post):
-        return post.permalink_url
+        return post.permalink
 
     def get_target_urls(self, post):
         target_urls = []
@@ -53,8 +53,10 @@ class MentionClient:
         target_urls = self.get_target_urls(post)
         self.app.logger.debug("Sending webmentions to these urls {}"
                               .format(" ; ".join(target_urls)))
+        results = []
         for target_url in target_urls:
-            self.send_mention(post, target_url)
+            results.append(self.send_mention(post, target_url))
+        return results
 
     def send_mention(self, post, target_url):
         self.app.logger.debug("Looking for webmention endpoint on %s",
@@ -62,14 +64,21 @@ class MentionClient:
 
         if self.supports_webmention(target_url):
             self.app.logger.debug("Site supports webmention")
-            success = self.send_webmention(post, target_url)
-            self.app.logger.debug("Sending webmention successful: %s", success)
+            success, explanation = self.send_webmention(post, target_url)
+
         elif self.supports_pingback(target_url):
             self.app.logger.debug("Site supports pingback")
-            success = self.send_pingback(post, target_url)
+            success, explanation = self.send_pingback(post, target_url)
             self.app.logger.debug("Sending pingback successful: %s", success)
+
         else:
             self.app.logger.debug("Site does not support mentions")
+            success = False
+            explanation = 'Site does not support webmentions or pingbacks'
+
+        return {'target': target_url,
+                'success': success,
+                'explanation': explanation}
 
     def supports_webmention(self, target_url):
         return self.find_webmention_endpoint(target_url) is not None
@@ -101,22 +110,26 @@ class MentionClient:
             "Sending webmention from %s to %s",
             self.get_source_url(post), target_url)
 
-        endpoint = self.find_webmention_endpoint(target_url)
-        payload = {'source': self.get_source_url(post), 'target': target_url}
-        headers = {'content-type': 'application/x-www-form-urlencoded',
-                   'accept': 'application/json'}
-        response = requests.post(endpoint, data=payload, headers=headers)
-        #from https://github.com/vrypan/webmention-tools/blob/master/webmentiontools/send.py
-        if response.status_code // 100 != 2:
-            self.app.logger.warn(
-                "Failed to send webmention for %s. Response status code: %s",
-                target_url, response.status_code)
-            return False
-        else:
-            self.app.logger.debug(
-                "Sent webmention successfully to %s. Sender response: %s:",
-                target_url, response.text)
-            return True
+        try:
+            endpoint = self.find_webmention_endpoint(target_url)
+            payload = {'source': self.get_source_url(post), 'target': target_url}
+            headers = {'content-type': 'application/x-www-form-urlencoded',
+                       'accept': 'application/json'}
+            response = requests.post(endpoint, data=payload, headers=headers)
+
+            #from https://github.com/vrypan/webmention-tools/blob/master/webmentiontools/send.py
+            if response.status_code // 100 != 2:
+                self.app.logger.warn(
+                    "Failed to send webmention for %s. Response status code: %s",
+                    target_url, response.status_code)
+                return False, "Received bad response {}".format(response)
+            else:
+                self.app.logger.debug(
+                    "Sent webmention successfully to %s. Sender response: %s:",
+                    target_url, response.text)
+                return True, "Successful"
+        except Exception as e:
+            return False, "Exception while sending webmention {}".format(e)
 
     def supports_pingback(self, target_url):
         return self.find_pingback_endpoint(target_url) is not None
@@ -131,17 +144,21 @@ class MentionClient:
         return endpoint
 
     def send_pingback(self, post, target_url):
-        endpoint = self.find_pingback_endpoint(target_url)
-        source_url = self.get_source_url(post)
+        try:
+            endpoint = self.find_pingback_endpoint(target_url)
+            source_url = self.get_source_url(post)
 
-        payload = """<?xml version="1.0" encoding="iso-8859-1"?><methodCall>"""
-        """<methodName>pingback.ping</methodName><params><param><value>"""
-        """<string>{}</string></value></param><param><value>"""
-        """<string>{}</string></value></param></params></methodCall>"""\
-            .format(source_url, target_url)
-        headers = {'content-type': 'application/xml'}
-        response = requests.post(endpoint, data=payload, headers=headers)
-        self.app.logger.debug(
-            "Pingback to %s response status code %s. Message %s",
-            target_url, response.status_code, response.text)
-        return True  # TODO detect errors
+            payload = """<?xml version="1.0" encoding="iso-8859-1"?><methodCall>"""
+            """<methodName>pingback.ping</methodName><params><param><value>"""
+            """<string>{}</string></value></param><param><value>"""
+            """<string>{}</string></value></param></params></methodCall>"""\
+                .format(source_url, target_url)
+            headers = {'content-type': 'application/xml'}
+            response = requests.post(endpoint, data=payload, headers=headers)
+            self.app.logger.debug(
+                "Pingback to %s response status code %s. Message %s",
+                target_url, response.status_code, response.text)
+
+            return True, "Sent pingback successfully"
+        except Exception as e:
+            return False, "Exception while sending pingback: {}".format(e)

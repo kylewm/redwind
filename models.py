@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from collections import defaultdict
 from sqlalchemy import cast
 
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(80), unique=True)
@@ -82,6 +83,7 @@ class Post(db.Model):
     repost_source = db.Column(db.String(2048))
     like_of = db.Column(db.String(2048))
     repost_preview = db.Column(db.Text)
+    draft = db.Column(db.Boolean())
     twitter_status_id = db.Column(db.String(64))
     facebook_post_id = db.Column(db.String(64))
     tags = db.relationship('Tag', secondary=tags_to_posts,
@@ -108,6 +110,7 @@ class Post(db.Model):
         self.post_type = post_type
         self.content_format = content_format
         self.author = author
+        self.draft = True
 
     @property
     def mentions_categorized(self):
@@ -117,7 +120,7 @@ class Post(db.Model):
         return cat
 
     @property
-    def permalink_url(self):
+    def permalink(self):
         site_url = app.config.get('SITE_URL') or 'http://localhost'
 
         path_components = [site_url,
@@ -130,7 +133,7 @@ class Post(db.Model):
         return '/'.join(path_components)
 
     @property
-    def short_permalink_url(self):
+    def short_permalink(self):
         tag = shortlinks.tag_for_post_type(self.post_type)
         ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
         return '{}/{}{}{}'.format(app.config.get('SHORT_SITE_URL'),
