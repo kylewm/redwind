@@ -113,7 +113,7 @@
                     if (data.success) {
                         appendResult("Success");
                         for (var ii = 0 ; ii < data.results.length ; ++ii) {
-                            var result = results[ii];
+                            var result = data.results[ii];
                             if (result.success) {
                                 appendResult("Sent to " + result.target);
                             } else {
