@@ -112,13 +112,14 @@
                 success: function wmSuccess(data) {
                     if (data.success) {
                         appendResult("Success");
-                        $.each(data.results, function (result) {
+                        for (var ii = 0 ; ii < data.results.length ; ++ii) {
+                            var result = results[ii];
                             if (result.success) {
                                 appendResult("Sent to " + result.target);
                             } else {
                                 appendResult("Failure for " + result.target + ", " + result.explanation);
                             }
-                        });
+                        }
                     } else {
                         appendResult("Failure: " + data.error);
                     }
