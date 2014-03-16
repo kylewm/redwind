@@ -28,13 +28,6 @@ def process_webmention(source, target):
             "Webmention could not find target post: %s. Giving up", target)
         return None
 
-    #TODO remove after the old permalinks are out of circulation
-    #old_permalink = '{}/{}/{}/{}'\
-    #    .format(app.config['SITE_URL'],
-    #            target_post.post_type,
-    #            target_post.pub_date.strftime("%y%m%d"),
-    #            target_post.date_index)
-
     link_to_target = find_link_to_target(source, source_response,
                                          [target, target_post.permalink,
                                           target_post.short_permalink])

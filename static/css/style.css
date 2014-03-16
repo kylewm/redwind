@@ -182,13 +182,12 @@ footer {
     padding: 10px;
 }
 
-.admin-post-controls {
+/*.admin-post-controls {
     display: inline-block;
-    /*position: absolute; left: -35px;*/
     float: right;
     font-size: 0.8em;
     text-align: right;
-}
+}*/
 
 .syndication-icon {
     vertical-align: middle;

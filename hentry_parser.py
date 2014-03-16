@@ -49,6 +49,7 @@ def parse(txt):
 
     for item in d['items']:
         if 'h-entry' in item['type']:
+
             hentry = item
             permalink = (next((perma for perma
                               in hentry['properties'].get('url', [])), None)

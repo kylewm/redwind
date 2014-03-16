@@ -115,9 +115,9 @@
                         for (var ii = 0 ; ii < data.results.length ; ++ii) {
                             var result = data.results[ii];
                             if (result.success) {
-                                appendResult("Sent to " + result.target);
+                                appendResult("Sent to <a href=\"" + result.target + "\">" + result.target + "</a>");
                             } else {
-                                appendResult("Failure for " + result.target + ", " + result.explanation);
+                                appendResult("Failure for <a href=\"" + result.target + "\">" + result.target + "</a>: " + result.explanation);
                             }
                         }
                     } else {

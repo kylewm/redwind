@@ -4,7 +4,9 @@
 
   {% for post in posts %}
 
-    {% include "post_content.html" %}
+    <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
+      {% include "post_content.html" %}
+    </div>
 
   {% endfor %}
 
