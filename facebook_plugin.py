@@ -1,6 +1,7 @@
 from app import app, db
 from flask.ext.login import login_required, current_user
-from flask import request, redirect, url_for
+from flask import request, redirect, url_for, jsonify
+from models import Post
 import requests
 import json
 
@@ -33,29 +34,43 @@ def authorize_facebook():
                         + urllib.parse.urlencode(params))
 
 
-class FacebookClient:
-    def __init__(self, app):
-        self.app = app
+@app.route('/api/syndicate_to_facebook', methods=['POST'])
+@login_required
+def syndicate_to_facebook():
+    try:
+        post_id = int(request.form.get('post_id'))
+        post = Post.query.filter_by(id=post_id).first()
+        handle_new_or_edit(post)
+        db.session.commit()
+        return jsonify(success=True, facebook_post_id=post.facebook_post_id,
+                       facebook_permalink=post.facebook_url)
+    except Exception as e:
+        app.logger.exception('posting to facebook')
+        response = jsonify(success=False,
+                           error="exception while syndicating to Facebook: {}"
+                           .format(e))
+        return response
 
-    def handle_new_or_edit(self, post):
-        app.logger.debug('publishing to facebook')
 
-        actions = {'name': 'See Original',
-                   'link': post.permalink}
-        privacy = {'value': 'EVERYONE'}
+def handle_new_or_edit(post):
+    app.logger.debug('publishing to facebook')
 
-        post_args = {'access_token': post.author.facebook_access_token,
-                     'name': post.title,
-                     'message': post.content,
-                     'link': post.repost_source,
-                     'actions': json.dumps(actions),
-                     'privact': json.dumps(privacy)}
+    actions = {'name': 'See Original',
+               'link': post.permalink}
+    privacy = {'value': 'EVERYONE'}
 
-        response = requests.post('https://graph.facebook.com/me/feed',
-                                 data=post_args)
-        if 'json' in response.headers['content-type']:
-            result = response.json()
+    post_args = {'access_token': post.author.facebook_access_token,
+                 'name': post.title,
+                 'message': post.content,
+                 'link': post.repost_source,
+                 'actions': json.dumps(actions),
+                 'privact': json.dumps(privacy)}
 
-        app.logger.debug('published to facebook. response {}'.format(result))
-        if result:
-            post.facebook_post_id = result['id']
+    response = requests.post('https://graph.facebook.com/me/feed',
+                             data=post_args)
+    if 'json' in response.headers['content-type']:
+        result = response.json()
+
+    app.logger.debug('published to facebook. response {}'.format(result))
+    if result:
+        post.facebook_post_id = result['id']

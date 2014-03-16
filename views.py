@@ -1,10 +1,11 @@
 from app import app, db
 from models import Post, Mention
 from auth import load_user
-from twitter_plugin import TwitterClient
-from webmention_plugin import MentionClient
-from push_plugin import PushClient
-from facebook_plugin import FacebookClient
+
+import facebook_plugin
+import twitter_plugin
+import webmention_plugin
+import push_plugin
 
 import webmention_receiver
 
@@ -26,13 +27,14 @@ from werkzeug import secure_filename
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
-twitter_client = TwitterClient(app)
-facebook_client = FacebookClient(app)
-mention_client = MentionClient(app)
-push_client = PushClient(app)
-
 POST_TYPES = ['article', 'note', 'share', 'like', 'reply']
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
+
+PLUGINS = [facebook_plugin, twitter_plugin,
+           push_plugin, webmention_plugin,
+           webmention_receiver]
+
+map(__import__, PLUGINS)
 
 
 class DisplayPost:
@@ -86,9 +88,10 @@ class DisplayPost:
                 .format(m.group(1))
             return preview, True
 
-        preview = twitter_client.repost_preview(self.author, url)
-        if preview:
-            return preview, True
+        #FIXME
+        #preview = twitter_client.repost_preview(self.author, url)
+        #if preview:
+        #    return preview, True
 
         #fallback
         m = re.match(r'https?://(.*)', url)
@@ -534,114 +537,6 @@ def save_post():
         app.logger.exception("Failed to save post")
         return jsonify(success=False, error="exception while saving post {}"
                        .format(e))
-
-
-
-@app.route('/api/syndicate_to_twitter', methods=['POST'])
-@login_required
-def syndicate_to_twitter():
-    try:
-        post_id = int(request.form.get('post_id'))
-        post = Post.query.filter_by(id=post_id).first()
-        twitter_client.handle_new_or_edit(post)
-        db.session.commit()
-        return jsonify(success=True, twitter_status_id=post.twitter_status_id,
-                       twitter_permalink=post.twitter_url)
-    except Exception as e:
-        app.logger.exception('posting to twitter')
-        response = jsonify(success=False,
-                           error="exception while syndicating to Twitter: {}"
-                           .format(e))
-        return response
-
-
-@app.route('/api/syndicate_to_facebook', methods=['POST'])
-@login_required
-def syndicate_to_facebook():
-    try:
-        post_id = int(request.form.get('post_id'))
-        post = Post.query.filter_by(id=post_id).first()
-        facebook_client.handle_new_or_edit(post)
-        db.session.commit()
-        return jsonify(success=True, facebook_post_id=post.facebook_post_id,
-                       facebook_permalink=post.facebook_url)
-    except Exception as e:
-        app.logger.exception('posting to facebook')
-        response = jsonify(success=False,
-                           error="exception while syndicating to Facebook: {}"
-                           .format(e))
-        return response
-
-
-@app.route('/api/send_webmentions', methods=['POST'])
-@login_required
-def send_webmentions():
-    try:
-        post_id = int(request.form.get('post_id'))
-        post = Post.query.filter_by(id=post_id).first()
-        results = mention_client.handle_new_or_edit(post)
-        return jsonify(success=True, results=results)
-
-    except Exception as e:
-        app.logger.exception('sending webmentions')
-        return jsonify(success=False,
-                       error="exception while sending webmention: {}"
-                       .format(e))
-
-
-@app.route('/api/send_push_notification', methods=['POST'])
-@login_required
-def send_push_notification():
-    try:
-        post_id = request.form.get('post_id')
-        post = Post.query.filter_by(id=post_id).first()
-        push_client.handle_new_or_edit(post)
-        return jsonify(success=True)
-
-    except Exception as e:
-        app.logger.exception('posting to PuSH')
-        response = jsonify(success=False,
-                           error="Exception while sending PuSH notification {}"
-                           .format(e))
-        return response
-
-
-@app.route('/webmention', methods=["POST"])
-def receive_webmention():
-    try:
-        source = request.form.get('source')
-        target = request.form.get('target')
-
-        app.logger.debug("Webmention from %s to %s received", source, target)
-
-        mentions = webmention_receiver.process_webmention(source, target)
-        if not mentions:
-            app.logger.debug("Could not find any mentions in request %s to %s",
-                             source, target)
-            response = jsonify(success=False,
-                               error="Could not find references to {} in {}"
-                               .format(target, source))
-            return response
-
-        # de-dup on incoming url
-        if mentions:
-            for existing in Mention.query.filter_by(
-                    post_id=mentions[0].post_id,
-                    permalink=mentions[0].permalink).all():
-                db.session.remove(existing)
-
-        for mention in mentions:
-            db.session.add(mention)
-
-        db.session.commit()
-
-        push_client.handle_new_mentions(mentions)
-        return jsonify(success=True, source=source, target=target)
-    except Exception as e:
-        response = jsonify(success=False,
-                           error="Exception while receiving webmention {}"
-                           .format(e))
-        return response
 
 
 @app.route('/api/mf2')

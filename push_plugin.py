@@ -1,28 +1,47 @@
+from app import app
+from models import Post
+from flask import request, jsonify
+from flask.ext.login import login_required
 import requests
 
 
-class PushClient:
-    def __init__(self, app):
-        self.app = app
+@app.route('/api/send_push_notification', methods=['POST'])
+@login_required
+def send_push_notification():
+    try:
+        post_id = request.form.get('post_id')
+        post = Post.query.filter_by(id=post_id).first()
+        handle_new_or_edit(post)
+        return jsonify(success=True)
 
-    def publish(self, url):
-        self.app.logger.debug("sending PuSH notification to %s", url)
-        data = {'hub.mode': 'publish', 'hub.url': url}
-        response = requests.post('https://pubsubhubbub.appspot.com/', data)
-        if response.status_code == 204:
-            self.app.logger.info('successfully sent PuSH notification')
-        else:
-            self.app.logger.warn('unexpected response from PuSH hub %s',
-                                 response)
+    except Exception as e:
+        app.logger.exception('posting to PuSH')
+        response = jsonify(success=False,
+                           error="Exception while sending PuSH notification {}"
+                           .format(e))
+        return response
 
-    def handle_new_or_edit(self, post):
-        if post.post_type in ('article', 'note', 'share'):
-            self.publish('http://kylewm.com/all.atom')
-        if post.post_type == 'article':
-            self.publish('http://kylewm.com/articles.atom')
-        elif post.post_type == 'note':
-            self.publish('http://kylewm.com/notes.atom')
 
-    def handle_new_mentions(self, mentions):
-        if mentions:
-            self.publish('http://kylewm.com/mention.atom')
+def publish(url):
+    app.logger.debug("sending PuSH notification to %s", url)
+    data = {'hub.mode': 'publish', 'hub.url': url}
+    response = requests.post('https://pubsubhubbub.appspot.com/', data)
+    if response.status_code == 204:
+        app.logger.info('successfully sent PuSH notification')
+    else:
+        app.logger.warn('unexpected response from PuSH hub %s',
+                        response)
+
+
+def handle_new_or_edit(post):
+    if post.post_type in ('article', 'note', 'share'):
+        publish('http://kylewm.com/all.atom')
+    if post.post_type == 'article':
+        publish('http://kylewm.com/articles.atom')
+    elif post.post_type == 'note':
+        publish('http://kylewm.com/notes.atom')
+
+
+def handle_new_mentions(mentions):
+    if mentions:
+        publish('http://kylewm.com/mention.atom')
