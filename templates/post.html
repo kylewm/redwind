@@ -56,7 +56,7 @@
               </time>
 
               {% if authenticated %}
-                | <a href="{{ url_for('delete_mention_by_id', post_id=reply.id, redirect=post.permalink_url) }}">Delete</a>
+                | <a href="{{ url_for('delete_mention_by_id', id=reply.id, redirect=post.permalink) }}">Delete</a>
               {% endif %}
 
               <div style="clear:both"></div>
