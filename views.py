@@ -508,7 +508,7 @@ def save_post():
         post.content_format = request.form.get('content_format', 'plain')
         post.draft = request.form.get('draft', 'true') == 'true'
 
-        app.logger.debug("got draft setting from: js %s",
+        app.logger.debug("got draft setting from: %s",
                          request.form.get('draft'))
 
         if not post.pub_date:

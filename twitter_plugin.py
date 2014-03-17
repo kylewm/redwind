@@ -6,6 +6,8 @@ from rauth import OAuth1Service
 import views
 import requests
 import re
+from urllib.request import urlopen
+from tempfile import mkstemp
 from datetime import datetime, timedelta
 
 
@@ -138,19 +140,41 @@ class TwitterClient:
                                                    str(result.content)))
 
         else:
+            dpost = views.DisplayPost(post)
+
             data = {}
             data['status'] = self.create_status(post)
             data['trim_user'] = True
             reply_match = permalink_re.match(post.in_reply_to)
             if reply_match:
                 data['in_reply_to_status_id'] = reply_match.group(2)
-            result = api.post('statuses/update.json', data=data)
+
+            img = dpost.get_first_image()
+            if img:
+                tempfile = self.download_image_to_temp(img)
+                result = api.post('statuses/update_with_media.json',
+                                  header_auth=True,
+                                  use_oauth_params_only=True,
+                                  data=data,
+                                  files={'media[]': open(tempfile, 'rb')})
+
+            else:
+                result = api.post('statuses/update.json', data=data)
 
             if result.status_code // 2 != 100:
                 raise RuntimeError("{}: {}".format(str(result),
                                                    str(result.content)))
 
         post.twitter_status_id = result.json().get('id_str')
+
+    def download_image_to_temp(self, url):
+        response = requests.get(url, stream=True)
+        if response.status_code // 2 == 100:
+            _, tempfile = mkstemp()
+            with open(tempfile, 'wb') as f:
+                for chunk in response.iter_content():
+                    f.write(chunk)
+            return tempfile
 
     def is_twitter_authorized(self, user):
         return user.twitter_oauth_token and user.twitter_oauth_token_secret
