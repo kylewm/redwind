@@ -30,8 +30,10 @@
                 appendResult("Saved post " + data.id);
                 $('#post_id').val(data.id);
 
+                addPermalink(data.id, data.permalink);
+
                 if (draft) {
-                    addPermalink(data.id, data.permalink);
+                    finishPosting(data.id, data.permalink);
                 } else {
                     syndicateToTwitter(data.id, data.permalink);
                 }
@@ -137,7 +139,7 @@
     }
 
     function sendPushNotification(id, permalink) {
-        callback = addPermalink;
+        callback = finishPosting;
 
         appendResult("Sending PuSH notification");
         $.ajax({
@@ -161,8 +163,10 @@
 
     function addPermalink(id, permalink) {
         appendResult("<a href=\"" + permalink + "\" target=\"_ new\">View Post</a>");
-        appendResult("Done at " + new Date($.now()).toTimeString());
+    }
 
+    function finishPosting(id, permalink) {
+        appendResult("Done at " + new Date($.now()).toTimeString());
         //$('#preview').css('display', 'block');
         //$('#preview').attr('src', '/admin/preview?id=' + id);
     }

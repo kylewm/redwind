@@ -2,14 +2,18 @@
 
 {% block content2 %}
 
-  {% for post in posts %}
+  <div class="h-feed">
 
-    <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
-      {% include "post_content.html" %}
-    </div>
+    {% for post in posts %}
 
-  {% endfor %}
+      <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
+        {% include "post_content.html" %}
+      </div>
 
-{% include "page_arrows.html" %}
+    {% endfor %}
+
+  </div>
+
+  {% include "page_arrows.html" %}
 
 {% endblock content2 %}
