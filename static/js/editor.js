@@ -160,7 +160,7 @@
     }
 
     function addPermalink(id, permalink) {
-        appendResult("<a href=" + permalink + ">View Post</a>");
+        appendResult("<a href=\"" + permalink + "\" target=\"_ new\">View Post</a>");
         appendResult("Done at " + new Date($.now()).toTimeString());
 
         //$('#preview').css('display', 'block');

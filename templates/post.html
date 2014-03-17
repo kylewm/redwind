@@ -5,7 +5,6 @@
   <meta name="twitter:creator" content="@kyle_wm"/>
   <meta name="twitter:title" content="{{ title }}"/>
   <meta name="twitter:description" content="{{ post.format_text_as_text() | truncate(300) | replace('\n', '') }}"/>
-
   {% set img = post.get_first_image() %}
   {% if img %}
     <meta name="twitter:card" content="photo"/>
@@ -13,7 +12,6 @@
   {% else %}
     <meta name="twitter:card" content="summary"/>
   {% endif %}
-
 
 {% endblock %}
 
