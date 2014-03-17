@@ -46,17 +46,18 @@
     {% endif %}
 
     <div class="content">
-      <textarea name="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
+      <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
     </div>
 
     <p>
-      <select name="content_format">
+      <select name="content_format" id="content_format">
         <option {% if post.content_format == "markdown" %}selected{% endif %}>markdown</option>
         <option {% if post.content_format == "plain" %}selected{% endif %}>plain</option>
         <option {% if post.content_format == "html" %}selected{% endif %}>html</option>
-      </select><br/>
-      <label><input type="checkbox" id="send_to_twitter" name="send_to_twitter" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Twitter</label><br/>
-      <label><input type="checkbox" id="send_to_facebook" name="send_to_facebook" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Facebook</label><br/>
+      </select>
+
+      <label><input type="checkbox" id="send_to_twitter" name="send_to_twitter" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Twitter</label>
+      <label><input type="checkbox" id="send_to_facebook" name="send_to_facebook" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Facebook</label>
       <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if post.id is none %}checked{% endif %}/>Send Webmentions</label>
     </p>
 
@@ -71,7 +72,13 @@
 
   </form>
 
-  <a href="#" id="uploads_link">Uploads</a>
+  <form id="image_upload">
+    <label>
+      <span class="heading">Add Image:</span><input type="file" id="image_upload_button" text="Add Image" accept="image/*;capture=camera"></input>
+    </label>
+  </form>
+
+  <!-- <a href="#" id="uploads_link">Uploads</a> -->
 </div>
 
 <div class="col span_1_of_3">
@@ -84,7 +91,40 @@
 </div>
 -->
 
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
+<script type="text/javascript">
 
+
+$("#image_upload_button").change(function() {
+
+    var file = this.files[0];
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    $.ajax({
+        url: '/api/upload_file',
+        type: 'POST',
+        success: completeHandler,
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData: false
+    });
+});
+
+function completeHandler(data) {
+    var content_text_area = $("#content");
+    var content_format = $("#content_format").val();
+
+    if (content_format == 'markdown') {
+        content_text_area.val( content_text_area.val() + '\n![](' + data.path + ')');
+    }
+    else {
+        content_text_area.val( content_text_area.val() + '\n<img src="' + data.path + '"/>');
+    }
+}
+
+</script>
 {% endblock %}
