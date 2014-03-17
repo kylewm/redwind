@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 
+{% block head_content %}
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:site" content="@kyle_wm"/>
+<meta name="twitter:creator" content="@kyle_wm"/>
+<meta name="twitter:title" content="{{title|truncate(60)}"/>
+<meta name="twitter:description" content="{{ post.format_text_as_text | truncate(170) }}"/>
+
+{% endblock %}
+
 {% block content %}
 
   <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
