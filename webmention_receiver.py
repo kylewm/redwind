@@ -6,7 +6,7 @@ import urllib.parse
 import urllib.request
 import requests
 import push_plugin
-import shortlinks
+
 from bs4 import BeautifulSoup
 import hentry_parser
 

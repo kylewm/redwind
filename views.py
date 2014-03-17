@@ -2,16 +2,10 @@ from app import app, db
 from models import Post, Mention
 from auth import load_user
 
-import facebook_plugin
-import twitter_plugin
-import webmention_plugin
-import push_plugin
-
-import webmention_receiver
-
 from datetime import datetime
 import os
 import re
+import importlib
 import requests
 import pytz
 import unicodedata
@@ -30,11 +24,13 @@ TIMEZONE = pytz.timezone('US/Pacific')
 POST_TYPES = ['article', 'note', 'share', 'like', 'reply']
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 
-PLUGINS = [facebook_plugin, twitter_plugin,
-           push_plugin, webmention_plugin,
-           webmention_receiver]
 
-map(__import__, PLUGINS)
+PLUGINS = ['facebook_plugin', 'twitter_plugin',
+           'push_plugin', 'webmention_plugin',
+           'webmention_receiver']
+
+for plugin in PLUGINS:
+    importlib.import_module(plugin)
 
 
 class DisplayPost:
@@ -106,15 +102,24 @@ class DisplayPost:
         # image, etc.)
         return None, False
 
-    def format_text(self, text):
-        if not text:
+    def format_text(self):
+        if not self.content:
             return ''
         elif self.content_format == 'markdown':
-            return self.markdown_filter(text)
+            return self.markdown_filter(self.content)
         elif self.content_format == 'plain':
-            return self.plain_text_filter(text)
+            return self.plain_text_filter(self.content)
         else:
-            return text
+            return self.content
+
+    def format_text_as_text(self):
+        if not self.content:
+            return ''
+        if self.content_format == 'plain':
+            return self.content
+        html = self.format_text()
+        soup = BeautifulSoup(html)
+        return soup.get_text()
 
     def add_preview(self, text):
         preview = self.repost_preview
@@ -135,14 +140,14 @@ class DisplayPost:
         return Markup(self.get_html_content(True))
 
     def get_html_content(self, include_preview=True):
-        text = self.format_text(self.content)
+        text = self.format_text()
         if include_preview:
             text = self.add_preview(text)
         return text
 
     @property
     def html_excerpt(self):
-        text = self.format_text(self.content)
+        text = self.format_text()
         split = text.split('<!-- more -->', 1)
         text = self.add_preview(split[0])
         if len(split) > 1:
@@ -181,6 +186,15 @@ class DisplayPost:
     def references(self):
         return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type == 'reference']
+
+    def get_first_image(self):
+        """find the first image (if any) that is in an <img> tag
+        in the rendered post"""
+        html = self.get_html_content(False)
+        soup = BeautifulSoup(html)
+        img = soup.find('img')
+        if img:
+            return img.get('src')
 
 
 def render_posts(title, post_types, page, per_page, include_drafts=False):

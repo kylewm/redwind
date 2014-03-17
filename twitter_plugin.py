@@ -3,6 +3,7 @@ from models import Post
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response, jsonify
 from rauth import OAuth1Service
+import views
 import requests
 import re
 from datetime import datetime, timedelta
@@ -115,6 +116,7 @@ class TwitterClient:
         permalink_re = re.compile(
             "https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         api = self.get_auth_session(post.author)
+
         # check for RT's
         repost_match = permalink_re.match(post.repost_source)
         like_match = permalink_re.match(post.like_of)
@@ -239,7 +241,9 @@ class TwitterClient:
                                            can_drop=False)]
 
         else:
-            components = self.split_out_urls(post.author, post.content)
+            dpost = views.DisplayPost(post)
+            components = self.split_out_urls(post.author,
+                                             dpost.format_text_as_text())
 
             # include the re-shared link
             if post.repost_source:

@@ -2,6 +2,8 @@ from app import app, db
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, jsonify
 from models import Post
+import views
+
 import requests
 import json
 
@@ -54,6 +56,7 @@ def syndicate_to_facebook():
 
 def handle_new_or_edit(post):
     app.logger.debug('publishing to facebook')
+    dpost = views.DisplayPost(post)
 
     actions = {'name': 'See Original',
                'link': post.permalink}
@@ -61,8 +64,9 @@ def handle_new_or_edit(post):
 
     post_args = {'access_token': post.author.facebook_access_token,
                  'name': post.title,
-                 'message': post.content,
+                 'message': dpost.format_text_as_text(),
                  'link': post.repost_source,
+                 'picture': dpost.get_first_image(),
                  'actions': json.dumps(actions),
                  'privact': json.dumps(privacy)}
 
