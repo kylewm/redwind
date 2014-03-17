@@ -133,8 +133,8 @@ $(document).ready(function() {
         }
     }
 
-    function errorHandler(data, status) {
-        $('#result').append("<li>upload failed with " + data + ", " + status + "</li>");
+    function errorHandler(data, status, errorThrown) {
+        $('#result').append("<li>upload failed with " + status + ", " + errorThrown + "</li>");
     }
 
 });
