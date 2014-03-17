@@ -109,6 +109,7 @@ $(document).ready(function() {
                 url: '/api/upload_file',
                 type: 'POST',
                 success: completeHandler,
+                error: errorHandler,
                 data: formData,
                 cache: false,
                 contentType: false,
@@ -118,6 +119,9 @@ $(document).ready(function() {
     });
 
     function completeHandler(data) {
+
+        $('#result').append("<li>finished uploading to " + data.path + "</li>");
+
         var content_text_area = $("#content");
         var content_format = $("#content_format").val();
 
@@ -129,7 +133,10 @@ $(document).ready(function() {
         }
     }
 
+    function errorHandler(data, status) {
+        $('#result').append("<li>upload failed with " + data + ", " + status + "</li>");
+    }
+
 });
 </script>
-     <script src="http://jsconsole.com/remote.js?3642"></script>
 {% endblock %}
