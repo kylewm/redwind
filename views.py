@@ -275,7 +275,12 @@ def post_by_date(post_type, year, month, day, index, slug):
 
     dpost = DisplayPost(post)
     #print("rendering post", post.short_cite, post.short_permalink)
-    return render_template('post.html', post=dpost, title=dpost.title,
+    title = dpost.title
+    if not title:
+        title = "A {} from {}".format(dpost.post_type,
+                                      dpost.pub_date.strftime('%Y-%m-%d'))
+
+    return render_template('post.html', post=dpost, title=title,
                            authenticated=current_user.is_authenticated())
 
 
