@@ -41,7 +41,7 @@ class DisplayPost:
         if post_types:
             query = query.filter(Post.post_type.in_(post_types))
         if not include_drafts:
-            query = query.filter(or_(Post.draft.is_(None), not Post.draft))
+            query = query.filter(or_(Post.draft==False, Post.draft==None))
         query = query.order_by(Post.pub_date.desc())
         pagination = query.paginate(page, per_page)
         return pagination, [cls(post) for post in pagination.items]
