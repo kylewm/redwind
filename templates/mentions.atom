@@ -16,7 +16,7 @@
   <entry>
     <updated>{{ mention.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
     <published>{{ mention.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</published>
-    <link href="{{ mention.post.permalink_url }}" rel="alternate" type="text/html"/>
+    <link href="{{ mention.post.permalink }}" rel="alternate" type="text/html"/>
     <id>{{ mention.permalink }}</id>
     <title type="xhtml">
       <div xmlns="http://www.w3.org/1999/xhtml">
