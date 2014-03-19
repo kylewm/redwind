@@ -1,0 +1,48 @@
+{% if post.reply_contexts %}
+
+  In reply to
+  <div style="margin-top: 5px; margin-left: 15px;">
+    {% for reply in post.reply_contexts %}
+
+      <div class="reply-context">
+        {% if (not reply.author_name and reply.permalink and reply.title) %}
+
+          <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
+
+        {% else %}
+
+          <div class="h-cite">
+            <div class="p-author h-card">
+
+              <div class="author-image-holder">
+                <img class="u-photo"
+                     src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}" alt="{{reply.author_name}}"/>
+              </div>
+
+              {% if reply.author_name %}
+                <span class="p-name">{{ reply.author_name}}</span>
+              {% endif %}
+              {% if reply.author_url %}
+                / <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>
+              {% endif %}
+
+            </div>
+
+            <div style="margin-left: 56px">
+              <p class="e-content">{{ reply.content | html_to_plain }}</p>
+
+              <div class="links">
+                <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+                  <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+                </time>
+              </div>
+            </div>
+
+            <div style="clear: both"></div>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+{% endif %}

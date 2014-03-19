@@ -46,17 +46,13 @@ p + p {
     margin-top: 50px;
 }
 
-.post .reply-context {
-   font-size: 0.8em;
-}
-
 .post .links {
     font-size: 0.8em;
     margin-top: 0.2em;
 }
 
 .draft {
-    background-color: #eee;
+    background-color: #ddd;
 }
 
 .draft:before, .draft:after {
@@ -188,6 +184,47 @@ footer {
     font-size: 0.8em;
     text-align: right;
 }*/
+
+.reply-context {
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 5px;
+    /*border: 1px solid gray;*/
+    background-color: #eee;
+}
+
+.share-context {
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 5px;
+    /*border: 1px solid gray;*/
+    background-color: #eee;
+}
+
+.like-context {
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 5px;
+    /*border: 1px solid gray;*/
+    background-color: #eee;
+}
+
+.h-cite .author-image-holder {
+    float: left;
+    position: relative;
+    width: 48px;
+    height: 100%;
+    margin-right: 6px;
+}
+
+.h-cite .u-photo {
+    width: 48px;
+}
+
+.post .mentions {
+    margin-top: 0.5em;
+    margin-left: 56px
+}
 
 .syndication-icon {
     vertical-align: middle;

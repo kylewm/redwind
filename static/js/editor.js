@@ -1,12 +1,26 @@
 
 (function() {
 
-    $('#uploads_link').click(function(event) {
-        event.preventDefault();
-        var left = (screen.width-100) / 2;
-        var top = (screen.height-100) / 2;
+    $(document).ready(function() {
+        $('#uploads_link').click(function(event) {
+            event.preventDefault();
+            var left = (screen.width-100) / 2;
+            var top = (screen.height-100) / 2;
 
-        window.open('/admin/uploads', 'width=100,height=100,top='+top+',left='+left);
+            window.open('/admin/uploads', 'width=100,height=100,top='+top+',left='+left);
+        });
+
+        $('#save_draft_button').click(function(event) {
+            clearResults();
+            appendResult("Started save at: " + new Date($.now()).toTimeString());
+            save(true);
+        });
+
+        $('#publish_button').click(function(event) {
+            clearResults();
+            appendResult("Started publish at: " + new Date($.now()).toTimeString());
+            save(false);
+        });
     });
 
 
@@ -30,13 +44,8 @@
                 appendResult("Saved post " + data.id);
                 $('#post_id').val(data.id);
 
-                addPermalink(data.id, data.permalink);
-
-                if (draft) {
-                    finishPosting(data.id, data.permalink);
-                } else {
-                    syndicateToTwitter(data.id, data.permalink);
-                }
+                addPermalink(draft, data.id, data.permalink);
+                fetchContexts(draft, data.id, data.permalink);
             },
             error: function saveError(data) {
                 appendResult("Failed to save post " + data.error);
@@ -44,10 +53,34 @@
         });
     }
 
-    function syndicateToTwitter(id, permalink) {
+    function fetchContexts(draft, id, permalink) {
+        callback = syndicateToTwitter;
+        var formData = $('#edit_form').serializeArray();
+        appendResult("Fetching Contexts");
+        $.ajax({
+            type: "POST",
+            data: formData,
+            url: "/api/fetch_contexts",
+            success: function fetchSuccess(data) {
+                if (data.success) {
+                    appendResult("Success");
+                } else {
+                    appendResult("Failure " + data.error);
+                }
+                callback(draft, id, permalink);
+
+            },
+            error: function fetchFailure(data) {
+                appendResult("Failure " + data.error);
+                callback(draft, id, permalink);
+            }
+        });
+    }
+
+    function syndicateToTwitter(draft, id, permalink) {
         var callback = syndicateToFacebook
 
-        if ($("#send_to_twitter").prop("checked")) {
+        if (!draft && $("#send_to_twitter").prop("checked")) {
             appendResult("Syndicating to Twitter");
 
             $.ajax({
@@ -60,23 +93,23 @@
                     } else {
                         appendResult("Failure " + data.error);
                     }
-                    callback(id, permalink);
+                    callback(draft, id, permalink);
                 },
                 error:  function tweetFailure(data) {
                     appendResult("Failure " + data.error);
-                    callback(id, permalink);
+                    callback(draft, id, permalink);
                 }
             });
 
         } else {
-            callback(id, permalink);
+            callback(draft, id, permalink);
         }
     }
 
-    function syndicateToFacebook(id, permalink) {
+    function syndicateToFacebook(draft, id, permalink) {
         var callback = sendWebmentions;
 
-        if ($("#send_to_facebook").prop("checked")) {
+        if (!draft && $("#send_to_facebook").prop("checked")) {
             appendResult("Syndicating to Facebook");
             $.ajax({
                 type: "POST",
@@ -88,24 +121,24 @@
                     } else {
                         appendResult("Failure " + data.error);
                     }
-                    callback(id, permalink);
+                    callback(draft, id, permalink);
                 },
                 error: function fbError(data) {
                     appendResult("Failure " + data.error);
-                    callback(id, permalink);
+                    callback(draft, id, permalink);
                 }
 
             });
         } else {
-            callback(id, permalink);
+            callback(draft, id, permalink);
         }
 
     }
 
-    function sendWebmentions(id, permalink) {
+    function sendWebmentions(draft, id, permalink) {
         var callback = sendPushNotification;
 
-        if ($("#send_webmentions").prop("checked")) {
+        if (!draft && $("#send_webmentions").prop("checked")) {
             appendResult("Sending Webmentions");
             $.ajax({
                 type: "POST",
@@ -125,47 +158,52 @@
                     } else {
                         appendResult("Failure: " + data.error);
                     }
-                    callback(id, permalink);
+                    callback(draft, id, permalink);
                 },
                 error: function wmFailure(data) {
                     appendResult("Failure: " + data.error);
-                    callback(id, permalink);
+                    callback(draft, id, permalink);
                 }
             });
         } else {
-            callback(id, permalink);
+            callback(draft, id, permalink);
         }
 
     }
 
-    function sendPushNotification(id, permalink) {
+    function sendPushNotification(draft, id, permalink) {
         callback = finishPosting;
 
-        appendResult("Sending PuSH notification");
-        $.ajax({
-            type: "POST",
-            url: "/api/send_push_notification",
-            data: {"post_id": id},
-            success: function pushComplete(data) {
-                if (data.success) {
-                    appendResult("Success");
-                } else {
+        if (!draft) {
+            appendResult("Sending PuSH notification");
+            $.ajax({
+                type: "POST",
+                url: "/api/send_push_notification",
+                data: {"post_id": id},
+                success: function pushComplete(data) {
+                    if (data.success) {
+                        appendResult("Success");
+                    } else {
+                        appendResult("Failure: " + data.error);
+                    }
+                    callback(draft, id, permalink);
+                },
+                error: function pushError(data) {
                     appendResult("Failure: " + data.error);
+                    callback(draft, id, permalink);
                 }
-                callback(id, permalink);
-            },
-            error: function pushError(data) {
-                appendResult("Failure: " + data.error);
-                callback(id, permalink);
-            }
-        });
+            });
+        }
+        else {
+            callback(draft, id, permalink);
+        }
     }
 
-    function addPermalink(id, permalink) {
+    function addPermalink(draft, id, permalink) {
         appendResult("<a href=\"" + permalink + "\" target=\"_ new\">View Post</a>");
     }
 
-    function finishPosting(id, permalink) {
+    function finishPosting(draft, id, permalink) {
         appendResult("Done at " + new Date($.now()).toTimeString());
         //$('#preview').css('display', 'block');
         //$('#preview').attr('src', '/admin/preview?id=' + id);
@@ -175,18 +213,6 @@
         $('#result').append("<li>" + str + "</li>");
     }
 
-
-    $('#save_draft_button').click(function(event) {
-        clearResults();
-        appendResult("Started save at: " + new Date($.now()).toTimeString());
-        save(true, addPermalink);
-    });
-
-    $('#publish_button').click(function(event) {
-        clearResults();
-        appendResult("Started publish at: " + new Date($.now()).toTimeString());
-        save(false, syndicateToTwitter);
-    });
 
 
 })();

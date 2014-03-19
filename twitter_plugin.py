@@ -6,7 +6,7 @@ from rauth import OAuth1Service
 import views
 import requests
 import re
-from urllib.request import urlopen
+
 from tempfile import mkstemp
 from datetime import datetime, timedelta
 
@@ -100,7 +100,7 @@ class TwitterClient:
             return
 
         permalink_re = re.compile(
-            "https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
+            "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
         match = permalink_re.match(url)
         if match:
             api = self.get_auth_session(user)
@@ -110,6 +110,35 @@ class TwitterClient:
 
             if embed_response.status_code // 2 == 100:
                 return embed_response.json().get('html')
+
+    def fetch_external_post(self, user, source, ExtPostClass):
+        permalink_re = re.compile(
+            "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
+        match = permalink_re.match(source)
+        if match:
+            api = self.get_auth_session(user)
+            tweet_id = match.group(2)
+            status_response = api.get('statuses/show/{}.json'.format(tweet_id))
+
+            if status_response.status_code // 2 != 100:
+                app.logger.warn("failed to fetch tweet %s %s", status_response,
+                                status_response.content)
+                return None
+
+            status_data = status_response.json()
+
+            pub_date = datetime.datetime.strptime(status_data['created_at'],
+                                                  '%a %b %d %H:%M:%S %z %Y')
+            real_name = status_data['user']['name']
+            screen_name = status_data['user']['screen_name']
+            author_name = real_name
+            author_url = (status_data['user']['url']
+                          or 'http://twitter.com/{}'.format(screen_name))
+            author_image = status_data['user']['profile_image_url']
+            tweet_text = status_data['text']
+            return ExtPostClass(source, source, None, tweet_text,
+                                author_name, author_url,
+                                author_image, pub_date)
 
     def handle_new_or_edit(self, post):
         if not self.is_twitter_authorized(post.author):

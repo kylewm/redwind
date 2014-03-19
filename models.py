@@ -79,9 +79,15 @@ class Post(db.Model):
     content = db.Column(db.Text)
     post_type = db.Column(db.String(64))  # note/article/etc.
     content_format = db.Column(db.String(64))  # markdown/html/plain
+
     in_reply_to = db.Column(db.String(2048))
     repost_source = db.Column(db.String(2048))
     like_of = db.Column(db.String(2048))
+
+    reply_contexts = db.relationship('ReplyContext', backref='post')
+    share_contexts = db.relationship('ShareContext', backref='post')
+    like_contexts = db.relationship('LikeContext', backref='post')
+
     repost_preview = db.Column(db.Text)
     draft = db.Column(db.Boolean())
     twitter_status_id = db.Column(db.String(64))
@@ -172,30 +178,61 @@ class Post(db.Model):
             return 'post:{}'.format(self.content[:140])
 
 
-class ShortLink(db.Model):
+class ExternalPost(db.Model):
+    """mention, reply-context, repost-context, like-context
+       all contain nearly the same data"""
     id = db.Column(db.Integer, primary_key=True)
+
+    #the referenced URL
+    source = db.Column(db.String(2048))
+    #permanent link parsed from html
+    permalink = db.Column(db.String(2048))
+
+    title = db.Column(db.String(256))
+    content = db.Column(db.Text)
+    pub_date = db.Column(db.DateTime)
+
+    author_name = db.Column(db.String(256))
+    author_url = db.Column(db.String(2048))
+    author_image = db.Column(db.String(2048))
+
+    unparsed_html = db.Column(db.Text)
+
+    def __init__(self, source, permalink, title,
+                 content, author_name, author_url, author_image,
+                 pub_date=None, unparsed_html=None):
+        self.source = source
+        self.permalink = permalink
+        self.title = title
+        self.content = content
+        self.author_name = author_name
+        self.author_url = author_url
+        self.author_image = author_image
+        self.pub_date = pub_date
+
+    def __repr__(self):
+        return "<{}: source={}, permalink={}, content={}, date={}, "\
+            "author=({}, {}, {})>"\
+            .format(self.__class__.__name__,
+                    self.source, self.permalink, self.content, self.pub_date,
+                    self.author_name, self.author_url,
+                    self.author_image)
+
+
+class ReplyContext(ExternalPost):
+    id = db.Column(db.Integer, db.ForeignKey('external_post.id'), primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
 
-    def __init__(self, post):
-        self.post = post
 
-    @property
-    def url(self):
-        import base62
-        encoded_id = self.post.post_type[0] + base62.encode(self.id)
-        site_url = app.config.get('SHORT_SITE_URL')
-        return '/'.join((site_url, encoded_id))
+class ShareContext(ExternalPost):
+    id = db.Column(db.Integer, db.ForeignKey('external_post.id'), primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
 
 
-#CREATE TABLE mention (
-#	id INTEGER NOT NULL AUTO_INCREMENT,
-#	source VARCHAR(256),
-#	post_id INTEGER,
-#	content TEXT,
-#       is_reply BOOL,
-#	PRIMARY KEY (id),
-#	FOREIGN KEY(post_id) REFERENCES post (id)
-#)
+class LikeContext(ExternalPost):
+    id = db.Column(db.Integer, db.ForeignKey('external_post.id'), primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
 
 class Mention(db.Model):
     id = db.Column(db.Integer, primary_key=True)

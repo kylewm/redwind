@@ -1,0 +1,56 @@
+<div class="mentions">
+  <a name="mentions"></a>
+
+  {% set likes = post.likes %}
+  {% if likes %}
+  <div class="likes">
+    likes:&nbsp;
+    {% for like in likes %}
+    <a href="{{ like.permalink }}">
+      <img class="u-photo" src="{{like.author_image or url_for('static', filename='img/users/placeholder.png')}}"
+           width="36px" alt="{{like.author_name}}"
+           title="{{like.author_name}} {{like.content | trim}}" style="vertical-align: middle"/>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% set replies = post.non_likes %}
+  {% if replies %}
+  <div class="replies">
+    {% for reply in replies %}
+    <div class="p-comment h-cite">
+      <div class="p-author h-card">
+
+        <div class="author-image">
+          <img class="u-photo" src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}"
+               width="48px" alt="{{reply.author_name}}"/>
+        </div>
+
+        {% if reply.author_name %}
+        {% if reply.author_url %} <a class="p-name u-url" href="{{reply.author_url}}">
+          {% else %} <span class="p-name"> {% endif %}
+            {{reply.author_name}}
+            {% if reply.author_url %} </a>
+        {% else %} </span> {% endif %}
+        {% endif %}
+
+      </div>
+
+      <p class="e-content">{{ reply.content | safe }}</p>
+
+      <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+        <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+      </time>
+
+      {% if authenticated %}
+      | <a href="{{ url_for('delete_mention_by_id', id=reply.id, redirect=post.permalink) }}">Delete</a>
+      {% endif %}
+
+      <div style="clear:both"></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+</div>

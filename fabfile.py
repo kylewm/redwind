@@ -16,6 +16,7 @@ def push():
 def pull():
     with cd("~/red-wind"):
         run("git pull origin master")
+        run("git submodule update")
 
 
 def restart():

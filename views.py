@@ -1,5 +1,5 @@
 from app import app, db
-from models import Post, Mention
+from models import Post, Mention, ReplyContext, LikeContext, ShareContext
 from auth import load_user
 
 from datetime import datetime
@@ -41,7 +41,8 @@ class DisplayPost:
         if post_types:
             query = query.filter(Post.post_type.in_(post_types))
         if not include_drafts:
-            query = query.filter(or_(Post.draft.is_(None), not Post.draft))
+            query = query.filter(or_(Post.draft.is_(None),
+                                     Post.draft == False))
         query = query.order_by(Post.pub_date.desc())
         pagination = query.paginate(page, per_page)
         return pagination, [cls(post) for post in pagination.items]
@@ -467,6 +468,12 @@ def atom_sanitize(content):
     return result
 
 
+@app.template_filter('prettify_url')
+def prettify_url(url):
+    schema, path = url.split('//')
+    return path.strip('/')
+
+
 ## API Methods
 
 
@@ -556,6 +563,97 @@ def save_post():
         app.logger.exception("Failed to save post")
         return jsonify(success=False, error="exception while saving post {}"
                        .format(e))
+
+
+@app.route('/api/fetch_contexts', methods=['POST'])
+@login_required
+def fetch_post_contexts():
+    try:
+        post_id_str = request.form.get('post_id')
+        post_id = int(post_id_str)
+        post = Post.query.filter_by(id=post_id).first()
+
+        replies = request.form.get('in_reply_to', '').strip().splitlines()
+        reposts = request.form.get('repost_source', '').strip().splitlines()
+        likes = request.form.get('like_of', '').strip().splitlines()
+
+        for reply_url in replies:
+            replyctx = fetch_external_post(reply_url, ReplyContext)
+            if replyctx:
+                dupes = ReplyContext.query.filter(
+                    ReplyContext.post == post,
+                    ReplyContext.permalink == replyctx.permalink)
+                for dupe in dupes:
+                    db.session.delete(dupe)
+                db.session.add(replyctx)
+                post.reply_contexts.append(replyctx)
+
+        for repost_url in reposts:
+            sharectx = fetch_external_post(repost_url, ShareContext)
+            if sharectx:
+                dupes = ShareContext.query.filter(
+                    ShareContext.post == post,
+                    ShareContext.permalink == sharectx.permalink)
+                for dupe in dupes:
+                    db.session.delete(dupe)
+                db.session.add(sharectx)
+                post.share_contexts.append(sharectx)
+
+        for like_url in likes:
+            likectx = fetch_external_post(like_url, LikeContext)
+            if likectx:
+                dupes = LikeContext.query.filter(
+                    LikeContext.post == post,
+                    LikeContext.permalink == likectx.permalink)
+                for dupe in dupes:
+                    db.session.delete(dupe)
+
+                db.session.add(likectx)
+                post.like_contexts.append(likectx)
+
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'replies': replies,
+            'shares': reposts,
+            'likes': likes
+        })
+
+    except Exception as e:
+        app.logger.exception("failure fetching contexts")
+        return jsonify({
+            'success': False,
+            'error': "exception while fetching contexts {}".format(e)
+        })
+
+
+def fetch_external_post(source, ExtPostClass):
+    from twitter_plugin import twitter_client
+    import hentry_parser
+
+    extpost = twitter_client.fetch_external_post(current_user,
+                                                 source, ExtPostClass)
+    if extpost:
+        return extpost
+
+    response = requests.get(source)
+    if response.status_code // 2 == 100:
+        hentry = hentry_parser.parse(response.content)
+        if hentry:
+            return ExtPostClass(
+                source,
+                hentry.permalink,
+                hentry.title, hentry.content,
+                hentry.author.name if hentry.author else '',
+                hentry.author.url if hentry.author else '',
+                hentry.author.photo if hentry.author else '',
+                hentry.pub_date, response.content)
+
+    # get as much as we can without microformats
+    soup = BeautifulSoup(response.content)
+    title_tag = soup.find('title')
+    title = title_tag.text if title_tag else prettify_url(source)
+    return ExtPostClass(source, source, title, None, None, None, None)
 
 
 @app.route('/api/mf2')
