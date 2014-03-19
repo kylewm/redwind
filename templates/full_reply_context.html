@@ -1,7 +1,8 @@
 {% if post.reply_contexts %}
 
-  In reply to
-  <div style="margin-top: 5px; margin-left: 15px;">
+<div style="margin-bottom: 20px">
+  <p>In reply to</p>
+ 
     {% for reply in post.reply_contexts %}
 
       <div class="reply-context">
@@ -29,6 +30,7 @@
             </div>
 
             <div style="margin-left: 56px">
+	      {%if reply.title %}<p class="p-name">{{ reply.title }}</p>{% endif %}
               <p class="e-content">{{ reply.content | html_to_plain }}</p>
 
               <div class="links">
@@ -44,5 +46,4 @@
       </div>
     {% endfor %}
   </div>
-
 {% endif %}

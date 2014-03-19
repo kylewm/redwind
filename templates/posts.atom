@@ -16,13 +16,35 @@
   <entry>
     <updated>{{ post.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
     <published>{{ post.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</published>
-    <link href="{{ post.permalink_url }}" rel="alternate" type="text/html"/>
-    <id>{{ post.permalink_url }}</id>
+    <link href="{{ post.permalink }}" rel="alternate" type="text/html"/>
+    <id>{{ post.permalink }}</id>
     <title type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">{{ (post.title or post.html_content) | atom_sanitize }}</div>
+      <div xmlns="http://www.w3.org/1999/xhtml">
+	{% if post.share_contexts %}
+	  {% for share in post.share_contexts %}
+	    Shared {{share.permalink|prettify_url}}
+	  {% endfor %}
+        {% elif post.like_contexts %}
+	  {% for like in post.like_contexts %}
+	    Liked {{like.permalink|prettify_url}}
+	  {% endfor %}
+	{% else %}
+  	  {{ (post.title or (post.html_content | html_to_plain)) | atom_sanitize }}
+	{% endif %}
+      </div>
     </title>
     <content type="xhtml" xml:base="http://kylewm.com/" xml:space="preserve">
       <div xmlns="http://www.w3.org/1999/xhtml">
+	{% for reply in post.reply_contexts %}
+	  <p>In reply to <a href="{{reply.permalink}}">{{reply.permalink|prettify_url}}</a></p>
+	{% endfor %}
+	{% for share in post.share_contexts %}
+	  <p>Shared <a href="{{share.permalink}}">{{share.permalink|prettify_url}}</a></p>
+	{% endfor %}
+	{% for like in post.like_contexts %}
+	  <p>Liked <a href="{{like.permalink}}">{{like.permalink|prettify_url}}</a></p>
+	{% endfor %}
+
         {{ post.html_content | atom_sanitize }}
       </div>
     </content>
