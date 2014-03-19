@@ -2,6 +2,7 @@ from collections import namedtuple
 from mf2py.parser import Parser
 from dateutil.parser import parse as parsedate
 from bs4 import BeautifulSoup
+import json
 
 Author = namedtuple('Author', ['name', 'url', 'photo'])
 Reference = namedtuple('Reference', ['url', 'reftype'])
@@ -32,12 +33,7 @@ def parse(txt, source):
                               urls and urls[0],
                               photos and photos[0],)
 
-    soup = BeautifulSoup(txt)
-    basetag = soup.find('base')
-    if basetag:
-        baseurl = basetag.get('href')
-
-    p = Parser(url=baseurl or source, doc=txt)
+    p = Parser(doc=txt, url=source)
     d = p.to_dict()
     references = []
 
@@ -55,23 +51,35 @@ def parse(txt, source):
             hentry = item
             permalink = next((perma for perma
                               in hentry['properties'].get('url', [])), source)
+
             references += parse_references(
                 hentry['properties'].get('in-reply-to', []), 'reply')
+
             references += parse_references(
                 hentry['properties'].get('like-of', []), 'like')
+
             references += parse_references(
                 hentry['properties'].get('repost-of', []), 'repost')
 
             date_strs = hentry['properties'].get('published')
             pub_date = date_strs and parsedate(' '.join(date_strs))
 
-            title = hentry['properties'].get('name', '')
             # TODO: remove potentially harmful tags!
-            content = ''.join(content['html'].strip() for content
-                              in hentry['properties'].get('content', []))
+            content_html = ''.join(content['html'].strip() for content
+                                   in hentry['properties'].get('content', []))
+
+            content_value = ''.join(content['value'].strip() for content
+                                    in hentry['properties'].get('content', []))
+
+            title = ''.join(part.strip() for part
+                            in hentry['properties'].get('name', ''))
+
+            if title == content_value:
+                title = None
+            
             author = parse_author(
                 hentry['properties'].get('author', []))
-            return Entry(author, permalink, pub_date, references, title, content)
+            return Entry(author, permalink, pub_date, references, title, content_html)
 
 
 if __name__ == '__main__':
