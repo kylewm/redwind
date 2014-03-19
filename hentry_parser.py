@@ -1,6 +1,7 @@
 from collections import namedtuple
 from mf2py.parser import Parser
 from dateutil.parser import parse as parsedate
+from bs4 import BeautifulSoup
 
 Author = namedtuple('Author', ['name', 'url', 'photo'])
 Reference = namedtuple('Reference', ['url', 'reftype'])
@@ -31,7 +32,12 @@ def parse(txt, source):
                               urls and urls[0],
                               photos and photos[0],)
 
-    p = Parser(url=source, doc=txt)
+    soup = BeautifulSoup(txt)
+    basetag = soup.find('base')
+    if basetag:
+        baseurl = basetag.get('href')
+
+    p = Parser(url=baseurl or source, doc=txt)
     d = p.to_dict()
     references = []
 
