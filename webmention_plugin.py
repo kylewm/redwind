@@ -40,13 +40,16 @@ class MentionClient:
 
         # send mentions to 'in_reply_to' as well as all linked urls
         if post.in_reply_to:
-            target_urls.append(post.in_reply_to.strip())
+            for in_reply_to in post.in_reply_to.strip().splitlines():
+                target_urls.append(in_reply_to.strip())
 
         if post.repost_source:
-            target_urls.append(post.repost_source.strip())
+            for repost_source in post.repost_source.strip().splitlines():
+                target_urls.append(post.repost_source.strip())
 
         if post.like_of:
-            target_urls.append(post.like_of.strip())
+            for like_of in post.like_of.strip().splitlines():
+                target_urls.append(like_of.strip())
 
         html_content = views.DisplayPost(post)\
                             .get_html_content(include_preview=False)

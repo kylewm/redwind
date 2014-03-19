@@ -70,18 +70,18 @@ class DisplayPost:
         #youtube embeds
         m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
         if m:
-            preview = """<iframe width="560" height="315" """
-            """src="//www.youtube.com/embed/{}" frameborder="0" """
-            """allowfullscreen></iframe>"""\
+            preview = """<iframe width="560" height="315" """\
+                """src="//www.youtube.com/embed/{}" frameborder="0" """\
+                """allowfullscreen></iframe>"""\
                 .format(m.group(1))
             return preview, True
 
         #instagram embeds
         m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
         if m:
-            preview = """<iframe src="//instagram.com/p/{}/embed/" """
-            """width="400" height="500" frameborder="0" scrolling="no" """
-            """allowtransparency="true"></iframe>"""\
+            preview = """<iframe src="//instagram.com/p/{}/embed/" """\
+                """width="400" height="500" frameborder="0" scrolling="no" """\
+                """allowtransparency="true"></iframe>"""\
                 .format(m.group(1))
             return preview, True
 
@@ -470,7 +470,11 @@ def atom_sanitize(content):
 
 @app.template_filter('prettify_url')
 def prettify_url(url):
-    schema, path = url.split('//')
+    split = url.split('//', 1)
+    if len(split) == 2:
+        schema, path = split
+    else:
+        path = url
     return path.strip('/')
 
 
