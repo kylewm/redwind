@@ -127,7 +127,7 @@ class TwitterClient:
 
             status_data = status_response.json()
 
-            pub_date = datetime.datetime.strptime(status_data['created_at'],
+            pub_date = datetime.strptime(status_data['created_at'],
                                                   '%a %b %d %H:%M:%S %z %Y')
             real_name = status_data['user']['name']
             screen_name = status_data['user']['screen_name']
