@@ -638,7 +638,7 @@ def fetch_external_post(source, ExtPostClass):
 
     response = requests.get(source)
     if response.status_code // 2 == 100:
-        hentry = hentry_parser.parse(response.content)
+        hentry = hentry_parser.parse(response.content, source)
         if hentry:
             return ExtPostClass(
                 source,

@@ -94,7 +94,7 @@ def process_webmention(source, target):
             "Giving up", source, target)
         return None, "Could not find any links from source to target"
 
-    hentry = hentry_parser.parse(source_response.text)
+    hentry = hentry_parser.parse(source_response.text, source)
 
     if not hentry:
         app.logger.warn(

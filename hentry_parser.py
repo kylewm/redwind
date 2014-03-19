@@ -8,7 +8,7 @@ Entry = namedtuple('Entry', ['author', 'permalink', 'pub_date',
                              'references', 'title', 'content'])
 
 
-def parse(txt):
+def parse(txt, source):
     def parse_references(objs, reftype):
         refs = []
         for obj in objs:
@@ -31,7 +31,7 @@ def parse(txt):
                               urls and urls[0],
                               photos and photos[0],)
 
-    p = Parser(doc=txt)
+    p = Parser(url=source, doc=txt)
     d = p.to_dict()
     references = []
 
@@ -47,9 +47,8 @@ def parse(txt):
         if 'h-entry' in item['type']:
 
             hentry = item
-            permalink = (next((perma for perma
-                              in hentry['properties'].get('url', [])), None)
-                         or url)
+            permalink = next((perma for perma
+                              in hentry['properties'].get('url', [])), source)
             references += parse_references(
                 hentry['properties'].get('in-reply-to', []), 'reply')
             references += parse_references(
