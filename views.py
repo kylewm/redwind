@@ -237,7 +237,12 @@ def render_posts_atom(title, post_types, count):
 
 @app.route("/all.atom")
 def all_atom():
-    return render_posts_atom('All Posts', ('article', 'note', 'share'), 30)
+    return render_posts_atom('All', ('article', 'note', 'share', 'like', 'reply'), 30)
+
+
+@app.route("/updates.atom")
+def updates_atom():
+    return render_posts_atom('Updates', ('article', 'note', 'share'), 30)
 
 
 @app.route("/notes.atom")
