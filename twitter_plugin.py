@@ -153,9 +153,11 @@ class TwitterClient:
 
     def expand_link(self, url, depth_limit):
         if depth_limit > 0:
+            app.logger.debug("expanding %s", url)
             r = requests.head(url)
             if r and r.status_code == 301 and 'location' in r.headers:
                 url = r.headers['location']
+                app.logger.debug("redirected to %s", url)
                 url = self.expand_link(url, depth_limit-1)
         return url
 
