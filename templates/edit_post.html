@@ -54,7 +54,7 @@
         <option {% if post.content_format == "markdown" %}selected{% endif %}>markdown</option>
         <option {% if post.content_format == "plain" %}selected{% endif %}>plain</option>
         <option {% if post.content_format == "html" %}selected{% endif %}>html</option>
-      </select>
+      </select><br/>
 
       <label><input type="checkbox" id="send_to_twitter" name="send_to_twitter" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Twitter</label><br/>
 
