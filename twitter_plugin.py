@@ -134,14 +134,28 @@ class TwitterClient:
             real_name = status_data['user']['name']
             screen_name = status_data['user']['screen_name']
             author_name = real_name
-            author_url = (status_data['user']['url']
-                          or 'http://twitter.com/{}'.format(screen_name))
+            author_url = status_data['user']['url']
+            if author_url:
+                author_url = self.expand_link(author_url)
+            else:
+                author_url = 'http://twitter.com/{}'.format(screen_name)
             author_image = status_data['user']['profile_image_url']
-            tweet_text = status_data['text']
+            tweet_text = self.expand_links(status_data['text'])
 
             return ExtPostClass(source, source, None, tweet_text,
                                 'plain', author_name, author_url,
                                 author_image, pub_date)
+
+    def expand_links(self, text):
+        return re.sub(autolinker.LINK_REGEX,
+                      lambda match: self.expand_link(match.group(0)),
+                      text)
+
+    def expand_link(self, url):
+        r = requests.head(url)
+        if r and r.status_code == 301 and 'location' in r.headers:
+            url = r.headers['location']
+        return url
 
     def handle_new_or_edit(self, post):
         if not self.is_twitter_authorized(post.author):
