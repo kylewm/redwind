@@ -1,7 +1,10 @@
 {% if post.like_contexts %}
   <div class="like-context">
     {% for like in post.like_contexts %}
-      Liked <a class="u-like-of" href="{{ like.permalink }}">{{like.title or like.content | safe}}</a>
+      Liked
+      <a class="u-like-of" href="{{ like.permalink }}">
+        {{like.title or like.content | format_as_html(like.content_format) | safe}}
+      </a>
     {% endfor %}
   </div>
 {% endif %}

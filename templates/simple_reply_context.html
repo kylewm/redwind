@@ -10,7 +10,7 @@
           {% if reply.title %}
             &ldquo;<span class="p-name">{{ reply.title }}</span>&rdquo;
           {% else %}
-            &ldquo;<span class="e-content">{{ reply.content | html_to_plain }}</span>&rdquo;
+            &ldquo;<span class="e-content">{{ reply.content | format_as_text(reply.content_format) }}</span>&rdquo;
           {% endif %}
           <br/>
           <div class="links">

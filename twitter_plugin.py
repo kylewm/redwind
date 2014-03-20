@@ -3,9 +3,11 @@ from models import Post
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response, jsonify
 from rauth import OAuth1Service
+
 import views
 import requests
 import re
+import autolinker
 
 from tempfile import mkstemp
 from datetime import datetime, timedelta
@@ -128,7 +130,7 @@ class TwitterClient:
             status_data = status_response.json()
 
             pub_date = datetime.strptime(status_data['created_at'],
-                                                  '%a %b %d %H:%M:%S %z %Y')
+                                         '%a %b %d %H:%M:%S %z %Y')
             real_name = status_data['user']['name']
             screen_name = status_data['user']['screen_name']
             author_name = real_name
@@ -136,8 +138,9 @@ class TwitterClient:
                           or 'http://twitter.com/{}'.format(screen_name))
             author_image = status_data['user']['profile_image_url']
             tweet_text = status_data['text']
+
             return ExtPostClass(source, source, None, tweet_text,
-                                author_name, author_url,
+                                'plain', author_name, author_url,
                                 author_image, pub_date)
 
     def handle_new_or_edit(self, post):
@@ -294,9 +297,9 @@ class TwitterClient:
                                            can_drop=False)]
 
         else:
-            dpost = views.DisplayPost(post)
-            components = self.split_out_urls(post.author,
-                                             dpost.format_text_as_text())
+            components = self.split_out_urls(
+                post.author, views.format_as_text(post.content,
+                                                  post.content_format))
 
             # include the re-shared link
             if post.repost_source:

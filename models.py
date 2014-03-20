@@ -190,6 +190,8 @@ class ExternalPost(db.Model):
 
     title = db.Column(db.String(256))
     content = db.Column(db.Text)
+    content_format = db.Column(db.String(64))  # markdown/html/plain
+
     pub_date = db.Column(db.DateTime)
 
     author_name = db.Column(db.String(256))
@@ -198,13 +200,14 @@ class ExternalPost(db.Model):
 
     unparsed_html = db.Column(db.Text)
 
-    def __init__(self, source, permalink, title,
-                 content, author_name, author_url, author_image,
-                 pub_date=None, unparsed_html=None):
+    def __init__(self, source, permalink, title, content,
+                 content_format, author_name, author_url,
+                 author_image, pub_date=None, unparsed_html=None):
         self.source = source
         self.permalink = permalink
         self.title = title
         self.content = content
+        self.content_format = content_format
         self.author_name = author_name
         self.author_url = author_url
         self.author_image = author_image

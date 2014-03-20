@@ -2,7 +2,7 @@
 
 <div style="margin-bottom: 20px">
   <p>In reply to</p>
- 
+
     {% for reply in post.reply_contexts %}
 
       <div class="reply-context">
@@ -30,9 +30,12 @@
             </div>
 
             <div style="margin-left: 56px">
-	      {%if reply.title %}<p class="p-name">{{ reply.title }}</p>{% endif %}
-              <p class="e-content">{{ reply.content | html_to_plain }}</p>
-
+	      {%if reply.title %}
+                <p class="p-name">{{ reply.title }}</p>
+              {% endif %}
+              <p class="e-content">
+                {{ reply.content | format_as_html(reply.content_format) | safe }}
+              </p>
               <div class="links">
                 <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
                   <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>

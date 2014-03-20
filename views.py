@@ -1,6 +1,7 @@
 from app import app, db
 from models import Post, Mention, ReplyContext, LikeContext, ShareContext
 from auth import load_user
+import autolinker
 
 from datetime import datetime
 import os
@@ -53,19 +54,6 @@ class DisplayPost:
     def __getattr__(self, attr):
         return getattr(self.wrapped, attr)
 
-    def markdown_filter(self, data):
-        from markdown import markdown
-        from smartypants import smartypants
-        return smartypants(markdown(data, extensions=['codehilite']))
-
-    def plain_text_filter(self, plain):
-        plain = re.sub(r'\b(?<!href=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)',
-                       r'<a href="\g<0>">\g<1></a>', plain)
-        plain = re.sub(r'(?<!\w)@([a-zA-Z0-9_]+)',
-                       r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
-        plain = plain.replace('\n', '<br/>')
-        return plain
-
     def repost_preview_filter(self, url):
         #youtube embeds
         m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
@@ -74,7 +62,7 @@ class DisplayPost:
                 """src="//www.youtube.com/embed/{}" frameborder="0" """\
                 """allowfullscreen></iframe>"""\
                 .format(m.group(1))
-            return preview, True
+            return preview, False
 
         #instagram embeds
         m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
@@ -83,7 +71,7 @@ class DisplayPost:
                 """width="400" height="500" frameborder="0" scrolling="no" """\
                 """allowtransparency="true"></iframe>"""\
                 .format(m.group(1))
-            return preview, True
+            return preview, False
 
         #FIXME
         #preview = twitter_client.repost_preview(self.author, url)
@@ -102,25 +90,6 @@ class DisplayPost:
         # information we can't get from the page title, whether it is an
         # image, etc.)
         return None, False
-
-    def format_text(self):
-        if not self.content:
-            return ''
-        elif self.content_format == 'markdown':
-            return self.markdown_filter(self.content)
-        elif self.content_format == 'plain':
-            return self.plain_text_filter(self.content)
-        else:
-            return self.content
-
-    def format_text_as_text(self):
-        if not self.content:
-            return ''
-        if self.content_format == 'plain':
-            return self.content
-        html = self.format_text()
-        soup = BeautifulSoup(html)
-        return soup.get_text()
 
     def add_preview(self, text):
         preview = self.repost_preview
@@ -141,14 +110,14 @@ class DisplayPost:
         return Markup(self.get_html_content(True))
 
     def get_html_content(self, include_preview=True):
-        text = self.format_text()
+        text = format_as_html(self.content, self.content_format)
         if include_preview:
             text = self.add_preview(text)
         return text
 
     @property
     def html_excerpt(self):
-        text = self.format_text()
+        text = format_as_html(self.content, self.content_format)
         split = text.split('<!-- more -->', 1)
         text = self.add_preview(split[0])
         if len(split) > 1:
@@ -473,6 +442,44 @@ def atom_sanitize(content):
     return result
 
 
+@app.template_filter('format_as_html')
+def format_as_html(content, content_format):
+    if not content:
+        return ''
+    elif content_format == 'markdown':
+        return markdown_filter(content)
+    elif content_format == 'plain':
+        return plain_text_filter(content)
+    else:
+        return content
+
+
+@app.template_filter('format_as_text')
+def format_as_text(content, content_format):
+    if not content:
+        return ''
+    if content_format == 'plain':
+        return content
+    html = format_as_html(content, content_format)
+    soup = BeautifulSoup(html)
+    return soup.get_text()
+
+
+@app.template_filter('markdown')
+def markdown_filter(data):
+    from markdown import markdown
+    from smartypants import smartypants
+    return smartypants(
+        markdown(data, extensions=['codehilite']))
+
+
+@app.template_filter('autolink')
+def plain_text_filter(plain):
+    plain = autolinker.make_links(plain)
+    plain = plain.replace('\n', '<br/>')
+    return plain
+
+
 @app.template_filter('prettify_url')
 def prettify_url(url):
     split = url.split('//', 1)
@@ -650,9 +657,8 @@ def fetch_external_post(source, ExtPostClass):
         hentry = hentry_parser.parse(response.content, source)
         if hentry:
             return ExtPostClass(
-                source,
-                hentry.permalink,
-                hentry.title, hentry.content,
+                source, hentry.permalink,
+                hentry.title, hentry.content, 'html',
                 hentry.author.name if hentry.author else '',
                 hentry.author.url if hentry.author else '',
                 hentry.author.photo if hentry.author else '',

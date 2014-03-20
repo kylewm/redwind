@@ -64,7 +64,8 @@ def handle_new_or_edit(post):
 
     post_args = {'access_token': post.author.facebook_access_token,
                  'name': post.title,
-                 'message': dpost.format_text_as_text(),
+                 'message': views.format_as_text(post.content,
+                                                 post.content_format),
                  'link': post.repost_source,
                  'picture': dpost.get_first_image(),
                  'actions': json.dumps(actions),
