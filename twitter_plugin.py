@@ -161,7 +161,6 @@ class TwitterClient:
                 url = self.expand_link(url, depth_limit-1)
         return url
 
-
     def handle_new_or_edit(self, post):
         if not self.is_twitter_authorized(post.author):
             return
@@ -171,28 +170,29 @@ class TwitterClient:
         api = self.get_auth_session(post.author)
 
         # check for RT's
-        repost_match = permalink_re.match(post.repost_source)
-        like_match = permalink_re.match(post.like_of)
+        for share_context in post.share_contexts:
+            repost_match = permalink_re.match(share_context.source)
+            if repost_match:
+                is_retweet = True
+                tweet_id = repost_match.group(2)
+                result = api.post('statuses/retweet/{}.json'.format(tweet_id),
+                                  data={'trim_user': True})
+                if result.status_code // 2 != 100:
+                    raise RuntimeError("{}: {}".format(result,
+                                                       result.content))
 
-        if repost_match:
-            tweet_id = repost_match.group(2)
-            result = api.post('statuses/retweet/{}.json'.format(tweet_id),
-                              data={'trim_user': True})
-            if result.status_code // 2 != 100:
-                raise RuntimeError("{}: {}".format(str(result),
-                                                   str(result.content)))
+        for like_context in post.like_contexts:
+            like_match = permalink_re.match(post.like_of)
+            if like_match:
+                is_favorite = True
+                tweet_id = like_match.group(2)
+                result = api.post('favorites/create.json',
+                                  data={'id': tweet_id, 'trim_user': True})
+                if result.status_code // 2 != 100:
+                    raise RuntimeError("{}: {}".format(result,
+                                                       result.content))
 
-        elif like_match:
-            tweet_id = like_match.group(2)
-            result = api.post('favorites/create.json',
-                              data={'id': tweet_id, 'trim_user': True})
-            if result.status_code // 2 != 100:
-                raise RuntimeError("{}: {}".format(str(result),
-                                                   str(result.content)))
-
-        else:
-            dpost = views.DisplayPost(post)
-
+        if not is_retweet and not is_favorite:
             data = {}
             data['status'] = self.create_status(post)
             data['trim_user'] = True
@@ -200,7 +200,7 @@ class TwitterClient:
             if reply_match:
                 data['in_reply_to_status_id'] = reply_match.group(2)
 
-            img = dpost.get_first_image()
+            img = views.get_first_image(post)
             if img:
                 tempfile = self.download_image_to_temp(img)
                 result = api.post('statuses/update_with_media.json',
@@ -321,9 +321,9 @@ class TwitterClient:
                                                   post.content_format))
 
             # include the re-shared link
-            if post.repost_source:
+            for share_context in post.share_contexts:
                 components.append(self.url_to_span(post.author,
-                                                   post.repost_source,
+                                                   share_context.source,
                                                    can_drop=False))
 
             components.append(self.text_to_span(post.short_cite,

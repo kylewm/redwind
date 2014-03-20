@@ -37,19 +37,13 @@ class MentionClient:
 
     def get_target_urls(self, post):
         target_urls = []
-
         # send mentions to 'in_reply_to' as well as all linked urls
-        if post.in_reply_to:
-            for in_reply_to in post.in_reply_to.strip().splitlines():
-                target_urls.append(in_reply_to.strip())
-
-        if post.repost_source:
-            for repost_source in post.repost_source.strip().splitlines():
-                target_urls.append(post.repost_source.strip())
-
-        if post.like_of:
-            for like_of in post.like_of.strip().splitlines():
-                target_urls.append(like_of.strip())
+        target_urls += [reply_context.source for reply_context
+                        in post.reply_contexts]
+        target_urls += [share_context.source for share_context
+                        in post.share_contexts]
+        target_urls += [like_context.source for like_context
+                        in post.like_contexts]
 
         html_content = views.DisplayPost(post)\
                             .get_html_content(include_preview=False)

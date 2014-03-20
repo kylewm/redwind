@@ -56,7 +56,9 @@ def syndicate_to_facebook():
 
 def handle_new_or_edit(post):
     app.logger.debug('publishing to facebook')
-    dpost = views.DisplayPost(post)
+
+    share_link = next((share_context.source for share_context
+                       in post.share_contexts), None)
 
     actions = {'name': 'See Original',
                'link': post.permalink}
@@ -66,8 +68,8 @@ def handle_new_or_edit(post):
                  'name': post.title,
                  'message': views.format_as_text(post.content,
                                                  post.content_format),
-                 'link': post.repost_source,
-                 'picture': dpost.get_first_image(),
+                 'link': share_link,
+                 'picture': views.get_first_image(post),
                  'actions': json.dumps(actions),
                  'privact': json.dumps(privacy)}
 

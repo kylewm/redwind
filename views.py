@@ -91,18 +91,12 @@ class DisplayPost:
         # image, etc.)
         return None, False
 
-    def add_preview(self, text):
-        preview = self.repost_preview
-
-        if not preview and self.repost_source:
-            preview, cache = self.repost_preview_filter(self.repost_source)
-            if preview and cache:
-                self.wrapped.repost_preview = preview
-                db.session.commit()
-
-        if preview:
-            text += '<div>' + preview + '</div>'
-
+    def get_share_preview(self):
+        text = ''
+        for share_context in self.share_contexts:
+            preview, _ = self.repost_preview_filter(share_context.source)
+            if preview:
+                text += '<div>' + preview + '</div>'
         return text
 
     @property
@@ -112,14 +106,14 @@ class DisplayPost:
     def get_html_content(self, include_preview=True):
         text = format_as_html(self.content, self.content_format)
         if include_preview:
-            text = self.add_preview(text)
+            text += self.get_share_preview()
         return text
 
     @property
     def html_excerpt(self):
         text = format_as_html(self.content, self.content_format)
         split = text.split('<!-- more -->', 1)
-        text = self.add_preview(split[0])
+        text += self.get_share_preview(split[0])
         if len(split) > 1:
             text += "<br/><a href={}>Keep Reading...</a>"\
                 . format(self.permalink)
@@ -156,15 +150,6 @@ class DisplayPost:
     def references(self):
         return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type == 'reference']
-
-    def get_first_image(self):
-        """find the first image (if any) that is in an <img> tag
-        in the rendered post"""
-        html = self.get_html_content(False)
-        soup = BeautifulSoup(html)
-        img = soup.find('img')
-        if img:
-            return img.get('src')
 
 
 def render_posts(title, post_types, page, per_page, include_drafts=False):
@@ -440,6 +425,17 @@ def atom_sanitize(content):
         tag.replace_with(soup.new_string('removed script tag', Comment))
     result = Markup(soup)
     return result
+
+
+@app.template_filter('get_first_image')
+def get_first_image(content, content_format):
+    """find the first image (if any) that is in an <img> tag
+    in the rendered post"""
+    html = format_as_html(content, content_format)
+    soup = BeautifulSoup(html)
+    img = soup.find('img')
+    if img:
+        return img.get('src')
 
 
 @app.template_filter('format_as_html')
