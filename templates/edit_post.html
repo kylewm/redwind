@@ -56,8 +56,10 @@
         <option {% if post.content_format == "html" %}selected{% endif %}>html</option>
       </select>
 
-      <label><input type="checkbox" id="send_to_twitter" name="send_to_twitter" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Twitter</label>
-      <label><input type="checkbox" id="send_to_facebook" name="send_to_facebook" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Facebook</label>
+      <label><input type="checkbox" id="send_to_twitter" name="send_to_twitter" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Twitter</label><br/>
+
+      <label><input type="checkbox" id="send_to_facebook" name="send_to_facebook" value="true" {% if False and post.id is none %}checked{% endif %}/>Share on Facebook</label><br/>
+
       <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if post.id is none %}checked{% endif %}/>Send Webmentions</label>
     </p>
 
