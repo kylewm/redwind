@@ -2,7 +2,7 @@
   <div class="like-context">
     {% for like in post.like_contexts %}
       Liked
-      <a class="u-like-of" href="{{ like.permalink }}">
+      <a class="u-like u-like-of" href="{{ like.permalink }}">
         {{like.title or like.content | format_as_text(like.content_format)}}
       </a>
     {% endfor %}
