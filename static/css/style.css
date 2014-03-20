@@ -193,24 +193,24 @@ footer {
     border-radius: 5px;
     margin-bottom: 5px;
     padding: 5px;
-    /*border: 1px solid gray;*/
-    background-color: #eee;
+    border: 1px solid lightgray;
+    /*background-color: #eee;*/
 }
 
 .share-context {
     border-radius: 5px;
     margin-bottom: 5px;
     padding: 5px;
-    /*border: 1px solid gray;*/
-    background-color: #eee;
+    border: 1px solid lightgray;
+    /*background-color: #eee;*/
 }
 
 .like-context {
     border-radius: 5px;
     margin-bottom: 5px;
     padding: 5px;
-    /*border: 1px solid gray;*/
-    background-color: #eee;
+    border: 1px solid lightgray;
+    /*background-color: #eee;*/
 }
 
 .h-cite .author-image-holder {
