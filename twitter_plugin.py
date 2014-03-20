@@ -148,14 +148,17 @@ class TwitterClient:
 
     def expand_links(self, text):
         return re.sub(autolinker.LINK_REGEX,
-                      lambda match: self.expand_link(match.group(0)),
+                      lambda match: self.expand_link(match.group(0), 5),
                       text)
 
-    def expand_link(self, url):
-        r = requests.head(url)
-        if r and r.status_code == 301 and 'location' in r.headers:
-            url = r.headers['location']
+    def expand_link(self, url, depth_limit):
+        if depth_limit > 0:
+            r = requests.head(url)
+            if r and r.status_code == 301 and 'location' in r.headers:
+                url = r.headers['location']
+                url = self.expand_link(url, depth_limit-1)
         return url
+
 
     def handle_new_or_edit(self, post):
         if not self.is_twitter_authorized(post.author):
