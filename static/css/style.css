@@ -9,6 +9,10 @@ body {
     font-size: 110%;
 }
 
+img {
+    max-width: 100%;
+}
+
 code, pre {
     font-family: 'Droid Sans Mono', monospace;
     font-size: 0.8em;
@@ -20,7 +24,7 @@ pre {
 }
 
 .wrapper {
-    width: 80%;
+    max-width: 1024px;
     margin: 0 auto;
 }
 
