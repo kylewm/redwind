@@ -668,7 +668,7 @@ def fetch_external_post(source, ExtPostClass):
     soup = BeautifulSoup(response.content)
     title_tag = soup.find('title')
     title = title_tag.text if title_tag else prettify_url(source)
-    return ExtPostClass(source, source, title, None, None, None, None)
+    return ExtPostClass(source, source, title, None, 'plain', None, None, None)
 
 
 @app.route('/api/mf2')
