@@ -69,7 +69,8 @@ def handle_new_or_edit(post):
                  'message': views.format_as_text(post.content,
                                                  post.content_format),
                  'link': share_link,
-                 'picture': views.get_first_image(post),
+                 'picture': views.get_first_image(post.content, 
+                                                  post.content_format),
                  'actions': json.dumps(actions),
                  'privact': json.dumps(privacy)}
 

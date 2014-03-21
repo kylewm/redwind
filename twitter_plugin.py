@@ -8,10 +8,11 @@ import views
 import requests
 import re
 import autolinker
+import json
 
 from tempfile import mkstemp
 from datetime import datetime, timedelta
-
+from urllib.parse import urljoin
 
 @app.route('/admin/authorize_twitter')
 @login_required
@@ -170,6 +171,7 @@ class TwitterClient:
         api = self.get_auth_session(post.author)
 
         # check for RT's
+        is_retweet = False
         for share_context in post.share_contexts:
             repost_match = permalink_re.match(share_context.source)
             if repost_match:
@@ -180,7 +182,8 @@ class TwitterClient:
                 if result.status_code // 2 != 100:
                     raise RuntimeError("{}: {}".format(result,
                                                        result.content))
-
+                
+        is_favorite = False
         for like_context in post.like_contexts:
             like_match = permalink_re.match(post.like_of)
             if like_match:
@@ -193,16 +196,18 @@ class TwitterClient:
                                                        result.content))
 
         if not is_retweet and not is_favorite:
+            img = views.get_first_image(post.content, post.content_format)
+
             data = {}
-            data['status'] = self.create_status(post)
+            data['status'] = self.create_status(post, has_media=img)
             data['trim_user'] = True
             reply_match = permalink_re.match(post.in_reply_to)
             if reply_match:
                 data['in_reply_to_status_id'] = reply_match.group(2)
 
-            img = views.get_first_image(post)
             if img:
                 tempfile = self.download_image_to_temp(img)
+                app.logger.debug(json.dumps(data, indent=True))
                 result = api.post('statuses/update_with_media.json',
                                   header_auth=True,
                                   use_oauth_params_only=True,
@@ -219,7 +224,7 @@ class TwitterClient:
         post.twitter_status_id = result.json().get('id_str')
 
     def download_image_to_temp(self, url):
-        response = requests.get(url, stream=True)
+        response = requests.get(urljoin(app.config['SITE_URL'], url), stream=True)
         if response.status_code // 2 == 100:
             _, tempfile = mkstemp()
             with open(tempfile, 'wb') as f:
@@ -269,15 +274,17 @@ class TwitterClient:
 
         return ' '.join(c.text for c in shortened_comps)
 
-    def url_to_span(self, user, url, prefix='', postfix='', can_drop=True):
+    def get_url_length(self, user, is_https):
         twitter_config = self.get_help_configuration(user)
         if twitter_config:
-            url_length = twitter_config.get('short_url_length_https'
-                                            if url.startswith('https')
-                                            else 'short_url_length')
+            return twitter_config.get('short_url_length_https'
+                                      if is_https
+                                      else 'short_url_length')
         else:
-            url_length = 30
-
+            return 30
+        
+    def url_to_span(self, user, url, prefix='', postfix='', can_drop=True):
+        url_length = self.get_url_length(user, url.startswith('https'))
         app.logger.debug("assuming url length {}".format(url_length))
         return TextSpan(prefix + url + postfix,
                         len(prefix) + url_length + len(postfix),
@@ -304,10 +311,13 @@ class TwitterClient:
                 text = None
         return components
 
-    def create_status(self, post):
+    def create_status(self, post, has_media):
         """Create a <140 status message suitable for twitter
         """
         target_length = 140
+        if has_media:
+            target_length -= self.get_url_length(
+                post.author, is_https=False) + 1
 
         if post.title:
             components = [self.text_to_span(post.title),

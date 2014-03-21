@@ -454,8 +454,6 @@ def format_as_html(content, content_format):
 def format_as_text(content, content_format):
     if not content:
         return ''
-    if content_format == 'plain':
-        return content
     html = format_as_html(content, content_format)
     soup = BeautifulSoup(html)
     return soup.get_text()
