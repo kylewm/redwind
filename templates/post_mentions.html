@@ -17,13 +17,14 @@
 
   {% set replies = post.non_likes %}
   {% if replies %}
+  <h3>Replies</h3>
   <div class="replies">
     {% for reply in replies %}
     <div class="p-comment h-cite">
       <div class="p-author h-card">
 
-        <div class="author-image">
-          <img class="u-photo" src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}"
+        <div class="author-image-holder">
+          <img class="author-image u-photo" src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}"
                width="48px" alt="{{reply.author_name}}"/>
         </div>
 
