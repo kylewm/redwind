@@ -118,7 +118,8 @@ def process_webmention(source, target):
                           hentry.content, reftype,
                           hentry.author and hentry.author.name,
                           hentry.author and hentry.author.url,
-                          hentry.author and hentry.author.photo)
+                          hentry.author and hentry.author.photo,
+                          hentry.pub_date)
         mentions.append(mention)
 
     return mentions, None
