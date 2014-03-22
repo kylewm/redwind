@@ -40,13 +40,15 @@
 
       <p class="e-content">{{ reply.content | safe }}</p>
 
+      <div class="links">
       <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
         <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
       </time>
 
       {% if authenticated %}
-      | <a href="{{ url_for('delete_mention_by_id', id=reply.id, redirect=post.permalink) }}">Delete</a>
+      <span class="admin-post-controls"><a href="{{ url_for('delete_mention_by_id', id=reply.id, redirect=post.permalink) }}">Delete</a></span>
       {% endif %}
+      </div>
 
       <div style="clear:both"></div>
     </div>

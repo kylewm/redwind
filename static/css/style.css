@@ -189,12 +189,9 @@ footer {
     padding: 10px;
 }
 
-/*.admin-post-controls {
-    display: inline-block;
+.admin-post-controls {
     float: right;
-    font-size: 0.8em;
-    text-align: right;
-}*/
+}
 
 .reply-context {
     border-radius: 5px;
