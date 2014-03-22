@@ -336,9 +336,11 @@ class TwitterClient:
                                                    share_context.source,
                                                    can_drop=False))
 
-            components.append(self.text_to_span(post.short_cite,
-                                                can_drop=False,
-                                                can_shorten=False))
+            components.append(self.url_to_span(post.author, 
+                                               post.short_permalink,
+                                               prefix="\n(",
+                                               postfix=")",
+                                               can_drop=False))
 
             # if that overflows, replace with a permalink
             if self.estimate_length(components) > target_length:
