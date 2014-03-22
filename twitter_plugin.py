@@ -9,10 +9,12 @@ import requests
 import re
 import autolinker
 import json
+import pytz
 
 from tempfile import mkstemp
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
+
 
 @app.route('/admin/authorize_twitter')
 @login_required
@@ -132,6 +134,8 @@ class TwitterClient:
 
             pub_date = datetime.strptime(status_data['created_at'],
                                          '%a %b %d %H:%M:%S %z %Y')
+            if pub_date:
+                pub_date = pub_date.astimezone(pytz.utc)
             real_name = status_data['user']['name']
             screen_name = status_data['user']['screen_name']
             author_name = real_name
@@ -182,7 +186,7 @@ class TwitterClient:
                 if result.status_code // 2 != 100:
                     raise RuntimeError("{}: {}".format(result,
                                                        result.content))
-                
+
         is_favorite = False
         for like_context in post.like_contexts:
             like_match = permalink_re.match(post.like_of)
@@ -282,7 +286,7 @@ class TwitterClient:
                                       else 'short_url_length')
         else:
             return 30
-        
+
     def url_to_span(self, user, url, prefix='', postfix='', can_drop=True):
         url_length = self.get_url_length(user, url.startswith('https'))
         app.logger.debug("assuming url length {}".format(url_length))
@@ -336,7 +340,7 @@ class TwitterClient:
                                                    share_context.source,
                                                    can_drop=False))
 
-            components.append(self.url_to_span(post.author, 
+            components.append(self.url_to_span(post.author,
                                                post.short_permalink,
                                                prefix="\n(",
                                                postfix=")",

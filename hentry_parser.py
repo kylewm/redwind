@@ -1,6 +1,7 @@
 from collections import namedtuple
 from mf2py.parser import Parser
 from dateutil.parser import parse as parsedate
+import pytz
 from bs4 import BeautifulSoup
 import json
 import bleach
@@ -69,12 +70,12 @@ def parse(txt, source):
 
             date_strs = hentry['properties'].get('published')
             pub_date = date_strs and parsedate(' '.join(date_strs))
+            if pub_date:
+                pub_date = pub_date.astimezone(pytz.utc)
 
-            # TODO: remove potentially harmful tags!
             content_html = ''.join(content['html'].strip() for content
                                    in hentry['properties'].get('content', []))
             content_html = bleach.clean(content_html, strip=True)
-
             content_value = ''.join(content['value'].strip() for content
                                     in hentry['properties'].get('content', []))
 
@@ -83,10 +84,11 @@ def parse(txt, source):
 
             if title == content_value:
                 title = None
-            
+
             author = parse_author(
                 hentry['properties'].get('author', []))
-            return Entry(author, permalink, pub_date, references, title, content_html)
+            return Entry(author, permalink, pub_date, references, title,
+                         content_html)
 
 
 if __name__ == '__main__':
