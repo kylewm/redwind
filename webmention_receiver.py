@@ -58,6 +58,8 @@ def process_webmention(source, target):
             "Webmention could not find target post: %s. Giving up", target)
         return None, "Webmention could not find target post: {}".format(target)
 
+    target_urls = [target, target_post.permalink, target_post.short_permalink]
+
     # confirm that source actually refers to the post
     source_metadata = urllib.request.urlopen(source).info()
     if not source_metadata:
@@ -85,9 +87,7 @@ def process_webmention(source, target):
         return None, "Bad response when reading source post: {}, {}".format(
             source, source_response)
 
-    link_to_target = find_link_to_target(source, source_response,
-                                         [target, target_post.permalink,
-                                          target_post.short_permalink])
+    link_to_target = find_link_to_target(source, source_response, target_urls)
     if not link_to_target:
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
@@ -104,8 +104,7 @@ def process_webmention(source, target):
 
     reftypes = set()
     for ref in hentry.references:
-        if (ref.url == target_post.permalink
-                or ref.url == target_post.short_permalink):
+        if ref.url in target_urls:
             reftypes.add(ref.reftype)
 
     # if it's not a reply, repost, or like, it's just a reference
