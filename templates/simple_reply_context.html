@@ -6,7 +6,7 @@
       {% if (not reply.author_name and reply.permalink and reply.title) %}
         <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
       {% else %}
-        <div class="p-comment h-cite">
+        <div class="p-in-reply-to h-cite">
           {% if reply.title %}
             &ldquo;<span class="p-name">{{ reply.title }}</span>&rdquo;
           {% else %}
@@ -25,7 +25,7 @@
             </span>
             on
             <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-              <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+              <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
             </time>
           </div>
         </div>

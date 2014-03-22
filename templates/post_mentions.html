@@ -28,13 +28,13 @@
                width="48px" alt="{{reply.author_name}}"/>
         </div>
 
-        {% if reply.author_name %}
-        {% if reply.author_url %} <a class="p-name u-url" href="{{reply.author_url}}">
-          {% else %} <span class="p-name"> {% endif %}
-            {{reply.author_name}}
-            {% if reply.author_url %} </a>
-        {% else %} </span> {% endif %}
-        {% endif %}
+	{% if reply.author_name %}
+	<span class="p-name">{{ reply.author_name }}</span>
+	{% endif %}
+	{% if reply.author_name and reply.author_url %} / {% endif %}
+	{% if reply.author_url %}
+	<a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>
+	{% endif %}
 
       </div>
 

@@ -3,6 +3,12 @@ from mf2py.parser import Parser
 from dateutil.parser import parse as parsedate
 from bs4 import BeautifulSoup
 import json
+import bleach
+
+bleach.ALLOWED_TAGS += ['img']
+bleach.ALLOWED_ATTRIBUTES.update({
+    'img': ['src', 'alt', 'title']
+})
 
 Author = namedtuple('Author', ['name', 'url', 'photo'])
 Reference = namedtuple('Reference', ['url', 'reftype'])
@@ -67,6 +73,7 @@ def parse(txt, source):
             # TODO: remove potentially harmful tags!
             content_html = ''.join(content['html'].strip() for content
                                    in hentry['properties'].get('content', []))
+            content_html = bleach.clean(content_html, strip=True)
 
             content_value = ''.join(content['value'].strip() for content
                                     in hentry['properties'].get('content', []))
