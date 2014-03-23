@@ -222,8 +222,8 @@ class TwitterClient:
                 result = api.post('statuses/update.json', data=data)
 
             if result.status_code // 2 != 100:
-                raise RuntimeError("{}: {}".format(str(result),
-                                                   str(result.content)))
+                raise RuntimeError("{}: {}".format(result,
+                                                   result.content))
 
         post.twitter_status_id = result.json().get('id_str')
 
@@ -278,6 +278,12 @@ class TwitterClient:
 
         return ' '.join(c.text for c in shortened_comps)
 
+    def get_media_url_length(self, user):
+        twitter_config = self.get_help_configuration(user)
+        if twitter_config:
+            return twitter_config.get('characters_reserved_per_media')
+        return 30
+
     def get_url_length(self, user, is_https):
         twitter_config = self.get_help_configuration(user)
         if twitter_config:
@@ -320,8 +326,7 @@ class TwitterClient:
         """
         target_length = 140
         if has_media:
-            target_length -= self.get_url_length(
-                post.author, is_https=False) + 1
+            target_length -= self.get_mediaurl_length(post.author)
 
         if post.title:
             components = [self.text_to_span(post.title),
