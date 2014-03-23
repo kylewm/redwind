@@ -222,8 +222,9 @@ class TwitterClient:
                 result = api.post('statuses/update.json', data=data)
 
             if result.status_code // 2 != 100:
-                raise RuntimeError("{}: {}".format(result,
-                                                   result.content))
+                raise RuntimeError("status code: {}, headers: {}, body: {}".format(
+                        result.status_code, result.headers,
+                        result.content))
 
         post.twitter_status_id = result.json().get('id_str')
 
@@ -326,7 +327,7 @@ class TwitterClient:
         """
         target_length = 140
         if has_media:
-            target_length -= self.get_mediaurl_length(post.author)
+            target_length -= self.get_media_url_length(post.author)
 
         if post.title:
             components = [self.text_to_span(post.title),
