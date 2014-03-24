@@ -8,8 +8,12 @@
         Shared <a class="u-repost-of" href="{{ share.permalink }}">{{share.title}}</a>
 
       {% else %}
-
+    
         <div class="p-repost-of h-cite">
+            <time class="dt-published" datetime="{{ share.pub_date | isotime }}">
+              Shared a post from <a class="u-url" href="{{ share.permalink }}">{{ share.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+            </time>
+
           <div class="p-author h-card">
 
             {% if share.author_image %}
@@ -31,16 +35,18 @@
 
           <div {% if share.author_image %}style="margin-left: 56px;"{% endif %}>
             {% if share.title %}
-              <p class="p-name">{{share.title or ''}}</p>
-            {% endif %}
-            {% if share.content %}
+              <span class="p-name">{{share.title or ''}}</span>
+	    {% endif %}
+
+	    {% set content_length = share.content | wordcount %}	    
+            {% if content_length < 100 %}
               <p class="e-content">
                 {{ share.content | format_as_html(share.content_format) | safe }}
               </p>
+	    {% else %}
+	      <a class="u-url" href="{{ share.permalink }}">{{ content_length }} words.</a><br />
             {% endif %}
-            <time class="dt-published" datetime="{{ share.pub_date | isotime }}">
-              <a class="u-url" href="{{ share.permalink }}">{{ share.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-            </time>
+	      
           </div>
 
           <div style="clear: both"></div>

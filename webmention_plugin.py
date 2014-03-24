@@ -170,7 +170,8 @@ class MentionClient:
                     "Failed to send webmention for %s. "
                     "Response status code: %s",
                     target_url, response.status_code)
-                return False, "Bad response {}".format(response)
+                return False, "Status code: {}, Response: {}".format(response.status_code, 
+                                                                     response.text)
             else:
                 app.logger.debug(
                     "Sent webmention successfully to %s. Sender response: %s:",
