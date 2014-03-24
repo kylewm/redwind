@@ -224,7 +224,7 @@
         }
     }
 
-    function errorHandler(data, status, errorThrown) {
+    function uploadErrorHandler(data, status, errorThrown) {
         appendResult("upload failed with " + status + ", " + errorThrown);
     }
 

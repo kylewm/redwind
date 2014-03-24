@@ -2,6 +2,9 @@
 <a class="u-url" href="{{ post.permalink }}">
   <time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</time>
 </a>
+{% if post.latitude and post.longitude %}
+@ <a href="http://www.openstreetmap.org/#map=18/{{post.latitude}}/{{post.longitude}}">{{post.location_name or 'Unnamed place'}}</a>
+{% endif %}
 <span value="{{ post.short_cite}}" >
   {{ post.short_cite }}
 </span>

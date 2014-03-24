@@ -18,17 +18,9 @@
 
       <div class="links">
 	{% include "admin_post_controls.html" %}
-	{% if post.latitude and post.longitude %}
-	From <a href="http://www.openstreetmap.org/#map=18/{{post.latitude}}/{{post.longitude}}">{{post.location_name or 'Unnamed place'}}</a>
-	<br/>
-	{% endif %}
-
-	{% include "single_post_links.html" %}
 	{% include "syndication_links.html" %}
+	{% include "single_post_links.html" %}
       </div>
-
-
-
 
       {% include "post_mentions.html" %}
     </div>

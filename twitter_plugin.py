@@ -332,7 +332,7 @@ class TwitterClient:
         """
         target_length = 140
         if has_media:
-            target_length -= self.get_mediaurl_length(post.author)
+            target_length -= self.get_media_url_length(post.author)
 
         if post.title:
             components = [self.text_to_span(post.title),
