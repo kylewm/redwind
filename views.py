@@ -456,6 +456,14 @@ def format_as_text(content, content_format):
         return ''
     html = format_as_html(content, content_format)
     soup = BeautifulSoup(html)
+
+    # replace links with the URL
+    for a in soup.find_all('a'):
+        a.replace_with(a.get('href'))
+    # and images with their alt text
+    for i in soup.find_all('img'):
+        i.replace_with(i.get('title') or i.get('alt'))
+
     return soup.get_text()
 
 
