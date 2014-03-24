@@ -90,6 +90,11 @@ class Post(db.Model):
 
     repost_preview = db.Column(db.Text)
     draft = db.Column(db.Boolean())
+
+    latitude = db.Column(db.Float())
+    longitude = db.Column(db.Float())
+    location_name = db.Column(db.String(512))
+
     twitter_status_id = db.Column(db.String(64))
     facebook_post_id = db.Column(db.String(64))
     tags = db.relationship('Tag', secondary=tags_to_posts,

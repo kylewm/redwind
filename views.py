@@ -22,7 +22,7 @@ from werkzeug import secure_filename
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
-POST_TYPES = ['article', 'note', 'share', 'like', 'reply']
+POST_TYPES = ['article', 'note', 'share', 'like', 'reply', 'checkin']
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 
 
@@ -529,6 +529,12 @@ def save_post():
         post.like_of = request.form.get('like_of', '')
         post.content_format = request.form.get('content_format', 'plain')
         post.draft = request.form.get('draft', 'true') == 'true'
+
+        lat = request.form.get('latitude')
+        lon = request.form.get('longitude')
+        post.latitude = lat and float(lat)
+        post.longitude = lon and float(lon)
+        post.location_name = request.form.get('location_name')
 
         app.logger.debug("got draft setting from: %s",
                          request.form.get('draft'))

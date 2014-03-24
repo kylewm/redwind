@@ -8,7 +8,8 @@ TAG_TO_TYPE = {
     'a': 'article',
     'r': 'reply',
     's': 'share',
-    'l': 'like'}
+    'l': 'like',
+    'c': 'checkin'}
 
 TYPE_TO_TAG = {v: k for k, v in TAG_TO_TYPE.items()}
 
