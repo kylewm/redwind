@@ -24,17 +24,3 @@
   </script>
 {% endif %}
 
-<div class="links">
-  {% if post.latitude and post.longitude %}
-    From <a href="http://www.openstreetmap.org/#map=18/{{post.latitude}}/{{post.longitude}}">{{post.location_name or 'Unnamed place'}}</a>
-    <br/>
-  {% endif %}
-  {% if post.mentions %}
-    {% set reply_count = post.mentions | length %}
-    <a href="{{ post.permalink }}#mentions">{{ reply_count }} {% if reply_count == 1 %}mention{% else %}mentions{% endif %}</a>
-    <br/>
-  {% endif %}
-  {% include "single_post_links.html" %}
-  {% include "syndication_links.html" %}
-  {% include "admin_post_controls.html" %}
-</div>

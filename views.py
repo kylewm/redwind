@@ -225,7 +225,7 @@ def mentions_atom():
 def post_by_date(post_type, year, month, day, index, slug):
     post = Post.lookup_post_by_date(post_type, year, month, day, index)
     if not post:
-        abort(404)
+        abort(410)
 
     if not slug and post.slug:
         return redirect(
@@ -359,6 +359,10 @@ def new_post():
         if like_of:
             post.like_of = like_of
 
+    content = request.args.get('content')
+    if content:
+        post.content = content
+
     return render_template('edit_post.html', post=post,
                            advanced=request.args.get('advanced'),
                            authenticated=current_user.is_authenticated())
@@ -401,6 +405,14 @@ def isotime_filter(date):
     if date:
         utctime = pytz.utc.localize(date)
         return utctime.isoformat('T')
+
+
+@app.template_filter('pluralize')
+def pluralize(number, singular = '', plural = 's'):
+    if number == 1:
+        return singular
+    else:
+        return plural
 
 
 def url_for_other_page(page):
