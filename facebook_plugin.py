@@ -79,7 +79,7 @@ def handle_new_or_edit(post):
                  'privact': json.dumps(privacy)}
 
     if post.facebook_post_id:
-        response = requests.post('http://graph.facebook.com/{}'
+        response = requests.post('https://graph.facebook.com/{}'
                                  .format(post.facebook_post_id),
                                  data=post_args)
     else:
