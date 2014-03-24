@@ -10,23 +10,25 @@
 {% endif %}
 
 
-  {% if post.post_type == 'checkin' %}
-    {{post.location_name}} @ {{ post.latitude }}, {{ post.longitude }}
-    <div id="map-{{post.id}}" style="height:180px">
-
-    </div>
-    <script type="text/javascript">
-      var map = L.map('map-{{post.id}}').setView([{{post.latitude}}, {{post.longitude}}], 13);
-      L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: 'Map data &copy; OpenStreetMap contributors',
-        maxZoom: 18
-      }).addTo(map);
-      L.marker([{{post.latitude}}, {{post.longitude}}]).addTo(map);
-    </script>
-
-  {% endif %}
+<!-- experimental post type -->
+{% if post.post_type == 'checkin' %}
+  {{post.location_name}} @ {{ post.latitude }}, {{ post.longitude }}
+  <div id="map-{{post.id}}" style="height:180px"> </div>
+  <script type="text/javascript">
+    var map = L.map('map-{{post.id}}').setView([{{post.latitude}}, {{post.longitude}}], 13);
+    L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: 'Map data &copy; OpenStreetMap contributors',
+    maxZoom: 18
+    }).addTo(map);
+    L.marker([{{post.latitude}}, {{post.longitude}}]).addTo(map);
+  </script>
+{% endif %}
 
 <div class="links">
+  {% if post.latitude and post.longitude %}
+    From <a href="http://www.openstreetmap.org/#map=18/{{post.latitude}}/{{post.longitude}}">{{post.location_name or 'Unnamed place'}}</a>
+    <br/>
+  {% endif %}
   {% if post.mentions %}
     {% set reply_count = post.mentions | length %}
     <a href="{{ post.permalink }}#mentions">{{ reply_count }} {% if reply_count == 1 %}mention{% else %}mentions{% endif %}</a>

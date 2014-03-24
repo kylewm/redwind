@@ -205,6 +205,11 @@ class TwitterClient:
             data = {}
             data['status'] = self.create_status(post, has_media=img)
             data['trim_user'] = True
+
+            if post.latitude and post.longitude:
+                data['lat'] = post.latitude
+                data['long'] = post.longitude
+
             reply_match = permalink_re.match(post.in_reply_to)
             if reply_match:
                 data['in_reply_to_status_id'] = reply_match.group(2)

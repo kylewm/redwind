@@ -78,8 +78,20 @@ def handle_new_or_edit(post):
                  'actions': json.dumps(actions),
                  'privact': json.dumps(privacy)}
 
-    response = requests.post('https://graph.facebook.com/me/feed',
-                             data=post_args)
+    if post.facebook_post_id:
+        response = requests.post('http://graph.facebook.com/{}'
+                                 .format(post.facebook_status_id),
+                                 data=post_args)
+    else:
+        response = requests.post('https://graph.facebook.com/me/feed',
+                                 data=post_args)
+
+    app.logger.debug("Got response from facebook %s", response)
+
+    if response.status_code // 100 != 2:
+        raise RuntimeError("Bad response from Facebook. Status: {}, Content: {}"
+                           .format(response.status_code, response.content))
+
     if 'json' in response.headers['content-type']:
         result = response.json()
 

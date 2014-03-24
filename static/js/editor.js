@@ -234,11 +234,11 @@
 
     /* register events */
     $(document).ready(function() {
-
         $("#get_coords_button").click(function() {
             navigator.geolocation.getCurrentPosition(function(position) {
-                $("#latitude").val(position.coords.latitude);
-                $("#longitude").val(position.coords.longitude);
+                console.log(position);
+                $("#latitude").val(position.coords.latitude.toFixed(3));
+                $("#longitude").val(position.coords.longitude.toFixed(3));
             });
         });
 
