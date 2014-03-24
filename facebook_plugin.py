@@ -80,7 +80,7 @@ def handle_new_or_edit(post):
 
     if post.facebook_post_id:
         response = requests.post('http://graph.facebook.com/{}'
-                                 .format(post.facebook_status_id),
+                                 .format(post.facebook_post_id),
                                  data=post_args)
     else:
         response = requests.post('https://graph.facebook.com/me/feed',
