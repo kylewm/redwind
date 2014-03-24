@@ -2,6 +2,7 @@ from app import app, db
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, jsonify
 from models import Post
+from urllib.parse import urljoin
 import views
 
 import requests
@@ -64,13 +65,16 @@ def handle_new_or_edit(post):
                'link': post.permalink}
     privacy = {'value': 'EVERYONE'}
 
+    img_url = views.get_first_image(post.content, post.content_format)
+    if img_url:
+        img_url = urljoin(app.config['SITE_URL'], img_url)
+
     post_args = {'access_token': post.author.facebook_access_token,
                  'name': post.title,
                  'message': views.format_as_text(post.content,
                                                  post.content_format),
                  'link': share_link,
-                 'picture': views.get_first_image(post.content, 
-                                                  post.content_format),
+                 'picture': img_url,
                  'actions': json.dumps(actions),
                  'privact': json.dumps(privacy)}
 
