@@ -1,8 +1,5 @@
-{% if post.share_contexts %}
-  <div class="share-context">
-
     {% for share in post.share_contexts %}
-
+      <div class="share-context">
       {% if (not share.author_name and share.permalink and share.title) %}
 
         Shared <a class="u-repost-of" href="{{ share.permalink }}">{{share.title}}</a>
@@ -53,8 +50,6 @@
 
         </div>
       {% endif %}
+      </div>
     {% endfor %}
 
-  </div>
-
-{% endif %}
