@@ -7,11 +7,9 @@
       {% else %}
     
         <div class="p-repost-of h-cite">
-            <time class="dt-published" datetime="{{ share.pub_date | isotime }}">
-              Shared a post from <a class="u-url" href="{{ share.permalink }}">{{ share.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-            </time>
-
-          <div class="p-author h-card">
+	  
+	  Shared a post by
+          <span class="p-author h-card">
 
             {% if share.author_image %}
               <div class="author-image-holder">
@@ -21,14 +19,19 @@
               </div>
             {% endif %}
 
-            {% if share.author_name %}
-              <span class="p-name">{{share.author_name}}</span>
-            {% endif %}
-            {% if share.author_url %}
-              / <a class="u-url" href="{{share.author_url}}">{{ share.author_url | prettify_url }}</a>
-            {% endif %}
+	      {% if share.author_name and share.author_url %}
+                <a class="p-name u-url" href="{{share.author_url}}">{{ share.author_name }}</a>
+              {% elif share.author_name %}
+                <span class="p-name">{{ share.author_name}}</span>
+              {% elif share.author_url %}
+                <a class="u-url" href="{{share.author_url}}">{{ share.author_url | prettify_url }}</a>
+              {% endif %}
+          </span>
 
-          </div>
+	  from
+          <time class="dt-published" datetime="{{ share.pub_date | isotime }}">
+            <a class="u-url" href="{{ share.permalink }}">{{ share.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+          </time>
 
           <div {% if share.author_image %}style="margin-left: 56px;"{% endif %}>
             {% if share.title %}
@@ -41,7 +44,7 @@
                 {{ share.content | format_as_html(share.content_format) | safe }}
               </p>
 	    {% else %}
-	      <a class="u-url" href="{{ share.permalink }}">{{ content_length }} words.</a><br />
+	      <br /><a class="u-url" href="{{ share.permalink }}">{{ content_length }} words.</a><br />
             {% endif %}
 	      
           </div>

@@ -1,46 +1,49 @@
 {% if post.reply_contexts %}
 
 <div style="margin-bottom: 20px">
-  <p>In reply to</p>
-
-    {% for reply in post.reply_contexts %}
-
-      <div class="reply-context">
-        {% if (not reply.author_name and reply.permalink and reply.title) %}
-
+  {% for reply in post.reply_contexts %}
+  
+  <div class="reply-context">
+	{% if (not reply.author_name and reply.permalink and reply.title) %}
+	<time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+	  On <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+	</time>
           <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
 
         {% else %}
 
           <div class="p-in-reply-to h-cite">
-            <div class="p-author h-card">
-
+            <span class="p-author h-card">
               <div class="author-image-holder">
                 <img class="u-photo"
                      src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}" alt="{{reply.author_name}}"/>
               </div>
 
-              {% if reply.author_name %}
+	      {% if reply.author_name and reply.author_url %}
+                <a class="p-name u-url" href="{{reply.author_url}}">{{ reply.author_name }}</a>
+              {% elif reply.author_name %}
                 <span class="p-name">{{ reply.author_name}}</span>
+              {% elif reply.author_url %}
+                <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>
               {% endif %}
-              {% if reply.author_url %}
-                / <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>
-              {% endif %}
+            </span>
 
-            </div>
+	    on
+	    <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+	      <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+	    </time>
+	    said
+
 
             <div style="margin-left: 56px">
 	      {%if reply.title %}
                 <p class="p-name">{{ reply.title }}</p>
               {% else %}
               <p class="e-content">
-                {{ reply.content | format_as_html(reply.content_format) | safe }}
+                &ldquo;{{ reply.content | format_as_html(reply.content_format) | safe }}&rdquo;
               </p>
 	      {% endif %}
               <div class="links">
-                <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-                  <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-                </time>
               </div>
             </div>
 

@@ -134,7 +134,7 @@ class TwitterClient:
 
             pub_date = datetime.strptime(status_data['created_at'],
                                          '%a %b %d %H:%M:%S %z %Y')
-            if pub_date:
+            if pub_date and pub_date.tzinfo:
                 pub_date = pub_date.astimezone(pytz.utc)
             real_name = status_data['user']['name']
             screen_name = status_data['user']['screen_name']

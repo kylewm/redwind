@@ -1,8 +1,21 @@
 {% if post.reply_contexts %}
-  In reply to
-
   {% for reply in post.reply_contexts %}
     <div class="reply-context">
+      <span class="p-author h-card">
+        {% if reply.author_name %}
+        {% if reply.author_url %}<a class="p-name u-url" href="{{reply.author_url}}">
+          {% else %} <span class="p-name"> {% endif %}
+            {{reply.author_name}}
+            {% if reply.author_url %} </a>
+        {% else %} </span> {% endif %}
+        {% endif %}
+      </span>
+      on
+      <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+        <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+      </time>
+      said
+      <br/>
       {% if (not reply.author_name and reply.permalink and reply.title) %}
         <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
       {% else %}
@@ -12,22 +25,6 @@
           {% else %}
             &ldquo;<span class="e-content">{{ reply.content | format_as_text(reply.content_format) }}</span>&rdquo;
           {% endif %}
-          <br/>
-          <div class="links">
-            &mdash; <span class="p-author h-card">
-            {% if reply.author_name %}
-              {% if reply.author_url %}<a class="p-name u-url" href="{{reply.author_url}}">
-              {% else %} <span class="p-name"> {% endif %}
-              {{reply.author_name}}
-              {% if reply.author_url %} </a>
-              {% else %} </span> {% endif %}
-            {% endif %}
-            </span>
-            on
-            <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-              <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-            </time>
-          </div>
         </div>
       {% endif %}
 
