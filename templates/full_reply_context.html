@@ -1,5 +1,3 @@
-{% if post.reply_contexts %}
-<div style="margin-bottom: 20px">
   {% for reply in post.reply_contexts %}
 
   <div class="reply-context">
@@ -52,5 +50,3 @@
         {% endif %}
       </div>
     {% endfor %}
-  </div>
-{% endif %}

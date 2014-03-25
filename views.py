@@ -489,12 +489,12 @@ def get_first_image(content, content_format):
 
 
 @app.template_filter('format_as_html')
-def format_as_html(content, content_format):
+def format_as_html(content, content_format, linkify=True):
     if not content:
         html = ''
     elif content_format == 'markdown':
         html = markdown_filter(content)
-    elif content_format == 'plain':
+    elif content_format == 'plain' and linkify:
         html = plain_text_filter(content)
     else:
         html = content
@@ -510,7 +510,7 @@ def bleach_html(html):
 def format_as_text(content, content_format):
     if not content:
         return ''
-    html = format_as_html(content, content_format)
+    html = format_as_html(content, content_format, linkify=False)
     soup = BeautifulSoup(html)
 
     # replace links with the URL
