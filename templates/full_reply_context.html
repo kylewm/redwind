@@ -1,7 +1,7 @@
 {% if post.reply_contexts %}
 <div style="margin-bottom: 20px">
   {% for reply in post.reply_contexts %}
-  
+
   <div class="reply-context">
 	{% if (not reply.author_name and reply.permalink and reply.title) %}
 	<time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
@@ -42,7 +42,7 @@
               {% set content_words = reply.content | wordcount %}
               {% if content_words < 100 %}
               <p class="e-content">
-                &ldquo;{{ reply.content | format_as_html(reply.content_format) | safe }}&rdquo;
+                &ldquo;{{ reply.content | format_as_html(reply.content_format) | bleach | safe }}&rdquo;
               </p>
 	      {% endif %}
             </div>
