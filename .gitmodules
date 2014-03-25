@@ -1,6 +1,3 @@
-[submodule "mf2py"]
-	path = mf2py
-	url = https://github.com/kylewm/mf2py
 [submodule "rauth"]
 	path = rauth
 	url = git@github.com:kylewm/rauth.git
