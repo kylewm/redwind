@@ -1,12 +1,12 @@
 {% if post.reply_contexts %}
-  <div style="margin-bottom: 20px">
-    {% for reply in post.reply_contexts %}
-
-      <div class="reply-context">
+<div style="margin-bottom: 20px">
+  {% for reply in post.reply_contexts %}
+  
+  <div class="reply-context">
 	{% if (not reply.author_name and reply.permalink and reply.title) %}
-	  <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-	    On <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-	  </time>
+	<time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+	  On <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+	</time>
           <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
 
         {% else %}
@@ -38,13 +38,13 @@
             <div style="margin-left: 56px">
               {%if reply.title %}
                 <p class="p-name">{{ reply.title }}</p>
-              {% else %}
-                <p class="e-content">
-                  &ldquo;{{ reply.content | format_as_html(reply.content_format) | bleach | safe }}&rdquo;
-                </p>
               {% endif %}
-              <div class="links">
-              </div>
+              {% set content_words = reply.content | wordcount %}
+              {% if content_words < 100 %}
+              <p class="e-content">
+                &ldquo;{{ reply.content | format_as_html(reply.content_format) | safe }}&rdquo;
+              </p>
+	      {% endif %}
             </div>
 
             <div style="clear: both"></div>

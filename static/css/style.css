@@ -18,6 +18,7 @@ blockquote {
 
 img {
     max-width: 100%;
+    max-height: 640px;
 }
 
 code, pre {
@@ -59,7 +60,9 @@ p + p {
 
 .post .links {
     font-size: 0.8em;
-    margin-top: 0.2em;
+    margin-top: 0.5em;
+    vertical-align: bottom;
+    border-top: 1px solid #ddddaa;
 }
 
 .draft {
@@ -191,30 +194,28 @@ footer {
 
 .admin-post-controls {
     float: right;
+    text-align: right;
 }
 
 .reply-context {
-    border-radius: 5px;
     margin-bottom: 5px;
-    padding: 5px;
-    border: 1px solid lightgray;
-    /*background-color: #eee;*/
+    border-left: 5px solid lightgray;
+    background-color: #f0f0ff;
+    padding: 10px;
 }
 
 .share-context {
-    border-radius: 5px;
     margin-bottom: 5px;
-    padding: 5px;
-    border: 1px solid lightgray;
-    /*background-color: #eee;*/
+    border-left: 5px solid lightgray;
+    background-color: #f0f0ff;
+    padding: 10px;
 }
 
 .like-context {
-    border-radius: 5px;
     margin-bottom: 5px;
-    padding: 5px;
-    border: 1px solid lightgray;
-    /*background-color: #eee;*/
+    border-left: 5px solid lightgray;
+    background-color: #f0f0ff;
+    padding: 10px;
 }
 
 .h-cite .author-image-holder {
