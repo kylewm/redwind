@@ -22,7 +22,7 @@ from werkzeug.exceptions import NotFound
 import urllib.parse
 import urllib.request
 import requests
-import push_plugin
+from . import push_plugin
 
 from bs4 import BeautifulSoup
 import hentry_parser

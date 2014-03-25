@@ -89,6 +89,11 @@ def syndicate_to_twitter():
         return response
 
 
+@views.fetch_external_post_function
+def fetch_external_post(user, source, ExtPostClass):
+    return twitter_client.fetch_external_post(user, source, ExtPostClass)
+
+
 class TwitterClient:
     def __init__(self):
         self.cached_api = None
@@ -170,10 +175,10 @@ class TwitterClient:
 
     def expand_links(self, text):
         return re.sub(autolinker.LINK_REGEX,
-                      lambda match: self.expand_link(match.group(0), 5),
+                      lambda match: self.expand_link(match.group(0)),
                       text)
 
-    def expand_link(self, url, depth_limit):
+    def expand_link(self, url, depth_limit=5):
         if depth_limit > 0:
             app.logger.debug("expanding %s", url)
             r = requests.head(url)

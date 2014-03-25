@@ -21,6 +21,13 @@ from models import *
 from views import *
 from shortlinks import *
 
+PLUGINS = ['facebook_plugin', 'twitter_plugin',
+           'push_plugin', 'webmention_sender',
+           'webmention_receiver']
+
+for plugin in PLUGINS:
+    importlib.import_module('plugins.' + plugin)
+
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=True)

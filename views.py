@@ -42,20 +42,12 @@ bleach.ALLOWED_ATTRIBUTES.update({
     'img': ['src', 'alt', 'title']
 })
 
-
-
 TIMEZONE = pytz.timezone('US/Pacific')
 
 POST_TYPES = ['article', 'note', 'share', 'like', 'reply', 'checkin']
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 
-
-PLUGINS = ['facebook_plugin', 'twitter_plugin',
-           'push_plugin', 'webmention_plugin',
-           'webmention_receiver']
-
-for plugin in PLUGINS:
-    importlib.import_module(plugin)
+FETCH_EXTERNAL_POST_HOOK = []
 
 
 class DisplayPost:
@@ -713,14 +705,19 @@ def fetch_post_contexts():
         })
 
 
+def fetch_external_post_function(func):
+    """decorator that plugins can use to register fetch functions"""
+    FETCH_EXTERNAL_POST_HOOK.append(func)
+    return func
+
+
 def fetch_external_post(source, ExtPostClass):
-    from twitter_plugin import twitter_client
     import hentry_parser
 
-    extpost = twitter_client.fetch_external_post(current_user,
-                                                 source, ExtPostClass)
-    if extpost:
-        return extpost
+    for fetch_fn in FETCH_EXTERNAL_POST_HOOK:
+        extpost = fetch_fn(current_user, source, ExtPostClass)
+        if extpost:
+            return extpost
 
     response = requests.get(source)
     if response.status_code // 2 == 100:
