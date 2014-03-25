@@ -35,15 +35,15 @@
 
 
             <div style="margin-left: 56px">
-	      {%if reply.title %}
+	      {% if reply.title %}
                 <p class="p-name">{{ reply.title }}</p>
-              {% else %}
+              {% endif %}
+              {% set content_words = reply.content | wordcount %}
+              {% if content_words < 100 %}
               <p class="e-content">
                 &ldquo;{{ reply.content | format_as_html(reply.content_format) | safe }}&rdquo;
               </p>
 	      {% endif %}
-              <div class="links">
-              </div>
             </div>
 
             <div style="clear: both"></div>

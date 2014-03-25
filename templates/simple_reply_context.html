@@ -22,8 +22,13 @@
         <div class="p-in-reply-to h-cite">
           {% if reply.title %}
             &ldquo;<span class="p-name">{{ reply.title }}</span>&rdquo;
+	  {% endif %}
+	  {% set content_words = reply.content | wordcount %}
+	  
+          {% if content_words < 100 %}
+            &ldquo;<span class="e-content">{{ reply.content | format_as_html(reply.content_format) | safe }}</span>&rdquo;
           {% else %}
-            &ldquo;<span class="e-content">{{ reply.content | format_as_text(reply.content_format) }}</span>&rdquo;
+             {{ content_words }} words
           {% endif %}
         </div>
       {% endif %}
