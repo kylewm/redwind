@@ -732,7 +732,7 @@ def convert_mf2():
     response = requests.get(url)
     #p = Parser(doc=response.content)
     #return jsonify(p.to_dict())
-    json = mf2.parse(url, response.content)
+    json = mf2.parse(response.content, url)
     return jsonify(json)
 
 def slugify(s):
