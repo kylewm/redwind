@@ -15,10 +15,11 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app, db
+from app import app, db, mail
 from flask import request, jsonify
 from models import Post, Mention
 from werkzeug.exceptions import NotFound
+
 import urllib.parse
 import urllib.request
 import requests
@@ -44,19 +45,18 @@ def receive_webmention():
             return response
 
         # de-dup on incoming url
-        if mentions:
-            for existing in Mention.query.filter_by(
-                    post_id=mentions[0].post.id,
-                    permalink=mentions[0].permalink).all():
-                db.session.delete(existing)
+        for existing in Mention.query.filter_by(
+                post_id=mentions[0].post.id,
+                permalink=mentions[0].permalink).all():
+            db.session.delete(existing)
 
         for mention in mentions:
             db.session.add(mention)
-
         db.session.commit()
 
-        push.handle_new_mentions(mentions)
+        push.handle_new_mentions()
         return jsonify(success=True, source=source, target=target)
+
     except Exception as e:
         response = jsonify(success=False,
                            error="Exception while receiving webmention {}"

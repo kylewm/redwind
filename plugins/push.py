@@ -59,6 +59,5 @@ def handle_new_or_edit(post):
         publish('http://kylewm.com/notes.atom')
 
 
-def handle_new_mentions(mentions):
-    if mentions:
-        publish('http://kylewm.com/mention.atom')
+def handle_new_mentions():
+    publish('http://kylewm.com/mention.atom')
