@@ -8,19 +8,3 @@
     {{ post.html_content }}
   </div>
 {% endif %}
-
-
-{% if post.post_type == 'checkin' %}
-  <!-- experimental post type -->
-  {{post.location_name}} @ {{ post.latitude }}, {{ post.longitude }}
-  <div id="map-{{post.id}}" style="height:180px"> </div>
-  <script type="text/javascript">
-    var map = L.map('map-{{post.id}}').setView([{{post.latitude}}, {{post.longitude}}], 13);
-    L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: 'Map data &copy; OpenStreetMap contributors',
-    maxZoom: 18
-    }).addTo(map);
-    L.marker([{{post.latitude}}, {{post.longitude}}]).addTo(map);
-  </script>
-{% endif %}
-

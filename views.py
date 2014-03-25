@@ -314,6 +314,21 @@ def settings():
                            authenticated=current_user.is_authenticated())
 
 
+@app.route('/locations')
+def locations():
+    posts = Post.query.filter(Post.latitude != None,
+                              Post.latitude != 0,
+                              Post.longitude != None,
+                              Post.longitude != 0).all()
+    locations = [{
+        'lat': post.latitude,
+        'long': post.longitude,
+        'name': post.location_name
+    } for post in posts]
+
+    return render_template("locations.html", locations=locations)
+
+
 @app.route('/admin/delete')
 @login_required
 def delete_by_id():
@@ -711,12 +726,14 @@ def fetch_external_post(source, ExtPostClass):
 
 @app.route('/api/mf2')
 def convert_mf2():
-    from mf2py.parser import Parser
+    import mf2
+    #from mf2py.parser import Parser
     url = request.args.get('url')
     response = requests.get(url)
-    p = Parser(doc=response.content)
-    return jsonify(p.to_dict())
-
+    #p = Parser(doc=response.content)
+    #return jsonify(p.to_dict())
+    json = mf2.parse(url, response.content)
+    return jsonify(json)
 
 def slugify(s):
     slug = unicodedata.normalize('NFKD', s).lower()
