@@ -1,4 +1,4 @@
-<div class="mentions">
+<div class="mentions">  
   <a name="mentions"></a>
 
   {% set likes = post.likes %}
@@ -9,7 +9,7 @@
     <a href="{{ like.permalink }}">
       <img class="u-photo" src="{{like.author_image or url_for('static', filename='img/users/placeholder.png')}}"
            width="36px" alt="{{like.author_name}}"
-           title="{{like.author_name}} {{like.content | trim}}" style="vertical-align: middle"/>
+           title="{{like.author_name}} {{like.content | format_as_text(like.content_format) | trim}}" style="vertical-align: middle"/>
     </a>
     {% endfor %}
   </div>
@@ -17,7 +17,6 @@
 
   {% set replies = post.non_likes %}
   {% if replies %}
-  
   <div class="replies">
     {% for reply in replies %}
     <div class="p-comment h-cite">
