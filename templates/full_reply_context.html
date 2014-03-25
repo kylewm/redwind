@@ -1,12 +1,12 @@
 {% if post.reply_contexts %}
-<div style="margin-bottom: 20px">
-  {% for reply in post.reply_contexts %}
-  
-  <div class="reply-context">
+  <div style="margin-bottom: 20px">
+    {% for reply in post.reply_contexts %}
+
+      <div class="reply-context">
 	{% if (not reply.author_name and reply.permalink and reply.title) %}
-	<time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-	  On <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-	</time>
+	  <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+	    On <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+	  </time>
           <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
 
         {% else %}
@@ -18,7 +18,7 @@
                      src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}" alt="{{reply.author_name}}"/>
               </div>
 
-	      {% if reply.author_name and reply.author_url %}
+              {% if reply.author_name and reply.author_url %}
                 <a class="p-name u-url" href="{{reply.author_url}}">{{ reply.author_name }}</a>
               {% elif reply.author_name %}
                 <span class="p-name">{{ reply.author_name}}</span>
@@ -27,21 +27,22 @@
               {% endif %}
             </span>
 
-	    on
-	    <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-	      <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-	    </time>
-	    said
+            on
 
+            <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+              <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+            </time>
+
+            said
 
             <div style="margin-left: 56px">
-	      {%if reply.title %}
+              {%if reply.title %}
                 <p class="p-name">{{ reply.title }}</p>
               {% else %}
-              <p class="e-content">
-                &ldquo;{{ reply.content | format_as_html(reply.content_format) | safe }}&rdquo;
-              </p>
-	      {% endif %}
+                <p class="e-content">
+                  &ldquo;{{ reply.content | format_as_html(reply.content_format) | bleach | safe }}&rdquo;
+                </p>
+              {% endif %}
               <div class="links">
               </div>
             </div>

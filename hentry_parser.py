@@ -1,15 +1,8 @@
-from collections import namedtuple
-from mf2py.parser import Parser
+#from mf2py.parser import Parser
+import mf2
 from dateutil.parser import parse as parsedate
 import pytz
-from bs4 import BeautifulSoup
-import json
-import bleach
 
-bleach.ALLOWED_TAGS += ['img']
-bleach.ALLOWED_ATTRIBUTES.update({
-    'img': ['src', 'alt', 'title']
-})
 
 class Author:
     def __init__(self, name, url, photo):
@@ -18,8 +11,10 @@ class Author:
         self.photo = photo
 
     def __repr__(self):
-        return "Author[name={}, url={}, photo={}]".format(self.name, self.url, self.photo)
-        
+        return "Author[name={}, url={}, photo={}]".format(
+            self.name, self.url, self.photo)
+
+
 class Reference:
     def __init__(self, url, reftype):
         self.url = url
@@ -27,6 +22,7 @@ class Reference:
 
     def __repr__(self):
         return "Reference[url={}, reftype={}]".format(self.url, self.reftype)
+
 
 class Entry:
     def __init__(self, author, permalink, pub_date,
@@ -39,7 +35,10 @@ class Entry:
         self.content = content
 
     def __repr__(self):
-        return "Entry[author={}, permalink={}, pub_date={}, references={}, title={}, content={}]".format(self.author, self.permalink, self.pub_date, self.references, self.title, self.content[:100])
+        return "Entry[author={}, permalink={}, pub_date={}, references={}, title={}, content={}]".format(
+            self.author, self.permalink, self.pub_date,
+            self.references, self.title, self.content[:100].replace('\n', ''))
+
 
 def parse(txt, source):
     def parse_references(objs, reftype):
@@ -63,8 +62,9 @@ def parse(txt, source):
                           urls and urls[0],
                           photos and photos[0])
 
-    p = Parser(doc=txt, url=source)
-    d = p.to_dict()
+    #p = Parser(doc=txt, url=source)
+    #d = p.to_dict()
+    d = mf2.parse(txt, source)
     references = []
 
     for rel, rel_url in d['rels'].items():
@@ -99,7 +99,6 @@ def parse(txt, source):
 
             content_html = ''.join(content['html'].strip() for content
                                    in hentry['properties'].get('content', []))
-            content_html = bleach.clean(content_html, strip=True)
             content_value = ''.join(content['value'].strip() for content
                                     in hentry['properties'].get('content', []))
 
@@ -113,20 +112,20 @@ def parse(txt, source):
             for obj in hentry['properties'].get('author', []):
                 author = parse_author(obj)
                 break
-                
+
             entry = Entry(author, permalink, pub_date, references, title,
                           content_html)
             break
 
     hcards = [item for item in d['items'] if 'h-card' in item['type']]
-       
+
     if entry and not entry.author:
         for item in hcards:
             urls = item['properties'].get('url', [])
             if source in urls:
                 entry.author = parse_author(item)
                 break
-                        
+
     if entry and not entry.author:
         rel_mes = d["rels"].get("me", [])
         for item in hcards:
@@ -151,19 +150,11 @@ if __name__ == '__main__':
     import requests
     urls = [
         'https://snarfed.org/2014-03-10_re-kyle-mahan',
-
         'https://brid-gy.appspot.com/like/facebook/12802152/10100820912531629/1347771058',
-
-        'https://brid-gy.appspot.com/comment/googleplus/109622249060170703374/z12vyphidxaodbb0223qdj0pwkvuytpja04/z12vyphidxaodbb0223qdj0pwkvuytpja04.1334830661177000',
-
         'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
-
         'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
-
         'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
-
         'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
-
         'http://tommorris.org/posts/2550'
     ]
 

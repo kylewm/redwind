@@ -6,9 +6,9 @@
         Shared <a class="u-repost-of" href="{{ share.permalink }}">{{share.title}}</a>
 
       {% else %}
-    
+
         <div class="p-repost-of h-cite">
-	  
+
 	  Shared a post by
           <span class="p-author h-card">
 
@@ -39,15 +39,15 @@
               <span class="p-name">{{share.title or ''}}</span>
 	    {% endif %}
 
-	    {% set content_length = share.content | wordcount %}	    
+	    {% set content_length = share.content | wordcount %}
             {% if content_length < 100 %}
               <p class="e-content">
-                {{ share.content | format_as_html(share.content_format) | safe }}
+                {{ share.content | format_as_html(share.content_format) | bleach | safe }}
               </p>
 	    {% else %}
 	      <br /><a class="u-url" href="{{ share.permalink }}">{{ content_length }} words.</a><br />
             {% endif %}
-	      
+
           </div>
 
           <div style="clear: both"></div>

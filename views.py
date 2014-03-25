@@ -1,25 +1,31 @@
 from app import app, db
 from models import Post, Mention, ReplyContext, LikeContext, ShareContext
 from auth import load_user
-import autolinker
 
+from bs4 import BeautifulSoup, Comment
 from datetime import datetime
-import os
-import re
-import importlib
-import requests
-import pytz
-import unicodedata
+from flask import request, redirect, url_for, render_template, flash,\
+    abort, make_response, jsonify, Markup
+from flask.ext.login import login_required, login_user, logout_user,\
+    current_user
 from sqlalchemy import cast as sqlcast, or_
 from sqlalchemy.orm import subqueryload
-
-from flask import request, redirect, url_for, render_template,\
-    flash, abort, make_response, jsonify, Markup
-from flask.ext.login import login_required, login_user,\
-    logout_user, current_user
-from bs4 import BeautifulSoup, Comment
-
 from werkzeug import secure_filename
+import autolinker
+import bleach
+import importlib
+import os
+import pytz
+import re
+import requests
+import unicodedata
+
+bleach.ALLOWED_TAGS += ['img']
+bleach.ALLOWED_ATTRIBUTES.update({
+    'img': ['src', 'alt', 'title']
+})
+
+
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
@@ -459,13 +465,19 @@ def get_first_image(content, content_format):
 @app.template_filter('format_as_html')
 def format_as_html(content, content_format):
     if not content:
-        return ''
+        html = ''
     elif content_format == 'markdown':
-        return markdown_filter(content)
+        html = markdown_filter(content)
     elif content_format == 'plain':
-        return plain_text_filter(content)
+        html = plain_text_filter(content)
     else:
-        return content
+        html = content
+    return html
+
+
+@app.template_filter('bleach')
+def bleach_html(html):
+    return bleach.clean(html, strip=True)
 
 
 @app.template_filter('format_as_text')
