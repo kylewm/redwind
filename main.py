@@ -21,11 +21,7 @@ from models import *
 from views import *
 from shortlinks import *
 
-PLUGINS = ['facebook_plugin', 'twitter_plugin',
-           'push_plugin', 'webmention_sender',
-           'webmention_receiver']
-
-for plugin in PLUGINS:
+for plugin in app.config['PLUGINS']:
     importlib.import_module('plugins.' + plugin)
 
 

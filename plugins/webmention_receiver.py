@@ -22,7 +22,7 @@ from werkzeug.exceptions import NotFound
 import urllib.parse
 import urllib.request
 import requests
-from . import push_plugin
+from . import push
 
 from bs4 import BeautifulSoup
 import hentry_parser
@@ -55,7 +55,7 @@ def receive_webmention():
 
         db.session.commit()
 
-        push_plugin.handle_new_mentions(mentions)
+        push.handle_new_mentions(mentions)
         return jsonify(success=True, source=source, target=target)
     except Exception as e:
         response = jsonify(success=False,
