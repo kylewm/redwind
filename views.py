@@ -336,7 +336,8 @@ def locations():
         'name': post.location_name
     } for post in posts]
 
-    return render_template("locations.html", locations=locations)
+    return render_template("locations.html", locations=locations,
+                           authenticated=current_user.is_authenticated())
 
 
 @app.route('/admin/delete')
