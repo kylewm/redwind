@@ -1,3 +1,4 @@
+{% if post.share_contexts %}
     {% for share in post.share_contexts %}
       <div class="share-context">
       {% if (not share.author_name and share.permalink and share.title) %}
@@ -56,3 +57,4 @@
       </div>
     {% endfor %}
 
+{% endif %}

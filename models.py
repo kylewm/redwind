@@ -74,7 +74,7 @@ class Post(db.Model):
     pub_date = db.Column(db.DateTime)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     author = db.relationship('User',
-                             backref=db.backref('posts', lazy='dynamic'))
+                             backref=db.backref('posts'))
     title = db.Column(db.String(256))
     content = db.Column(db.Text)
     post_type = db.Column(db.String(64))  # note/article/etc.

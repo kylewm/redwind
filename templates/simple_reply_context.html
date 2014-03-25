@@ -1,4 +1,4 @@
-{% if post.reply_contexts %}
+{% if post.post_type == 'reply' %}
   {% for reply in post.reply_contexts %}
     <div class="reply-context">
       <span class="p-author h-card">

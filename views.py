@@ -11,6 +11,7 @@ import requests
 import pytz
 import unicodedata
 from sqlalchemy import cast as sqlcast, or_
+from sqlalchemy.orm import subqueryload
 
 from flask import request, redirect, url_for, render_template,\
     flash, abort, make_response, jsonify, Markup
@@ -39,6 +40,10 @@ class DisplayPost:
     @classmethod
     def get_posts(cls, post_types, page, per_page, include_drafts=False):
         query = Post.query
+        query = query.options(subqueryload(Post.mentions),
+                              subqueryload(Post.reply_contexts),
+                              subqueryload(Post.share_contexts),
+                              subqueryload(Post.like_contexts))
         if post_types:
             query = query.filter(Post.post_type.in_(post_types))
         if not include_drafts:
@@ -105,7 +110,7 @@ class DisplayPost:
 
     def get_html_content(self, include_preview=True):
         text = format_as_html(self.content, self.content_format)
-        if include_preview:
+        if include_preview and self.post_type == 'share':
             text += self.get_share_preview()
         return text
 
@@ -113,7 +118,8 @@ class DisplayPost:
     def html_excerpt(self):
         text = format_as_html(self.content, self.content_format)
         split = text.split('<!-- more -->', 1)
-        text += self.get_share_preview(split[0])
+        if self.post_type == 'share':
+            text += self.get_share_preview(split[0])
         if len(split) > 1:
             text += "<br/><a href={}>Keep Reading...</a>"\
                 . format(self.permalink)

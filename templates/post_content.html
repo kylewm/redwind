@@ -10,8 +10,8 @@
 {% endif %}
 
 
-<!-- experimental post type -->
 {% if post.post_type == 'checkin' %}
+  <!-- experimental post type -->
   {{post.location_name}} @ {{ post.latitude }}, {{ post.longitude }}
   <div id="map-{{post.id}}" style="height:180px"> </div>
   <script type="text/javascript">

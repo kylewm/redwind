@@ -16,15 +16,18 @@
       <div class="links">
 	{% include "admin_post_controls.html" %}
 	
-	{% set like_count = post.likes | length %}
-	{% set reply_count = post.non_likes | length %}
+	{% set like_count = post.likes | count %}
+	{% set reply_count = post.non_likes | count %}
 	{% if like_count or reply_count %}
-
-	<a href="{{ post.permalink }}#mentions">
-	  {% if like_count %}{{ like_count }} like{{ like_count | pluralize('', 's') }}{% endif %}
-	  {% if reply_count %}{{ reply_count }} repl{{ reply_count | pluralize('y', 'ies') }}{% endif %}
-	</a>
-	<br />
+	  <a href="{{ post.permalink }}#mentions">
+	    {% if like_count %}
+	    {{ like_count }} like{{ like_count | pluralize('', 's') }}
+	    {% endif %}
+	    {% if reply_count %}
+	    {{ reply_count }} repl{{ reply_count | pluralize('y', 'ies') }}
+	    {% endif %}
+	  </a>
+	  <br />
 	{% endif %}
 
 	{% include "single_post_links.html" %}
