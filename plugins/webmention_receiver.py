@@ -25,7 +25,7 @@ import requests
 from . import push
 
 from bs4 import BeautifulSoup
-import hentry_parser
+from util import hentry_parser
 
 
 @app.route('/webmention', methods=["POST"])

@@ -19,7 +19,7 @@ from app import app, db
 
 import datetime
 import shortlinks
-import base60
+from util import base60
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from collections import defaultdict

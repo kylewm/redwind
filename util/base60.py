@@ -18,6 +18,7 @@
 #use tantek's NewBase60 http://tantek.pbworks.com/w/page/19402946/NewBase60
 RADIX = list("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ_abcdefghijkmnopqrstuvwxyz")
 
+
 def encode(n):
     arr = []
     base = len(RADIX)

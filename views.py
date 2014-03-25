@@ -28,9 +28,10 @@ from flask.ext.login import login_required, login_user, logout_user,\
 from sqlalchemy import cast as sqlcast, or_
 from sqlalchemy.orm import subqueryload
 from werkzeug import secure_filename
-import autolinker
+from util import autolinker
+from util import hentry_parser
+
 import bleach
-import importlib
 import os
 import pytz
 import re
@@ -712,8 +713,6 @@ def fetch_external_post_function(func):
 
 
 def fetch_external_post(source, ExtPostClass):
-    import hentry_parser
-
     for fetch_fn in FETCH_EXTERNAL_POST_HOOK:
         extpost = fetch_fn(current_user, source, ExtPostClass)
         if extpost:
@@ -740,14 +739,12 @@ def fetch_external_post(source, ExtPostClass):
 
 @app.route('/api/mf2')
 def convert_mf2():
-    import mf2
-    #from mf2py.parser import Parser
+    from util import mf2
     url = request.args.get('url')
     response = requests.get(url)
-    #p = Parser(doc=response.content)
-    #return jsonify(p.to_dict())
     json = mf2.parse(response.content, url)
     return jsonify(json)
+
 
 def slugify(s):
     slug = unicodedata.normalize('NFKD', s).lower()

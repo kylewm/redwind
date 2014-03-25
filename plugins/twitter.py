@@ -24,10 +24,10 @@ from rauth import OAuth1Service
 import views
 import requests
 import re
-import autolinker
 import json
 import pytz
 
+from util import autolinker
 from tempfile import mkstemp
 from datetime import datetime, timedelta
 from urllib.parse import urljoin

@@ -15,8 +15,7 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#from mf2py.parser import Parser
-import mf2
+from . import mf2
 from dateutil.parser import parse as parsedate
 import pytz
 

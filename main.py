@@ -20,6 +20,7 @@ from app import app
 from models import *
 from views import *
 from shortlinks import *
+import importlib
 
 for plugin in app.config['PLUGINS']:
     importlib.import_module('plugins.' + plugin)

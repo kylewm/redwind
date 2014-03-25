@@ -1,7 +1,7 @@
 from app import *
 from models import *
-import hentry_parser
-from twitter_plugin import twitter_client
+from util import hentry_parser
+from plugins.twitter import twitter_client
 import requests
 import json
 import re
