@@ -1,4 +1,3 @@
-{% if post.reply_contexts %}
   {% for reply in post.reply_contexts %}
     <div class="reply-context">
       <span class="p-author h-card">
@@ -26,7 +25,7 @@
 	  {% set content_words = reply.content | wordcount %}
 	  
           {% if content_words < 100 %}
-            &ldquo;<span class="e-content">{{ reply.content | format_as_html(reply.content_format) | safe }}</span>&rdquo;
+            &ldquo;<span class="e-content">{{ reply.content | format_as_html(reply.content_format) | bleach | safe }}</span>&rdquo;
           {% else %}
              {{ content_words }} words
           {% endif %}
@@ -35,5 +34,3 @@
 
     </div>
   {% endfor %}
-
-{% endif %}
