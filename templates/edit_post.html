@@ -49,6 +49,9 @@
       <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
     </div>
 
+    <span style="position: absolute; margin-left: -40px" size="8" type="text" name="char_count" id="char_count">&nbsp;</span>
+    <textarea name="tweet_preview" id="tweet_preview" rows="2" style="width:100%"></textarea><br/>
+
     <div class="location">
       <input type="button" id="get_coords_button" value="Location:"/>
       <label>Lat <input id="latitude" name="latitude" size="10" value="{{ post.latitude or ''}}"/></label>
@@ -69,6 +72,8 @@
 
       <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if post.id is none %}checked{% endif %}/>Send Webmentions</label>
     </p>
+
+
 
     {% if advanced %}
       <div class="twitter_status_id">

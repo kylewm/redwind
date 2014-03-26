@@ -74,10 +74,12 @@ def authorize_twitter2():
 @app.route('/api/syndicate_to_twitter', methods=['POST'])
 @login_required
 def syndicate_to_twitter():
+
     try:
         post_id = int(request.form.get('post_id'))
+        preview = request.form.get('tweet_preview')
         post = Post.query.filter_by(id=post_id).first()
-        twitter_client.handle_new_or_edit(post)
+        twitter_client.handle_new_or_edit(post, preview)
         db.session.commit()
         return jsonify(success=True, twitter_status_id=post.twitter_status_id,
                        twitter_permalink=post.twitter_url)
@@ -188,7 +190,7 @@ class TwitterClient:
                 url = self.expand_link(url, depth_limit-1)
         return url
 
-    def handle_new_or_edit(self, post):
+    def handle_new_or_edit(self, post, preview):
         if not self.is_twitter_authorized(post.author):
             return
 
@@ -225,7 +227,7 @@ class TwitterClient:
             img = views.get_first_image(post.content, post.content_format)
 
             data = {}
-            data['status'] = self.create_status(post, has_media=img)
+            data['status'] = self.create_status(post, preview, has_media=img)
             data['trim_user'] = True
 
             if post.latitude and post.longitude:
@@ -349,9 +351,18 @@ class TwitterClient:
                 text = None
         return components
 
-    def create_status(self, post, has_media):
+    def create_status(self, post, preview, has_media):
         """Create a <140 status message suitable for twitter
         """
+        if preview:
+            # we can skip the shortening algorithm!
+            # replace http://kyl.im/XXXXX with short-link
+            # replace http://kylewm.com/XXXX/XX/XX/X with regular link
+            # TODO don't hardcode this!
+            preview = preview.replace('http://kyl.im/XXXXX', post.short_permalink)
+            preview = preview.replace('http://kylewm.com/XXXX/XX/XX/X', post.permalink)
+            return preview
+
         target_length = 140
         if has_media:
             target_length -= self.get_media_url_length(post.author)
