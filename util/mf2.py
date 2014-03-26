@@ -106,7 +106,8 @@ def parse_microformats(url, root):
         properties = {}
         for child in root.find_all(True, recursive=False):
             props, children = parse_properties(url, child)
-            properties.update(props)
+            for key, values in props.items():
+                multimap_extend(properties, key, values)
             children += children
         parse_implied_properties(url, root, properties)
 
@@ -176,19 +177,6 @@ def parse_implied_properties(url, root, properties):
                     break
 
 
-def multimap_put(m, k, v):
-    if k not in m:
-        m[k] = []
-    m[k].append(v)
-
-
-def multimap_extend(m, k, vs):
-    if k not in m:
-        m[k] = vs
-    else:
-        m[k] += vs
-
-
 def parse_properties(url, root):
     properties = {}
     children = []
@@ -217,7 +205,8 @@ def parse_properties(url, root):
 
         for child in root.find_all(True, recursive=False):
             subprops, children = parse_properties(url, child)
-            properties.update(subprops)
+            for key, values in subprops.items():
+                multimap_extend(properties, key, values)
             children += children
 
     return properties, children
@@ -352,6 +341,19 @@ def _get_text_sub_img_for_alt(element):
     return element.get_text().strip()
 
 
+def multimap_put(m, k, v):
+    if k not in m:
+        m[k] = []
+    m[k].append(v)
+
+
+def multimap_extend(m, k, vs):
+    if k not in m:
+        m[k] = vs
+    else:
+        m[k] += vs
+
+
 if __name__ == '__main__':
     import requests
     import json
@@ -364,7 +366,8 @@ if __name__ == '__main__':
         'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
         'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
         'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
-        'http://tommorris.org/posts/2550'
+        'http://tommorris.org/posts/2550',
+        'https://brid-gy.appspot.com/like/facebook/12802152/10100835618460829/1740230476'
     ]
 
     for url in urls:
