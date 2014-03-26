@@ -3,7 +3,12 @@
   <title>Kyle Mahan: Mentions</title>
   <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"></link>
   <link href="{{ request.base_url }}" rel="self"></link>
-  <link rel="hub" href="http://pubsubhubbub.appspot.com/"></link>
+
+
+  <!-- PubSubHubbub Discovery -->
+  <link rel="hub" href="http://kylewm.superfeedr.com/" />
+  <!-- End Of PubSubHubbub Discovery -->
+
   <id>http://kylewm.com/mentions.atom</id>
   <author>
     <name>Kyle</name>
@@ -18,14 +23,16 @@
     <published>{{ mention.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</published>
     <link href="{{ mention.post.permalink }}" rel="alternate" type="text/html"/>
     <id>{{ mention.permalink }}</id>
-    <title type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
-        {{ mention.mention_type }} from {{ mention.author_name | atom_sanitize }} on {{ mention.post.title or mention.post.content | truncate(100) | atom_sanitize }}</div>
+    <title type="html">
+        {{ mention.mention_type }} from {{ mention.author_name | atom_sanitize }} on
+	{% if mention.post.title %}
+	  {{ mention.post.title | atom_sanitize }}
+	{% elif mention.post.content %}
+ 	  {{ mention.post.content | format_as_text(mention.post.content_format) | truncate(100) | atom_sanitize }}
+	{% endif %}
     </title>
-    <content type="xhtml" xml:base="http://kylewm.com/" xml:space="preserve">
-      <div xmlns="http://www.w3.org/1999/xhtml">
+    <content type="html" xml:base="http://kylewm.com/" xml:space="preserve">
         {{ mention.content | atom_sanitize }}
-      </div>
     </content>
     <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/{{ mention.mention_type }}</object-type>
   </entry>

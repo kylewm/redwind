@@ -3,8 +3,12 @@
   <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
   <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"></link>
   <link href="{{ request.base_url }}" rel="self"></link>
-  <link rel="hub" href="http://pubsubhubbub.appspot.com/"></link>
-  <id>http://kylewm.com/all.atom</id>
+
+  <!-- PubSubHubbub Discovery -->
+  <link rel="hub" href="http://kylewm.superfeedr.com/" />
+  <!-- End Of PubSubHubbub Discovery -->
+
+  <id>http://kylewm.com/{{ feed_id }}</id>
   <author>
     <name>Kyle</name>
     <uri>http://kylewm.com</uri>
@@ -18,8 +22,7 @@
     <published>{{ post.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</published>
     <link href="{{ post.permalink }}" rel="alternate" type="text/html"/>
     <id>{{ post.permalink }}</id>
-    <title type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
+    <title type="html">
 	{% if post.share_contexts %}
 	  {% for share in post.share_contexts %}
 	    Shared {{share.permalink|prettify_url}}
@@ -31,22 +34,19 @@
 	{% else %}
   	  {{ (post.title or (post.html_content | html_to_plain)) | atom_sanitize }}
 	{% endif %}
-      </div>
     </title>
-    <content type="xhtml" xml:base="http://kylewm.com/" xml:space="preserve">
-      <div xmlns="http://www.w3.org/1999/xhtml">
+    <content type="html" xml:base="http://kylewm.com/" xml:space="preserve">
 	{% for reply in post.reply_contexts %}
-	  <p>In reply to <a href="{{reply.permalink}}">{{reply.permalink|prettify_url}}</a></p>
+	  &lt;p>In reply to &lt;a href="{{reply.permalink}}">{{reply.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 	{% for share in post.share_contexts %}
-	  <p>Shared <a href="{{share.permalink}}">{{share.permalink|prettify_url}}</a></p>
+	  &lt;p>Shared &lt;a href="{{share.permalink}}">{{share.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 	{% for like in post.like_contexts %}
-	  <p>Liked <a href="{{like.permalink}}">{{like.permalink|prettify_url}}</a></p>
+	  &lt;p>Liked &lt;a href="{{like.permalink}}">{{like.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 
         {{ post.html_content | atom_sanitize }}
-      </div>
     </content>
     <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/{{ post.post_type }}</object-type>
   </entry>

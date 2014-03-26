@@ -204,31 +204,32 @@ def everything(page):
                         include_drafts=current_user.is_authenticated())
 
 
-def render_posts_atom(title, post_types, count):
+def render_posts_atom(title, feed_id, post_types, count):
     _, posts = DisplayPost.get_posts(post_types, 1, count)
     return make_response(render_template('posts.atom', title=title,
+                                         feed_id=feed_id,
                                          posts=posts), 200,
                          {'Content-Type': 'application/atom+xml'})
 
 
 @app.route("/all.atom")
 def all_atom():
-    return render_posts_atom('All', ('article', 'note', 'share', 'like', 'reply'), 30)
+    return render_posts_atom('All', 'all.atom', ('article', 'note', 'share', 'like', 'reply'), 30)
 
 
 @app.route("/updates.atom")
 def updates_atom():
-    return render_posts_atom('Updates', ('article', 'note', 'share'), 30)
+    return render_posts_atom('Updates', 'updates.atom', ('article', 'note', 'share'), 30)
 
 
 @app.route("/notes.atom")
 def notes_atom():
-    return render_posts_atom('Notes', ('note',), 30)
+    return render_posts_atom('Notes', 'notes.atom', ('note',), 30)
 
 
 @app.route("/articles.atom")
 def articles_atom():
-    return render_posts_atom('Articles', ('article',), 10)
+    return render_posts_atom('Articles', 'articles.atom', ('article',), 10)
 
 
 @app.route("/mentions.atom")
@@ -238,8 +239,9 @@ def mentions_atom():
         .filter(Mention.post)\
         .order_by(Mention.pub_date.desc())\
         .limit(30).all()
-    return render_template("mentions.atom",
-                           mentions=mentions)
+    return make_response(render_template("mentions.atom",
+                                         mentions=mentions), 200,
+                         {'Content-Type': 'application/atom+xml'})
 
 
 @app.route('/' + POST_TYPE_RULE + '/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>', defaults={'slug': None})
@@ -463,18 +465,14 @@ app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 @app.template_filter('html_to_plain')
 def html_to_plain(content):
-    soup = BeautifulSoup(str(content))
+    soup = BeautifulSoup(str(content), 'html5lib')
     text = soup.get_text()
     return Markup.escape(text)
 
 
 @app.template_filter('atom_sanitize')
 def atom_sanitize(content):
-    soup = BeautifulSoup(str(content))
-    for tag in soup.find_all('script'):
-        tag.replace_with(soup.new_string('removed script tag', Comment))
-    result = Markup(soup)
-    return result
+    return Markup.escape(str(content))
 
 
 @app.template_filter('get_first_image')
@@ -515,10 +513,10 @@ def format_as_text(content, content_format):
 
     # replace links with the URL
     for a in soup.find_all('a'):
-        a.replace_with(a.get('href'))
+        a.replace_with(a.get('href') or 'link')
     # and images with their alt text
     for i in soup.find_all('img'):
-        i.replace_with(i.get('title') or i.get('alt'))
+        i.replace_with(i.get('title') or i.get('alt') or 'image')
 
     return soup.get_text()
 
@@ -534,7 +532,7 @@ def markdown_filter(data):
 @app.template_filter('autolink')
 def plain_text_filter(plain):
     plain = autolinker.make_links(plain)
-    plain = plain.replace('\n', '<br/>')
+    plain = plain.replace('\n', '<br />')
     return plain
 
 

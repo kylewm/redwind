@@ -42,7 +42,7 @@ def send_push_notification():
 def publish(url):
     app.logger.debug("sending PuSH notification to %s", url)
     data = {'hub.mode': 'publish', 'hub.url': url}
-    response = requests.post('https://pubsubhubbub.appspot.com/', data)
+    response = requests.post('https://kylewm.superfeedr.com/', data)
     if response.status_code == 204:
         app.logger.info('successfully sent PuSH notification')
     else:
