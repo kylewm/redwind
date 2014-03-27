@@ -117,6 +117,11 @@ header .site-name {
     display: inline-block;
 }
 
+#sign_in_button {
+    font-size: 0.8em;
+    border: 1px solid gray;
+}
+
 nav {
     text-align: right;
 }

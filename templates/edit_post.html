@@ -20,10 +20,10 @@
 
     {% if post.post_type == 'article' %}
       <div class="title">
-        <label><span class="heading">Title</span><input name="title" size="60" value="{{ post.title or '' }}"/></label>
+        <label><span class="heading">Title</span><input id="title" name="title" size="60" value="{{ post.title or '' }}"/></label>
       </div>
       <div class="slug">
-        <label><span class="heading">Slug</span><input name="slug" size="60" value="{{ post.slug or ''}}"/></label>
+        <label><span class="heading">Slug</span><input id="slug" name="slug" size="60" value="{{ post.slug or ''}}"/></label>
       </div>
     {% endif %}
 
@@ -49,8 +49,10 @@
       <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
     </div>
 
-    <span style="position: absolute; margin-left: -40px" size="8" type="text" name="char_count" id="char_count">&nbsp;</span>
-    <textarea name="tweet_preview" id="tweet_preview" rows="2" style="width:100%"></textarea><br/>
+    <div style="position: relative">
+      <span style="position: absolute; top: 2px; right: -35px; padding: 1px;" size="8" type="text" name="char_count" id="char_count">&nbsp;</span>
+      <textarea  name="tweet_preview" id="tweet_preview" style="height: 75px; width:100%; background-color: #eeeeff"> </textarea><br/>
+    </div>
 
     <div class="location">
       <input type="button" id="get_coords_button" value="Location:"/>
@@ -58,6 +60,7 @@
       <label>Long <input id="longitude" name="longitude" size="10" value="{{ post.longitude or ''}}"/></label>
       <label>Name <input id="location_name" name="location_name" size="21" value="{{ post.location or ''}}"/></label>
     </div>
+
 
     <p>
       <select name="content_format" id="content_format">

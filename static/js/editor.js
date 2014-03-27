@@ -279,13 +279,13 @@
                     shortened = true;
                 }
                 else if (item.type == 'text') {
-                    if (item.value.length > diff + 4) {
+                    if (item.value.length > diff + 3) {
                         var truncated = item.value.substring(0, item.value.length-diff-4);
                         // remove .'s and spaces from the end of the truncated string
                         while ([' ', '.'].indexOf(truncated[truncated.length-1]) >= 0) {
                             truncated = truncated.substring(0, truncated.length-1);
                         }
-                        classified[ii] = {type: 'text', value:  truncated + '... '};
+                        classified[ii] = {type: 'text', value:  truncated + '...'};
                         shortened = true;
                     }
                     else {
@@ -316,14 +316,51 @@
     }
 
     function generateTweetPreview() {
+
+        var addShortPermalink = function(classified) {
+            classified.push({
+                type: 'url',
+                required: true,
+                value: 'http://kyl.im/XXXXX',
+                prefix: '\n(',
+                suffix: ')'});
+        };
+
+        var addPermalink = function(classified) {
+            classified.push({
+                type: 'url',
+                required: true,
+                prefix: ' ',
+                value: 'http://kylewm.com/XXXX/XX/XX/X'
+            });
+        };
+
         var target = 140;
-        var fullText = $('#content').val();
+        var titleField = $('#title'), contentArea = $('#content');
+
+        var fullText, useShortPermalink;
+        if (titleField.length > 0) {
+            fullText = titleField.val();
+            useShortPermalink = false;
+        } else {
+            fullText = contentArea.val();
+            useShortPermalink = true;
+        }
+
         var classified = classifyText(fullText);
-        classified.push({type: 'url', required: true, value: 'http://kyl.im/XXXXX', prefix: '\n(', suffix: ')'})
+
+        if (useShortPermalink) {
+            addShortPermalink(classified);
+        } else {
+            addPermalink(classified);
+        }
 
         if (estimateLength(classified) > target) {
-            classified.pop();
-            classified.push({type: 'url', required: true, value: 'http://kylewm.com/XXXX/XX/XX/X'});
+            if (useShortPermalink) {
+                // replace the shortlink with a full one
+                classified.pop();
+                addPermalink(classified);
+            }
             shorten(classified, target);
         }
 
@@ -336,7 +373,6 @@
         var text = $('#tweet_preview').val();
         var classified = classifyText(text);
         var length = estimateLength(classified);
-        console.log(length);
         $("#char_count").text(length);
     }
 
@@ -362,7 +398,12 @@
             save(false);
         });
 
-        $('#content').on('input propertychange', generateTweetPreview);
+        var titleField = $('#title'), contentArea = $('#content');
+        if (titleField.length != 0) {
+            titleField.on('input propertychange', generateTweetPreview);
+        } else {
+            contentArea.on('input propertychange', generateTweetPreview);
+        }
 
         $('#tweet_preview').on('input propertychange', fillCharCount);
 
@@ -394,6 +435,8 @@
                 });
             }
         });
+
+        generateTweetPreview();
     });
 
 })();
