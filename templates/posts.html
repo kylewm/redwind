@@ -7,7 +7,7 @@
     {% for post in posts %}
 
       <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
-        {% include "simple_reply_context.html" %}
+        {% include "reply_context.html" %}
         {% include "like_context.html" %}
         {% include "share_context.html" %}
         {% include "post_content.html" %}
@@ -15,7 +15,7 @@
 
       <div class="links">
 	{% include "admin_post_controls.html" %}
-	
+
 	{% set like_count = post.likes | count %}
 	{% set reply_count = post.non_likes | count %}
 	{% if like_count or reply_count %}

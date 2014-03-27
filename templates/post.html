@@ -8,12 +8,12 @@
 
   <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
     {% include "hcard_author.html" %}
-	  
-    {% include "full_reply_context.html" %}
+
+    {% include "reply_context.html" %}
     {% include "like_context.html" %}
     {% include "share_context.html" %}
     {% include "post_content.html" %}
-    
+
     <div class="links">
       {% include "admin_post_controls.html" %}
       {% include "syndication_links.html" %}
@@ -22,7 +22,7 @@
     </div>
 
     {% include "post_mentions.html" %}
-   
+
   </div>
 
   {% include "footer.html" %}
