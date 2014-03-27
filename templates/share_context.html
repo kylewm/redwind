@@ -39,7 +39,7 @@
               <span class="p-name">{{share.title or ''}}</span>
 	    {% endif %}
 
-	    {% set content_length = share.content | wordcount %}
+	    {% set content_length = share.content | format_as_text(share.content_format) | wordcount %}
             {% if content_length < 100 %}
               <p class="e-content">
                 {{ share.content | format_as_html(share.content_format) | bleach | safe }}
