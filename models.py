@@ -87,8 +87,6 @@ class Post:
     @classmethod
     def load_recent(cls, count):
         def walk(path, files):
-            print("walking", path)
-            print("collected files", files)
             if len(files) >= count:
                 return
 
@@ -104,10 +102,10 @@ class Post:
 
         def load_from_path(path):
             filename = os.path.basename(path)
-            match = re.match('([a-z]+)(\d+)', filename)
-            post_type = match.group(1)
-            date_index = int(match.group(2))
-            return cls.load(path, post_type, date_index)
+            #match = re.match('([a-z]+)(\d+)', filename)
+            #post_type = match.group(1)
+            #date_index = int(match.group(2))
+            return cls.load(path)
 
         files = []
         walk(datadir, files)
@@ -117,17 +115,17 @@ class Post:
         return posts
 
     @classmethod
-    def load(cls, path, post_type, date_index):
+    def load(cls, path):
         with open(path, 'r') as f:
             data = json.load(f)
-        return cls.from_json(data, post_type, date_index)
+        return cls.from_json(data)
 
     @classmethod
-    def from_json(cls, data, post_type, date_index):
-        post = cls(post_type=data.get('post_type', post_type),
+    def from_json(cls, data):
+        post = cls(post_type=data.get('type', 'note'),
                    content_format=data.get('format', 'plain'))
         post.pub_date = isoparse(data.get('pub_date'))
-        post.date_index = data.get('date_index', date_index)
+        post.date_index = data.get('date_index', 1)
         post.slug = data.get('slug')
         post.title = data.get('title')
         post.content = data.get('content', '')
@@ -138,8 +136,14 @@ class Post:
         post.repost_source = data.get('repost_source')
         post.like_of = data.get('like_of')
 
-        post.contexts = [Context.from_json(ctx) for ctx
-                         in data.get('contexts', [])]
+        contexts = data.get('context', {})
+        post.reply_contexts = [Context.from_json(ctx) for ctx
+                               in contexts.get('reply', [])]
+        post.share_contexts = [Context.from_json(ctx) for ctx
+                               in contexts.get('share', [])]
+        post.like_contexts = [Context.from_json(ctx) for ctx
+                              in contexts.get('like', [])]
+
         post.mentions = [Mention.from_json(mnt) for mnt
                          in data.get('mentions', [])]
         post.draft = data.get('draft', False)
@@ -155,8 +159,10 @@ class Post:
 
     @classmethod
     def lookup_post_by_date(cls, post_type, year, month, day, index):
-        path = os.path.join(datadir, year, month, day, post_type + index)
-        return Post.load(path, post_type, index)
+        path = "{}/{:04d}/{:02d}/{:02d}/{}_{}".format(
+            datadir, year, month, day,
+            post_type, index)
+        return Post.load(path)
 
     def __init__(self, post_type, content_format):
         self.post_type = post_type

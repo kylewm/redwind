@@ -25,6 +25,6 @@ login_mgr.login_view = 'index'
 
 @login_mgr.user_loader
 def load_user(domain):
-    user = User.load('_data/user')
+    user = User.load('_user')
     if user.domain == domain:
         return user
