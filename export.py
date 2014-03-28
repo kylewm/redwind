@@ -20,13 +20,16 @@ def format_date(date):
 
 
 def filter_empty_keys(data):
+    if isinstance(data, list):
+        return list(filter_empty_keys(v) for v in data if filter_empty_keys(v))
     if isinstance(data, dict):
-        return dict((k, filter_empty_keys(v)) for k, v in data.items() if v)
+        return dict((k, filter_empty_keys(v)) for k, v in data.items()
+                    if filter_empty_keys(v))
     return data
 
 
-def write_mention(f, mention):
-    data = {
+def mention_data(mention):
+    return {
         'source': mention.source,
         'permalink': mention.permalink,
         'type': mention.mention_type,
@@ -35,17 +38,21 @@ def write_mention(f, mention):
             'url': mention.author_url,
             'image': mention.author_image
         },
-        'pub_date': format_date(mention.pub_date)
+        'pub_date': format_date(mention.pub_date),
+        'content': dos2unix(mention.content)
     }
 
+
+def write_mention(f, mention):
+    data = mention_data(mention)
     f.write(json.dumps(filter_empty_keys(data), indent=True))
     if mention.content:
         f.write('\n')
         f.write(dos2unix(mention.content))
 
 
-def write_ext_post(f, post):
-    data = {
+def ext_post_data(post):
+    return {
         'source': post.source,
         'permalink': post.permalink,
         'title': post.title,
@@ -55,39 +62,58 @@ def write_ext_post(f, post):
             'name': post.author_name,
             'url': post.author_url,
             'image': post.author_image,
-        }
+        },
+        'content': dos2unix(post.content)
     }
+
+
+def write_ext_post(f, post):
+    data = ext_post_data(post)
     f.write(json.dumps(filter_empty_keys(data), indent=True))
     if post.content:
         f.write('\n')
         f.write(dos2unix(post.content))
 
-
-def write_post(f, post):
-    data = {
+def post_data(post):
+    return {
         'pub_date': format_date(post.pub_date),
         'title': post.title,
         'slug': post.slug,
         'type': post.post_type,
         'format': post.content_format,
-        'latitude': post.latitude,
-        'longitude': post.longitude,
-        'location_name': post.location_name,
-        'twitter_id': post.twitter_status_id,
-        'facebook_id': post.facebook_post_id,
+        'location': {
+            'latitude': post.latitude,
+            'longitude': post.longitude,
+            'name': post.location_name,
+        },
+        'syndication': {
+            'twitter_id': post.twitter_status_id,
+            'facebook_id': post.facebook_post_id,
+        },
         'tags': [tag.name for tag in post.tags],
         'in_reply_to': post.in_reply_to.split() if post.in_reply_to else None,
         'repost_source': post.repost_source.split() if post.repost_source else None,
-        'like_of': post.like_of.split() if post.like_of else None
+        'like_of': post.like_of.split() if post.like_of else None,
+        'content': dos2unix(post.content),
+        'contexts': [ext_post_data(context) for context
+                     in itertools.chain(post.reply_contexts,
+                                        post.like_contexts,
+                                        post.share_contexts)],
+        'mentions': [mention_data(mention) for mention
+                     in post.mentions]
     }
+
+
+def write_post(f, post):
+    data = post_data(post)
     f.write(json.dumps(filter_empty_keys(data), indent=True))
-    if post.content:
-        f.write('\n')
-        f.write(dos2unix(post.content))
+    #if post.content:
+    #    f.write('\n')
+    #    f.write(dos2unix(post.content))
 
 
 def dos2unix(text):
-    return text.replace('\r\n', '\n').replace('\r', '\n')
+    return text and text.replace('\r\n', '\n').replace('\r', '\n')
 
 
 for post in Post.query.all():
@@ -99,21 +125,25 @@ for post in Post.query.all():
         post.post_type,
         post.date_index)
 
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
 
-    print("serializing", post.pub_date)
-
-    with open(os.path.join(path, 'post'), 'w') as f:
+    print("serializing", path)
+    with open(path, 'w') as f:
         write_post(f, post)
 
-    for idx, mention in enumerate(post.mentions, start=1):
-        with open(os.path.join(path, 'mention{}'.format(idx)), 'w') as f:
-            write_mention(f, mention)
 
-    for idx, context in enumerate(
-            itertools.chain(post.share_contexts, post.like_contexts,
-                            post.reply_contexts),
-            start=1):
-        with open(os.path.join(path, 'context{}'.format(idx)), 'w') as f:
-            write_ext_post(f, context)
+
+    # with open(os.path.join(path, 'post'), 'w') as f:
+    #     write_post(f, post)
+
+    # for idx, mention in enumerate(post.mentions, start=1):
+    #     with open(os.path.join(path, 'mention{}'.format(idx)), 'w') as f:
+    #         write_mention(f, mention)
+
+    # for idx, context in enumerate(
+    #         itertools.chain(post.share_contexts, post.like_contexts,
+    #                         post.reply_contexts),
+    #         start=1):
+    #     with open(os.path.join(path, 'context{}'.format(idx)), 'w') as f:
+    #         write_ext_post(f, context)

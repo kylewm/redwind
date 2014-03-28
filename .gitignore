@@ -9,3 +9,4 @@ src
 venv
 TAGS
 *.log
+_data
