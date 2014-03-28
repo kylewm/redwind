@@ -133,3 +133,14 @@ for post in Post.query.all():
     print("serializing", path)
     with open(path, 'w') as f:
         write_post(f, post)
+
+
+user = User.query.first()
+with open("_user", 'w') as f:
+    w.write(json.dumps(
+        {
+            'domain': user.domain,
+            'twitter_oauth_token': user.twitter_oauth_token,
+            'twitter_oauth_token_secret': user.twitter_oauth_token_secret,
+            'facebook_access_token': user.facebook_access_token
+        }, indent=True))
