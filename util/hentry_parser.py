@@ -176,6 +176,6 @@ if __name__ == '__main__':
 
     for url in urls:
         print("parsing url", url)
-        txt = requests.get(url).content
+        txt = requests.get(url).text
         print(parse(txt, url))
         print()

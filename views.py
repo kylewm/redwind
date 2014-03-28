@@ -719,7 +719,7 @@ def fetch_external_post(source, ExtPostClass):
 
     response = requests.get(source)
     if response.status_code // 2 == 100:
-        hentry = hentry_parser.parse(response.content, source)
+        hentry = hentry_parser.parse(response.text, source)
         if hentry:
             return ExtPostClass(
                 source, hentry.permalink,
@@ -727,10 +727,10 @@ def fetch_external_post(source, ExtPostClass):
                 hentry.author.name if hentry.author else '',
                 hentry.author.url if hentry.author else '',
                 hentry.author.photo if hentry.author else '',
-                hentry.pub_date, response.content)
+                hentry.pub_date, response.text)
 
     # get as much as we can without microformats
-    soup = BeautifulSoup(response.content)
+    soup = BeautifulSoup(response.text)
     title_tag = soup.find('title')
     title = title_tag.text if title_tag else prettify_url(source)
     return ExtPostClass(source, source, title, None, 'plain', None, None, None)
@@ -741,7 +741,7 @@ def convert_mf2():
     from util import mf2
     url = request.args.get('url')
     response = requests.get(url)
-    json = mf2.parse(response.content, url)
+    json = mf2.parse(response.text, url)
     return jsonify(json)
 
 

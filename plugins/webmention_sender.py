@@ -19,7 +19,7 @@ from app import app
 
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from models import Post
 from flask import jsonify, request
 from flask.ext.login import login_required
@@ -118,7 +118,8 @@ class MentionClient:
                 'explanation': explanation}
 
     def check_content_type_and_size(self, target_url):
-        metadata = urlopen(target_url).info()
+        request = Request(target_url, headers={'User-Agent': 'kylewm.com'})
+        metadata = urlopen(request).info()
         if not metadata:
             return False, "Could not retrieve metadata for url {}".format(
                 target_url)

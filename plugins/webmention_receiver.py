@@ -47,6 +47,7 @@ def receive_webmention():
         # de-dup on incoming url
         for existing in Mention.query.filter_by(
                 post_id=mentions[0].post.id,
+                source=mentions[0].source,
                 permalink=mentions[0].permalink).all():
             db.session.delete(existing)
 

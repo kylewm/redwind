@@ -25,3 +25,11 @@ app.jinja_env.add_extension('jinja2.ext.i18n')
 
 db = SQLAlchemy(app)
 toolbar = DebugToolbarExtension(app)
+
+if not app.debug:
+    import logging
+    from logging.handlers import RotatingFileHandler
+    
+    file_handler = RotatingFileHandler('app.log', maxBytes=1048576, backupCount=5)
+    file_handler.setLevel(logging.WARNING)
+    app.logger.addHandler(file_handler)

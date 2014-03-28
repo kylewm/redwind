@@ -234,9 +234,11 @@ class TwitterClient:
                 data['lat'] = post.latitude
                 data['long'] = post.longitude
 
-            reply_match = permalink_re.match(post.in_reply_to)
-            if reply_match:
-                data['in_reply_to_status_id'] = reply_match.group(2)
+            for reply_context in post.reply_contexts:
+                reply_match = permalink_re.match(reply_context.source)
+                if reply_match:
+                    data['in_reply_to_status_id'] = reply_match.group(2)
+                    break
 
             if img:
                 tempfile = self.download_image_to_temp(img)
