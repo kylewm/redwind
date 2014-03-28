@@ -15,7 +15,7 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app, db
+from app import app
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, jsonify
 from models import Post

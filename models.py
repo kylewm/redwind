@@ -15,35 +15,39 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app, db
+from app import app
 
 import datetime
 import shortlinks
 from util import base60
-
-from werkzeug.security import generate_password_hash, check_password_hash
 from collections import defaultdict
-from sqlalchemy import cast
+import os
+import os.path
+import json
+import re
+from operator import attrgetter
+
+datadir = "_data"
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    login = db.Column(db.String(80), unique=True)
-    domain = db.Column(db.String(120), unique=True)
-    email = db.Column(db.String(120), unique=True)
-    pw_hash = db.Column(db.String(256))
-    display_name = db.Column(db.String(80))
-    twitter_username = db.Column(db.String(80))
-    facebook_username = db.Column(db.String(80))
-    facebook_access_token = db.Column(db.String(512))
-    twitter_oauth_token = db.Column(db.String(512))
-    twitter_oauth_token_secret = db.Column(db.String(512))
+def isoparse(s):
+    return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
 
-    def set_password(self, plaintext):
-        self.pw_hash = generate_password_hash(plaintext)
 
-    def check_password(self, plaintext):
-        return check_password_hash(self.pw_hash, plaintext)
+class User:
+    @classmethod
+    def load(cls, path):
+        with open(path, 'r') as f:
+            data = json.load(f)
+        return cls.from_json(data)
+
+    @classmethod
+    def from_json(cls, data):
+        user = cls(data.get('domain'))
+        user.twitter_oauth_token = data.get('twitter_oauth_token')
+        user.twitter_oauth_token_secret = data.get('twitter_oauth_token_secret')
+        user.facebook_access_token = data.get('facebook_access_token')
+        return user
 
     # Flask-Login integration
     def is_authenticated(self):
@@ -58,87 +62,108 @@ class User(db.Model):
     def get_id(self):
         return self.domain
 
-    def __init__(self, login, email, password):
-        self.login = login
-        self.email = email
-        self.set_password(password)
+    def __init__(self, domain):
+        self.domain = domain
 
     def __repr__(self):
-        return '<User:{}>'.format(self.login)
+        return '<User:{}>'.format(self.domain)
 
 
-class Tag(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(256))
+class Location:
+    @classmethod
+    def from_json(cls, data):
+        return cls(data.get('latitude'),
+                   data.get('longitude'),
+                   data.get('name'))
 
-    def __init__(self, name):
+    def __init__(self, lat, lon, name):
+        self.latitude = lat
+        self.longitude = lon
         self.name = name
 
-    def __repr__(self):
-        return 'tag:{}'.format(self.name)
 
-tags_to_posts = db.Table(
-    'tags_to_posts', db.Model.metadata,
-    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')),
-    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
-    db.Column('position', db.Integer))
-
-
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    date_index = db.Column(db.Integer)
-    slug = db.Column(db.String(256))
-    pub_date = db.Column(db.DateTime)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    author = db.relationship('User',
-                             backref=db.backref('posts'))
-    title = db.Column(db.String(256))
-    content = db.Column(db.Text)
-    post_type = db.Column(db.String(64))  # note/article/etc.
-    content_format = db.Column(db.String(64))  # markdown/html/plain
-
-    in_reply_to = db.Column(db.String(2048))
-    repost_source = db.Column(db.String(2048))
-    like_of = db.Column(db.String(2048))
-
-    reply_contexts = db.relationship('ReplyContext', backref='post')
-    share_contexts = db.relationship('ShareContext', backref='post')
-    like_contexts = db.relationship('LikeContext', backref='post')
-
-    repost_preview = db.Column(db.Text)
-    draft = db.Column(db.Boolean())
-
-    latitude = db.Column(db.Float())
-    longitude = db.Column(db.Float())
-    location_name = db.Column(db.String(512))
-
-    twitter_status_id = db.Column(db.String(64))
-    facebook_post_id = db.Column(db.String(64))
-    tags = db.relationship('Tag', secondary=tags_to_posts,
-                           order_by=tags_to_posts.columns.position,
-                           backref='posts')
-    mentions = db.relationship('Mention', backref='post')
+class Post:
 
     @classmethod
-    def lookup_post_by_id(cls, dbid):
-        post = cls.query.filter_by(id=dbid).first()
+    def load_recent(cls, count):
+        def walk(path, files):
+            print("walking", path)
+            print("collected files", files)
+            if len(files) >= count:
+                return
+
+            ls = sorted(os.listdir(path), reverse=True)
+            for filename in ls:
+                if filename == 'user':
+                    continue
+                newpath = os.path.join(path, filename)
+                if os.path.isdir(newpath):
+                    walk(newpath, files)
+                else:
+                    files.append(newpath)
+
+        def load_from_path(path):
+            filename = os.path.basename(path)
+            match = re.match('([a-z]+)(\d+)', filename)
+            post_type = match.group(1)
+            date_index = int(match.group(2))
+            return cls.load(path, post_type, date_index)
+
+        files = []
+        walk(datadir, files)
+
+        posts = [load_from_path(f) for f in files]
+        posts.sort(key=attrgetter('pub_date'), reverse=True)
+        return posts
+
+    @classmethod
+    def load(cls, path, post_type, date_index):
+        with open(path, 'r') as f:
+            data = json.load(f)
+        return cls.from_json(data, post_type, date_index)
+
+    @classmethod
+    def from_json(cls, data, post_type, date_index):
+        post = cls(post_type=data.get('post_type', post_type),
+                   content_format=data.get('format', 'plain'))
+        post.pub_date = isoparse(data.get('pub_date'))
+        post.date_index = data.get('date_index', date_index)
+        post.slug = data.get('slug')
+        post.title = data.get('title')
+        post.content = data.get('content', '')
+        post.content_format = data.get('format')
+
+        # FIXME these are redundant with contexts
+        post.in_reply_to = data.get('in_reply_to')
+        post.repost_source = data.get('repost_source')
+        post.like_of = data.get('like_of')
+
+        post.contexts = [Context.from_json(ctx) for ctx
+                         in data.get('contexts', [])]
+        post.mentions = [Mention.from_json(mnt) for mnt
+                         in data.get('mentions', [])]
+        post.draft = data.get('draft', False)
+
+        if 'location' in data:
+            post.location = Location.from_json(data.get('location', {}))
+
+        if 'syndication' in data:
+            synd = data.get('syndication', {})
+            post.twitter_status_id = synd.get('twitter_id')
+            post.facebook_post_id = synd.get('facebook_id')
         return post
 
     @classmethod
     def lookup_post_by_date(cls, post_type, year, month, day, index):
-        date = datetime.date(year, month, day)
-        post = cls.query\
-                  .filter(Post.post_type == post_type,
-                          cast(Post.pub_date, db.Date) == date,
-                          Post.date_index == index)\
-                  .first()
-        return post
+        path = os.path.join(datadir, year, month, day, post_type + index)
+        return Post.load(path, post_type, index)
 
-    def __init__(self, post_type, content_format, author):
+    def __init__(self, post_type, content_format):
         self.post_type = post_type
         self.content_format = content_format
-        self.author = author
         self.draft = True
+        self.contexts = []
+        self.mentions = []
 
     @property
     def mentions_categorized(self):
@@ -200,31 +225,25 @@ class Post(db.Model):
             return 'post:{}'.format(self.content[:140])
 
 
-class ExternalPost(db.Model):
-    """mention, reply-context, repost-context, like-context
+class Context:
+    """reply-context, repost-context, like-context
        all contain nearly the same data"""
-    id = db.Column(db.Integer, primary_key=True)
 
-    #the referenced URL
-    source = db.Column(db.String(2048))
-    #permanent link parsed from html
-    permalink = db.Column(db.String(2048))
-
-    title = db.Column(db.String(256))
-    content = db.Column(db.Text)
-    content_format = db.Column(db.String(64))  # markdown/html/plain
-
-    pub_date = db.Column(db.DateTime)
-
-    author_name = db.Column(db.String(256))
-    author_url = db.Column(db.String(2048))
-    author_image = db.Column(db.String(2048))
-
-    unparsed_html = db.Column(db.Text)
+    @classmethod
+    def from_json(cls, data):
+        return cls(data.get('source'),
+                   data.get('permalink'),
+                   data.get('title'),
+                   data.get('content'),
+                   data.get('format'),
+                   data.get('author', {}).get('name'),
+                   data.get('author', {}).get('url'),
+                   data.get('author', {}).get('image'),
+                   isoparse(data.get('pub_date')))
 
     def __init__(self, source, permalink, title, content,
                  content_format, author_name, author_url,
-                 author_image, pub_date=None, unparsed_html=None):
+                 author_image, pub_date=None):
         self.source = source
         self.permalink = permalink
         self.title = title
@@ -244,38 +263,23 @@ class ExternalPost(db.Model):
                     self.author_image)
 
 
-class ReplyContext(ExternalPost):
-    id = db.Column(db.Integer, db.ForeignKey('external_post.id'), primary_key=True)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+class Mention:
 
+    @classmethod
+    def from_json(cls, data):
+        return cls(data.get('source'),
+                   data.get('permalink'),
+                   data.get('content'),
+                   data.get('type'),
+                   data.get('author', {}).get('name'),
+                   data.get('author', {}).get('url'),
+                   data.get('author', {}).get('image'),
+                   isoparse(data.get('pub_date')))
 
-class ShareContext(ExternalPost):
-    id = db.Column(db.Integer, db.ForeignKey('external_post.id'), primary_key=True)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-
-
-class LikeContext(ExternalPost):
-    id = db.Column(db.Integer, db.ForeignKey('external_post.id'), primary_key=True)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-
-
-class Mention(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    source = db.Column(db.String(2048))
-    permalink = db.Column(db.String(2048))
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-    content = db.Column(db.Text)
-    mention_type = db.Column(db.String(64))
-    author_name = db.Column(db.String(256))
-    author_url = db.Column(db.String(2048))
-    author_image = db.Column(db.String(2048))
-    pub_date = db.Column(db.DateTime)
-
-    def __init__(self, source, permalink, post, content, mention_type,
+    def __init__(self, source, permalink, content, mention_type,
                  author_name, author_url, author_image, pub_date=None):
         self.source = source
         self.permalink = permalink
-        self.post = post
         self.content = content
         self.mention_type = mention_type
         self.author_name = author_name

@@ -5,7 +5,6 @@ import os
 import os.path
 import pytz
 import itertools
-from sqlalchemy import cast
 import datetime
 
 outdir = '_data'

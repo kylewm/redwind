@@ -15,7 +15,7 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app, db
+from app import app
 from flask import request, jsonify
 from models import Post, Mention
 from werkzeug.exceptions import NotFound

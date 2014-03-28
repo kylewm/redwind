@@ -15,8 +15,8 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app, db
-from models import Post, Mention, ReplyContext, LikeContext, ShareContext
+from app import app
+from models import Post, Mention, Context
 from auth import load_user
 
 from bs4 import BeautifulSoup, Comment
@@ -25,8 +25,7 @@ from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, jsonify, Markup
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
-from sqlalchemy import cast as sqlcast, or_
-from sqlalchemy.orm import subqueryload
+
 from werkzeug import secure_filename
 from util import autolinker
 from util import hentry_parser
@@ -50,24 +49,10 @@ POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 
 FETCH_EXTERNAL_POST_HOOK = []
 
+DATADIR = "_data"
+
 
 class DisplayPost:
-
-    @classmethod
-    def get_posts(cls, post_types, page, per_page, include_drafts=False):
-        query = Post.query
-        query = query.options(subqueryload(Post.mentions),
-                              subqueryload(Post.reply_contexts),
-                              subqueryload(Post.share_contexts),
-                              subqueryload(Post.like_contexts))
-        if post_types:
-            query = query.filter(Post.post_type.in_(post_types))
-        if not include_drafts:
-            query = query.filter(or_(Post.draft.is_(None),
-                                     Post.draft == False))
-        query = query.order_by(Post.pub_date.desc())
-        pagination = query.paginate(page, per_page)
-        return pagination, [cls(post) for post in pagination.items]
 
     def __init__(self, wrapped):
         self.wrapped = wrapped
@@ -175,10 +160,8 @@ class DisplayPost:
 
 
 def render_posts(title, post_types, page, per_page, include_drafts=False):
-    pagination, posts = DisplayPost.get_posts(post_types,
-                                              page, per_page, include_drafts)
-    return render_template('posts.html', pagination=pagination,
-                           posts=posts, title=title,
+    posts = [DisplayPost(post) for post in Post.load_recent(per_page)]
+    return render_template('posts.html', posts=posts, title=title,
                            authenticated=current_user.is_authenticated())
 
 
@@ -205,7 +188,7 @@ def everything(page):
 
 
 def render_posts_atom(title, feed_id, post_types, count):
-    _, posts = DisplayPost.get_posts(post_types, 1, count)
+    posts = [DisplayPost(post) for post in Post.load_recent(count)]
     return make_response(render_template('posts.atom', title=title,
                                          feed_id=feed_id,
                                          posts=posts), 200,
