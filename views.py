@@ -46,6 +46,7 @@ TIMEZONE = pytz.timezone('US/Pacific')
 
 POST_TYPES = ['article', 'note', 'share', 'like', 'reply', 'checkin']
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
+DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>'
 
 FETCH_EXTERNAL_POST_HOOK = []
 
@@ -227,8 +228,8 @@ def mentions_atom():
                          {'Content-Type': 'application/atom+xml'})
 
 
-@app.route('/' + POST_TYPE_RULE + '/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>', defaults={'slug': None})
-@app.route('/' + POST_TYPE_RULE + '/<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>/<slug>')
+@app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
+@app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
     post = Post.lookup_post_by_date(post_type, year, month, day, index)
     if not post:
@@ -249,27 +250,6 @@ def post_by_date(post_type, year, month, day, index, slug):
 
     return render_template('post.html', post=dpost, title=title,
                            authenticated=current_user.is_authenticated())
-
-
-@app.route('/' + POST_TYPE_RULE + '/<string(length=6):yymmdd>/<int:index>')
-def post_by_old_date(post_type, yymmdd, index):
-    year = int('20' + yymmdd[0:2])
-    month = int(yymmdd[2:4])
-    day = int(yymmdd[4:6])
-    return redirect(url_for('post_by_date', post_type=post_type,
-                            year=year, month=month, day=day, index=index))
-
-
-@app.route('/' + POST_TYPE_RULE + '/<int(max=2014):year>/<int:dbid>',
-           defaults={'slug': None})
-@app.route('/' + POST_TYPE_RULE + '/<int(max=2014):year>/<int:dbid>/<slug>')
-def post_by_id(post_type, year, dbid, slug):
-    post = Post.lookup_post_by_id(dbid)
-    if not post:
-        abort(404)
-    return redirect(url_for('post_by_date', post_type=post.post_type,
-                            year=post.pub_date.year, month=post.pub_date.month,
-                            day=post.pub_date.day, index=post.date_index))
 
 
 @app.route("/indieauth")
@@ -327,9 +307,9 @@ def locations():
 
 @app.route('/admin/delete')
 @login_required
-def delete_by_id():
-    post_id = request.args.get('id')
-    post = Post.query.filter_by(id=post_id).first()
+def delete_by_path():
+    post_path = request.args.get('path')
+    post = Post.lookup_post_by_path(post_path)
 
     if not post:
         abort(404)
@@ -364,7 +344,7 @@ def delete_mention_by_id():
 def new_post():
     post_type = request.args.get('type', 'note')
     content_format = 'markdown' if post_type == 'article' else 'plain'
-    post = Post(post_type, content_format, current_user)
+    post = Post(post_type, content_format)
     post.content = ''
 
     if post_type == 'reply':
@@ -393,9 +373,9 @@ def new_post():
 
 @app.route('/admin/edit')
 @login_required
-def edit_by_id():
-    post_id = request.args.get('id')
-    post = Post.query.filter_by(id=post_id).first()
+def edit_by_path():
+    post_path = request.args.get('path')
+    post = Post.lookup_post_by_path(post_path)
     if not post:
         abort(404)
     return render_template('edit_post.html', post=post,
@@ -407,13 +387,6 @@ def edit_by_id():
 def uploads_popup():
     return render_template('uploads_popup.html')
 
-
-@app.route('/admin/preview')
-@login_required
-def post_preview():
-    post_id = request.args.get('id')
-    post = Post.query.filter_by(id=post_id).first()
-    return render_template('post_preview.html', post=DisplayPost(post))
 
 
 @app.template_filter('strftime')

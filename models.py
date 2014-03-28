@@ -159,10 +159,14 @@ class Post:
 
     @classmethod
     def lookup_post_by_date(cls, post_type, year, month, day, index):
-        path = "{}/{:04d}/{:02d}/{:02d}/{}_{}".format(
-            datadir, year, month, day,
+        path = "{}/{:02d}/{:02d}/{}_{}".format(
+            year, month, day,
             post_type, index)
-        return Post.load(path)
+        return cls.lookup_post_by_path(path)
+
+    @classmethod
+    def lookup_post_by_path(cls, path):
+        return Post.load(os.path.join(datadir, path))
 
     def __init__(self, post_type, content_format):
         self.post_type = post_type
@@ -170,6 +174,12 @@ class Post:
         self.draft = True
         self.contexts = []
         self.mentions = []
+
+    @property
+    def path(self):
+        return "{}/{:02d}/{:02d}/{}_{}".format(
+            self.pub_date.year, self.pub_date.month, self.pub_date.day,
+            self.post_type, self.date_index)
 
     @property
     def mentions_categorized(self):
