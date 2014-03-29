@@ -27,7 +27,7 @@ import requests
 def send_push_notification():
     try:
         post_id = request.form.get('post_id')
-        post = Post.query.filter_by(id=post_id).first()
+        post = Post.lookup_post_by_shortid(post_id)
         handle_new_or_edit(post)
         return jsonify(success=True)
 

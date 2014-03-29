@@ -47,7 +47,7 @@ def authorize_facebook():
         payload = urllib.parse.parse_qs(r.read())
         access_token = payload[b'access_token']
         current_user.facebook_access_token = access_token
-        db.session.commit()
+        current_user.save()
         return redirect(url_for('settings'))
     else:
         return redirect('https://graph.facebook.com/oauth/authorize?'
@@ -58,10 +58,10 @@ def authorize_facebook():
 @login_required
 def syndicate_to_facebook():
     try:
-        post_id = int(request.form.get('post_id'))
-        post = Post.query.filter_by(id=post_id).first()
+        post_id = request.form.get('post_id')
+        post = Post.lookup_post_by_shortid(post_id)
         handle_new_or_edit(post)
-        db.session.commit()
+        post.save()
         return jsonify(success=True, facebook_post_id=post.facebook_post_id,
                        facebook_permalink=post.facebook_url)
     except Exception as e:
@@ -86,7 +86,7 @@ def handle_new_or_edit(post):
     if img_url:
         img_url = urljoin(app.config['SITE_URL'], img_url)
 
-    post_args = {'access_token': post.author.facebook_access_token,
+    post_args = {'access_token': current_user.facebook_access_token,
                  'name': post.title,
                  'message': views.format_as_text(post.content,
                                                  post.content_format),

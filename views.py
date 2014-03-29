@@ -35,6 +35,7 @@ import os
 import pytz
 import re
 import requests
+import shortlinks
 import unicodedata
 
 bleach.ALLOWED_TAGS += ['img']
@@ -161,7 +162,8 @@ class DisplayPost:
 
 
 def render_posts(title, post_types, page, per_page, include_drafts=False):
-    posts = [DisplayPost(post) for post in Post.load_recent(per_page)]
+    posts = [DisplayPost(post) for post
+             in Post.load_recent(per_page, post_types)]
     return render_template('posts.html', posts=posts, title=title,
                            authenticated=current_user.is_authenticated())
 
@@ -252,6 +254,20 @@ def post_by_date(post_type, year, month, day, index, slug):
                            authenticated=current_user.is_authenticated())
 
 
+@app.route('/short/<string(minlength=5,maxlength=6):tag>')
+def shortlink(tag):
+    post_type = shortlinks.parse_type(tag)
+    pub_date = shortlinks.parse_date(tag)
+    index = shortlinks.parse_index(tag)
+
+    if not post_type or not pub_date or not index:
+        abort(404)
+
+    return redirect(url_for('post_by_date', post_type=post_type,
+                            year=pub_date.year, month=pub_date.month,
+                            day=pub_date.day, index=index))
+
+
 @app.route("/indieauth")
 def indie_auth():
     token = request.args.get('token')
@@ -289,50 +305,17 @@ def settings():
                            authenticated=current_user.is_authenticated())
 
 
-@app.route('/locations')
-def locations():
-    posts = Post.query.filter(Post.latitude != None,
-                              Post.latitude != 0,
-                              Post.longitude != None,
-                              Post.longitude != 0).all()
-    locations = [{
-        'lat': post.latitude,
-        'long': post.longitude,
-        'name': post.location_name
-    } for post in posts]
-
-    return render_template("locations.html", locations=locations,
-                           authenticated=current_user.is_authenticated())
-
-
 @app.route('/admin/delete')
 @login_required
-def delete_by_path():
-    post_path = request.args.get('path')
-    post = Post.lookup_post_by_path(post_path)
+def delete_by_id():
+    shortid = request.args.get('id')
+    post = Post.lookup_post_by_shortid(shortid)
 
     if not post:
         abort(404)
 
-    db.session.delete(post)
-    db.session.commit()
-
-    redirect_url = request.args.get('redirect') or url_for('index')
-    app.logger.debug("redirecting to {}".format(redirect_url))
-    return redirect(redirect_url)
-
-
-@app.route('/admin/delete_mention')
-@login_required
-def delete_mention_by_id():
-    mention_id = request.args.get('id')
-    mention = Mention.query.filter_by(id=mention_id).first()
-
-    if not mention:
-        abort(404)
-
-    db.session.delete(mention)
-    db.session.commit()
+    post.deleted = True
+    post.save()
 
     redirect_url = request.args.get('redirect') or url_for('index')
     app.logger.debug("redirecting to {}".format(redirect_url))
@@ -373,9 +356,9 @@ def new_post():
 
 @app.route('/admin/edit')
 @login_required
-def edit_by_path():
-    post_path = request.args.get('path')
-    post = Post.lookup_post_by_path(post_path)
+def edit_by_id():
+    shortid = request.args.get('id')
+    post = Post.lookup_post_by_shortid(shortid)
     if not post:
         abort(404)
     return render_template('edit_post.html', post=post,
@@ -386,7 +369,6 @@ def edit_by_path():
 @app.route('/admin/uploads')
 def uploads_popup():
     return render_template('uploads_popup.html')
-
 
 
 @app.template_filter('strftime')
@@ -530,13 +512,12 @@ def receive_upload():
 def save_post():
     try:
         post_id_str = request.form.get('post_id')
-
+        print("post id=", post_id_str)
         if post_id_str == 'new':
             post_type = request.form.get('post_type', 'note')
-            post = Post(post_type, 'plain', current_user)
+            post = Post(post_type, 'plain')
         else:
-            post_id = int(post_id_str)
-            post = Post.query.filter_by(id=post_id).first()
+            post = Post.lookup_post_by_shortid(post_id_str)
 
         # populate the Post object and save it to the database,
         # redirect to the view
@@ -566,18 +547,6 @@ def save_post():
         elif post.title and not post.slug:
             post.slug = slugify(post.title)
 
-        # generate the date/index identifier
-        if not post.date_index:
-            post.date_index = 1
-            same_day_posts = Post.query\
-                                 .filter(Post.post_type == post.post_type,
-                                         sqlcast(Post.pub_date, db.Date)
-                                         == post.pub_date.date())\
-                                 .all()
-            if same_day_posts:
-                post.date_index += max(post.date_index for post
-                                       in same_day_posts)
-
         post.repost_preview = None
 
         twitter_status_id = request.form.get("twitter_status_id")
@@ -588,10 +557,9 @@ def save_post():
         if facebook_post_id:
             post.facebook_post_id = facebook_post_id
 
-        if not post.id:
-            db.session.add(post)
-        db.session.commit()
-        return jsonify(success=True, id=post.id, permalink=post.permalink)
+        post.save()
+        print("saved post", post.shortid, post.permalink)
+        return jsonify(success=True, id=post.shortid, permalink=post.permalink)
 
     except Exception as e:
         app.logger.exception("Failed to save post")
@@ -604,48 +572,32 @@ def save_post():
 def fetch_post_contexts():
     try:
         post_id_str = request.form.get('post_id')
-        post_id = int(post_id_str)
-        post = Post.query.filter_by(id=post_id).first()
+        post = Post.lookup_post_by_shortid(post_id_str)
 
         replies = request.form.get('in_reply_to', '').strip().splitlines()
         reposts = request.form.get('repost_source', '').strip().splitlines()
         likes = request.form.get('like_of', '').strip().splitlines()
 
+        post.reply_contexts = []
+        post.like_contexts = []
+        post.share_contexts = []
+
         for reply_url in replies:
-            replyctx = fetch_external_post(reply_url, ReplyContext)
+            replyctx = fetch_external_post(reply_url)
             if replyctx:
-                dupes = ReplyContext.query.filter(
-                    ReplyContext.post == post,
-                    ReplyContext.permalink == replyctx.permalink)
-                for dupe in dupes:
-                    db.session.delete(dupe)
-                db.session.add(replyctx)
                 post.reply_contexts.append(replyctx)
 
         for repost_url in reposts:
-            sharectx = fetch_external_post(repost_url, ShareContext)
+            sharectx = fetch_external_post(repost_url)
             if sharectx:
-                dupes = ShareContext.query.filter(
-                    ShareContext.post == post,
-                    ShareContext.permalink == sharectx.permalink)
-                for dupe in dupes:
-                    db.session.delete(dupe)
-                db.session.add(sharectx)
                 post.share_contexts.append(sharectx)
 
         for like_url in likes:
-            likectx = fetch_external_post(like_url, LikeContext)
+            likectx = fetch_external_post(like_url)
             if likectx:
-                dupes = LikeContext.query.filter(
-                    LikeContext.post == post,
-                    LikeContext.permalink == likectx.permalink)
-                for dupe in dupes:
-                    db.session.delete(dupe)
-
-                db.session.add(likectx)
                 post.like_contexts.append(likectx)
 
-        db.session.commit()
+        post.save()
         return jsonify({
             'success': True,
             'replies': replies,
@@ -667,9 +619,9 @@ def fetch_external_post_function(func):
     return func
 
 
-def fetch_external_post(source, ExtPostClass):
+def fetch_external_post(source):
     for fetch_fn in FETCH_EXTERNAL_POST_HOOK:
-        extpost = fetch_fn(current_user, source, ExtPostClass)
+        extpost = fetch_fn(source)
         if extpost:
             return extpost
 
@@ -677,19 +629,20 @@ def fetch_external_post(source, ExtPostClass):
     if response.status_code // 2 == 100:
         hentry = hentry_parser.parse(response.text, source)
         if hentry:
-            return ExtPostClass(
+            return Context(
                 source, hentry.permalink,
                 hentry.title, hentry.content, 'html',
                 hentry.author.name if hentry.author else '',
                 hentry.author.url if hentry.author else '',
                 hentry.author.photo if hentry.author else '',
-                hentry.pub_date, response.text)
+                hentry.pub_date)
 
     # get as much as we can without microformats
     soup = BeautifulSoup(response.text)
     title_tag = soup.find('title')
     title = title_tag.text if title_tag else prettify_url(source)
-    return ExtPostClass(source, source, title, None, 'plain', None, None, None)
+    print("result", title)
+    return Context(source, source, title, None, 'plain', None, None, None)
 
 
 @app.route('/api/mf2')

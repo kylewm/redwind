@@ -10,16 +10,21 @@
 
     function save(draft) {
         var formData = $('#edit_form').serializeArray();
-        formData.push({'name': 'draft', 'value': draft});
+        formData.push({'name': 'draft', 'value': draft})
         $.ajax({
             type: "POST",
             url: "/api/save",
             data: formData,
             success: function saveSuccess(data) {
-                appendResult("Saved post " + data.id);
-                $('#post_id').val(data.id);
-                addPermalink(draft, data.id, data.permalink);
-                fetchContexts(draft, data.id, data.permalink);
+                if (!data.success) {
+                    appendResult("Failed to save post " + data.error);
+                }
+                else {
+                    appendResult("Saved post " + data.id);
+                    $('#post_id').val(data.id);
+                    addPermalink(draft, data.id, data.permalink);
+                    fetchContexts(draft, data.id, data.permalink);
+                }
             },
             error: function saveError(data) {
                 appendResult("Failed to save post " + data.error);

@@ -6,8 +6,8 @@
 <div class="col span_2_of_3">
 
   <form id="edit_form" method="POST">
-    <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
-    <input type="hidden" name="post_type" value="{{ post.post_type }}"/>
+    <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
+    <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
 
     {% if post.draft   %}

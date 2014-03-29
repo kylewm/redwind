@@ -33,8 +33,8 @@ import views
 @login_required
 def send_webmentions():
     try:
-        post_id = int(request.form.get('post_id'))
-        post = Post.query.filter_by(id=post_id).first()
+        post_id = request.form.get('post_id')
+        post = Post.lookup_post_by_shortid(post_id)
         results = mention_client.handle_new_or_edit(post)
         return jsonify(success=True, results=results)
 
@@ -188,7 +188,7 @@ class MentionClient:
                     "Failed to send webmention for %s. "
                     "Response status code: %s",
                     target_url, response.status_code)
-                return False, "Status code: {}, Response: {}".format(response.status_code, 
+                return False, "Status code: {}, Response: {}".format(response.status_code,
                                                                      response.text)
             else:
                 app.logger.debug(

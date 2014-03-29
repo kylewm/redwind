@@ -16,7 +16,7 @@
 
 
 from app import app
-from models import Post
+from models import Post, Context
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response, jsonify
 from rauth import OAuth1Service
@@ -65,7 +65,7 @@ def authorize_twitter2():
         current_user.twitter_oauth_token = access_token
         current_user.twitter_oauth_token_secret = access_token_secret
 
-        db.session.commit()
+        current_user.save()
         return redirect(url_for('settings'))
     except requests.RequestException as e:
         return make_response(str(e))
@@ -74,13 +74,12 @@ def authorize_twitter2():
 @app.route('/api/syndicate_to_twitter', methods=['POST'])
 @login_required
 def syndicate_to_twitter():
-
     try:
-        post_id = int(request.form.get('post_id'))
+        post_id = request.form.get('post_id')
         preview = request.form.get('tweet_preview')
-        post = Post.query.filter_by(id=post_id).first()
+        post = Post.lookup_post_by_shortid(post_id)
         twitter_client.handle_new_or_edit(post, preview)
-        db.session.commit()
+        post.save()
         return jsonify(success=True, twitter_status_id=post.twitter_status_id,
                        twitter_permalink=post.twitter_url)
     except Exception as e:
@@ -92,8 +91,8 @@ def syndicate_to_twitter():
 
 
 @views.fetch_external_post_function
-def fetch_external_post(user, source, ExtPostClass):
-    return twitter_client.fetch_external_post(user, source, ExtPostClass)
+def fetch_external_post(source):
+    return twitter_client.fetch_external_post(source)
 
 
 class TwitterClient:
@@ -118,21 +117,21 @@ class TwitterClient:
                 base_url='https://api.twitter.com/1.1/')
         return self.cached_auth_service
 
-    def get_auth_session(self, user):
+    def get_auth_session(self):
         service = self.get_auth_service()
-        session = service.get_session((user.twitter_oauth_token,
-                                       user.twitter_oauth_token_secret))
+        session = service.get_session((current_user.twitter_oauth_token,
+                                       current_user.twitter_oauth_token_secret))
         return session
 
-    def repost_preview(self, user, url):
-        if not self.is_twitter_authorized(user):
+    def repost_preview(self, url):
+        if not self.is_twitter_authorized(current_user):
             return
 
         permalink_re = re.compile(
             "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
         match = permalink_re.match(url)
         if match:
-            api = self.get_auth_session(user)
+            api = self.get_auth_session()
             tweet_id = match.group(2)
             embed_response = api.get('statuses/oembed.json',
                                      params={'id': tweet_id})
@@ -140,12 +139,12 @@ class TwitterClient:
             if embed_response.status_code // 2 == 100:
                 return embed_response.json().get('html')
 
-    def fetch_external_post(self, user, source, ExtPostClass):
+    def fetch_external_post(self, source):
         permalink_re = re.compile(
             "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
         match = permalink_re.match(source)
         if match:
-            api = self.get_auth_session(user)
+            api = self.get_auth_session()
             tweet_id = match.group(2)
             status_response = api.get('statuses/show/{}.json'.format(tweet_id))
 
@@ -171,9 +170,9 @@ class TwitterClient:
             author_image = status_data['user']['profile_image_url']
             tweet_text = self.expand_links(status_data['text'])
 
-            return ExtPostClass(source, source, None, tweet_text,
-                                'plain', author_name, author_url,
-                                author_image, pub_date)
+            return Context(source, source, None, tweet_text,
+                           'plain', author_name, author_url,
+                           author_image, pub_date)
 
     def expand_links(self, text):
         return re.sub(autolinker.LINK_REGEX,
@@ -191,12 +190,12 @@ class TwitterClient:
         return url
 
     def handle_new_or_edit(self, post, preview):
-        if not self.is_twitter_authorized(post.author):
+        if not self.is_twitter_authorized():
             return
 
         permalink_re = re.compile(
             "https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
-        api = self.get_auth_session(post.author)
+        api = self.get_auth_session()
 
         # check for RT's
         is_retweet = False
@@ -253,14 +252,15 @@ class TwitterClient:
                 result = api.post('statuses/update.json', data=data)
 
             if result.status_code // 2 != 100:
-                raise RuntimeError("status code: {}, headers: {}, body: {}".format(
-                        result.status_code, result.headers,
-                        result.content))
+                raise RuntimeError("status code: {}, headers: {}, body: {}"
+                                   .format(result.status_code, result.headers,
+                                           result.content))
 
         post.twitter_status_id = result.json().get('id_str')
 
     def download_image_to_temp(self, url):
-        response = requests.get(urljoin(app.config['SITE_URL'], url), stream=True)
+        response = requests.get(urljoin(app.config['SITE_URL'], url),
+                                stream=True)
         if response.status_code // 2 == 100:
             _, tempfile = mkstemp()
             with open(tempfile, 'wb') as f:
@@ -268,15 +268,16 @@ class TwitterClient:
                     f.write(chunk)
             return tempfile
 
-    def is_twitter_authorized(self, user):
-        return user.twitter_oauth_token and user.twitter_oauth_token_secret
+    def is_twitter_authorized(self):
+        return current_user and current_user.twitter_oauth_token \
+            and current_user.twitter_oauth_token_secret
 
-    def get_help_configuration(self, user):
+    def get_help_configuration(self):
         stale_limit = timedelta(days=1)
 
         if (not self.cached_config
                 or datetime.utcnow() - self.config_fetch_date > stale_limit):
-            api = self.get_auth_session(user)
+            api = self.get_auth_session()
             response = api.get('help/configuration.json')
             if response.status_code // 2 == 100:
                 self.cached_config = response.json()
@@ -310,14 +311,14 @@ class TwitterClient:
 
         return ' '.join(c.text for c in shortened_comps)
 
-    def get_media_url_length(self, user):
-        twitter_config = self.get_help_configuration(user)
+    def get_media_url_length(self):
+        twitter_config = self.get_help_configuration()
         if twitter_config:
             return twitter_config.get('characters_reserved_per_media')
         return 30
 
-    def get_url_length(self, user, is_https):
-        twitter_config = self.get_help_configuration(user)
+    def get_url_length(self, is_https):
+        twitter_config = self.get_help_configuration()
         if twitter_config:
             return twitter_config.get('short_url_length_https'
                                       if is_https
@@ -325,8 +326,8 @@ class TwitterClient:
         else:
             return 30
 
-    def url_to_span(self, user, url, prefix='', postfix='', can_drop=True):
-        url_length = self.get_url_length(user, url.startswith('https'))
+    def url_to_span(self, url, prefix='', postfix='', can_drop=True):
+        url_length = self.get_url_length(url.startswith('https'))
         app.logger.debug("assuming url length {}".format(url_length))
         return TextSpan(prefix + url + postfix,
                         len(prefix) + url_length + len(postfix),
@@ -336,7 +337,7 @@ class TwitterClient:
         return TextSpan(text, len(text), can_shorten=can_shorten,
                         can_drop=can_drop)
 
-    def split_out_urls(self, user, text):
+    def split_out_urls(self, text):
         components = []
         while text:
             m = re.search(r'https?://[a-zA-Z0-9_\.\-():@#$%&?/=]+', text)
@@ -345,7 +346,7 @@ class TwitterClient:
                 url = m.group(0)
 
                 components.append(self.text_to_span(head))
-                components.append(self.url_to_span(user, url))
+                components.append(self.url_to_span(url))
                 text = text[m.end():]
             else:
                 tail = text.strip()
@@ -361,33 +362,32 @@ class TwitterClient:
             # replace http://kyl.im/XXXXX with short-link
             # replace http://kylewm.com/XXXX/XX/XX/X with regular link
             # TODO don't hardcode this!
-            preview = preview.replace('http://kyl.im/XXXXX', post.short_permalink)
-            preview = preview.replace('http://kylewm.com/XXXX/XX/XX/X', post.permalink)
+            preview = re.sub('http://kyl.im/[X/]+',
+                             post.short_permalink, preview)
+            preview = re.sub('http://kylewm.com/[X/]+',
+                             post.permalink, preview)
             return preview
 
         target_length = 140
         if has_media:
-            target_length -= self.get_media_url_length(post.author)
+            target_length -= self.get_media_url_length()
 
         if post.title:
             components = [self.text_to_span(post.title),
-                          self.url_to_span(post.author,
-                                           post.permalink,
+                          self.url_to_span(post.permalink,
                                            can_drop=False)]
 
         else:
             components = self.split_out_urls(
-                post.author, views.format_as_text(post.content,
+                views.format_as_text(post.content,
                                                   post.content_format))
 
             # include the re-shared link
             for share_context in post.share_contexts:
-                components.append(self.url_to_span(post.author,
-                                                   share_context.source,
+                components.append(self.url_to_span(share_context.source,
                                                    can_drop=False))
 
-            components.append(self.url_to_span(post.author,
-                                               post.short_permalink,
+            components.append(self.url_to_span(post.short_permalink,
                                                prefix="\n(",
                                                postfix=")",
                                                can_drop=False))
@@ -395,8 +395,7 @@ class TwitterClient:
             # if that overflows, replace with a permalink
             if self.estimate_length(components) > target_length:
                 components.pop()
-                components.append(self.url_to_span(post.author,
-                                                   post.permalink,
+                components.append(self.url_to_span(post.permalink,
                                                    can_drop=False))
 
         status = self.run_shorten_algorithm(components, target_length)

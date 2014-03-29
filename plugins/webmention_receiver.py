@@ -37,7 +37,7 @@ def receive_webmention():
 
         app.logger.debug("Webmention from %s to %s received", source, target)
 
-        mentions, error = process_webmention(source, target)
+        post, mentions, error = process_webmention(source, target)
         if not mentions:
             app.logger.debug("Failed to process webmention: %s", error)
             response = jsonify(success=False, source=source,
@@ -45,15 +45,14 @@ def receive_webmention():
             return response
 
         # de-dup on incoming url
-        for existing in Mention.query.filter_by(
-                post_id=mentions[0].post.id,
-                source=mentions[0].source,
-                permalink=mentions[0].permalink).all():
-            db.session.delete(existing)
+        #for existing in Mention.query.filter_by(
+        #        post_id=mentions[0].post.id,
+        #        source=mentions[0].source,
+        #        permalink=mentions[0].permalink).all():
+        #    db.session.delete(existing)
 
-        for mention in mentions:
-            db.session.add(mention)
-        db.session.commit()
+        post.mentions += mentions
+        post.save()
 
         push.handle_new_mentions()
         return jsonify(success=True, source=source, target=target)
@@ -74,7 +73,7 @@ def process_webmention(source, target):
     if not target_post:
         app.logger.warn(
             "Webmention could not find target post: %s. Giving up", target)
-        return None, "Webmention could not find target post: {}".format(target)
+        return target_post, None, "Webmention could not find target post: {}".format(target)
 
     target_urls = [target, target_post.permalink, target_post.short_permalink]
 
@@ -82,7 +81,7 @@ def process_webmention(source, target):
     source_metadata = urllib.request.urlopen(source).info()
     if not source_metadata:
         app.logger.warn("Could not open source URL: %s. Giving up", source)
-        return None, "Could not open source URL: {}".format(source)
+        return target_post, None, "Could not open source URL: {}".format(source)
 
     source_length = source_metadata.get('Content-Length')
     source_content_type = source_metadata.get_content_maintype()
@@ -90,19 +89,19 @@ def process_webmention(source, target):
     if source_content_type and source_content_type != 'text':
         app.logger.warn("Cannot process mention from non-text type %s",
                         source_content_type)
-        return None, "Source content type {}. 'text' is required.".format(
+        return target_post, None, "Source content type {}. 'text' is required.".format(
             source_content_type)
 
     if source_length and int(source_length) > 2097152:
         app.logger.warn("Very large source. length=%s", source_length)
-        return None, "Source is very large. Length={}".format(source_length)
+        return target_post, None, "Source is very large. Length={}".format(source_length)
 
     source_response = requests.get(source)
 
     if source_response.status_code // 100 != 2:
         app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
-        return None, "Bad response when reading source post: {}, {}".format(
+        return target_post, None, "Bad response when reading source post: {}, {}".format(
             source, source_response)
 
     link_to_target = find_link_to_target(source, source_response, target_urls)
@@ -110,7 +109,7 @@ def process_webmention(source, target):
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
-        return None, "Could not find any links from source to target"
+        return target_post, None, "Could not find any links from source to target"
 
     hentry = hentry_parser.parse(source_response.text, source)
 
@@ -118,7 +117,7 @@ def process_webmention(source, target):
         app.logger.warn(
             "Webmention could not find h-entry on source page: %s. Giving up",
             source)
-        return None, "Could not find h-entry in source page"
+        return target_post, None, "Could not find h-entry in source page"
 
     reftypes = set()
     for ref in hentry.references:
@@ -139,7 +138,7 @@ def process_webmention(source, target):
                           hentry.pub_date)
         mentions.append(mention)
 
-    return mentions, None
+    return target_post, mentions, None
 
 
 def find_link_to_target(source_url, source_response, target_urls):

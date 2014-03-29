@@ -24,17 +24,39 @@ from collections import defaultdict
 import os
 import os.path
 import json
-import re
+import pytz
 from operator import attrgetter
 
 datadir = "_data"
 
 
 def isoparse(s):
-    return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+    if s:
+        try:
+            return datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%f')
+        except:
+            return datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+
+
+def format_date(date):
+    if date:
+        if date.tzinfo:
+            date = date.astimezone(pytz.utc)
+            date = date.replace(tzinfo=None)
+        return date.isoformat('T')
+
+
+def filter_empty_keys(data):
+    if isinstance(data, list):
+        return list(filter_empty_keys(v) for v in data if filter_empty_keys(v))
+    if isinstance(data, dict):
+        return dict((k, filter_empty_keys(v)) for k, v in data.items()
+                    if filter_empty_keys(v))
+    return data
 
 
 class User:
+
     @classmethod
     def load(cls, path):
         with open(path, 'r') as f:
@@ -48,6 +70,19 @@ class User:
         user.twitter_oauth_token_secret = data.get('twitter_oauth_token_secret')
         user.facebook_access_token = data.get('facebook_access_token')
         return user
+
+    def to_json(self):
+        data = {
+            'domain': self.domain,
+            'twitter_oauth_token': self.twitter_oauth_token,
+            'twitter_oauth_token_secret': self.twitter_oauth_token_secret,
+            'facebook_access_token': self.facebook_access_token
+        }
+        return filter_empty_keys(data)
+
+    def save(self):
+        with open(os.path.join(datadir, 'user'), 'w') as f:
+            json.dump(self.to_json(), f, indent=True)
 
     # Flask-Login integration
     def is_authenticated(self):
@@ -83,11 +118,10 @@ class Location:
 
 
 class Post:
-
     @classmethod
-    def load_recent(cls, count):
-        def walk(path, files):
-            if len(files) >= count:
+    def load_recent(cls, count, post_types, include_drafts=False):
+        def walk(path, posts):
+            if len(posts) >= count:
                 return
 
             ls = sorted(os.listdir(path), reverse=True)
@@ -96,23 +130,20 @@ class Post:
                     continue
                 newpath = os.path.join(path, filename)
                 if os.path.isdir(newpath):
-                    walk(newpath, files)
+                    walk(newpath, posts)
                 else:
-                    files.append(newpath)
+                    filename = os.path.basename(newpath)
+                    post_type, date_index = filename.split('_')
+                    if post_type in post_types:
+                        post = Post.load(newpath)
+                        if not post.deleted and (not post.draft
+                                                 or include_drafts):
+                            posts.append(post)
 
-        def load_from_path(path):
-            filename = os.path.basename(path)
-            #match = re.match('([a-z]+)(\d+)', filename)
-            #post_type = match.group(1)
-            #date_index = int(match.group(2))
-            return cls.load(path)
-
-        files = []
-        walk(datadir, files)
-
-        posts = [load_from_path(f) for f in files]
+        posts = []
+        walk(os.path.join(datadir, 'posts'), posts)
         posts.sort(key=attrgetter('pub_date'), reverse=True)
-        return posts
+        return posts[:count]
 
     @classmethod
     def load(cls, path):
@@ -132,9 +163,9 @@ class Post:
         post.content_format = data.get('format')
 
         # FIXME these are redundant with contexts
-        post.in_reply_to = data.get('in_reply_to')
-        post.repost_source = data.get('repost_source')
-        post.like_of = data.get('like_of')
+        post.in_reply_to = '\n'.join(data.get('in_reply_to', []))
+        post.repost_source = '\n'.join(data.get('repost_source', []))
+        post.like_of = '\n'.join(data.get('like_of', []))
 
         contexts = data.get('context', {})
         post.reply_contexts = [Context.from_json(ctx) for ctx
@@ -147,6 +178,7 @@ class Post:
         post.mentions = [Mention.from_json(mnt) for mnt
                          in data.get('mentions', [])]
         post.draft = data.get('draft', False)
+        post.deleted = data.get('deleted', False)
 
         if 'location' in data:
             post.location = Location.from_json(data.get('location', {}))
@@ -162,18 +194,90 @@ class Post:
         path = "{}/{:02d}/{:02d}/{}_{}".format(
             year, month, day,
             post_type, index)
+
         return cls.lookup_post_by_path(path)
 
     @classmethod
     def lookup_post_by_path(cls, path):
-        return Post.load(os.path.join(datadir, path))
+        return Post.load(os.path.join(datadir, 'posts', path))
+
+    @classmethod
+    def lookup_post_by_shortid(cls, shortid):
+        post_type = shortlinks.parse_type(shortid)
+        pub_date = shortlinks.parse_date(shortid)
+        index = shortlinks.parse_index(shortid)
+        return cls.lookup_post_by_path('{}/{:02d}/{:02d}/{}_{}'
+                                       .format(pub_date.year, pub_date.month,
+                                               pub_date.day, post_type, index))
 
     def __init__(self, post_type, content_format):
         self.post_type = post_type
         self.content_format = content_format
         self.draft = True
-        self.contexts = []
+        self.deleted = False
+        self.reply_contexts = []
+        self.share_contexts = []
+        self.like_contexts = []
         self.mentions = []
+
+        self.pub_date = None
+        self.date_index = None
+        self.slug = None
+        self.twitter_status_id = None
+        self.facebook_post_id = None
+        self.location_name = None
+        self.latitude = None
+        self.longitude = None
+
+    def to_json(self):
+        data = {
+            'type': self.post_type,
+            'pub_date':  format_date(self.pub_date),
+            'date_index': self.date_index,
+            'slug': self.slug,
+            'title': self.title,
+            'content': self.content,
+            'format': self.content_format,
+            'in_reply_to': self.in_reply_to.split() if self.in_reply_to else None,
+            'repost_source': self.repost_source.split() if self.repost_source else None,
+            'like_of': self.like_of.split() if self.like_of else None,
+            'context': {
+                'reply': [ctx.to_json() for ctx in self.reply_contexts],
+                'share': [ctx.to_json() for ctx in self.share_contexts],
+                'like': [ctx.to_json() for ctx in self.like_contexts]
+            },
+            'mentions': [mnt.to_json() for mnt in self.mentions],
+            'location': {
+                'name': self.location_name,
+                'latitude': self.latitude,
+                'longitude': self.longitude
+            },
+            'syndication': {
+                'twitter_id': self.twitter_status_id,
+                'facebook_id': self.facebook_post_id
+            },
+            'draft': self.draft,
+            'deleted': self.deleted
+        }
+        return filter_empty_keys(data)
+
+    def save(self):
+        basedir = os.path.join(datadir, 'posts')
+
+        # assign a new date index if we don't have one yet
+        if not self.date_index:
+            self.date_index = 1
+            while os.path.exists(os.path.join(basedir, self.path)):
+                self.date_index += 1
+
+        filename = os.path.join(basedir, self.path)
+
+        parentdir = os.path.dirname(filename)
+        if not os.path.exists(parentdir):
+            os.makedirs(parentdir)
+
+        with open(filename, 'w') as f:
+            json.dump(self.to_json(), f, indent=True)
 
     @property
     def path(self):
@@ -202,12 +306,19 @@ class Post:
         return '/'.join(path_components)
 
     @property
-    def short_permalink(self):
+    def shortid(self):
+        if not self.pub_date or not self.date_index:
+            return None
         tag = shortlinks.tag_for_post_type(self.post_type)
         ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
-        return '{}/{}{}{}'.format(app.config.get('SHORT_SITE_URL'),
-                                  tag, base60.encode(ordinal),
-                                  base60.encode(self.date_index))
+        return '{}{}{}'.format(tag, base60.encode(ordinal),
+                               base60.encode(self.date_index))
+
+
+    @property
+    def short_permalink(self):
+        return '{}/{}'.format(app.config.get('SHORT_SITE_URL'),
+                              self.shortid)
 
     @property
     def short_cite(self):
@@ -222,7 +333,7 @@ class Post:
     def twitter_url(self):
         if self.twitter_status_id:
             return "https://twitter.com/{}/status/{}".format(
-                self.author.twitter_username,
+                'kyle_wm',  # FIXME
                 self.twitter_status_id)
 
     @property
@@ -270,6 +381,22 @@ class Context:
         self.author_image = author_image
         self.pub_date = pub_date
 
+    def to_json(self):
+        data = {
+            'source': self.source,
+            'permalink': self.permalink,
+            'title': self.title,
+            'content': self.content,
+            'format': self.content_format,
+            'author': {
+                'name': self.author_name,
+                'url': self.author_url,
+                'image': self.author_image
+            },
+            'pub_date': format_date(self.pub_date)
+        }
+        return filter_empty_keys(data)
+
     def __repr__(self):
         return "<{}: source={}, permalink={}, content={}, date={}, "\
             "author=({}, {}, {})>"\
@@ -302,6 +429,21 @@ class Mention:
         self.author_url = author_url
         self.author_image = author_image
         self.pub_date = pub_date or datetime.datetime.utcnow()
+
+    def to_json(self):
+        data = {
+            'source': self.source,
+            'permalink': self.permalink,
+            'type': self.mention_type,
+            'content': self.content,
+            'author': {
+                'name': self.author_name,
+                'url': self.author_url,
+                'image': self.author_image
+            },
+            'pub_date': format_date(self.pub_date)
+        }
+        return filter_empty_keys(data)
 
     def __repr__(self):
         return "<Mention: type={}, source={}, permalink={}, author=({}, {}, {})>"\
