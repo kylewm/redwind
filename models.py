@@ -25,9 +25,12 @@ import os
 import os.path
 import json
 import pytz
+import tempfile
+import shutil
 from operator import attrgetter
 
 datadir = "_data"
+backupdir = "_data.backup"
 
 
 def isoparse(s):
@@ -43,6 +46,7 @@ def format_date(date):
         if date.tzinfo:
             date = date.astimezone(pytz.utc)
             date = date.replace(tzinfo=None)
+        date = date.replace(microsecond=0)
         return date.isoformat('T')
 
 
@@ -55,13 +59,25 @@ def filter_empty_keys(data):
     return data
 
 
+def save_backup(sourcedir, destdir, relpath):
+    source = os.path.join(sourcedir, relpath)
+    if os.path.exists(source):
+        now = datetime.datetime.now()
+        target = os.path.join(destdir, relpath
+                              + "-" + format_date(now))
+        if not os.path.exists(os.path.dirname(target)):
+            os.makedirs(os.path.dirname(target))
+        shutil.copy(source, target)
+
+
 class User:
 
     @classmethod
     def load(cls, path):
-        with open(path, 'r') as f:
-            data = json.load(f)
-        return cls.from_json(data)
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                data = json.load(f)
+            return cls.from_json(data)
 
     @classmethod
     def from_json(cls, data):
@@ -81,8 +97,14 @@ class User:
         return filter_empty_keys(data)
 
     def save(self):
-        with open(os.path.join(datadir, 'user'), 'w') as f:
+        _, temp = tempfile.mkstemp()
+        with open(temp, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
+
+        filename = os.path.join(datadir, 'user')
+        if os.path.exists(filename):
+            save_backup(datadir, backupdir, 'user')
+        shutil.move(temp, filename)
 
     # Flask-Login integration
     def is_authenticated(self):
@@ -126,16 +148,14 @@ class Post:
 
             ls = sorted(os.listdir(path), reverse=True)
             for filename in ls:
-                if filename == 'user':
-                    continue
                 newpath = os.path.join(path, filename)
                 if os.path.isdir(newpath):
                     walk(newpath, posts)
                 else:
                     filename = os.path.basename(newpath)
                     post_type, date_index = filename.split('_')
-                    if post_type in post_types:
-                        post = Post.load(newpath)
+                    if not post_types or post_type in post_types:
+                        post = cls.load(newpath)
                         if not post.deleted and (not post.draft
                                                  or include_drafts):
                             posts.append(post)
@@ -146,10 +166,39 @@ class Post:
         return posts[:count]
 
     @classmethod
+    def load_by_month(cls, year, month):
+        posts = []
+        path = os.path.join(datadir, 'posts', "{}/{:02d}".format(year, month))
+        days = os.listdir(path)
+        for day in days:
+            daypath = os.path.join(path, day)
+            for filename in os.listdir(daypath):
+                filepath = os.path.join(daypath, filename)
+                post = cls.load(filepath)
+                if not post.deleted:
+                    posts.append(post)
+
+        posts.sort(key=attrgetter('pub_date'), reverse=True)
+        return posts
+
+    @classmethod
+    def get_archive_months(cls):
+        result = []
+        path = os.path.join(datadir, 'posts')
+        for year in os.listdir(path):
+            yearpath = os.path.join(path, year)
+            for month in os.listdir(yearpath):
+                first_of_month = datetime.date(int(year), int(month), 1)
+                result.append(first_of_month)
+        result.sort(reverse=True)
+        return result
+
+    @classmethod
     def load(cls, path):
-        with open(path, 'r') as f:
-            data = json.load(f)
-        return cls.from_json(data)
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                data = json.load(f)
+            return cls.from_json(data)
 
     @classmethod
     def from_json(cls, data):
@@ -199,7 +248,7 @@ class Post:
 
     @classmethod
     def lookup_post_by_path(cls, path):
-        return Post.load(os.path.join(datadir, 'posts', path))
+        return cls.load(os.path.join(datadir, 'posts', path))
 
     @classmethod
     def lookup_post_by_shortid(cls, shortid):
@@ -271,13 +320,16 @@ class Post:
                 self.date_index += 1
 
         filename = os.path.join(basedir, self.path)
-
         parentdir = os.path.dirname(filename)
         if not os.path.exists(parentdir):
             os.makedirs(parentdir)
 
-        with open(filename, 'w') as f:
+        _, temp = tempfile.mkstemp()
+        with open(temp, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
+
+        save_backup(basedir, os.path.join(backupdir, 'posts'), self.path)
+        shutil.move(temp, filename)
 
     @property
     def path(self):

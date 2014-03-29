@@ -45,7 +45,8 @@ def authorize_facebook():
             'https://graph.facebook.com/oauth/access_token?'
             + urllib.parse.urlencode(params))
         payload = urllib.parse.parse_qs(r.read())
-        access_token = payload[b'access_token']
+
+        access_token = payload[b'access_token'][0].decode('ascii')
         current_user.facebook_access_token = access_token
         current_user.save()
         return redirect(url_for('settings'))

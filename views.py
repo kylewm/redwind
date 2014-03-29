@@ -16,11 +16,11 @@
 
 
 from app import app
-from models import Post, Mention, Context
+from models import Post, Context
 from auth import load_user
 
-from bs4 import BeautifulSoup, Comment
-from datetime import datetime
+from bs4 import BeautifulSoup
+from datetime import datetime, date
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, jsonify, Markup
 from flask.ext.login import login_required, login_user, logout_user,\
@@ -47,7 +47,8 @@ TIMEZONE = pytz.timezone('US/Pacific')
 
 POST_TYPES = ['article', 'note', 'share', 'like', 'reply', 'checkin']
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
-DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<int:index>'
+DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
+            '<int(fixed_digits=2):day>/<int:index>'
 
 FETCH_EXTERNAL_POST_HOOK = []
 
@@ -80,23 +81,6 @@ class DisplayPost:
                 """allowtransparency="true"></iframe>"""\
                 .format(m.group(1))
             return preview, False
-
-        #FIXME
-        #preview = twitter_client.repost_preview(self.author, url)
-        #if preview:
-        #    return preview, True
-
-        #fallback (this is included in the template now)
-        #m = re.match(r'https?://(.*)', url)
-        #if m:
-        #    preview = """<a href="{}" class="u-repost u-repost-of">{}</a>"""\
-        #        .format(url, m.group(1))
-        #    return preview, False
-
-        # TODO when the post is first created, we should fetch the
-        # reposted URL and save some information about it (i.e.,
-        # information we can't get from the page title, whether it is an
-        # image, etc.)
         return None, False
 
     def get_share_preview(self):
@@ -200,17 +184,13 @@ def render_posts_atom(title, feed_id, post_types, count):
 
 @app.route("/all.atom")
 def all_atom():
-    return render_posts_atom('All', 'all.atom', ('article', 'note', 'share', 'like', 'reply'), 30)
+    return render_posts_atom('All', 'all.atom', None, 30)
 
 
 @app.route("/updates.atom")
 def updates_atom():
-    return render_posts_atom('Updates', 'updates.atom', ('article', 'note', 'share'), 30)
-
-
-@app.route("/notes.atom")
-def notes_atom():
-    return render_posts_atom('Notes', 'notes.atom', ('note',), 30)
+    return render_posts_atom('Updates', 'updates.atom',
+                             ('article', 'note', 'share'), 30)
 
 
 @app.route("/articles.atom")
@@ -218,16 +198,23 @@ def articles_atom():
     return render_posts_atom('Articles', 'articles.atom', ('article',), 10)
 
 
-@app.route("/mentions.atom")
-def mentions_atom():
-    mentions = Mention\
-        .query\
-        .filter(Mention.post)\
-        .order_by(Mention.pub_date.desc())\
-        .limit(30).all()
-    return make_response(render_template("mentions.atom",
-                                         mentions=mentions), 200,
-                         {'Content-Type': 'application/atom+xml'})
+@app.route('/archive', defaults={'year': None, 'month': None})
+@app.route('/archive/<int:year>/<int(fixed_digits=2):month>')
+def archive(year, month):
+    # give the template the posts from this month,
+    # and the list of all years/month
+
+    months = Post.get_archive_months()
+    if year and month:
+        posts = [DisplayPost(post) for post in Post.load_by_month(year, month)]
+        first_of_month = year and month and date(year, month, 1)
+    else:
+        posts = []
+        first_of_month = None
+
+    return render_template(
+        'archive.html', months=months,
+        expanded_month=first_of_month, posts=posts)
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
@@ -235,7 +222,10 @@ def mentions_atom():
 def post_by_date(post_type, year, month, day, index, slug):
     post = Post.lookup_post_by_date(post_type, year, month, day, index)
     if not post:
-        abort(410)
+        abort(404)
+
+    if post.deleted:
+        abort(410)  # deleted permanently
 
     if not slug and post.slug:
         return redirect(
@@ -372,21 +362,25 @@ def uploads_popup():
 
 
 @app.template_filter('strftime')
-def strftime_filter(date, fmt='%Y %b %d'):
-    if date:
-        localdate = pytz.utc.localize(date).astimezone(TIMEZONE)
-        return localdate.strftime(fmt)
+def strftime_filter(thedate, fmt='%Y %b %d'):
+    if not thedate:
+        thedate = date(1982, 11, 24)
+    if hasattr(thedate, 'tzinfo'):
+        thedate = pytz.utc.localize(thedate).astimezone(TIMEZONE)
+    return thedate.strftime(fmt)
 
 
 @app.template_filter('isotime')
-def isotime_filter(date):
-    if date:
-        utctime = pytz.utc.localize(date)
-        return utctime.isoformat('T')
+def isotime_filter(thedate):
+    if not thedate:
+        thedate = date(1982, 11, 24)
+    if hasattr(thedate, 'tzinfo'):
+        thedate = pytz.utc.localize(thedate)
+    return thedate.isoformat()
 
 
 @app.template_filter('pluralize')
-def pluralize(number, singular = '', plural = 's'):
+def pluralize(number, singular='', plural='s'):
     if number == 1:
         return singular
     else:

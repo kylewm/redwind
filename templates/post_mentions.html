@@ -1,56 +1,56 @@
-<div class="mentions">  
+<div class="mentions">
   <a name="mentions"></a>
 
   {% set likes = post.likes %}
   {% if likes %}
-  <div class="likes">
-    likes:&nbsp;
-    {% for like in likes %}
-    <a href="{{ like.permalink }}">
-      <img class="u-photo" src="{{like.author_image or url_for('static', filename='img/users/placeholder.png')}}"
-           width="36px" alt="{{like.author_name}}"
-           title="{{like.author_name}} {{like.content | format_as_text(like.content_format) | trim}}" style="vertical-align: middle"/>
-    </a>
-    {% endfor %}
-  </div>
+    <div class="likes">
+      likes:&nbsp;
+      {% for like in likes %}
+        <a href="{{ like.permalink }}">
+          <img class="u-photo" src="{{like.author_image or url_for('static', filename='img/users/placeholder.png')}}"
+               width="36px" alt="{{like.author_name}}"
+               title="{{like.author_name}} {{like.content | format_as_text(like.content_format) | trim}}" style="vertical-align: middle"/>
+        </a>
+      {% endfor %}
+    </div>
   {% endif %}
 
   {% set replies = post.non_likes %}
   {% if replies %}
-  <div class="replies">
-    {% for reply in replies %}
-    <div class="p-comment h-cite">
-      <div class="p-author h-card">
+    <div class="replies">
+      {% for reply in replies %}
+        <div class="p-comment h-cite">
+          <div class="p-author h-card">
 
-        <div class="author-image-holder">
-          <img class="author-image u-photo" src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}"
-               width="48px" alt="{{reply.author_name}}"/>
+            <div class="author-image-holder">
+              <img class="author-image u-photo" src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}"
+                   width="48px" alt="{{reply.author_name}}"/>
+            </div>
+
+            {% if authenticated %}
+              <!-- TODO <span class="admin-post-controls"><a href=" url_for('delete_mention_by_id', id=reply.id, redirect=post.permalink) ">Delete</a></span> -->
+            {% endif %}
+
+
+	    {% if reply.author_name and reply.author_url %}
+              <a class="p-name u-url" href="{{reply.author_url}}">{{ reply.author_name }}</a>
+            {% elif reply.author_name %}
+              <span class="p-name">{{ reply.author_name}}</span>
+            {% elif reply.author_url %}
+              <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>
+            {% endif %}
+	    on <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+	    <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+	      </time>
+	      said
+          </div>
+
+          <p class="e-content">{{ reply.content | safe }}</p>
+
+          <div style="clear:both"></div>
         </div>
-
-      {% if authenticated %}
-      <span class="admin-post-controls"><a href="{{ url_for('delete_mention_by_id', id=reply.id, redirect=post.permalink) }}">Delete</a></span>
-      {% endif %}
-
-	
-	      {% if reply.author_name and reply.author_url %}
-                <a class="p-name u-url" href="{{reply.author_url}}">{{ reply.author_name }}</a>
-              {% elif reply.author_name %}
-                <span class="p-name">{{ reply.author_name}}</span>
-              {% elif reply.author_url %}
-                <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>
-              {% endif %}
-		on <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-		  <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
-		</time>
-		said
-      </div>
-
-      <p class="e-content">{{ reply.content | safe }}</p>
-
-      <div style="clear:both"></div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
 
-  {% endif %}
+{% endif %}
 </div>
