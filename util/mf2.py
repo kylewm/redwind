@@ -91,9 +91,9 @@ h_classes = classes_by_prefix_fn('h-')
 
 
 def property_classes(element):
-    return itertools.chain(
+    return list(itertools.chain(
         p_classes(element), dt_classes(element),
-        u_classes(element), e_classes(element))
+        u_classes(element), e_classes(element)))
 
 
 def parse_microformats(url, root):
@@ -102,13 +102,14 @@ def parse_microformats(url, root):
 
     types = h_classes(root)
     if types:
-        children = []
+        all_children = []
         properties = {}
+
         for child in root.find_all(True, recursive=False):
             props, children = parse_properties(url, child)
             for key, values in props.items():
                 multimap_extend(properties, key, values)
-            children += children
+            all_children += children
         parse_implied_properties(url, root, properties)
 
         result = {
@@ -116,8 +117,8 @@ def parse_microformats(url, root):
             'properties': properties,
         }
 
-        if children:
-            result['children'] = children
+        if all_children:
+            result['children'] = all_children
 
         results.append(result)
 
@@ -185,11 +186,12 @@ def parse_properties(url, root):
         #nested microformat -- get property names
         mfvalues = parse_microformats(url, root)
         propclasses = property_classes(root)
+
         if propclasses:
             for _, mfprop in propclasses:
                 multimap_extend(properties, mfprop, mfvalues)
         else:
-            children.append(children)
+            children += mfvalues
     else:
         for _, text_prop in p_classes(root):
             multimap_put(properties, text_prop, text_property_value(root))
@@ -204,10 +206,10 @@ def parse_properties(url, root):
             multimap_put(properties, e_prop, e_property_value(root))
 
         for child in root.find_all(True, recursive=False):
-            subprops, children = parse_properties(url, child)
+            subprops, subchildren = parse_properties(url, child)
             for key, values in subprops.items():
                 multimap_extend(properties, key, values)
-            children += children
+            children += subchildren
 
     return properties, children
 
@@ -359,15 +361,16 @@ if __name__ == '__main__':
     import json
 
     urls = [
-        'https://snarfed.org/2014-03-10_re-kyle-mahan',
-        'https://brid-gy.appspot.com/like/facebook/12802152/10100820912531629/1347771058',
-        'https://brid-gy.appspot.com/comment/googleplus/109622249060170703374/z12vyphidxaodbb0223qdj0pwkvuytpja04/z12vyphidxaodbb0223qdj0pwkvuytpja04.1334830661177000',
-        'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
-        'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
-        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
-        'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
-        'http://tommorris.org/posts/2550',
-        'https://brid-gy.appspot.com/like/facebook/12802152/10100835618460829/1740230476'
+        # 'https://snarfed.org/2014-03-10_re-kyle-mahan',
+        # 'https://brid-gy.appspot.com/like/facebook/12802152/10100820912531629/1347771058',
+        # 'https://brid-gy.appspot.com/comment/googleplus/109622249060170703374/z12vyphidxaodbb0223qdj0pwkvuytpja04/z12vyphidxaodbb0223qdj0pwkvuytpja04.1334830661177000',
+        # 'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
+        # 'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
+        # 'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
+        # 'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
+        # 'http://tommorris.org/posts/2550',
+        # 'https://brid-gy.appspot.com/like/facebook/12802152/10100835618460829/1740230476'
+        'http://kartikprabhu.com/article/indieweb-love-blog',
     ]
 
     for url in urls:
