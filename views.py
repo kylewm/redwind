@@ -157,7 +157,7 @@ def render_posts(title, post_types, page, per_page, include_drafts=False):
 @app.route('/page/<int:page>')
 def index(page):
     # leave out replies and likes
-    return render_posts(None, ('article', 'note', 'share'), page, 30,
+    return render_posts(None, ('article', 'note', 'share', 'reply'), page, 30,
                         include_drafts=current_user.is_authenticated())
 
 
