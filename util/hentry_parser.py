@@ -15,7 +15,7 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from . import mf2
+from mf2py.parser import Parser
 from dateutil.parser import parse as parsedate
 import pytz
 
@@ -78,9 +78,8 @@ def parse(txt, source):
                           urls and urls[0],
                           photos and photos[0])
 
-    #p = Parser(doc=txt, url=source)
-    #d = p.to_dict()
-    d = mf2.parse(txt, source)
+    p = Parser(doc=txt, url=source)
+    d = p.to_dict()
     references = []
 
     for rel, rel_url in d['rels'].items():
@@ -165,13 +164,14 @@ def parse(txt, source):
 if __name__ == '__main__':
     import requests
     urls = [
-        'https://snarfed.org/2014-03-10_re-kyle-mahan',
-        'https://brid-gy.appspot.com/like/facebook/12802152/10100820912531629/1347771058',
-        'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
-        'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
-        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
-        'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
-        'http://tommorris.org/posts/2550'
+#        'https://snarfed.org/2014-03-10_re-kyle-mahan',
+#        'https://brid-gy.appspot.com/like/facebook/12802152/10100820912531629/1347771058',
+#        'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
+#        'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
+#        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
+#        'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
+#        'http://tommorris.org/posts/2550',
+        'http://tommorris.org/posts/8872'
     ]
 
     for url in urls:

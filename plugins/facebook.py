@@ -60,9 +60,9 @@ def authorize_facebook():
 def syndicate_to_facebook():
     try:
         post_id = request.form.get('post_id')
-        post = Post.lookup_post_by_shortid(post_id)
-        handle_new_or_edit(post)
-        post.save()
+        with Post.writeable(Post.shortid_to_path(post_id)) as post:
+            handle_new_or_edit(post)
+            post.save()
         return jsonify(success=True, facebook_post_id=post.facebook_post_id,
                        facebook_permalink=post.facebook_url)
     except Exception as e:

@@ -34,7 +34,7 @@ import views
 def send_webmentions():
     try:
         post_id = request.form.get('post_id')
-        post = Post.lookup_post_by_shortid(post_id)
+        post = Post.load_by_shortid(post_id)
         results = mention_client.handle_new_or_edit(post)
         return jsonify(success=True, results=results)
 

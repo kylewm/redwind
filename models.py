@@ -27,7 +27,10 @@ import json
 import pytz
 import tempfile
 import shutil
+import time
 from operator import attrgetter
+from contextlib import contextmanager
+
 
 datadir = "_data"
 backupdir = "_data.backup"
@@ -70,10 +73,28 @@ def save_backup(sourcedir, destdir, relpath):
         shutil.copy(source, target)
 
 
+def acquire_lock(path, retries):
+    lockfile = path+'.lock'
+    while os.path.exists(lockfile) and retries > 0:
+        time.sleep(1)
+        retries -= 1
+    if os.path.exists(lockfile):
+        raise RuntimeError("Timed out waiting for lock to become available {}"
+                           .format(lockfile))
+    with open(lockfile, 'w') as f:
+        f.write("1")
+    return True
+
+
+def release_lock(path):
+    os.remove(path + '.lock')
+
+
 class User:
 
     @classmethod
     def load(cls, path):
+        app.logger.debug("loading from path %s", path)
         if os.path.exists(path):
             with open(path, 'r') as f:
                 data = json.load(f)
@@ -140,6 +161,28 @@ class Location:
 
 
 class Post:
+
+    @classmethod
+    @contextmanager
+    def writeable(cls, path):
+        acquire_lock(path, 30)
+        post = cls.load(path)
+        post._writeable = True
+        try:
+            yield post
+        finally:
+            post._writeable = False
+            release_lock(path)
+
+    @classmethod
+    def load(cls, path):
+        app.logger.debug("loading from path %s", path)
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                data = json.load(f)
+            post = cls.from_json(data)
+            return post
+
     @classmethod
     def load_recent(cls, count, post_types, include_drafts=False):
         def walk(path, posts):
@@ -177,9 +220,36 @@ class Post:
                 post = cls.load(filepath)
                 if not post.deleted:
                     posts.append(post)
-
         posts.sort(key=attrgetter('pub_date'), reverse=True)
         return posts
+
+    @classmethod
+    def load_by_date(cls, post_type, year, month, day, index):
+        return cls.load(
+            cls.date_to_path(post_type, year, month, day, index))
+
+    @classmethod
+    def load_by_shortid(cls, shortid):
+        return cls.load(cls.shortid_to_path(shortid))
+
+    @classmethod
+    def date_to_path(cls, post_type, year, month, day, index):
+        return cls.relpath_to_fullpath("{}/{:02d}/{:02d}/{}_{}"
+                                       .format(year, month, day,
+                                               post_type, index))
+
+    @classmethod
+    def shortid_to_path(cls, shortid):
+        post_type = shortlinks.parse_type(shortid)
+        pub_date = shortlinks.parse_date(shortid)
+        index = shortlinks.parse_index(shortid)
+        return cls.relpath_to_fullpath('{}/{:02d}/{:02d}/{}_{}'
+                                       .format(pub_date.year, pub_date.month,
+                                               pub_date.day, post_type, index))
+
+    @classmethod
+    def relpath_to_fullpath(cls, path):
+        return os.path.join(datadir, 'posts', path)
 
     @classmethod
     def get_archive_months(cls):
@@ -192,13 +262,6 @@ class Post:
                 result.append(first_of_month)
         result.sort(reverse=True)
         return result
-
-    @classmethod
-    def load(cls, path):
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                data = json.load(f)
-            return cls.from_json(data)
 
     @classmethod
     def from_json(cls, data):
@@ -238,27 +301,6 @@ class Post:
             post.facebook_post_id = synd.get('facebook_id')
         return post
 
-    @classmethod
-    def lookup_post_by_date(cls, post_type, year, month, day, index):
-        path = "{}/{:02d}/{:02d}/{}_{}".format(
-            year, month, day,
-            post_type, index)
-
-        return cls.lookup_post_by_path(path)
-
-    @classmethod
-    def lookup_post_by_path(cls, path):
-        return cls.load(os.path.join(datadir, 'posts', path))
-
-    @classmethod
-    def lookup_post_by_shortid(cls, shortid):
-        post_type = shortlinks.parse_type(shortid)
-        pub_date = shortlinks.parse_date(shortid)
-        index = shortlinks.parse_index(shortid)
-        return cls.lookup_post_by_path('{}/{:02d}/{:02d}/{}_{}'
-                                       .format(pub_date.year, pub_date.month,
-                                               pub_date.day, post_type, index))
-
     def __init__(self, post_type, content_format):
         self.post_type = post_type
         self.content_format = content_format
@@ -277,6 +319,7 @@ class Post:
         self.location_name = None
         self.latitude = None
         self.longitude = None
+        self._writeable = False
 
     def to_json(self):
         data = {
@@ -311,6 +354,9 @@ class Post:
         return filter_empty_keys(data)
 
     def save(self):
+        if not self._writeable:
+            raise RuntimeError("Cannot save post that was not opened with the 'writeable' flag")
+
         basedir = os.path.join(datadir, 'posts')
 
         # assign a new date index if we don't have one yet

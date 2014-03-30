@@ -77,9 +77,9 @@ def syndicate_to_twitter():
     try:
         post_id = request.form.get('post_id')
         preview = request.form.get('tweet_preview')
-        post = Post.lookup_post_by_shortid(post_id)
-        twitter_client.handle_new_or_edit(post, preview)
-        post.save()
+        with Post.writeable(Post.shortid_to_path(post_id)) as post:
+            twitter_client.handle_new_or_edit(post, preview)
+            post.save()
         return jsonify(success=True, twitter_status_id=post.twitter_status_id,
                        twitter_permalink=post.twitter_url)
     except Exception as e:
@@ -272,88 +272,6 @@ class TwitterClient:
         return current_user and current_user.twitter_oauth_token \
             and current_user.twitter_oauth_token_secret
 
-    def get_help_configuration(self):
-        stale_limit = timedelta(days=1)
-
-        if (not self.cached_config
-                or datetime.utcnow() - self.config_fetch_date > stale_limit):
-            api = self.get_auth_session()
-            response = api.get('help/configuration.json')
-            if response.status_code // 2 == 100:
-                self.cached_config = response.json()
-                self.config_fetch_date = datetime.utcnow()
-        return self.cached_config
-
-        def __repr__(self):
-            return "text({})".format(self.text)
-
-    def estimate_length(self, components):
-        return sum(c.length for c in components) + len(components) - 1
-
-    def run_shorten_algorithm(self, components, target_length):
-        orig_length = self.estimate_length(components)
-        difference = orig_length - target_length
-
-        shortened_comps = []
-        for c in reversed(components):
-
-            if difference <= 0 or not (c.can_drop or c.can_shorten):
-                shortened_comps.insert(0, c)
-            else:
-                if c.can_shorten:
-                    shortened = c.shorten(c.length - difference)
-                    difference -= c.length
-                    if shortened:
-                        difference += shortened.length
-                        shortened_comps.insert(0, shortened)
-                else:
-                    difference -= c.length
-
-        return ' '.join(c.text for c in shortened_comps)
-
-    def get_media_url_length(self):
-        twitter_config = self.get_help_configuration()
-        if twitter_config:
-            return twitter_config.get('characters_reserved_per_media')
-        return 30
-
-    def get_url_length(self, is_https):
-        twitter_config = self.get_help_configuration()
-        if twitter_config:
-            return twitter_config.get('short_url_length_https'
-                                      if is_https
-                                      else 'short_url_length')
-        else:
-            return 30
-
-    def url_to_span(self, url, prefix='', postfix='', can_drop=True):
-        url_length = self.get_url_length(url.startswith('https'))
-        app.logger.debug("assuming url length {}".format(url_length))
-        return TextSpan(prefix + url + postfix,
-                        len(prefix) + url_length + len(postfix),
-                        can_shorten=False, can_drop=can_drop)
-
-    def text_to_span(self, text, can_shorten=True, can_drop=True):
-        return TextSpan(text, len(text), can_shorten=can_shorten,
-                        can_drop=can_drop)
-
-    def split_out_urls(self, text):
-        components = []
-        while text:
-            m = re.search(r'https?://[a-zA-Z0-9_\.\-():@#$%&?/=]+', text)
-            if m:
-                head = text[:m.start()].strip()
-                url = m.group(0)
-
-                components.append(self.text_to_span(head))
-                components.append(self.url_to_span(url))
-                text = text[m.end():]
-            else:
-                tail = text.strip()
-                components.append(self.text_to_span(tail))
-                text = None
-        return components
-
     def create_status(self, post, preview, has_media):
         """Create a <140 status message suitable for twitter
         """
@@ -368,64 +286,8 @@ class TwitterClient:
                              post.permalink, preview)
             return preview
 
-        target_length = 140
-        if has_media:
-            target_length -= self.get_media_url_length()
-
-        if post.title:
-            components = [self.text_to_span(post.title),
-                          self.url_to_span(post.permalink,
-                                           can_drop=False)]
-
-        else:
-            components = self.split_out_urls(
-                views.format_as_text(post.content,
-                                                  post.content_format))
-
-            # include the re-shared link
-            for share_context in post.share_contexts:
-                components.append(self.url_to_span(share_context.source,
-                                                   can_drop=False))
-
-            components.append(self.url_to_span(post.short_permalink,
-                                               prefix="\n(",
-                                               postfix=")",
-                                               can_drop=False))
-
-            # if that overflows, replace with a permalink
-            if self.estimate_length(components) > target_length:
-                components.pop()
-                components.append(self.url_to_span(post.permalink,
-                                                   can_drop=False))
-
-        status = self.run_shorten_algorithm(components, target_length)
-        app.logger.debug("shortened to (%d) for twitter '%s'",
-                         len(status), status)
-        return status
-
-
-class TextSpan:
-    def __init__(self, text, length, can_shorten=True, can_drop=True):
-        self.text = text
-        self.length = length
-        self.can_shorten = can_shorten
-        self.can_drop = can_drop
-
-    def shorten(self, length):
-        if len(self.text) <= length:
-            return self
-        elif length-3 <= 0:
-            return None
-        else:
-            new_text = self.text[:length-3].strip() + '...'
-            return TextSpan(new_text, len(new_text),
-                            can_shorten=False, can_drop=self.can_drop)
-
-    def __repr__(self):
-        shorten_text = "can shorten" if self.can_shorten else "cannot shorten"
-        drop_text = "can drop" if self.can_drop else "cannot drop"
-        return "span({}={}, {}, {}".format(self.text, self.length,
-                                           shorten_text, drop_text)
+        # fallback
+        return (post.title or post.content)[:116] + " " + post.permalink
 
 
 twitter_client = TwitterClient()

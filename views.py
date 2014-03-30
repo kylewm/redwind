@@ -25,6 +25,7 @@ from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, jsonify, Markup
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
+from contextlib import contextmanager
 
 from werkzeug import secure_filename
 from util import autolinker
@@ -214,13 +215,14 @@ def archive(year, month):
 
     return render_template(
         'archive.html', months=months,
-        expanded_month=first_of_month, posts=posts)
+        expanded_month=first_of_month, posts=posts,
+        authenticated=current_user.is_authenticated)
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
-    post = Post.lookup_post_by_date(post_type, year, month, day, index)
+    post = Post.load_by_date(post_type, year, month, day, index)
     if not post:
         abort(404)
 
@@ -299,13 +301,11 @@ def settings():
 @login_required
 def delete_by_id():
     shortid = request.args.get('id')
-    post = Post.lookup_post_by_shortid(shortid)
-
-    if not post:
-        abort(404)
-
-    post.deleted = True
-    post.save()
+    with Post.writeable(Post.shortid_to_path(shortid)) as post:
+        if not post:
+            abort(404)
+        post.deleted = True
+        post.save()
 
     redirect_url = request.args.get('redirect') or url_for('index')
     app.logger.debug("redirecting to {}".format(redirect_url))
@@ -348,7 +348,8 @@ def new_post():
 @login_required
 def edit_by_id():
     shortid = request.args.get('id')
-    post = Post.lookup_post_by_shortid(shortid)
+    post = Post.load_by_shortid(shortid)
+
     if not post:
         abort(404)
     return render_template('edit_post.html', post=post,
@@ -504,55 +505,59 @@ def receive_upload():
 @app.route('/api/save', methods=['POST'])
 @login_required
 def save_post():
-    try:
-        post_id_str = request.form.get('post_id')
-        print("post id=", post_id_str)
-        if post_id_str == 'new':
+
+    @contextmanager
+    def new_or_writeable(shortid):
+        if shortid == 'new':
             post_type = request.form.get('post_type', 'note')
             post = Post(post_type, 'plain')
+            post._writeable = True
+            yield post
         else:
-            post = Post.lookup_post_by_shortid(post_id_str)
+            with Post.writeable(Post.shortid_to_path(shortid)) as post:
+                yield post
 
-        # populate the Post object and save it to the database,
-        # redirect to the view
-        post.title = request.form.get('title', '')
-        post.content = request.form.get('content')
-        post.in_reply_to = request.form.get('in_reply_to', '')
-        post.repost_source = request.form.get('repost_source', '')
-        post.like_of = request.form.get('like_of', '')
-        post.content_format = request.form.get('content_format', 'plain')
-        post.draft = request.form.get('draft', 'true') == 'true'
+    try:
+        post_id_str = request.form.get('post_id')
+        with new_or_writeable(post_id_str) as post:
+            # populate the Post object and save it to the database,
+            # redirect to the view
+            post.title = request.form.get('title', '')
+            post.content = request.form.get('content')
+            post.in_reply_to = request.form.get('in_reply_to', '')
+            post.repost_source = request.form.get('repost_source', '')
+            post.like_of = request.form.get('like_of', '')
+            post.content_format = request.form.get('content_format', 'plain')
+            post.draft = request.form.get('draft', 'true') == 'true'
 
-        lat = request.form.get('latitude')
-        lon = request.form.get('longitude')
-        post.latitude = lat and float(lat)
-        post.longitude = lon and float(lon)
-        post.location_name = request.form.get('location_name')
+            lat = request.form.get('latitude')
+            lon = request.form.get('longitude')
+            post.latitude = lat and float(lat)
+            post.longitude = lon and float(lon)
+            post.location_name = request.form.get('location_name')
 
-        app.logger.debug("got draft setting from: %s",
-                         request.form.get('draft'))
+            if not post.pub_date:
+                post.pub_date = datetime.utcnow()
 
-        if not post.pub_date:
-            post.pub_date = datetime.utcnow()
+            slug = request.form.get('slug')
+            if slug:
+                post.slug = slug
+            elif post.title and not post.slug:
+                post.slug = slugify(post.title)
 
-        slug = request.form.get('slug')
-        if slug:
-            post.slug = slug
-        elif post.title and not post.slug:
-            post.slug = slugify(post.title)
+            post.repost_preview = None
 
-        post.repost_preview = None
+            twitter_status_id = request.form.get("twitter_status_id")
+            if twitter_status_id:
+                post.twitter_status_id = twitter_status_id
 
-        twitter_status_id = request.form.get("twitter_status_id")
-        if twitter_status_id:
-            post.twitter_status_id = twitter_status_id
+            facebook_post_id = request.form.get("facebook_post_id")
+            if facebook_post_id:
+                post.facebook_post_id = facebook_post_id
 
-        facebook_post_id = request.form.get("facebook_post_id")
-        if facebook_post_id:
-            post.facebook_post_id = facebook_post_id
+            post.save()
 
-        post.save()
-        print("saved post", post.shortid, post.permalink)
+        app.logger.debug("saved post %s %s", post.shortid, post.permalink)
         return jsonify(success=True, id=post.shortid, permalink=post.permalink)
 
     except Exception as e:
@@ -566,32 +571,36 @@ def save_post():
 def fetch_post_contexts():
     try:
         post_id_str = request.form.get('post_id')
-        post = Post.lookup_post_by_shortid(post_id_str)
 
         replies = request.form.get('in_reply_to', '').strip().splitlines()
         reposts = request.form.get('repost_source', '').strip().splitlines()
         likes = request.form.get('like_of', '').strip().splitlines()
 
-        post.reply_contexts = []
-        post.like_contexts = []
-        post.share_contexts = []
+        reply_contexts = []
+        like_contexts = []
+        share_contexts = []
 
         for reply_url in replies:
             replyctx = fetch_external_post(reply_url)
             if replyctx:
-                post.reply_contexts.append(replyctx)
+                reply_contexts.append(replyctx)
 
         for repost_url in reposts:
             sharectx = fetch_external_post(repost_url)
             if sharectx:
-                post.share_contexts.append(sharectx)
+                share_contexts.append(sharectx)
 
         for like_url in likes:
             likectx = fetch_external_post(like_url)
             if likectx:
-                post.like_contexts.append(likectx)
+                like_contexts.append(likectx)
 
-        post.save()
+        with Post.writeable(Post.shortid_to_path(post_id_str)) as post:
+            post.reply_contexts = reply_contexts
+            post.like_contexts = like_contexts
+            post.share_contexts = share_contexts
+            post.save()
+
         return jsonify({
             'success': True,
             'replies': replies,
@@ -641,10 +650,10 @@ def fetch_external_post(source):
 
 @app.route('/api/mf2')
 def convert_mf2():
-    from util import mf2
+    from mf2py.parser import Parser
     url = request.args.get('url')
-    response = requests.get(url)
-    json = mf2.parse(response.text, url)
+    p = Parser(url=url)
+    json = p.to_dict()
     return jsonify(json)
 
 
