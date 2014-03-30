@@ -422,9 +422,9 @@ class Post:
     def short_cite(self):
         tag = shortlinks.tag_for_post_type(self.post_type)
         ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
-        cite = '({} {}{}{})'.format(app.config.get('SHORT_SITE_CITE'),
-                                    tag, base60.encode(ordinal),
-                                    base60.encode(self.date_index))
+        cite = '{} {}{}{}'.format(app.config.get('SHORT_SITE_CITE'),
+                                  tag, base60.encode(ordinal),
+                                  base60.encode(self.date_index))
         return cite
 
     @property

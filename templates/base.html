@@ -37,67 +37,68 @@
         <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
 
-    <div class="wrapper">
-
+    <div id="wrapper">
       <header>
-        <div class="section group">
-          <div class="col span_1_of_3">
-            <p class="site-name">kylewm.com</p>
-          </div>
-          <div class="col span_2_of_3">
-            <nav>
-              <ul>
-                <li><a href="{{ url_for('index') }}">stream</a></li>
-                <li><a href="{{ url_for('articles') }}">articles</a></li>
-                <li><a href="{{ url_for('archive') }}">archive</a></li>
+        {% if not authenticated %}
+          <form id="indie_auth_form" action="http://indieauth.com/auth" method="get">
+            <!-- <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" /> -->
+            <input id="indie_auth_url" type="hidden" name="me" value="http://kylewm.com"/>
+            <button id="sign_in_button" type="submit">Sign In</button>
+            <input type="hidden" name="redirect_uri" value="{{ url_for('indie_auth', _external=True) }}" />
+          </form>
+        {% endif %}
 
-                {% if authenticated %}
-                <li><a href="{{ url_for('settings') }}">settings</a></li>
-                <li><a href="{{ url_for('logout') }}">logout</a></li>
-                {% else %}
-                <li>
-                  <form action="http://indieauth.com/auth" method="get">
-                    <!-- <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" /> -->
-                    <input id="indie_auth_url" type="hidden" name="me" value="http://kylewm.com"/>
-                    <button id="sign_in_button" type="submit">Sign In</button>
-                    <input type="hidden" name="redirect_uri" value="{{ url_for('indie_auth', _external=True) }}" />
-                  </form>
-                </li>
 
-                {% endif %}
-              </ul>
-              {% if authenticated %}
-              <ul>
-                <li>new:</li>
-                <li><a href="{{ url_for('new_post', type='article') }}">article</a></li>
-                <li><a href="{{ url_for('new_post', type='note') }}">note</a></li>
-                <li><a href="{{ url_for('new_post', type='reply') }}">reply</a></li>
-                <li><a href="{{ url_for('new_post', type='share') }}">share</a></li>
-                <li><a href="{{ url_for('new_post', type='like') }}">like</a></li>
-              </ul>
-              {% endif %}
-            </nav>
-          </div>
-        </div>
+        <nav>
+          <ul>
+            <li><span class="site-name">kylewm.com</span></li>
+            <li><span class="site-name-separator">//</span></li>
+            <li><a href="{{ url_for('index') }}">stream</a></li>
+            <li><a href="{{ url_for('articles') }}">articles</a></li>
+            <li><a href="{{ url_for('archive') }}">archive</a></li>
+
+            {% if authenticated %}
+              <li><a href="{{ url_for('settings') }}">settings</a></li>
+              <li><a href="{{ url_for('logout') }}">logout</a></li>
+            {% else %}
+            {% endif %}
+          </ul>
+
+          {% if authenticated %}
+            <ul>
+              <li>new</li>
+              <li>//</li>
+              <li><a href="{{ url_for('new_post', type='article') }}">article</a></li>
+              <li><a href="{{ url_for('new_post', type='note') }}">note</a></li>
+              <li><a href="{{ url_for('new_post', type='reply') }}">reply</a></li>
+              <li><a href="{{ url_for('new_post', type='share') }}">share</a></li>
+              <li><a href="{{ url_for('new_post', type='like') }}">like</a></li>
+            </ul>
+          {% endif %}
+        </nav>
       </header>
-
 
       <div class="flashes">
         {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <ul class=flashes>
-          {% for message in messages %}
-          <li>{{ message }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
+          {% if messages %}
+            <ul class=flashes>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
         {% endwith %}
       </div>
 
-
-      <div class="section group">
-          {% block content %}{% endblock content %}
+      <div id="content-area">
+        {% block content %}{% endblock content %}
       </div>
+
+      <footer>
+        {% block footer %}{% endblock footer %}
+        {% include "site_info.html" %}
+      </footer>
     </div>
+
   </body>
 </html>

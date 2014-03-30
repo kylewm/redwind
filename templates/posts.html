@@ -1,6 +1,6 @@
-{% extends "base_with_sidebar.html" %}
+{% extends "base.html" %}
 
-{% block content2 %}
+{% block content %}
 
   <div class="h-feed">
 
@@ -43,4 +43,8 @@
 
   {% include "page_arrows.html" %}
 
-{% endblock content2 %}
+{% endblock content %}
+
+{% block footer %}
+  {% include "hcard.html" %}
+{% endblock footer %}

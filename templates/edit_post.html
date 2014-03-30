@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 
-
 {% block content %}
-
-<div class="col span_2_of_3">
 
   <form id="edit_form" method="POST">
     <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
@@ -96,17 +93,9 @@
     </label>
   </form>
 
-</div>
-
-<div class="col span_1_of_3">
   <ul id="result"></ul>
-</div>
 
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-<script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
-<script type="text/javascript">
+  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
 
-
-
-</script>
 {% endblock %}

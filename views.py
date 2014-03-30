@@ -39,9 +39,9 @@ import requests
 import shortlinks
 import unicodedata
 
-bleach.ALLOWED_TAGS += ['img']
+bleach.ALLOWED_TAGS += ['img', 'p', 'br']
 bleach.ALLOWED_ATTRIBUTES.update({
-    'img': ['src', 'alt', 'title']
+    'img': [ 'src', 'alt', 'title']
 })
 
 TIMEZONE = pytz.timezone('US/Pacific')
@@ -271,7 +271,7 @@ def indie_auth():
         user = load_user(domain)
         if user:
             login_user(user, remember=True)
-            flash('Logged in {} with domain {}'.format(user.login, domain))
+            flash('Logged in with domain {}'.format(domain))
         else:
             flash('No user for domain {}'.format(domain))
 
@@ -378,6 +378,38 @@ def isotime_filter(thedate):
     if hasattr(thedate, 'tzinfo'):
         thedate = pytz.utc.localize(thedate)
     return thedate.isoformat()
+
+
+@app.template_filter('human_time')
+def human_time(thedate):
+    if not thedate:
+        return None
+    now = datetime.utcnow()
+    delta = now - thedate
+
+    if delta.days < 1:
+        # resolve seconds into hours/minutes
+        minutes = delta.seconds // 60
+        if minutes < 1:
+            return "Just now"
+        if minutes < 60:
+            return "{} minute{} ago".format(minutes, pluralize(minutes))
+        else:
+            hours = round(minutes/60)
+            return "About {} hour{} ago".format(hours, pluralize(hours))
+
+    if delta.days == 1:
+        return "Yesterday"
+
+    if delta.days < 30:
+        return "{} days ago".format(delta.days)
+
+    if delta.days < 365:
+        months = round(delta.days / 30)
+        return "About {} month{} ago".format(months, pluralize(months))
+
+    years = round(delta.days / 365)
+    return "{} year{} ago".format(years, pluralize(years))
 
 
 @app.template_filter('pluralize')

@@ -1,8 +1,6 @@
-<a href="{{ post.short_permalink }}">&infin;</a>
-<a class="u-url" href="{{ post.permalink }}">
-  <time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</time>
-</a>
-{% if post.latitude and post.longitude %}
-@ <a href="http://www.openstreetmap.org/#map=18/{{post.latitude}}/{{post.longitude}}">{{post.location_name or 'Unnamed place'}}</a>
+
+<a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | human_time }}</time></a>
+{% if post.location %}
+at <a href="http://www.openstreetmap.org/#map=18/{{post.location.latitude}}/{{post.location.longitude}}">{{post.location.name or 'Unnamed place'}}</a>
 {% endif %}
 <br />

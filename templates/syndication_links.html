@@ -1,14 +1,19 @@
 {% if post.twitter_url or post.facebook_url %}
 
-  {% if post.twitter_url %}
-    <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">
-      View on Twitter
-    </a><br />
-  {% endif %}
+  <div class="syndication-links">
+    <h4>Syndication</h4>
+    <ul>
+      {% if post.twitter_url %}
+        <li><a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">
+            View on Twitter
+        </a></li>
+      {% endif %}
 
-  {% if post.facebook_url %}
-    <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">
-      View on Facebook
-    </a><br />
-  {% endif %}
+      {% if post.facebook_url %}
+        <li><a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">
+            View on Facebook
+        </a></li>
+      {% endif %}
+    </ul>
+  </div>
 {% endif %}

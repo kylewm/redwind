@@ -1,10 +1,11 @@
 <div class="mentions">
+
   <a name="mentions"></a>
 
   {% set likes = post.likes %}
   {% if likes %}
     <div class="likes">
-      likes:&nbsp;
+      <h4>Likes</h4>
       {% for like in likes %}
         <a href="{{ like.permalink }}">
           <img class="u-photo" src="{{like.author_image or url_for('static', filename='img/users/placeholder.png')}}"
@@ -18,6 +19,7 @@
   {% set replies = post.non_likes %}
   {% if replies %}
     <div class="replies">
+      <h4>Replies</h4>
       {% for reply in replies %}
         <div class="p-comment h-cite">
           <div class="p-author h-card">
@@ -38,9 +40,9 @@
               <span class="p-name">{{ reply.author_name}}</span>
             {% elif reply.author_url %}
               <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>
-            {% endif %}
-	    on <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-	    <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | strftime('%Y-%m-%d %I:%M %P') }}</a>
+            {% endif %} /
+	     <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+	    <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
 	      </time>
 	      said
           </div>
