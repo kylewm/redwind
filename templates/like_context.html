@@ -1,7 +1,7 @@
 {% if post.like_contexts %}
   <div class="like-context">
     {% for like in post.like_contexts %}
-      Liked
+    <i class="fa fa-thumbs-up"></i> Liked
       <a class="u-like u-like-of" href="{{ like.permalink }}">
         {{like.title or like.content | format_as_text(like.content_format)}}
       </a>
