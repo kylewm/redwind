@@ -39,15 +39,22 @@ def parse_type(tag):
 
 
 def parse_date(tag):
-    date_enc = tag[1:4]
-    ordinal = base60.decode(date_enc)
-    if ordinal:
-        return date_from_ordinal(ordinal)
+    try:
+        date_enc = tag[1:4]
+        ordinal = base60.decode(date_enc)
+        if ordinal:
+            return date_from_ordinal(ordinal)
+    except ValueError:
+        app.logger.warn("Could not parse base60 date %s", tag)
+
 
 
 def parse_index(tag):
-    index_enc = tag[4:]
-    return base60.decode(index_enc)
+    try:
+        index_enc = tag[4:]
+        return base60.decode(index_enc)
+    except ValueError:
+        app.logger.warn("Could not parse base60 index %s", tag)
 
 
 def date_to_ordinal(date0):
