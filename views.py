@@ -16,7 +16,7 @@
 
 
 from app import app
-from models import Post, Context
+from models import Post, Context, Location
 from auth import load_user
 
 from bs4 import BeautifulSoup
@@ -565,9 +565,11 @@ def save_post():
 
             lat = request.form.get('latitude')
             lon = request.form.get('longitude')
-            post.latitude = lat and float(lat)
-            post.longitude = lon and float(lon)
-            post.location_name = request.form.get('location_name')
+            if lat and lon:
+                post.location = Location(float(lat), float(lon), 
+                                         request.form.get('location_name'))
+            else:
+                post.location = None
 
             if not post.pub_date:
                 post.pub_date = datetime.utcnow()
