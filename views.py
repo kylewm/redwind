@@ -176,7 +176,7 @@ def everything(page):
 
 
 def render_posts_atom(title, feed_id, post_types, count):
-    posts = [DisplayPost(post) for post in Post.load_recent(count)]
+    posts = [DisplayPost(post) for post in Post.load_recent(count, post_types)]
     return make_response(render_template('posts.atom', title=title,
                                          feed_id=feed_id,
                                          posts=posts), 200,
