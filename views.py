@@ -118,17 +118,18 @@ class DisplayPost:
         def by_date(m):
             return m.pub_date or\
                 datetime.datetime(datetime.MIN_YEAR, 1, 1)
-        return sorted(self.mentions, key=by_date)
+        filtered = [m for m in self.mentions if not m.deleted]
+        filtered.sort(key=by_date)
+        return filtered
+
+    @property
+    def mention_count(self):
+        return len([m for m in self.mentions if not m.deleted])
 
     @property
     def likes(self):
         return [mention for mention in self.mentions_sorted_by_date
                 if mention.mention_type == 'like']
-
-    @property
-    def non_likes(self):
-        return [mention for mention in self.mentions_sorted_by_date
-                if mention.mention_type != 'like']
 
     @property
     def reposts(self):

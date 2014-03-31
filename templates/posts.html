@@ -16,7 +16,7 @@
       <div class="links">
 	{% include "admin_post_controls.html" %}
 	{% include "single_post_links.html" %}
-        {% set mention_count = post.mentions | count %}
+        {% set mention_count = post.mention_count %}
         {% if mention_count %}
           &nbsp;&nbsp;&nbsp;<a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ mention_count }}</a>
         {% endif %}

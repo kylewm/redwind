@@ -44,18 +44,19 @@ def receive_webmention():
                                target=target, error=error)
             return response
 
-        # de-dup on incoming url
-        #for existing in Mention.query.filter_by(
-        #        post_id=mentions[0].post.id,
-        #        source=mentions[0].source,
-        #        permalink=mentions[0].permalink).all():
-        #    db.session.delete(existing)
-
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
+            # de-dup on incoming url
+            for existing in post.mentions:
+                if existing.source == mentions[0].source and \
+                   existing.permalink == mentions[0].permalink:
+                    existing.deleted = True
+
             post.mentions += mentions
             post.save()
 
-        push.handle_new_mentions()
+            push.handle_new_mentions()
+        models.update_recent_mentions(post_id)
+
         return jsonify(success=True, source=source, target=target)
 
     except Exception as e:

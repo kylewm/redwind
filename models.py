@@ -73,21 +73,23 @@ def save_backup(sourcedir, destdir, relpath):
         shutil.copy(source, target)
 
 
+@contextmanager
 def acquire_lock(path, retries):
     lockfile = path+'.lock'
+    if not os.path.exists(os.path.dirname(lockfile)):
+        os.makedirs(os.path.dirname(lockfile))
     while os.path.exists(lockfile) and retries > 0:
         time.sleep(1)
         retries -= 1
     if os.path.exists(lockfile):
         raise RuntimeError("Timed out waiting for lock to become available {}"
                            .format(lockfile))
-    with open(lockfile, 'w') as f:
-        f.write("1")
-    return True
-
-
-def release_lock(path):
-    os.remove(path + '.lock')
+    try:
+        with open(lockfile, 'w') as f:
+            f.write("1")
+        yield
+    finally:
+        os.remove(lockfile)
 
 
 class User:
@@ -165,14 +167,11 @@ class Post:
     @classmethod
     @contextmanager
     def writeable(cls, path):
-        acquire_lock(path, 30)
-        post = cls.load(path)
-        post._writeable = True
-        try:
+        with acquire_lock(path, 30):
+            post = cls.load(path)
+            post._writeable = True
             yield post
-        finally:
             post._writeable = False
-            release_lock(path)
 
     @classmethod
     def load(cls, path):
@@ -507,6 +506,22 @@ class Context:
 class Mention:
 
     @classmethod
+    def update_recent(cls, post_id):
+        """post received a comment, add it to the front of the list of
+           recently commented posts"""
+        filename = os.path.join(datadir, 'recent_mentions')
+        with acquire_lock(filename, 30):
+            if os.path.exists(filename):
+                with open(filename, 'r') as f:
+                    recent = json.load(f)
+            else:
+                recent = []
+
+            recent.remove(post_id)
+            recent.insert(0, post_id)
+            json.dump(recent[:30], f)
+
+    @classmethod
     def from_json(cls, data):
         return cls(data.get('source'),
                    data.get('permalink'),
@@ -515,10 +530,12 @@ class Mention:
                    data.get('author', {}).get('name'),
                    data.get('author', {}).get('url'),
                    data.get('author', {}).get('image'),
-                   isoparse(data.get('pub_date')))
+                   isoparse(data.get('pub_date')),
+                   data.get('deleted', False))
 
     def __init__(self, source, permalink, content, mention_type,
-                 author_name, author_url, author_image, pub_date=None):
+                 author_name, author_url, author_image,
+                 pub_date=None, deleted=False):
         self.source = source
         self.permalink = permalink
         self.content = content
@@ -527,6 +544,7 @@ class Mention:
         self.author_url = author_url
         self.author_image = author_image
         self.pub_date = pub_date or datetime.datetime.utcnow()
+        self.deleted = deleted
 
     def to_json(self):
         data = {
@@ -539,7 +557,8 @@ class Mention:
                 'url': self.author_url,
                 'image': self.author_image
             },
-            'pub_date': format_date(self.pub_date)
+            'pub_date': format_date(self.pub_date),
+            'deleted': self.deleted
         }
         return filter_empty_keys(data)
 
