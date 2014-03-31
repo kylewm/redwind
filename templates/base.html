@@ -54,7 +54,6 @@
         <nav>
           <ul>
             <li><span class="site-name">kylewm.com</span></li>
-            <li><span class="site-name-separator">//</span></li>
             <li><a href="{{ url_for('index') }}">stream</a></li>
             <li><a href="{{ url_for('articles') }}">articles</a></li>
             <li><a href="{{ url_for('archive') }}">archive</a></li>
@@ -69,7 +68,6 @@
           {% if authenticated %}
             <ul>
               <li>new</li>
-              <li>//</li>
               <li><a href="{{ url_for('new_post', type='article') }}">article</a></li>
               <li><a href="{{ url_for('new_post', type='note') }}">note</a></li>
               <li><a href="{{ url_for('new_post', type='reply') }}">reply</a></li>

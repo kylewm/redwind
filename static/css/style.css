@@ -103,6 +103,7 @@ nav ul {
 
 nav li {
     display: inline;
+    margin-right: 1em;
 }
 
 #indie_auth_form {
@@ -145,6 +146,10 @@ nav li {
     margin-left: 66px;
 }
 
+.p-comment .e-content {
+    margin-left: 66px;
+}
+
 .share-context + .p-name {
     margin-top: 1em;
 }
@@ -162,13 +167,12 @@ nav li {
     font-size: 0.9em;
 }
 
-.post .likes {
+.post .likes-and-reposts, .post .replies, .post .references {
     margin-top: 2em;
-
 }
 
-.post .replies {
-    margin-top: 2em;
+.post .likes + .reposts {
+    margin-top: 0.5em;
 }
 
 .p-comment + .p-comment {

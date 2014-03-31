@@ -15,23 +15,13 @@
 
       <div class="links">
 	{% include "admin_post_controls.html" %}
-
-	{% set like_count = post.likes | count %}
-	{% set reply_count = post.non_likes | count %}
-	{% if like_count or reply_count %}
-	  <a href="{{ post.permalink }}#mentions">
-	    {% if like_count %}
-	    {{ like_count }} like{{ like_count | pluralize('', 's') }}
-	    {% endif %}
-	    {% if reply_count %}
-	    {{ reply_count }} repl{{ reply_count | pluralize('y', 'ies') }}
-	    {% endif %}
-	  </a>
-	  <br />
-	{% endif %}
-
 	{% include "single_post_links.html" %}
-	<div style="clear:both"></div>
+        {% set mention_count = post.mentions | count %}
+        {% if mention_count %}
+          &nbsp;&nbsp;&nbsp;<a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ mention_count }}</a>
+        {% endif %}
+
+
       </div>
 
 
