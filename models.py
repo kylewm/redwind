@@ -158,6 +158,13 @@ class Location:
         self.latitude = lat
         self.longitude = lon
         self.name = name
+        
+    def to_json(self):
+        return {
+            'latitude' : self.latitude,
+            'longitude': self.longitude,
+            'name': self.name
+            }
 
 
 class Post:
@@ -316,9 +323,7 @@ class Post:
         self.slug = None
         self.twitter_status_id = None
         self.facebook_post_id = None
-        self.location_name = None
-        self.latitude = None
-        self.longitude = None
+        self.location = None
         self._writeable = False
 
     def to_json(self):
@@ -339,11 +344,7 @@ class Post:
                 'like': [ctx.to_json() for ctx in self.like_contexts]
             },
             'mentions': [mnt.to_json() for mnt in self.mentions],
-            'location': {
-                'name': self.location_name,
-                'latitude': self.latitude,
-                'longitude': self.longitude
-            },
+            'location': self.location and self.location.to_json(),
             'syndication': {
                 'twitter_id': self.twitter_status_id,
                 'facebook_id': self.facebook_post_id

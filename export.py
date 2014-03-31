@@ -119,7 +119,7 @@ def dos2unix(text):
 
 
 for post in Post.query.all():
-    path = "{}/{:04d}/{:02d}/{:02d}/{}_{}".format(
+    path = "{}/posts/{:04d}/{:02d}/{:02d}/{}_{}".format(
         outdir,
         post.pub_date.year,
         post.pub_date.month,
@@ -136,8 +136,8 @@ for post in Post.query.all():
 
 
 user = User.query.first()
-with open("_user", 'w') as f:
-    w.write(json.dumps(
+with open(os.path.join(outdir, "user"), 'w') as f:
+    f.write(json.dumps(
         {
             'domain': user.domain,
             'twitter_oauth_token': user.twitter_oauth_token,
