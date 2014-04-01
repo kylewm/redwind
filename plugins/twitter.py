@@ -230,8 +230,8 @@ class TwitterClient:
             data['trim_user'] = True
 
             if post.location:
-                data['lat'] = post.location.latitude
-                data['long'] = post.location.longitude
+                data['lat'] = str(post.location.latitude)
+                data['long'] = str(post.location.longitude)
 
             for reply_context in post.reply_contexts:
                 reply_match = permalink_re.match(reply_context.source)
