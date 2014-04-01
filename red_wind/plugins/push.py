@@ -16,7 +16,7 @@
 
 
 from app import app
-from models import Post
+from ..models import Post
 from flask import request, jsonify
 from flask.ext.login import login_required
 import requests

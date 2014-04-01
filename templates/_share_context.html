@@ -1,4 +1,4 @@
-
+{% from "_macros.html" import author_image %}
 {% for share in post.share_contexts %}
   <div class="share-context">
 
@@ -13,12 +13,7 @@
 
         <i class="fa fa-retweet"></i> Shared a post by
         <span class="p-author h-card">
-
-          <div class="author-image-holder">
-            <img class="u-photo"
-                 src="{{share.author_image or url_for('static', filename='img/users/placeholder.png')}}"
-                 alt="{{share.author_name}}"/>
-          </div>
+          {{ author_image(share.author_image, share.author_name) }}
 
           {% if share.author_name and share.author_url %}
             <a class="p-name u-url" href="{{share.author_url}}">{{ share.author_name }}</a>

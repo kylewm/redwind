@@ -1,3 +1,4 @@
+{% from '_macros.html' import author_image, author_image_likes %}
 <div class="mentions">
 
   <a name="mentions"></a>
@@ -11,12 +12,10 @@
         <div class="likes">
           <i class="fa fa-thumbs-up"></i>
           {% for like in likes %}
+            {% set img_title = like.content | format_as_text(like.content_format) | trim %}
             <a href="{{ like.permalink }}">
-              <img class="u-photo" src="{{like.author_image or url_for('static', filename='img/users/placeholder.png')}}"
-                   width="36px" alt="{{like.author_name}}"
-                   title="{{like.author_name}} {{like.content | format_as_text(like.content_format) | trim}}" style="vertical-align: middle"/>
-            </a>
-          {% endfor %}
+              {{ author_image_likes(like.author_image, like.author_name, like.author_name + ' ' + img_title) }}</a>
+            {% endfor %}
         </div>
       {% endif %}
 
@@ -24,10 +23,8 @@
         <div class="reposts">
           <i class="fa fa-retweet"></i>
           {% for repost in reposts %}
-            <a href="{{ repost.permalink }}">
-              <img class="u-photo" src="{{repost.author_image or url_for('static', filename='img/users/placeholder.png')}}"
-                   width="36px" alt="{{repost.author_name}}"
-                   title="{{repost.author_name}} {{repost.content | format_as_text(repost.content_format) | trim}}" style="vertical-align: middle"/>
+            {% set img_title = repost.content | format_as_text(repost.content_format) | trim %}
+            <a href="{{ repost.permalink }}">{{ author_image_likes(repost.author_image, repost.author_name, repost.author_name + ' ' + img_title) }}
             </a>
           {% endfor %}
         </div>
@@ -44,8 +41,7 @@
           <div class="p-author h-card">
 
             <div class="author-image-holder">
-              <img class="author-image u-photo" src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}"
-                   width="48px" alt="{{reply.author_name}}"/>
+              {{ author_image(reply.author_image, reply.author_name) }}
             </div>
 
             <i class="fa fa-reply"></i>

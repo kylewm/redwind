@@ -16,20 +16,21 @@
 
 
 from app import app
-from models import Post, Context
+from ..models import Post, Context
+from .. import views
+from ..util import autolinker, download_resource
+
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response, jsonify
 from rauth import OAuth1Service
 
-import views
 import requests
 import re
 import json
 import pytz
 
-from util import autolinker
 from tempfile import mkstemp
-from datetime import datetime, timedelta
+from datetime import datetime
 from urllib.parse import urljoin
 
 
@@ -259,14 +260,11 @@ class TwitterClient:
         post.twitter_status_id = result.json().get('id_str')
 
     def download_image_to_temp(self, url):
-        response = requests.get(urljoin(app.config['SITE_URL'], url),
-                                stream=True)
-        if response.status_code // 2 == 100:
-            _, tempfile = mkstemp()
-            with open(tempfile, 'wb') as f:
-                for chunk in response.iter_content():
-                    f.write(chunk)
-            return tempfile
+        _, tempfile = mkstemp()
+        download_resource(
+            urljoin(app.config['SITE_URL'], url), tempfile)
+        return tempfile
+
 
     def is_twitter_authorized(self):
         return current_user and current_user.twitter_oauth_token \

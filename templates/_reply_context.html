@@ -1,3 +1,4 @@
+{% from "_macros.html" import author_image %}
 {% for reply in post.reply_contexts %}
 
   <div class="reply-context">
@@ -12,10 +13,7 @@
 
       <div class="p-in-reply-to h-cite">
         <span class="p-author h-card">
-          <div class="author-image-holder">
-            <img class="u-photo"
-                 src="{{reply.author_image or url_for('static', filename='img/users/placeholder.png')}}" alt="{{reply.author_name}}"/>
-          </div>
+          {{ author_image(reply.author_image, reply.author_name) }}
 
           <i class="fa fa-share"></i>
           In reply to

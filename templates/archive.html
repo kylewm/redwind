@@ -14,12 +14,12 @@
 
         {% for post in posts %}
           <div class="h-entry post">
-            {% include "reply_context.html" %}
-            {% include "share_context.html" %}
-            {% include "like_context.html" %}
-            {% include "post_content.html" %}
+            {% include "_reply_context.html" %}
+            {% include "_share_context.html" %}
+            {% include "_like_context.html" %}
+            {% include "_post_content.html" %}
             <div class="links">
-              {% include "single_post_links.html" %}
+              {% include "_single_post_links.html" %}
             </div>
           </div>
         {% endfor %}

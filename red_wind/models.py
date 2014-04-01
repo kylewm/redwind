@@ -16,10 +16,9 @@
 
 
 from app import app
+from .util import shortlinks, base60
 
 import datetime
-import shortlinks
-from util import base60
 from collections import defaultdict
 import os
 import os.path
@@ -32,8 +31,8 @@ from operator import attrgetter
 from contextlib import contextmanager
 
 
-datadir = "_data"
-backupdir = "_data.backup"
+datadir = '_data'
+backupdir = os.path.join(datadir, '.backup')
 
 
 def isoparse(s):
@@ -160,7 +159,7 @@ class Location:
         self.latitude = lat
         self.longitude = lon
         self.name = name
-        
+
     def to_json(self):
         return {
             'latitude' : self.latitude,
@@ -411,7 +410,6 @@ class Post:
         ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
         return '{}{}{}'.format(tag, base60.encode(ordinal),
                                base60.encode(self.date_index))
-
 
     @property
     def short_permalink(self):

@@ -1,0 +1,17 @@
+{% if post.twitter_url or post.facebook_url %}
+  <div class="syndication-links">
+    <h4>Syndication</h4>
+    {% if post.twitter_url %}
+      <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">
+        <i class="fa fa-twitter"></i> View on Twitter
+      </a><br/>
+    {% endif %}
+
+    {% if post.facebook_url %}
+      <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">
+        <i class="fa fa-facebook"></i> View on Facebook
+      </a><br/>
+    {% endif %}
+</ul>
+</div>
+{% endif %}

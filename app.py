@@ -16,15 +16,23 @@
 
 
 from flask import Flask
+from werkzeug.datastructures import ImmutableDict
 
 app = Flask(__name__)
 app.config.from_object('config.Configuration')
-app.jinja_env.add_extension('jinja2.ext.i18n')
+
+app.jinja_options = ImmutableDict(
+    trim_blocks=True,
+    lstrip_blocks=True,
+    extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
+)
+
 
 if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
 
-    file_handler = RotatingFileHandler('app.log', maxBytes=1048576, backupCount=5)
+    file_handler = RotatingFileHandler('app.log', maxBytes=1048576,
+                                       backupCount=5)
     file_handler.setLevel(logging.WARNING)
     app.logger.addHandler(file_handler)

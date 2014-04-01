@@ -15,15 +15,12 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 from app import app
-from models import *
-from views import *
-from shortlinks import *
+from red_wind.views import *
 import importlib
 
 for plugin in app.config['PLUGINS']:
-    importlib.import_module('plugins.' + plugin)
+    importlib.import_module('red_wind.plugins.' + plugin)
 
 
 if __name__ == '__main__':

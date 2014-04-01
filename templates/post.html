@@ -7,24 +7,24 @@
 {% block content %}
 
   <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
-    {% include "hcard_author.html" %}
+    {% include "_hcard_author.html" %}
 
-    {% include "reply_context.html" %}
-    {% include "like_context.html" %}
-    {% include "share_context.html" %}
-    {% include "post_content.html" %}
+    {% include "_reply_context.html" %}
+    {% include "_like_context.html" %}
+    {% include "_share_context.html" %}
+    {% include "_post_content.html" %}
 
     <div class="links">
-      {% include "admin_post_controls.html" %}
-      {% include "single_post_links.html" %}
+      {% include "_admin_post_controls.html" %}
+      {% include "_single_post_links.html" %}
       <div style="clear: both;"></div>
     </div>
 
 
-    {% include "syndication_links.html" %}
+    {% include "_syndication_links.html" %}
 
 
-    {% include "post_mentions.html" %}
+    {% include "_post_mentions.html" %}
 
   </div>
 

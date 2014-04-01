@@ -11,3 +11,4 @@ TAGS
 *.log
 _data
 _data.backup/
+static/_mirror

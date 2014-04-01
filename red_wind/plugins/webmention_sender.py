@@ -16,17 +16,17 @@
 
 
 from app import app
+from ..models import Post
+from ..views import DisplayPost
 
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from urllib.request import urlopen, Request
-from models import Post
 from flask import jsonify, request
 from flask.ext.login import login_required
 
 import re
 import requests
-import views
 
 
 @app.route('/api/send_webmentions', methods=['POST'])
@@ -62,8 +62,8 @@ class MentionClient:
         target_urls += [like_context.source for like_context
                         in post.like_contexts]
 
-        html_content = views.DisplayPost(post)\
-                            .get_html_content(include_preview=False)
+        html_content = DisplayPost(post)\
+            .get_html_content(include_preview=False)
 
         app.logger.debug("search post content {}".format(html_content))
 
@@ -188,8 +188,8 @@ class MentionClient:
                     "Failed to send webmention for %s. "
                     "Response status code: %s",
                     target_url, response.status_code)
-                return False, "Status code: {}, Response: {}".format(response.status_code,
-                                                                     response.text)
+                return False, "Status code: {}, Response: {}".format(
+                    response.status_code, response.text)
             else:
                 app.logger.debug(
                     "Sent webmention successfully to %s. Sender response: %s:",

@@ -16,17 +16,18 @@
 
 
 from app import app
+from ..models import Post, Mention
+from ..util import hentry_parser
+from . import push
+
 from flask import request, jsonify
-from models import Post, Mention
 from werkzeug.exceptions import NotFound
 
 import urllib.parse
 import urllib.request
 import requests
-from . import push
 
 from bs4 import BeautifulSoup
-from util import hentry_parser
 
 
 @app.route('/webmention', methods=["POST"])

@@ -164,16 +164,15 @@ def parse(txt, source):
 if __name__ == '__main__':
     import requests
     urls = [
-#        'https://snarfed.org/2014-03-10_re-kyle-mahan',
-#        'https://brid-gy.appspot.com/like/facebook/12802152/10100820912531629/1347771058',
-#        'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
-#        'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
-#        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
-#        'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
-#        'http://tommorris.org/posts/2550',
+        'https://snarfed.org/2014-03-10_re-kyle-mahan',
+        'https://brid-gy.appspot.com/like/facebook/12802152/10100820912531629/1347771058',
+        'http://tantek.com/2014/030/t1/handmade-art-indieweb-reply-webmention-want',
+        'http://tantek.com/2014/067/b2/mockups-people-focused-mobile-communication',
+        'https://brid-gy.appspot.com/comment/twitter/kyle_wm/443763597160636417/443787536108761088',
+        'https://snarfed.org/2014-03-10_re-kyle-mahan-5',
+        'http://tommorris.org/posts/2550',
         'http://tommorris.org/posts/8872'
     ]
-
     for url in urls:
         print("parsing url", url)
         txt = requests.get(url).text

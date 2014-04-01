@@ -16,11 +16,12 @@
 
 
 from app import app
+from ..models import Post
+from .. import views
+
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, jsonify
-from models import Post
 from urllib.parse import urljoin
-import views
 
 import requests
 import json

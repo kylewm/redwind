@@ -7,15 +7,15 @@
     {% for post in posts %}
 
       <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
-        {% include "reply_context.html" %}
-        {% include "like_context.html" %}
-        {% include "share_context.html" %}
-        {% include "post_content.html" %}
+        {% include "_reply_context.html" %}
+        {% include "_like_context.html" %}
+        {% include "_share_context.html" %}
+        {% include "_post_content.html" %}
 
 
       <div class="links">
-	{% include "admin_post_controls.html" %}
-	{% include "single_post_links.html" %}
+	{% include "_admin_post_controls.html" %}
+	{% include "_single_post_links.html" %}
         {% set mention_count = post.mention_count %}
         {% if mention_count %}
           &nbsp;&nbsp;&nbsp;<a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ mention_count }}</a>
@@ -31,10 +31,10 @@
 
   </div>
 
-  {% include "page_arrows.html" %}
+  {% include "_page_arrows.html" %}
 
 {% endblock content %}
 
 {% block footer %}
-  {% include "hcard.html" %}
+  {% include "_hcard.html" %}
 {% endblock footer %}

@@ -16,7 +16,7 @@
 
 
 from app import app
-from models import User
+from .models import User
 from flask.ext.login import LoginManager
 
 login_mgr = LoginManager(app)

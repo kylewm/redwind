@@ -16,8 +16,10 @@
 
 
 from app import app
-from models import Post, Context, Location
-from auth import load_user
+from .models import Post, Context, Location
+from .auth import load_user
+from .util import autolinker, hentry_parser, shortlinks,\
+    download_resource
 
 from bs4 import BeautifulSoup
 from datetime import datetime, date
@@ -26,22 +28,20 @@ from flask import request, redirect, url_for, render_template, flash,\
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
 from contextlib import contextmanager
+from urllib.parse import urlparse
 
 from werkzeug import secure_filename
-from util import autolinker
-from util import hentry_parser
 
 import bleach
 import os
 import pytz
 import re
 import requests
-import shortlinks
 import unicodedata
 
 bleach.ALLOWED_TAGS += ['img', 'p', 'br']
 bleach.ALLOWED_ATTRIBUTES.update({
-    'img': [ 'src', 'alt', 'title']
+    'img': ['src', 'alt', 'title']
 })
 
 TIMEZONE = pytz.timezone('US/Pacific')
@@ -52,8 +52,6 @@ DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
             '<int(fixed_digits=2):day>/<int:index>'
 
 FETCH_EXTERNAL_POST_HOOK = []
-
-DATADIR = "_data"
 
 
 class DisplayPost:
@@ -154,6 +152,11 @@ def render_posts(title, post_types, page, per_page, include_drafts=False):
                            authenticated=current_user.is_authenticated())
 
 
+@app.context_processor
+def inject_user_authenticatd():
+    return {'authenticated': current_user.is_authenticated}
+
+
 @app.route('/', defaults={'page': 1})
 @app.route('/page/<int:page>')
 def index(page):
@@ -216,8 +219,7 @@ def archive(year, month):
 
     return render_template(
         'archive.html', months=months,
-        expanded_month=first_of_month, posts=posts,
-        authenticated=current_user.is_authenticated)
+        expanded_month=first_of_month, posts=posts)
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
@@ -243,8 +245,7 @@ def post_by_date(post_type, year, month, day, index, slug):
         title = "A {} from {}".format(dpost.post_type,
                                       dpost.pub_date.strftime('%Y-%m-%d'))
 
-    return render_template('post.html', post=dpost, title=title,
-                           authenticated=current_user.is_authenticated())
+    return render_template('post.html', post=dpost, title=title)
 
 
 @app.route('/short/<string(minlength=5,maxlength=6):tag>')
@@ -294,8 +295,7 @@ def logout():
 @app.route('/admin/settings')
 @login_required
 def settings():
-    return render_template("settings.html", user=current_user,
-                           authenticated=current_user.is_authenticated())
+    return render_template("settings.html", user=current_user)
 
 
 @app.route('/admin/delete')
@@ -341,9 +341,7 @@ def new_post():
         post.content = content
 
     return render_template('edit_post.html', post=post,
-                           advanced=request.args.get('advanced'),
-                           authenticated=current_user.is_authenticated())
-
+                           advanced=request.args.get('advanced'))
 
 @app.route('/admin/edit')
 @login_required
@@ -354,8 +352,7 @@ def edit_by_id():
     if not post:
         abort(404)
     return render_template('edit_post.html', post=post,
-                           advanced=request.args.get('advanced'),
-                           authenticated=current_user.is_authenticated())
+                           advanced=request.args.get('advanced'))
 
 
 @app.route('/admin/uploads')
@@ -512,6 +509,23 @@ def prettify_url(url):
     return path.strip('/')
 
 
+@app.template_filter('local_mirror')
+def local_mirror_resource(url):
+    site_netloc = urlparse(app.config['SITE_URL']).netloc
+
+    o = urlparse(url)
+    if o.netloc and o.netloc != site_netloc:
+        mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
+        mirror_file_path = os.path.join("static", mirror_url_path)
+        print("downloading from", url)
+        print("downloading to", mirror_file_path)
+
+        if os.path.exists(mirror_file_path) or download_resource(url, mirror_file_path):
+            return url_for('static', filename=mirror_url_path)
+
+    return url
+
+
 ## API Methods
 
 
@@ -566,7 +580,7 @@ def save_post():
             lat = request.form.get('latitude')
             lon = request.form.get('longitude')
             if lat and lon:
-                post.location = Location(float(lat), float(lon), 
+                post.location = Location(float(lat), float(lon),
                                          request.form.get('location_name'))
             else:
                 post.location = None

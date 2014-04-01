@@ -131,6 +131,13 @@ nav li {
     margin-right: 10px;
 }
 
+
+.post .author-image-likes {
+    width: 36px;
+    vertical-align: middle;
+}
+
+
 .post .author-image-holder img {
     width: 100%;
 }

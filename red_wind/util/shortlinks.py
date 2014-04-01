@@ -16,8 +16,7 @@
 
 
 from app import app
-from flask import redirect, url_for, abort
-from util import base60
+from ..util import base60
 from datetime import date
 
 TAG_TO_TYPE = {
