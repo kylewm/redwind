@@ -22,9 +22,14 @@
 
 
     {% include "_syndication_links.html" %}
-
-
     {% include "_post_mentions.html" %}
+
+    <form id="manual-webmention" method="POST" action="/webmention">
+      Written a response?
+      <input name="source" placeholder="Send me the link"/>
+      <input name="target" type="hidden" value="{{post.permalink}}"/>
+      <input type="submit" value="Send"/>
+    </form>
 
   </div>
 
