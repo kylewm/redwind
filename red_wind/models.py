@@ -516,7 +516,8 @@ class Mention:
             else:
                 recent = []
 
-            recent.remove(post_id)
+            if post_id in recent:
+                recent.remove(post_id)
             recent.insert(0, post_id)
             json.dump(recent[:30], f)
 
