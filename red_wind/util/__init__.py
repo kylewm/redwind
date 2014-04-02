@@ -10,11 +10,14 @@ def download_resource(url, path):
                             stream=True)
 
     if response.status_code // 2 == 100:
-
         if not os.path.exists(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
 
         with open(path, 'wb') as f:
-            for chunk in response.iter_content():
+            for chunk in response.iter_content(512):
                 f.write(chunk)
-            return True
+
+        return True
+    else:
+        app.logger.warn("Failed to download resource %s. Got response %s",
+                        url, str(response))
