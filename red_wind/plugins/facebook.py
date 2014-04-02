@@ -77,31 +77,29 @@ def syndicate_to_facebook():
 def handle_new_or_edit(post):
     app.logger.debug('publishing to facebook')
 
-    share_link = next((share_context.source for share_context
-                       in post.share_contexts), None)
-
-    actions = {'name': 'See Original',
-               'link': post.permalink}
-    privacy = {'value': 'EVERYONE'}
+    post_args = {
+        'access_token': current_user.facebook_access_token,
+        'message': views.format_as_text(post.content,
+                                        post.content_format),
+        'actions': json.dumps({
+            'name': 'See Original',
+            'link': post.permalink
+        }),
+        'privacy': json.dumps({'value': 'EVERYONE'})
+    }
 
     img_url = views.get_first_image(post.content, post.content_format)
     if img_url:
         img_url = urljoin(app.config['SITE_URL'], img_url)
-
-    post_args = {'access_token': current_user.facebook_access_token,
-                 'name': post.title,
-                 'message': views.format_as_text(post.content,
-                                                 post.content_format),
-                 'link': share_link,
-                 'picture': img_url,
-                 'actions': json.dumps(actions),
-                 'privact': json.dumps(privacy)}
-
-    if post.facebook_post_id:
-        response = requests.post('https://graph.facebook.com/{}'
-                                 .format(post.facebook_post_id),
+        post_args['url'] = img_url,
+        response = requests.post('https://graph.facebook.com/me/photos',
                                  data=post_args)
+
     else:
+        share_link = next((share_context.source for share_context
+                           in post.share_contexts), None)
+        post_args['name'] = post.title
+        post_args['link'] = share_link
         response = requests.post('https://graph.facebook.com/me/feed',
                                  data=post_args)
 
