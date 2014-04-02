@@ -56,7 +56,7 @@ def receive_webmention():
             post.save()
 
             push.handle_new_mentions()
-        models.update_recent_mentions(post_id)
+        Mention.update_recent(post_id)
 
         return jsonify(success=True, source=source, target=target)
 
