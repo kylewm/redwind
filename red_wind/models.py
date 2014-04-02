@@ -519,7 +519,8 @@ class Mention:
             if post_id in recent:
                 recent.remove(post_id)
             recent.insert(0, post_id)
-            json.dump(recent[:30], f)
+            with open(filename, 'w') as f:
+                json.dump(recent[:30], f)
 
     @classmethod
     def from_json(cls, data):
