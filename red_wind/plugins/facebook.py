@@ -88,20 +88,19 @@ def handle_new_or_edit(post):
         'privacy': json.dumps({'value': 'EVERYONE'})
     }
 
-    img_url = views.get_first_image(post.content, post.content_format)
-    if img_url:
-        img_url = urljoin(app.config['SITE_URL'], img_url)
-        post_args['url'] = img_url,
-        response = requests.post('https://graph.facebook.com/me/photos',
-                                 data=post_args)
+    post_args['name'] = post.title
 
-    else:
-        share_link = next((share_context.source for share_context
-                           in post.share_contexts), None)
-        post_args['name'] = post.title
+    img_url = views.get_first_image(post.content, post.content_format)
+    share_link = next((share_context.source for share_context
+                       in post.share_contexts), None)
+    if share_link:
         post_args['link'] = share_link
-        response = requests.post('https://graph.facebook.com/me/feed',
-                                 data=post_args)
+    elif img_url:
+        # if there is an image, link back to the original post
+        post_args['link'] = post.permalink
+
+    response = requests.post('https://graph.facebook.com/me/feed',
+                             data=post_args)
 
     app.logger.debug("Got response from facebook %s", response)
 
