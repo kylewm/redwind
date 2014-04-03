@@ -7,7 +7,7 @@
 
     <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Share on Twitter"/>
 
-<textarea  name="tweet_preview" id="tweet_preview" style="height: 75px; width:100%; background-color: #eeeeff">{% if post.title %}
+<textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">{% if post.title %}
 {{ post.title }} {{ post.permalink }}{% else %}
 {{ post.content | format_as_text(post.content_format) }} ({{post.short_permalink}}){% endif %}
 </textarea><br/>
