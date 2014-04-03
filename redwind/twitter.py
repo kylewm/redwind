@@ -28,11 +28,13 @@ import requests
 import re
 import json
 import pytz
+import types
 
 from tempfile import mkstemp
 from datetime import datetime
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
+from rauth.oauth import HmacSha1Signature
 
 @app.route('/admin/authorize_twitter')
 @login_required
@@ -111,33 +113,44 @@ def share_on_twitter():
         return """Share on Twitter Failed!<br/>Exception: {}""".format(e)
 
 
+class UpdateWithMediaSignature(HmacSha1Signature):
+    def sign(self,
+             consumer_secret,
+             access_token_secret,
+             method,
+             url,
+             oauth_params,
+             req_kwargs):
+
+        sig_wo = super(UpdateWithMediaSignature, self).sign(
+            consumer_secret, access_token_secret, method,
+            url, oauth_params, {})
+        return sig_wo
+
+
 class TwitterClient:
-    def __init__(self):
-        self.cached_api = None
-        self.cached_config = None
-        self.config_fetch_date = None
-        self.cached_auth_service = None
 
     def get_auth_service(self):
-        if not self.cached_auth_service:
-            key = app.config['TWITTER_CONSUMER_KEY']
-            secret = app.config['TWITTER_CONSUMER_SECRET']
-            self.cached_auth_service = OAuth1Service(
-                name='twitter',
-                consumer_key=key,
-                consumer_secret=secret,
-                request_token_url=
-                'https://api.twitter.com/oauth/request_token',
-                access_token_url='https://api.twitter.com/oauth/access_token',
-                authorize_url='https://api.twitter.com/oauth/authorize',
-                base_url='https://api.twitter.com/1.1/')
-        return self.cached_auth_service
+        key = app.config['TWITTER_CONSUMER_KEY']
+        secret = app.config['TWITTER_CONSUMER_SECRET']
+        service = OAuth1Service(
+            name='twitter',
+            consumer_key=key,
+            consumer_secret=secret,
+            request_token_url=
+            'https://api.twitter.com/oauth/request_token',
+            access_token_url='https://api.twitter.com/oauth/access_token',
+            authorize_url='https://api.twitter.com/oauth/authorize',
+            base_url='https://api.twitter.com/1.1/')
+        return service
 
-    def get_auth_session(self, oauth_token=None, oauth_secret=None):
+    def get_auth_session(self, oauth_token=None,
+                         oauth_secret=None, signature=None):
         service = self.get_auth_service()
         session = service.get_session(
-            (oauth_token or current_user.twitter_oauth_token,
-             oauth_secret or current_user.twitter_oauth_token_secret))
+            token=(oauth_token or current_user.twitter_oauth_token,
+                   oauth_secret or current_user.twitter_oauth_token_secret),
+            signature=signature)
         return session
 
     def repost_preview(self, url):
@@ -263,11 +276,17 @@ class TwitterClient:
             if img:
                 tempfile = self.download_image_to_temp(img)
                 app.logger.debug(json.dumps(data, indent=True))
-                result = api.post('statuses/update_with_media.json',
-                                  header_auth=True,
-                                  use_oauth_params_only=True,
-                                  data=data,
-                                  files={'media[]': open(tempfile, 'rb')})
+                media_api = self.get_auth_session(
+                    signature=UpdateWithMediaSignature)
+
+                filebuf = open(tempfile, 'rb')
+                filebuf.__deepcopy__ = types.MethodType(lambda x, memo: x, filebuf)
+                result = media_api.post('statuses/update_with_media.json',
+                                        header_auth=True,
+                                        data=data,
+                                        files={
+                                            'media[]': filebuf
+                                        })
 
             else:
                 result = api.post('statuses/update.json', data=data)
