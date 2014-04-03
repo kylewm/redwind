@@ -15,10 +15,10 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app
+from .. import app
 from ..models import Post, Context
 from .. import views
-from ..util import autolinker, download_resource
+from .. import util
 
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response, jsonify
@@ -176,7 +176,7 @@ class TwitterClient:
                            author_image, pub_date)
 
     def expand_links(self, text):
-        return re.sub(autolinker.LINK_REGEX,
+        return re.sub(util.LINK_REGEX,
                       lambda match: self.expand_link(match.group(0)),
                       text)
 
@@ -261,10 +261,9 @@ class TwitterClient:
 
     def download_image_to_temp(self, url):
         _, tempfile = mkstemp()
-        download_resource(
+        util.download_resource(
             urljoin(app.config['SITE_URL'], url), tempfile)
         return tempfile
-
 
     def is_twitter_authorized(self):
         return current_user and current_user.twitter_oauth_token \

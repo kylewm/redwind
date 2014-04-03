@@ -15,8 +15,8 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app
-from .util import shortlinks, base60
+from . import app
+from . import util
 
 import datetime
 from collections import defaultdict
@@ -162,7 +162,7 @@ class Location:
 
     def to_json(self):
         return {
-            'latitude' : self.latitude,
+            'latitude': self.latitude,
             'longitude': self.longitude,
             'name': self.name
             }
@@ -245,9 +245,9 @@ class Post:
 
     @classmethod
     def shortid_to_path(cls, shortid):
-        post_type = shortlinks.parse_type(shortid)
-        pub_date = shortlinks.parse_date(shortid)
-        index = shortlinks.parse_index(shortid)
+        post_type = util.parse_type(shortid)
+        pub_date = util.parse_date(shortid)
+        index = util.parse_index(shortid)
         return cls.relpath_to_fullpath('{}/{:02d}/{:02d}/{}_{}'
                                        .format(pub_date.year, pub_date.month,
                                                pub_date.day, post_type, index))
@@ -406,10 +406,10 @@ class Post:
     def shortid(self):
         if not self.pub_date or not self.date_index:
             return None
-        tag = shortlinks.tag_for_post_type(self.post_type)
-        ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
-        return '{}{}{}'.format(tag, base60.encode(ordinal),
-                               base60.encode(self.date_index))
+        tag = util.tag_for_post_type(self.post_type)
+        ordinal = util.date_to_ordinal(self.pub_date.date())
+        return '{}{}{}'.format(tag, util.base60_encode(ordinal),
+                               util.base60_encode(self.date_index))
 
     @property
     def short_permalink(self):
@@ -418,11 +418,11 @@ class Post:
 
     @property
     def short_cite(self):
-        tag = shortlinks.tag_for_post_type(self.post_type)
-        ordinal = shortlinks.date_to_ordinal(self.pub_date.date())
+        tag = util.tag_for_post_type(self.post_type)
+        ordinal = util.date_to_ordinal(self.pub_date.date())
         cite = '{} {}{}{}'.format(app.config.get('SHORT_SITE_CITE'),
-                                  tag, base60.encode(ordinal),
-                                  base60.encode(self.date_index))
+                                  tag, util.base60_encode(ordinal),
+                                  util.base60_encode(self.date_index))
         return cite
 
     @property

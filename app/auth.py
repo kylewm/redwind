@@ -15,15 +15,16 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import re
+from . import app
+from .models import User
+from flask.ext.login import LoginManager
 
-TWITTER_USERNAME_REGEX = r'(?<!\w)@([a-zA-Z0-9_]+)'
-LINK_REGEX = r'\b(?<!=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)'
+login_mgr = LoginManager(app)
+login_mgr.login_view = 'index'
 
 
-def make_links(plain):
-    plain = re.sub(LINK_REGEX,
-                   r'<a href="\g<0>">\g<1></a>', plain)
-    plain = re.sub(TWITTER_USERNAME_REGEX,
-                   r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
-    return plain
+@login_mgr.user_loader
+def load_user(domain):
+    user = User.load('_data/user')
+    if user.domain == domain:
+        return user

@@ -16,11 +16,11 @@
 
 
 from app import app
-from red_wind.views import *
+from app.views import *
 import importlib
 
 for plugin in app.config['PLUGINS']:
-    importlib.import_module('red_wind.plugins.' + plugin)
+    importlib.import_module('app.plugins.' + plugin)
 
 
 if __name__ == '__main__':

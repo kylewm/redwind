@@ -15,11 +15,11 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from app import app
+from . import app
+from . import util
 from .models import Post, Context, Location
 from .auth import load_user
-from .util import autolinker, hentry_parser, shortlinks,\
-    download_resource
+from .util import hentry_parser
 
 from bs4 import BeautifulSoup
 from datetime import datetime, date
@@ -153,8 +153,8 @@ def render_posts(title, post_types, page, per_page, include_drafts=False):
 
 
 @app.context_processor
-def inject_user_authenticatd():
-    return {'authenticated': current_user.is_authenticated}
+def inject_user_authenticated():
+    return {'authenticated': current_user.is_authenticated()}
 
 
 @app.route('/', defaults={'page': 1})
@@ -250,9 +250,9 @@ def post_by_date(post_type, year, month, day, index, slug):
 
 @app.route('/short/<string(minlength=5,maxlength=6):tag>')
 def shortlink(tag):
-    post_type = shortlinks.parse_type(tag)
-    pub_date = shortlinks.parse_date(tag)
-    index = shortlinks.parse_index(tag)
+    post_type = util.parse_type(tag)
+    pub_date = util.parse_date(tag)
+    index = util.parse_index(tag)
 
     if not post_type or not pub_date or not index:
         abort(404)
@@ -342,6 +342,7 @@ def new_post():
 
     return render_template('edit_post.html', post=post,
                            advanced=request.args.get('advanced'))
+
 
 @app.route('/admin/edit')
 @login_required
@@ -494,7 +495,7 @@ def markdown_filter(data):
 
 @app.template_filter('autolink')
 def plain_text_filter(plain):
-    plain = autolinker.make_links(plain)
+    plain = util.autolink(plain)
     plain = plain.replace('\n', '<br />')
     return plain
 
@@ -520,7 +521,7 @@ def local_mirror_resource(url):
         print("downloading from", url)
         print("downloading to", mirror_file_path)
 
-        if os.path.exists(mirror_file_path) or download_resource(url, mirror_file_path):
+        if os.path.exists(mirror_file_path) or util.download_resource(url, mirror_file_path):
             return url_for('static', filename=mirror_url_path)
 
     return url
