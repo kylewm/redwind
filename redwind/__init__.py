@@ -15,8 +15,28 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from redwind import app
+from flask import Flask
+from redis import Redis
+from werkzeug.datastructures import ImmutableDict
 
+app = Flask(__name__)
+app.config.from_object('config.Configuration')
 
-if __name__ == '__main__':
-    app.run(debug=True, threaded=True)
+app.jinja_options = ImmutableDict(
+    trim_blocks=True,
+    lstrip_blocks=True,
+    extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
+)
+
+redis = Redis()
+
+if not app.debug:
+    import logging
+    from logging.handlers import RotatingFileHandler
+
+    file_handler = RotatingFileHandler('app.log', maxBytes=1048576,
+                                       backupCount=5)
+    file_handler.setLevel(logging.WARNING)
+    app.logger.addHandler(file_handler)
+
+from . import views

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form id="share_on_facebook" method="POST">
+    <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid }}"/>
+
+    <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Share on Facebook"/>
+
+<textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">
+{% if post.title %}
+{{ post.title }}
+
+{% endif %}
+{{ post.content | format_as_text(post.content_format) }}
+</textarea><br/>
+
+{% if imgs %}
+  Preview Image<br/>
+  <label><input type="radio" name="img" value="">No Preview</label><br/>
+  {% for img in imgs %}
+    <label><input type="radio" name="img" value="{{img}}">
+        <img src="{{img}}" style="width:64px"/>
+    </label><br/>
+  {% endfor %}
+{% endif %}
+
+</form>
+
+{% endblock content %}

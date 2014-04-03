@@ -1,0 +1,74 @@
+(function() {
+
+    function clearResults() {
+        $('#result').empty();
+    }
+
+    function appendResult(str) {
+        $('#result').append("<li>" + str + "</li>");
+    }
+
+    function uploadCompleteHandler(data) {
+
+        appendResult("finished uploading to " + data.path);
+
+        var content_text_area = $("#content");
+        var content_format = $("#content_format").val();
+
+        if (content_format == 'markdown') {
+            content_text_area.val( content_text_area.val() + '\n![](' + data.path + ')');
+        }
+        else {
+            content_text_area.val( content_text_area.val() + '\n<img src="' + data.path + '"/>');
+        }
+    }
+
+    function uploadErrorHandler(data, status, errorThrown) {
+        appendResult("upload failed with " + status + ", " + errorThrown);
+    }
+
+    function appendResult(str) {
+        $('#result').append("<li>" + str + "</li>");
+    }
+
+    /* register events */
+    $(document).ready(function() {
+        $('#uploads_link').click(function(event) {
+            event.preventDefault();
+            var left = (screen.width-100) / 2;
+            var top = (screen.height-100) / 2;
+
+            window.open('/admin/uploads', 'width=100,height=100,top='+top+',left='+left);
+        });
+
+        $("#get_coords_button").click(function() {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                console.log(position);
+                $("#latitude").val(position.coords.latitude.toFixed(3));
+                $("#longitude").val(position.coords.longitude.toFixed(3));
+            });
+        });
+
+        $("#image_upload_button").change(function() {
+            var file = this.files[0];
+            $('#result').append("<li>uploading file " + file.name + "</li>");
+
+            if (undefined != file) {
+                var formData = new FormData();
+                formData.append('file', file);
+
+                $.ajax({
+                    url: '/api/upload_file',
+                    type: 'POST',
+                    success: uploadCompleteHandler,
+                    error: uploadErrorHandler,
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            }
+        });
+    });
+
+})();

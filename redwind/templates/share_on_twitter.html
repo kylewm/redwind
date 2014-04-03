@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form id="share_on_twitter" method="POST">
+    <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid }}"/>
+
+    <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Share on Twitter"/>
+
+<textarea  name="tweet_preview" id="tweet_preview" style="height: 75px; width:100%; background-color: #eeeeff">{% if post.title %}
+{{ post.title }} {{ post.permalink }}{% else %}
+{{ post.content | format_as_text(post.content_format) }} ({{post.short_permalink}}){% endif %}
+</textarea><br/>
+
+      <span size="8" type="text" name="char_count" id="char_count">&nbsp;</span><br/>
+      <label><span class="heading-small">Permalink:</span>
+        <input id="permalink" size="60" value="{{post.permalink}}"/>
+      </label><br/>
+      <label><span class="heading-small">Short:</span>
+        <input id="permashortlink" size="60" value="({{post.short_permalink}})"/>
+      </label>
+
+    {% if imgs %}
+      <label><input type="radio" name="img" value="">No Image</label><br/>
+      {% for img in imgs %}
+        <label><input type="radio" name="img" value="{{img}}">
+            <img src="{{img}}" style="width:64px"/>
+        </label><br/>
+      {% endfor %}
+    {% endif %}
+
+</form>
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="{{url_for('static', filename='js/twitter.js')}}"></script>
+
+{% endblock content %}
