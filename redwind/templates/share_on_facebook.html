@@ -16,11 +16,10 @@
 </textarea><br/>
 
 {% if imgs %}
-  Preview Image<br/>
   <label><input type="radio" name="img" value="">No Preview</label><br/>
   {% for img in imgs %}
-    <label><input type="radio" name="img" value="{{img}}">
-        <img src="{{img}}" style="width:64px"/>
+    <label><input type="radio" name="img" value="{{img}}"{% if loop.first %} checked{% endif %}>
+        <img src="{{img}}" style="width:64px; vertical-align: middle"/>
     </label><br/>
   {% endfor %}
 {% endif %}
