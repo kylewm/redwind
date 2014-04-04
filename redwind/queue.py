@@ -34,7 +34,8 @@ def run_daemon(app, rv_ttl=500):
         msg = redis.blpop(app.config['REDIS_QUEUE_KEY'])
         func, key, args, kwargs = loads(msg[1])
         try:
-            rv = func(*args, **kwargs)
+            with app.app_context():
+                rv = func(*args, **kwargs)
         except Exception as e:
             app.logger.exception("exception while processing queue")
             rv = e
