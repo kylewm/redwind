@@ -30,7 +30,7 @@ def restart():
     with cd("~/red-wind"):
         with prefix("source venv/bin/activate"):
             run("pip install -r requirements.txt")
-            run("uwsgi --reload /tmp/red-wind.pid")
+    run("supervisorctl restart all")
 
 
 def deploy():
