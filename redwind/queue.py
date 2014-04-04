@@ -1,4 +1,6 @@
 from . import redis
+from .auth import load_user
+from flask.ext.login import current_user, login_user
 from flask import current_app
 from pickle import loads, dumps
 from uuid import uuid4
@@ -22,7 +24,8 @@ def queueable(f):
     def delay(*args, **kwargs):
         qkey = current_app.config['REDIS_QUEUE_KEY']
         key = '%s:result:%s' % (qkey, str(uuid4()))
-        s = dumps((f, key, args, kwargs))
+        userid = current_user.get_id()
+        s = dumps((f, key, args, kwargs, userid))
         redis.rpush(current_app.config['REDIS_QUEUE_KEY'], s)
         return DelayedResult(key)
     f.delay = delay
@@ -32,9 +35,11 @@ def queueable(f):
 def run_daemon(app, rv_ttl=500):
     while 1:
         msg = redis.blpop(app.config['REDIS_QUEUE_KEY'])
-        func, key, args, kwargs = loads(msg[1])
+        func, key, args, kwargs, userid = loads(msg[1])
         try:
-            with app.app_context():
+            with app.test_request_context():
+                user = load_user(userid)
+                login_user(user)
                 rv = func(*args, **kwargs)
         except Exception as e:
             app.logger.exception("exception while processing queue")

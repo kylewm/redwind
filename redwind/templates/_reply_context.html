@@ -2,12 +2,14 @@
 {% for reply in post.reply_contexts %}
 
   <div class="reply-context">
-    {% if (not reply.author_name and reply.permalink and reply.title) %}
-      <i class="fa fa-share"></i>
-      <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-	On <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
-      </time>
-      <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
+
+    {% if (reply.source and not reply.permalink) %}
+
+      <i class="fa fa-share"></i> <a rel="reply-to" class="u-in-reply-to" href="{{ reply.source }}">{{reply.source | prettify_url}}</a>
+
+    {% elif (not reply.author_name and reply.permalink and reply.title) %}
+
+      <i class="fa fa-share"></i> <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
 
     {% else %}
 

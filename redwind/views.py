@@ -145,8 +145,7 @@ class DisplayPost:
 def render_posts(title, post_types, page, per_page, include_drafts=False):
     posts = [DisplayPost(post) for post
              in Post.load_recent(per_page, post_types)]
-    return render_template('posts.html', posts=posts, title=title,
-                           authenticated=current_user.is_authenticated())
+    return render_template('posts.html', posts=posts, title=title)
 
 
 @app.context_processor
@@ -594,19 +593,19 @@ def save_post():
             in_reply_to = request.form.get('in_reply_to')
             post.reply_contexts = []
             if in_reply_to:
-                post.reply_contexts = [Context(url) for url
+                post.reply_contexts = [Context(url.strip()) for url
                                        in in_reply_to.split('\n')]
 
             repost_source = request.form.get('repost_source')
             post.share_contexts = []
             if repost_source:
-                post.share_contexts = [Context(url) for url
+                post.share_contexts = [Context(url.strip()) for url
                                        in repost_source.split('\n')]
 
             like_of = request.form.get('like_of')
             post.like_contexts = []
             if like_of:
-                post.like_contexts = [Context(url) for url
+                post.like_contexts = [Context(url.strip()) for url
                                       in like_of.split('\n')]
 
             twitter_status_id = request.form.get("twitter_status_id")

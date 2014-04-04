@@ -144,12 +144,11 @@ class TwitterClient:
             base_url='https://api.twitter.com/1.1/')
         return service
 
-    def get_auth_session(self, oauth_token=None,
-                         oauth_secret=None, signature=None):
+    def get_auth_session(self, signature=None):
         service = self.get_auth_service()
         session = service.get_session(
-            token=(oauth_token or current_user.twitter_oauth_token,
-                   oauth_secret or current_user.twitter_oauth_token_secret),
+            token=(current_user.twitter_oauth_token,
+                   current_user.twitter_oauth_token_secret),
             signature=signature)
         return session
 
@@ -169,12 +168,12 @@ class TwitterClient:
             if embed_response.status_code // 2 == 100:
                 return embed_response.json().get('html')
 
-    def fetch_external_post(self, ctx, oauth_token=None, oauth_secret=None):
+    def fetch_external_post(self, ctx):
         permalink_re = re.compile(
             "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
         match = permalink_re.match(ctx.source)
         if match:
-            api = self.get_auth_session(oauth_token, oauth_secret)
+            api = self.get_auth_session()
             tweet_id = match.group(2)
             status_response = api.get('statuses/show/{}.json'.format(tweet_id))
 

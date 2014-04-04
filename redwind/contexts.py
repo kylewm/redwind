@@ -9,16 +9,11 @@ import requests
 
 
 def fetch_post_contexts(post):
-    auth_tokens = {
-        'twitter': current_user.twitter_oauth_token,
-        'twitter_secret': current_user.twitter_oauth_token_secret
-    }
-
-    do_fetch_post_contexts.delay(post.shortid, auth_tokens)
+    do_fetch_post_contexts.delay(post.shortid)
 
 
 @queueable
-def do_fetch_post_contexts(post_id, auth_tokens):
+def do_fetch_post_contexts(post_id):
     try:
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
 
@@ -29,15 +24,15 @@ def do_fetch_post_contexts(post_id, auth_tokens):
 
             if post.reply_contexts:
                 for reply_ctx in post.reply_contexts:
-                    fetch_external_post(reply_ctx, auth_tokens)
+                    fetch_external_post(reply_ctx)
 
             if post.share_contexts:
                 for share_ctx in post.share_contexts:
-                    fetch_external_post(share_ctx, auth_tokens)
+                    fetch_external_post(share_ctx)
 
             if post.like_contexts:
                 for like_ctx in post.like_contexts:
-                    fetch_external_post(like_ctx, auth_tokens)
+                    fetch_external_post(like_ctx)
 
             post.save()
 
@@ -48,14 +43,12 @@ def do_fetch_post_contexts(post_id, auth_tokens):
         return False, "exception while fetching contexts {}".format(e)
 
 
-def fetch_external_post(context, auth_tokens):
+def fetch_external_post(context):
     from .views import prettify_url
 
-    if 'twitter' in auth_tokens and 'twitter_secret' in auth_tokens:
-        app.logger.debug("checking twitter for {}".format(context))
-        if twitter_client.fetch_external_post(context, auth_tokens['twitter'],
-                                              auth_tokens['twitter_secret']):
-            return
+    app.logger.debug("checking twitter for {}".format(context))
+    if twitter_client.fetch_external_post(context):
+        return True
 
     app.logger.debug("parsing for microformats {}".format(context))
     response = requests.get(context.source)
