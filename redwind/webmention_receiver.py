@@ -62,27 +62,25 @@ def process_webmention(source, target, callback):
             })
 
     try:
-        post_id, mentions, delete, error \
-            = do_process_webmention(source, target)
-
+        post_id, mentions, delete, error = do_process_webmention(source, target)
         if error:
             app.logger.debug("Failed to process webmention: %s", error)
             call_callback(400, error)
             return 400, error
-
+        
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
             if delete:
                 for existing in post.mentions:
                     if existing.source == source or \
                        existing.permalink == source:
                         existing.deleted = True
+
             else:
                 # de-dup on incoming url
                 for existing in post.mentions:
                     if existing.source == mentions[0].source and \
                        existing.permalink == mentions[0].permalink:
                         existing.deleted = True
-
                 post.mentions += mentions
 
             post.save()
@@ -94,6 +92,7 @@ def process_webmention(source, target, callback):
         return 200, 'Success'
 
     except Exception as e:
+        app.logger.exception("exception while processing webmention")
         error = "exception while processing webmention {}".format(e)
         call_callback(400, error)
         return 400, error
@@ -101,10 +100,9 @@ def process_webmention(source, target, callback):
 
 def do_process_webmention(source, target):
     app.logger.debug("processing webmention from %s to %s", source, target)
-
     # confirm that target is a valid link to a post
     target_post = find_target_post(target)
-
+        
     if not target_post:
         app.logger.warn(
             "Webmention could not find target post: %s. Giving up", target)
@@ -113,11 +111,11 @@ def do_process_webmention(source, target):
 
     target_urls = [target, target_post.permalink, target_post.short_permalink]
     target_id = target_post.shortid
-
+    
     # confirm that source actually refers to the post
     source_response = requests.get(source)
     app.logger.debug('received response from source %s', source_response)
-
+    
     if source_response.status_code == 410:
         app.logger.debug("Webmention indicates original was deleted")
         return target_id, None, True, None
@@ -130,15 +128,7 @@ def do_process_webmention(source, target):
             .format(source, source_response)
 
     source_length = source_response.headers.get('Content-Length')
-    source_content_type = source_response.headers.get_content_maintype()
-
-    if source_content_type and source_content_type != 'text':
-        app.logger.warn("Cannot process mention from non-text type %s",
-                        source_content_type)
-        return target_id, None, False, \
-            "Source content type {}. 'text' is required."\
-            .format(source_content_type)
-
+        
     if source_length and int(source_length) > 2097152:
         app.logger.warn("Very large source. length=%s", source_length)
         return target_id, None, False,\
