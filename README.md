@@ -19,13 +19,11 @@ I run Red Wind behind [Supervisor](http://supervisord.org) with the following co
 
     [program:red-wind]
     directory=/home/kmahan/red-wind
-    environment=PYTHONPATH="mf2py"
     command=/home/kmahan/red-wind/venv/bin/uwsgi --master --processes 4  -s /tmp/uwsgi.sock -w main:app
               -H venv/ --chmod-socket=666
     user=kmahan
 
     [program:red-wind-queue]
     directory=/home/kmahan/red-wind
-    environment=PYTHONPATH="mf2py"
     command=/home/kmahan/red-wind/venv/bin/python queue_daemon.py
     user=kmahan
