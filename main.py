@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright © 2013, 2014 Kyle Mahan
 # This file is part of Red Wind.
 #
@@ -14,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+if 'mf2py' not in sys.path:
+    sys.path.append('mf2py')
 
 from redwind import app
 
