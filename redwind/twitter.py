@@ -114,12 +114,13 @@ def share_on_twitter():
 
 
 class UpdateWithMediaSignature(HmacSha1Signature):
+
     def sign(self, consumer_secret, access_token_secret, method, url,
              oauth_params, req_kwargs):
-
         sig_wo = super(UpdateWithMediaSignature, self).sign(
             consumer_secret, access_token_secret, method, url,
             oauth_params, {})
+        print(repr(sig_wo))
         return sig_wo
 
 
