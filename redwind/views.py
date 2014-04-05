@@ -533,13 +533,12 @@ def local_mirror_resource(url):
 
 @app.route('/api/upload_file', methods=['POST'])
 @login_required
-def receive_upload():
+def upload_file():
     f = request.files['file']
     filename = secure_filename(f.filename)
     now = datetime.utcnow()
 
-    file_path = os.path.join('uploads', str(now.year),
-                             str(now.month).zfill(2), filename)
+    file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
 
     url_path = url_for('static', filename=file_path)
     full_file_path = os.path.join(app.root_path, 'static', file_path)
@@ -549,6 +548,51 @@ def receive_upload():
 
     f.save(full_file_path)
     return jsonify({'path': url_path})
+
+
+@app.route('/api/upload_image', methods=['POST'])
+@login_required
+def upload_image():
+    f = request.files['file']
+    filename = secure_filename(f.filename)
+    now = datetime.utcnow()
+
+    file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
+
+    full_file_path = os.path.join(app.root_path, 'static', file_path)
+    if not os.path.exists(os.path.dirname(full_file_path)):
+        os.makedirs(os.path.dirname(full_file_path))
+    f.save(full_file_path)
+
+    result = {'original': url_for('static', filename=file_path)}
+
+    sizes = [('small', 128), ('medium', 300), ('large', 800)]
+    for tag, side in sizes:
+        result[tag] = resize_image(file_path, tag, side)
+
+    return jsonify(result)
+
+
+def resize_image(path, tag, side):
+    from PIL import Image
+
+    dirname, filename = os.path.split(path)
+    ext = '.jpg'
+
+    split = filename.rsplit('.', 1)
+    if len(split) > 1:
+        filename, ext = split
+
+    newpath = os.path.join(dirname, '{}-{}.{}'.format(filename, tag, ext))
+    im = Image.open(os.path.join(app.root_path, 'static', path))
+
+    origw, origh = im.size
+    ratio = side / max(origw, origh)
+
+    im = im.resize((int(origw * ratio), int(origh * ratio)), Image.ANTIALIAS)
+    im.save(os.path.join(app.root_path, 'static', newpath))
+    return url_for('static', filename=newpath)
+
 
 
 # drafts can be saved or published
