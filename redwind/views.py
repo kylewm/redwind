@@ -73,7 +73,7 @@ class DisplayPost:
             return preview, False
 
         #instagram embeds
-        m = self.INSTGRAM_RE.match(url)
+        m = self.INSTAGRAM_RE.match(url)
         if m:
             preview = """<iframe src="//instagram.com/p/{}/embed/" """\
                 """width="400" height="500" frameborder="0" scrolling="no" """\
@@ -96,10 +96,9 @@ class DisplayPost:
 
     def get_html_content(self, include_preview=True):
         text = format_as_html(self.content, self.content_format)
-        print("formatted=", repr(text))
         if include_preview and self.post_type == 'share':
-            text += self.get_share_preview()
-        print("with preview=", repr(text))
+            preview = self.get_share_preview()
+            text += preview
         return text
 
     @property
