@@ -165,10 +165,7 @@
     $(document).ready(function() {
 
         $('#preview').on('input propertychange', fillCharCount);
-
-        $('#permalink').on('click', function() { this.select(); });
-        $('#permashortlink').on('click', function() { this.select(); });
-
+        $('#permalink, #permashortlink, #permashortcite').on('click', function() { this.select(); });
         fillCharCount();
     });
 

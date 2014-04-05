@@ -9,7 +9,7 @@
 
 <textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">{% if post.title %}
 {{ post.title }} {{ post.permalink }}{% else %}
-{{ post.content | format_as_text(post.content_format) }} ({{post.short_permalink}}){% endif %}
+{{ post.content | format_as_text(post.content_format) }} ({{post.short_cite}}){% endif %}
 </textarea><br/>
 
       <span size="8" type="text" name="char_count" id="char_count">&nbsp;</span><br/>
@@ -18,6 +18,9 @@
       </label><br/>
       <label><span class="heading-small">Short:</span>
         <input id="permashortlink" size="60" value="({{post.short_permalink}})"/>
+      </label><br/>
+      <label><span class="heading-small">Cite:</span>
+        <input id="permashortcite" size="60" value="({{post.short_cite}})"/>
       </label><br/>
 
     {% if imgs %}
