@@ -1,4 +1,5 @@
 import uwsgi
+import os
 from . import app
 from .models import User
 from flask.ext.login import login_user
@@ -24,7 +25,7 @@ def process_spool(env):
         kwargs = loads(env[b'kwargs'])
 
         with app.test_request_context():
-            user = User.load('_data/user')
+            user = User.load(os.path.join(app.root_path, '_data/user'))
             app.logger.debug('loaded user %s', repr(user))
             login_user(user)
             func(*args, **kwargs)

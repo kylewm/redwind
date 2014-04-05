@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from . import app
+import os
 from .models import User
 from flask.ext.login import LoginManager
 
@@ -25,6 +25,6 @@ login_mgr.login_view = 'index'
 
 @login_mgr.user_loader
 def load_user(domain):
-    user = User.load('_data/user')
+    user = User.load(os.path.join(app.root_path, '_data/user'))
     if user.domain == domain:
         return user

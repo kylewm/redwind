@@ -507,7 +507,8 @@ def local_mirror_resource(url):
     o = urlparse(url)
     if o.netloc and o.netloc != site_netloc:
         mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
-        mirror_file_path = os.path.join("redwind/static", mirror_url_path)
+        mirror_file_path = os.path.join(app.root_path, 'static',
+                                        mirror_url_path)
 
         if os.path.exists(mirror_file_path) or \
            util.download_resource(url, mirror_file_path):
@@ -530,7 +531,7 @@ def receive_upload():
                              str(now.month).zfill(2), filename)
 
     url_path = url_for('static', filename=file_path)
-    full_file_path = os.path.join('redwind/static', file_path)
+    full_file_path = os.path.join(app.root_path, 'static', file_path)
 
     if not os.path.exists(os.path.dirname(full_file_path)):
         os.makedirs(os.path.dirname(full_file_path))

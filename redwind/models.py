@@ -31,10 +31,6 @@ from operator import attrgetter
 from contextlib import contextmanager
 
 
-datadir = '_data'
-backupdir = os.path.join(datadir, '.backup')
-
-
 def isoparse(s):
     if s:
         try:
@@ -123,9 +119,10 @@ class User:
         with open(temp, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
 
-        filename = os.path.join(datadir, 'user')
+        filename = os.path.join(app.root_path, '_data/user')
         if os.path.exists(filename):
-            save_backup(datadir, backupdir, 'user')
+            save_backup(os.path.join(app.root_path, '_data'),
+                        os.path.join(app.root_path, '_data/.backup'), 'user')
         shutil.move(temp, filename)
 
     # Flask-Login integration
@@ -215,14 +212,15 @@ class Post:
                             posts.append(post)
 
         posts = []
-        walk(os.path.join(datadir, 'posts'), posts)
+        walk(os.path.join(app.root_path, '_data/posts'), posts)
         posts.sort(key=attrgetter('pub_date'), reverse=True)
         return posts[:count]
 
     @classmethod
     def load_by_month(cls, year, month):
         posts = []
-        path = os.path.join(datadir, 'posts', "{}/{:02d}".format(year, month))
+        path = os.path.join(app.root_path,
+                            '_data/posts/{}/{:02d}'.format(year, month))
         days = os.listdir(path)
         for day in days:
             daypath = os.path.join(path, day)
@@ -260,12 +258,12 @@ class Post:
 
     @classmethod
     def relpath_to_fullpath(cls, path):
-        return os.path.join(datadir, 'posts', path)
+        return os.path.join(app.root_path, '_data/posts', path)
 
     @classmethod
     def get_archive_months(cls):
         result = []
-        path = os.path.join(datadir, 'posts')
+        path = os.path.join(app.root_path, '_data/posts')
         for year in os.listdir(path):
             yearpath = os.path.join(path, year)
             for month in os.listdir(yearpath):
@@ -355,7 +353,7 @@ class Post:
         if not self._writeable:
             raise RuntimeError("Cannot save post that was not opened with the 'writeable' flag")
 
-        basedir = os.path.join(datadir, 'posts')
+        basedir = os.path.join(app.root_path, '_data/posts')
 
         # assign a new date index if we don't have one yet
         if not self.date_index:
@@ -372,7 +370,9 @@ class Post:
         with open(temp, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
 
-        save_backup(basedir, os.path.join(backupdir, 'posts'), self.path)
+        save_backup(basedir,
+                    os.path.join(app.root_path, '_data/.backup/posts'),
+                    self.path)
         shutil.move(temp, filename)
 
     @property
@@ -519,7 +519,7 @@ class Mention:
     def update_recent(cls, post_id):
         """post received a comment, add it to the front of the list of
            recently commented posts"""
-        filename = os.path.join(datadir, 'recent_mentions')
+        filename = os.path.join(app.root_path, '_data/recent_mentions')
         with acquire_lock(filename, 30):
             if os.path.exists(filename):
                 with open(filename, 'r') as f:

@@ -30,7 +30,6 @@ app.jinja_options = ImmutableDict(
     extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
 )
 
-
 if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
@@ -39,8 +38,6 @@ if not app.debug:
                                        backupCount=5)
     file_handler.setLevel(logging.WARNING)
     app.logger.addHandler(file_handler)
-
-
 
 from . import views
 from . import spool
