@@ -11,19 +11,4 @@ The name comes from the great Raymond Chandler short story, the first paragraph 
 
 # Requirements
 
-Python 3.3, Flask, Redis (for the background queue). See requirements.txt for details.
-
-# Running
-
-I run Red Wind behind [Supervisor](http://supervisord.org) with the following configuration:
-
-    [program:red-wind]
-    directory=/home/kmahan/red-wind
-    command=/home/kmahan/red-wind/venv/bin/uwsgi --master --processes 4  -s /tmp/uwsgi.sock -w main:app
-              -H venv/ --chmod-socket=666
-    user=kmahan
-
-    [program:red-wind-queue]
-    directory=/home/kmahan/red-wind
-    command=/home/kmahan/red-wind/venv/bin/python queue_daemon.py
-    user=kmahan
+Python 3.3, Flask, uWSGI. See requirements.txt for details.
