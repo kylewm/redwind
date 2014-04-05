@@ -6,9 +6,9 @@ env.hosts = ['orin.kylewm.com']
 
 def getdata():
     with cd("~/red-wind"):
-        run("tar czvf data.tar.gz _data")
-    get('~/red-wind/data.tar.gz', '.')
-    local("tar zxvf data.tar.gz")
+        run("tar czvf /tmp/redwind-data.tar.gz redwind/_data")
+    get('/tmp/redwind-data.tar.gz', '.')
+    local("tar zxvf /tmp/redwind-data.tar.gz")
 
 
 def commit():

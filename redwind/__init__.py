@@ -19,6 +19,7 @@ if 'mf2py' not in sys.path:
     sys.path.append('mf2py')
 
 from flask import Flask
+from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.datastructures import ImmutableDict
 
 app = Flask(__name__)
@@ -29,6 +30,8 @@ app.jinja_options = ImmutableDict(
     lstrip_blocks=True,
     extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
 )
+
+#toolbar = DebugToolbarExtension(app)
 
 if not app.debug:
     import logging

@@ -125,6 +125,9 @@ class UpdateWithMediaSignature(HmacSha1Signature):
 
 class TwitterClient:
 
+    PERMALINK_RE = re.compile(
+        "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
+
     def get_auth_service(self):
         key = app.config['TWITTER_CONSUMER_KEY']
         secret = app.config['TWITTER_CONSUMER_SECRET']
@@ -151,9 +154,7 @@ class TwitterClient:
         if not self.is_twitter_authorized(current_user):
             return
 
-        permalink_re = re.compile(
-            "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
-        match = permalink_re.match(url)
+        match = self.PERMALINK_RE.match(url)
         if match:
             api = self.get_auth_session()
             tweet_id = match.group(2)
@@ -164,9 +165,7 @@ class TwitterClient:
                 return embed_response.json().get('html')
 
     def fetch_external_post(self, ctx):
-        permalink_re = re.compile(
-            "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
-        match = permalink_re.match(ctx.source)
+        match = self.PERMALINK_RE.match(ctx.source)
         if match:
             api = self.get_auth_session()
             tweet_id = match.group(2)
@@ -222,15 +221,12 @@ class TwitterClient:
     def handle_new_or_edit(self, post, preview, img):
         if not self.is_twitter_authorized():
             return
-
-        permalink_re = re.compile(
-            "https?://(?:www.)?twitter.com/(\w+)/status/(\w+)")
         api = self.get_auth_session()
 
         # check for RT's
         is_retweet = False
         for share_context in post.share_contexts:
-            repost_match = permalink_re.match(share_context.source)
+            repost_match = self.PERMALINK_RE.match(share_context.source)
             if repost_match:
                 is_retweet = True
                 tweet_id = repost_match.group(2)
@@ -242,7 +238,7 @@ class TwitterClient:
 
         is_favorite = False
         for like_context in post.like_contexts:
-            like_match = permalink_re.match(post.like_of)
+            like_match = self.PERMALINK_RE.match(post.like_of)
             if like_match:
                 is_favorite = True
                 tweet_id = like_match.group(2)
@@ -262,7 +258,7 @@ class TwitterClient:
                 data['long'] = str(post.location.longitude)
 
             for reply_context in post.reply_contexts:
-                reply_match = permalink_re.match(reply_context.source)
+                reply_match = self.PERMALINK_RE.match(reply_context.source)
                 if reply_match:
                     data['in_reply_to_status_id'] = reply_match.group(2)
                     break

@@ -53,6 +53,9 @@ DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
 
 class DisplayPost:
 
+    YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
+    INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)/?#?')
+
     def __init__(self, wrapped):
         self.wrapped = wrapped
 
@@ -61,7 +64,7 @@ class DisplayPost:
 
     def repost_preview_filter(self, url):
         #youtube embeds
-        m = re.match(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)', url)
+        m = self.YOUTUBE_RE.match(url)
         if m:
             preview = """<iframe width="560" height="315" """\
                 """src="//www.youtube.com/embed/{}" frameborder="0" """\
@@ -70,7 +73,7 @@ class DisplayPost:
             return preview, False
 
         #instagram embeds
-        m = re.match(r'https?://instagram\.com/p/(\w+)/?#?', url)
+        m = self.INSTGRAM_RE.match(url)
         if m:
             preview = """<iframe src="//instagram.com/p/{}/embed/" """\
                 """width="400" height="500" frameborder="0" scrolling="no" """\
@@ -93,8 +96,10 @@ class DisplayPost:
 
     def get_html_content(self, include_preview=True):
         text = format_as_html(self.content, self.content_format)
+        print("formatted=", repr(text))
         if include_preview and self.post_type == 'share':
             text += self.get_share_preview()
+        print("with preview=", repr(text))
         return text
 
     @property
@@ -150,7 +155,14 @@ def render_posts(title, post_types, page, per_page, include_drafts=False):
 
 @app.context_processor
 def inject_user_authenticated():
-    return {'authenticated': current_user.is_authenticated()}
+
+    with open(os.path.join(app.root_path, 'static/css/style.css')) as f:
+        inline_style = f.read()
+    # inline_style = re.sub('\s+', ' ', inline_style)
+    return {
+        'authenticated': current_user.is_authenticated(),
+        'inline_style': Markup(inline_style)
+    }
 
 
 @app.route('/', defaults={'page': 1})
@@ -486,7 +498,8 @@ def markdown_filter(data):
 @app.template_filter('autolink')
 def plain_text_filter(plain):
     plain = util.autolink(plain)
-    plain = plain.replace('\n', '<br />')
+    for endl in ('\r\n', '\n', '\r'):
+        plain = plain.replace(endl, '<br />')
     return plain
 
 

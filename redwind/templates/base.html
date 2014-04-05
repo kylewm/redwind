@@ -26,11 +26,9 @@
     <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/users/kyle114.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/kyle152.jpg') }}"/>
 
-    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pygments.css') }}">
+    <style type="text/css">
+      {{ inline_style }}
+    </style>
 
     {% block head_content %}{% endblock %}
   </head>
@@ -102,3 +100,7 @@
 
   </body>
 </html>
+
+<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono" rel="stylesheet" type="text/css">
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet" type="text/css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pygments.css') }}" type="text/css">
