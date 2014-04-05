@@ -17,7 +17,7 @@
 
 from . import app
 from .models import Post
-from .queue import queueable
+from .spool import spoolable
 
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -30,7 +30,7 @@ import requests
 def send_webmentions(post):
     try:
         app.logger.debug("queueing webmentions for {}".format(post.shortid))
-        do_send_webmentions.delay(post.shortid)
+        do_send_webmentions.spool(post.shortid)
         return True, 'Success'
 
     except Exception as e:
@@ -39,7 +39,7 @@ def send_webmentions(post):
             .format(e)
 
 
-@queueable
+@spoolable
 def do_send_webmentions(post_id):
     app.logger.debug("sending mentions for {}".format(post_id))
     post = Post.load_by_shortid(post_id)

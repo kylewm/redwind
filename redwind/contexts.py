@@ -1,18 +1,17 @@
 from . import app
 from .models import Post
-from .queue import queueable
 from .twitter import twitter_client
 from .util import hentry_parser
 from bs4 import BeautifulSoup
-from flask.ext.login import current_user
 import requests
+from .spool import spoolable
 
 
 def fetch_post_contexts(post):
-    do_fetch_post_contexts.delay(post.shortid)
+    do_fetch_post_contexts.spool(post.shortid)
 
 
-@queueable
+@spoolable
 def do_fetch_post_contexts(post_id):
     try:
         with Post.writeable(Post.shortid_to_path(post_id)) as post:

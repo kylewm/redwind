@@ -95,7 +95,7 @@ class User:
 
     @classmethod
     def load(cls, path):
-        app.logger.debug("loading from path %s", path)
+        app.logger.debug("loading from path %s", os.path.abspath(path))
         if os.path.exists(path):
             with open(path, 'r') as f:
                 data = json.load(f)
@@ -201,6 +201,12 @@ class Post:
                     walk(newpath, posts)
                 else:
                     filename = os.path.basename(newpath)
+
+                    # skip locks and emacs artifacts
+                    if filename.endswith('.lock') or filename.startswith('~') \
+                       or filename.startswith('.') or filename.startswith('#'):
+                        continue
+
                     post_type, date_index = filename.split('_')
                     if not post_types or post_type in post_types:
                         post = cls.load(newpath)

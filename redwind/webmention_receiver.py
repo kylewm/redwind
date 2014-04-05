@@ -18,7 +18,6 @@
 from . import push
 from . import app
 from .models import Post, Mention
-from .queue import queueable
 from .util import hentry_parser
 
 from flask import request, make_response
@@ -27,6 +26,7 @@ from werkzeug.exceptions import NotFound
 import urllib.parse
 import urllib.request
 import requests
+from .spool import spoolable
 
 from bs4 import BeautifulSoup
 
@@ -46,11 +46,11 @@ def receive_webmention():
             'webmention missing required target parameter', 400)
 
     app.logger.debug("Webmention from %s to %s received", source, target)
-    rv = process_webmention.delay(source, target, callback)
+    process_webmention.spool(source, target, callback)
     return make_response('webmention queued for processing', 202)
 
 
-@queueable
+@spoolable
 def process_webmention(source, target, callback):
     def call_callback(status, reason):
         if callback:
@@ -67,7 +67,7 @@ def process_webmention(source, target, callback):
             app.logger.debug("Failed to process webmention: %s", error)
             call_callback(400, error)
             return 400, error
-        
+
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
             if delete:
                 for existing in post.mentions:
@@ -102,7 +102,7 @@ def do_process_webmention(source, target):
     app.logger.debug("processing webmention from %s to %s", source, target)
     # confirm that target is a valid link to a post
     target_post = find_target_post(target)
-        
+
     if not target_post:
         app.logger.warn(
             "Webmention could not find target post: %s. Giving up", target)
@@ -111,11 +111,11 @@ def do_process_webmention(source, target):
 
     target_urls = [target, target_post.permalink, target_post.short_permalink]
     target_id = target_post.shortid
-    
+
     # confirm that source actually refers to the post
     source_response = requests.get(source)
     app.logger.debug('received response from source %s', source_response)
-    
+
     if source_response.status_code == 410:
         app.logger.debug("Webmention indicates original was deleted")
         return target_id, None, True, None
@@ -128,7 +128,7 @@ def do_process_webmention(source, target):
             .format(source, source_response)
 
     source_length = source_response.headers.get('Content-Length')
-        
+
     if source_length and int(source_length) > 2097152:
         app.logger.warn("Very large source. length=%s", source_length)
         return target_id, None, False,\

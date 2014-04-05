@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+if 'mf2py' not in sys.path:
+    sys.path.append('mf2py')
 
 from flask import Flask
-from redis import Redis
 from werkzeug.datastructures import ImmutableDict
 
 app = Flask(__name__)
@@ -28,7 +30,6 @@ app.jinja_options = ImmutableDict(
     extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
 )
 
-redis = Redis()
 
 if not app.debug:
     import logging
@@ -39,4 +40,7 @@ if not app.debug:
     file_handler.setLevel(logging.WARNING)
     app.logger.addHandler(file_handler)
 
+
+
 from . import views
+from . import spool
