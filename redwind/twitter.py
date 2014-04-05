@@ -22,7 +22,6 @@ from . import util
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response,\
     jsonify, render_template
-from rauth import OAuth1Service
 
 import requests
 import re
@@ -34,7 +33,13 @@ from tempfile import mkstemp
 from datetime import datetime
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
-from rauth.oauth import HmacSha1Signature
+
+from requests_oauthlib import OAuth1Session, OAuth1
+
+REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
+AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
+ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
+
 
 @app.route('/admin/authorize_twitter')
 @login_required
@@ -43,11 +48,14 @@ def authorize_twitter():
        authentication page"""
     callback_url = url_for('authorize_twitter2', _external=True)
     try:
-        twitter = twitter_client.get_auth_service()
-        request_token, request_token_secret = twitter.get_request_token(
-            params={'oauth_callback': callback_url})
+        oauth = OAuth1Session(
+            client_key=app.config['TWITTER_CONSUMER_KEY'],
+            client_secret=app.config['TWITTER_CONSUMER_SECRET'],
+            callback_uri=callback_url)
 
-        return redirect(twitter.get_authorize_url(request_token))
+        oauth.fetch_request_token(REQUEST_TOKEN_URL)
+        return redirect(oauth.authorization_url(AUTHORIZE_URL))
+
     except requests.RequestException as e:
         return make_response(str(e))
 
@@ -56,14 +64,15 @@ def authorize_twitter():
 def authorize_twitter2():
     """Receive the request token from Twitter and convert it to an
        access token"""
-    oauth_token = request.args.get('oauth_token')
-    oauth_verifier = request.args.get('oauth_verifier')
-
     try:
-        twitter = twitter_client.get_auth_service()
-        access_token, access_token_secret = twitter.get_access_token(
-            oauth_token, '', method='POST',
-            params={'oauth_verifier': oauth_verifier})
+        oauth = OAuth1Session(
+            client_key=app.config['TWITTER_CONSUMER_KEY'],
+            client_secret=app.config['TWITTER_CONSUMER_SECRET'])
+        oauth.parse_authorization_response(request.url)
+
+        response = oauth.fetch_access_token(ACCESS_TOKEN_URL)
+        access_token = response.get('oauth_token')
+        access_token_secret = response.get('oauth_token_secret')
 
         current_user.twitter_oauth_token = access_token
         current_user.twitter_oauth_token_secret = access_token_secret
@@ -113,42 +122,17 @@ def share_on_twitter():
         return """Share on Twitter Failed!<br/>Exception: {}""".format(e)
 
 
-class UpdateWithMediaSignature(HmacSha1Signature):
-
-    def sign(self, consumer_secret, access_token_secret, method, url,
-             oauth_params, req_kwargs):
-        sig_wo = super(UpdateWithMediaSignature, self).sign(
-            consumer_secret, access_token_secret, method, url,
-            oauth_params, {})
-        return sig_wo
-
-
 class TwitterClient:
 
     PERMALINK_RE = re.compile(
         "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
 
-    def get_auth_service(self):
-        key = app.config['TWITTER_CONSUMER_KEY']
-        secret = app.config['TWITTER_CONSUMER_SECRET']
-        service = OAuth1Service(
-            name='twitter',
-            consumer_key=key,
-            consumer_secret=secret,
-            request_token_url=
-            'https://api.twitter.com/oauth/request_token',
-            access_token_url='https://api.twitter.com/oauth/access_token',
-            authorize_url='https://api.twitter.com/oauth/authorize',
-            base_url='https://api.twitter.com/1.1/')
-        return service
-
-    def get_auth_session(self, signature=None):
-        service = self.get_auth_service()
-        session = service.get_session(
-            token=(current_user.twitter_oauth_token,
-                   current_user.twitter_oauth_token_secret),
-            signature=signature)
-        return session
+    def get_auth(self):
+        return OAuth1(
+            client_key=app.config['TWITTER_CONSUMER_KEY'],
+            client_secret=app.config['TWITTER_CONSUMER_SECRET'],
+            resource_owner_key=current_user.twitter_oauth_token,
+            resource_owner_secret=current_user.twitter_oauth_token_secret)
 
     def repost_preview(self, url):
         if not self.is_twitter_authorized(current_user):
@@ -156,10 +140,11 @@ class TwitterClient:
 
         match = self.PERMALINK_RE.match(url)
         if match:
-            api = self.get_auth_session()
             tweet_id = match.group(2)
-            embed_response = api.get('statuses/oembed.json',
-                                     params={'id': tweet_id})
+            embed_response = requests.get(
+                'https://api.twitter.com/1.1/statuses/oembed.json',
+                params={'id': tweet_id},
+                auth=self.get_auth())
 
             if embed_response.status_code // 2 == 100:
                 return embed_response.json().get('html')
@@ -167,9 +152,10 @@ class TwitterClient:
     def fetch_external_post(self, ctx):
         match = self.PERMALINK_RE.match(ctx.source)
         if match:
-            api = self.get_auth_session()
             tweet_id = match.group(2)
-            status_response = api.get('statuses/show/{}.json'.format(tweet_id))
+            status_response = requests.get(
+                'https://api.twitter.com/1.1/statuses/show/{}.json'.format(tweet_id),
+                auth=self.get_auth())
 
             if status_response.status_code // 2 != 100:
                 app.logger.warn("failed to fetch tweet %s %s", status_response,
@@ -221,8 +207,6 @@ class TwitterClient:
     def handle_new_or_edit(self, post, preview, img):
         if not self.is_twitter_authorized():
             return
-        api = self.get_auth_session()
-
         # check for RT's
         is_retweet = False
         for share_context in post.share_contexts:
@@ -230,8 +214,11 @@ class TwitterClient:
             if repost_match:
                 is_retweet = True
                 tweet_id = repost_match.group(2)
-                result = api.post('statuses/retweet/{}.json'.format(tweet_id),
-                                  data={'trim_user': True})
+                result = requests.post(
+                    'https://api.twitter.com/1.1/statuses/retweet/{}.json'
+                    .format(tweet_id),
+                    data={'trim_user': True},
+                    auth=self.get_auth())
                 if result.status_code // 2 != 100:
                     raise RuntimeError("{}: {}".format(result,
                                                        result.content))
@@ -242,8 +229,10 @@ class TwitterClient:
             if like_match:
                 is_favorite = True
                 tweet_id = like_match.group(2)
-                result = api.post('favorites/create.json',
-                                  data={'id': tweet_id, 'trim_user': True})
+                result = requests.post(
+                    'https://api.twitter.com/1.1/favorites/create.json',
+                    data={'id': tweet_id, 'trim_user': True},
+                    auth=self.get_auth())
                 if result.status_code // 2 != 100:
                     raise RuntimeError("{}: {}".format(result,
                                                        result.content))
@@ -266,20 +255,17 @@ class TwitterClient:
             if img:
                 tempfile = self.download_image_to_temp(img)
                 app.logger.debug(json.dumps(data, indent=True))
-                media_api = self.get_auth_session(
-                    signature=UpdateWithMediaSignature)
 
-                filebuf = open(tempfile, 'rb')
-                filebuf.__deepcopy__ = types.MethodType(lambda x, memo: x, filebuf)
-                result = media_api.post('statuses/update_with_media.json',
-                                        header_auth=True,
-                                        data=data,
-                                        files={
-                                            'media[]': filebuf
-                                        })
+                result = requests.post(
+                    'https://api.twitter.com/1.1/statuses/update_with_media.json',
+                    data=data,
+                    files={'media[]': open(tempfile, 'rb')},
+                    auth=self.get_auth())
 
             else:
-                result = api.post('statuses/update.json', data=data)
+                result = requests.post(
+                    'https://api.twitter.com/1.1/statuses/update.json',
+                    data=data, auth=self.get_auth())
 
             if result.status_code // 2 != 100:
                 raise RuntimeError("status code: {}, headers: {}, body: {}"
