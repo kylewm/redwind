@@ -25,7 +25,6 @@ def send_notifications(post):
         publish.spool('http://kylewm.com/updates.atom')
     if post.post_type == 'article':
         publish.spool('http://kylewm.com/articles.atom')
-
     publish.spool('http://kylewm.com/all.atom')
 
 

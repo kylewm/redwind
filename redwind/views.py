@@ -154,7 +154,6 @@ def render_posts(title, post_types, page, per_page, include_drafts=False):
 
 @app.context_processor
 def inject_user_authenticated():
-
     with open(os.path.join(app.root_path, 'static/css/style.css')) as f:
         inline_style = f.read()
     # inline_style = re.sub('\s+', ' ', inline_style)
@@ -168,7 +167,7 @@ def inject_user_authenticated():
 @app.route('/page/<int:page>')
 def index(page):
     # leave out replies and likes
-    return render_posts(None, ('article', 'note', 'share', 'reply'), page, 30,
+    return render_posts(None, ('article', 'note', 'share'), page, 30,
                         include_drafts=current_user.is_authenticated())
 
 
