@@ -207,3 +207,9 @@ form .heading-small {
 form input {
     margin: 3px;
 }
+
+@media(max-width: 600px) {
+    html, body {
+        word-wrap: break-word;
+    }
+}
