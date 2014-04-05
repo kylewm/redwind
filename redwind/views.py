@@ -320,17 +320,17 @@ def new_post():
     if post_type == 'reply':
         in_reply_to = request.args.get('in_reply_to')
         if in_reply_to:
-            post.in_reply_to = request.args.get('in_reply_to')
+            post.reply_contexts.append(Context(in_reply_to))
 
     if post_type == 'share':
         repost_source = request.args.get('repost_source')
         if repost_source:
-            post.repost_source = repost_source
+            post.share_contexts.append(Context(repost_source))
 
     if post_type == 'like':
         like_of = request.args.get('like_of')
         if like_of:
-            post.like_of = like_of
+            post.like_contexts.append(Context(like_of))
 
     content = request.args.get('content')
     if content:
