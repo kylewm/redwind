@@ -9,21 +9,19 @@
     }
 
     function uploadCompleteHandler(data) {
-
         appendResult("finished uploading to " + data.original);
         appendResult("<ul><li>small " + data.small
                      + "</li><li>medium " + data.medium
                      + "</li><li>large " + data.large + "</li></ul>");
 
-
         var content_text_area = $("#content");
         var content_format = $("#content_format").val();
 
         if (content_format == 'markdown') {
-            content_text_area.val( content_text_area.val() + '\n[![](' + data.large + ')](' + data.original + ')');
+            content_text_area.val( content_text_area.val() + '\n[![](' + data.medium + ')](' + data.original + ')');
         }
         else {
-            content_text_area.val( content_text_area.val() + '\n<a href="' + data.original +'"><img src="' + data.large + '"/></a>');
+            content_text_area.val( content_text_area.val() + '\n<a href="' + data.original +'"><img src="' + data.medium + '"/></a>');
         }
     }
 

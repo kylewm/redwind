@@ -46,9 +46,7 @@ blockquote {
 }
 
 .post .p-name img, .post .e-content img {
-    width: 100%;
-    max-width: 500px;
-    max-height: 640px;
+    max-width: 100%;
     text-align: center;
 }
 

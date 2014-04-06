@@ -584,7 +584,7 @@ def upload_image():
 
     result = {'original': url_for('static', filename=file_path)}
 
-    sizes = [('small', 128), ('medium', 300), ('large', 800)]
+    sizes = [('small', 300), ('medium', 600), ('large', 1024)]
     for tag, side in sizes:
         result[tag] = resize_image(file_path, tag, side)
 
