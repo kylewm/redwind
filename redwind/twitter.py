@@ -225,7 +225,7 @@ class TwitterClient:
 
         is_favorite = False
         for like_context in post.like_contexts:
-            like_match = self.PERMALINK_RE.match(post.like_of)
+            like_match = self.PERMALINK_RE.match(like_context.source)
             if like_match:
                 is_favorite = True
                 tweet_id = like_match.group(2)
