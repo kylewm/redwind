@@ -1,31 +1,30 @@
-{% if authenticated %}
-  <div>
-    Share on
-    <a href="{{ url_for('share_on_twitter', id=post.shortid) }}">
-      <i class="fa fa-twitter"></i> Twitter
-    </a>
-    &nbsp;
-    <a href="{{ url_for('share_on_facebook', id=post.shortid) }}">
-      <i class="fa fa-facebook"></i> Facebook
-    </a>
-  </div>
-{% endif %}
-
-{% if post.twitter_url or post.facebook_url %}
-  <div>
-    View on
-    {% if post.twitter_url %}
-      <a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">
-        <i class="fa fa-twitter"></i> Twitter
-      </a>
+{% if post.twitter_url or post.facebook_url or authenticated %}
+  <div class="syndication-links">
+    {% if authenticated %}
+      Share on
+      <ul>
+        <li><a href="{{ url_for('share_on_twitter', id=post.shortid) }}">
+            <i class="fa fa-twitter"></i> Twitter
+        </a></li>
+        <li><a href="{{ url_for('share_on_facebook', id=post.shortid) }}">
+            <i class="fa fa-facebook"></i> Facebook
+        </a></li>
+      </ul>
     {% endif %}
-    {% if post.twitter_url and post.facebook_url %}
-      &nbsp;
-    {% endif %}
-    {% if post.facebook_url %}
-      <a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">
-        <i class="fa fa-facebook"></i> Facebook
-      </a>
+    {% if post.twitter_url or post.facebook_url %}
+      View on
+      <ul>
+        {% if post.twitter_url %}
+          <li><a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">
+              <i class="fa fa-twitter"></i> Twitter
+          </a></li>
+        {% endif %}
+        {% if post.facebook_url %}
+          <li><a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">
+              <i class="fa fa-facebook"></i> Facebook
+          </a></li>
+        {% endif %}
+      </ul>
     {% endif %}
   </div>
 {% endif %}

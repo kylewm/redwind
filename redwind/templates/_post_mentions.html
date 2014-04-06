@@ -10,7 +10,8 @@
     <div class="likes-and-reposts">
       {% if likes %}
         <div class="likes">
-          <i class="fa fa-thumbs-up"></i>
+          <a name="likes"></a>
+          <i class="fa fa-star-o"></i>
           {% for like in likes %}
             {% set img_title = like.content | format_as_text(like.content_format) | trim %}
             <a href="{{ like.permalink }}">
@@ -21,6 +22,7 @@
 
       {% if reposts %}
         <div class="reposts">
+          <a name="reposts"></a>
           <i class="fa fa-retweet"></i>
           {% for repost in reposts %}
             {% set img_title = repost.content | format_as_text(repost.content_format) | trim %}
@@ -35,6 +37,7 @@
   {% set replies = post.replies %}
   {% if replies %}
     <div class="replies">
+      <a name="replies"></a>
       <b>Replies</b>
       {% for reply in replies %}
         <div class="p-comment h-cite">
@@ -69,6 +72,7 @@
   {% set references = post.references %}
   {% if references %}
     <div class="references">
+      <a name="references"></a>
       <h4>References</h4>
       {% for reference in references %}
         <p>

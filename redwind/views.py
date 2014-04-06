@@ -112,38 +112,56 @@ class DisplayPost:
                 . format(self.permalink)
         return Markup(text)
 
-    @property
-    def mentions_sorted_by_date(self):
+    def _mentions_sorted_by_date(self, mtype):
         def by_date(m):
             return m.pub_date or\
                 datetime.datetime(datetime.MIN_YEAR, 1, 1)
-        filtered = [m for m in self.mentions if not m.deleted]
+        filtered = [m for m in self.mentions
+                    if not m.deleted
+                    and (not mtype or m.mention_type == mtype)]
         filtered.sort(key=by_date)
         return filtered
 
+    def _mention_count(self, mtype):
+        return len([m for m in self.mentions
+                    if not m.deleted
+                    and (not mtype or m.mention_type == mtype)])
+
     @property
     def mention_count(self):
-        return len([m for m in self.mentions if not m.deleted])
+        return self._mention_count(None)
 
     @property
     def likes(self):
-        return [mention for mention in self.mentions_sorted_by_date
-                if mention.mention_type == 'like']
+        return self._mentions_sorted_by_date('like')
+
+    @property
+    def like_count(self):
+        return self._mention_count('like')
 
     @property
     def reposts(self):
-        return [mention for mention in self.mentions_sorted_by_date
-                if mention.mention_type == 'repost']
+        return self._mentions_sorted_by_date('repost')
+
+    @property
+    def repost_count(self):
+        return self._mention_count('repost')
 
     @property
     def replies(self):
-        return [mention for mention in self.mentions_sorted_by_date
-                if mention.mention_type == 'reply']
+        return self._mentions_sorted_by_date('reply')
+
+    @property
+    def reply_count(self):
+        return self._mention_count('reply')
 
     @property
     def references(self):
-        return [mention for mention in self.mentions_sorted_by_date
-                if mention.mention_type == 'reference']
+        return self._mentions_sorted_by_date('reference')
+
+    @property
+    def reference_count(self):
+        return self._mention_count('reference')
 
 
 def render_posts(title, post_types, page, per_page, include_drafts=False):
