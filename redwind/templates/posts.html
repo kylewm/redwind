@@ -13,46 +13,36 @@
         {% include "_post_content.html" %}
 
 
-      <div class="links">
-	{% include "_admin_post_controls.html" %}
-	{% include "_single_post_links.html" %}
-        {% set mention_count = post.mention_count %}
-        {% set like_count = post.like_count %}
-        {% set reply_count = post.reply_count %}
-        {% set repost_count = post.repost_count %}
-        {% set ref_count = post.reference_count %}
+        <div class="links">
+	  {% include "_admin_post_controls.html" %}
+	  {% include "_single_post_links.html" %}
+          {% set mention_count = post.mention_count %}
+          {% set like_count = post.like_count %}
+          {% set reply_count = post.reply_count %}
+          {% set repost_count = post.repost_count %}
+          {% set ref_count = post.reference_count %}
 
-        {% if mention_count %}
-          &nbsp;&nbsp;
-          {% if reply_count %}
-            &nbsp;<a href="{{ post.permalink }}#replies"><i class="fa fa-comment-o"></i> {{ reply_count }}</a>
+          {% if mention_count %}
+            &nbsp;&nbsp;
+            {% if reply_count %}
+              &nbsp;<a href="{{ post.permalink }}#replies"><i class="fa fa-comment-o"></i> {{ reply_count }}</a>
+            {% endif %}
+            {% if like_count %}
+              &nbsp;<a href="{{ post.permalink }}#likes"><i class="fa fa-star-o"></i> {{ like_count }}</a>
+            {% endif %}
+            {% if repost_count %}
+              &nbsp;<a href="{{ post.permalink }}#reposts"><i class="fa fa-retweet"></i> {{ repost_count }}</a>
+            {% endif %}
+            {% if ref_count %}
+              &nbsp;<a href="{{ post.permalink }}#references"><i class="fa fa-ellipsis"></i> {{ ref_count }}</a>
+            {% endif %}
           {% endif %}
-          {% if like_count %}
-            &nbsp;<a href="{{ post.permalink }}#likes"><i class="fa fa-star-o"></i> {{ like_count }}</a>
-          {% endif %}
-          {% if repost_count %}
-            &nbsp;<a href="{{ post.permalink }}#reposts"><i class="fa fa-retweet"></i> {{ repost_count }}</a>
-          {% endif %}
-          {% if ref_count %}
-            &nbsp;<a href="{{ post.permalink }}#references"><i class="fa fa-ellipsis"></i> {{ ref_count }}</a>
-          {% endif %}
-        </a>
-        {% endif %}
-
-
+        </div>
       </div>
-
-
-      </div>
-
-    {% endfor %}
-
+{% endfor %}
   </div>
-
   {% include "_page_arrows.html" %}
-
 {% endblock content %}
-
 {% block footer %}
   {% include "_hcard.html" %}
 {% endblock footer %}
