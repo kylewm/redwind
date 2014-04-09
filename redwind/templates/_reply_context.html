@@ -5,11 +5,11 @@
 
     {% if (reply.source and not reply.permalink) %}
 
-      <i class="fa fa-share"></i> <a rel="reply-to" class="u-in-reply-to" href="{{ reply.source }}">{{reply.source | prettify_url}}</a>
+      <i class="fa fa-share"></i> <a class="u-in-reply-to" href="{{ reply.source }}">{{reply.source | prettify_url}}</a>
 
     {% elif (not reply.author_name and reply.permalink and reply.title) %}
 
-      <i class="fa fa-share"></i> <a rel="reply-to" class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
+      <i class="fa fa-share"></i> <a class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
 
     {% else %}
 
