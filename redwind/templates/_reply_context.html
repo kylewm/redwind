@@ -28,7 +28,7 @@
           {% endif %}
         </span>
         <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-          <a rel="in-reply-to" class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
+          <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
         </time>
 
         <div class="content">
