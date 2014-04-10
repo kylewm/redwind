@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-
 {% block head_content %}
-  <!-- begone, proprietary metacrap -->
+  {% for reply in post.reply_contexts %}
+    <link rel="in-reply-to" href="{{ reply.permalink or reply.source }}"/>
+  {% endfor %}
 {% endblock %}
 
 {% block content %}
