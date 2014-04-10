@@ -81,12 +81,15 @@ def process_webmention(source, target, callback):
                     if existing.source == mentions[0].source and \
                        existing.permalink == mentions[0].permalink:
                         existing.deleted = True
+
                 post.mentions += mentions
 
             post.save()
 
-            push.handle_new_mentions()
-        Mention.update_recent(post_id)
+        # update recent mentions
+        post = Post.load_by_shortid(post_id)
+        Mention.update_recent(mentions, post)
+        push.handle_new_mentions()
 
         call_callback(200, 'Success')
         return 200, 'Success'

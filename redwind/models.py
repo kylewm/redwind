@@ -516,24 +516,6 @@ class Context:
 class Mention:
 
     @classmethod
-    def update_recent(cls, post_id):
-        """post received a comment, add it to the front of the list of
-           recently commented posts"""
-        filename = os.path.join(app.root_path, '_data/recent_mentions')
-        with acquire_lock(filename, 30):
-            if os.path.exists(filename):
-                with open(filename, 'r') as f:
-                    recent = json.load(f)
-            else:
-                recent = []
-
-            if post_id in recent:
-                recent.remove(post_id)
-            recent.insert(0, post_id)
-            with open(filename, 'w') as f:
-                json.dump(recent[:30], f)
-
-    @classmethod
     def from_json(cls, data):
         return cls(data.get('source'),
                    data.get('permalink'),
@@ -573,6 +555,46 @@ class Mention:
             'deleted': self.deleted
         }
         return filter_empty_keys(data)
+
+    @classmethod
+    def update_recent(cls, mentions, post):
+        """post received a comment(s), add it to the front of the list"""
+        filename = os.path.join(app.root_path, '_data/recent_mentions')
+        with acquire_lock(filename, 30):
+            if os.path.exists(filename):
+                recent = json.load(open(filename, 'r'))
+            else:
+                recent = []
+
+            for incoming in mentions:
+                obj = {
+                    'post': {
+                        'title': post.title or post.content,
+                        'permalink': post.permalink
+                    },
+                    'mention': incoming.to_json()
+                }
+                recent.insert(0, obj)
+
+            with open(filename, 'w') as f:
+                json.dump(recent[:30], f, indent=True)
+
+    @classmethod
+    def load_recent(cls):
+        filename = os.path.join(app.root_path, '_data/recent_mentions')
+        if os.path.exists(filename):
+            objs = json.load(open(filename, 'r'))
+        else:
+            objs = []
+
+        recent = []
+        for obj in objs:
+            mention = cls.from_json(obj['mention'])
+            mention.post_permalink = obj['post']['permalink']
+            mention.post_title = obj['post']['title']
+            recent.append(mention)
+
+        return recent
 
     def __repr__(self):
         return "<Mention: type={}, source={}, permalink={}, author=({}, {}, {})>"\

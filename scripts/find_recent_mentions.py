@@ -1,11 +1,12 @@
 import os
 import json
+from redwind import app
 from redwind.models import Post, Mention
 
 
 if __name__ == '__main__':
     mentions = []
-    for root, dirs, files in os.walk('redwind/_data/posts'):
+    for root, dirs, files in os.walk(os.path.join(app.root_path, '_data/posts')):
         for filename in files:
             post = Post.load(os.path.join(root, filename))
             for mention in post.mentions:
@@ -29,4 +30,6 @@ if __name__ == '__main__':
         }
         recent_mentions.append(obj)
 
-    print(json.dumps(recent_mentions, indent=True))
+    json.dump(recent_mentions,
+              open(os.path.join(app.root_path, '_data/recent_mentions'), 'w'),
+              indent=True)

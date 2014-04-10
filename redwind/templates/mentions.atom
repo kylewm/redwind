@@ -21,15 +21,10 @@
   <entry>
     <updated>{{ mention.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</updated>
     <published>{{ mention.pub_date | strftime('%Y-%m-%dT%H:%M:%SZ') }}</published>
-    <link href="{{ mention.post.permalink }}" rel="alternate" type="text/html"/>
+    <link href="{{ mention.post_permalink }}" rel="alternate" type="text/html"/>
     <id>{{ mention.permalink }}</id>
     <title type="html">
-        {{ mention.mention_type }} from {{ mention.author_name | atom_sanitize }} on
-	{% if mention.post.title %}
-	  {{ mention.post.title | atom_sanitize }}
-	{% elif mention.post.content %}
- 	  {{ mention.post.content | format_as_text(mention.post.content_format) | truncate(100) | atom_sanitize }}
-	{% endif %}
+        {{ mention.mention_type }} from {{ mention.author_name | atom_sanitize }}
     </title>
     <content type="html" xml:base="http://kylewm.com/" xml:space="preserve">
         {{ mention.content | atom_sanitize }}

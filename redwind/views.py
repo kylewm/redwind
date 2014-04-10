@@ -17,7 +17,7 @@
 
 from . import app, util, push, webmention_sender, webmention_receiver,\
     contexts, twitter, facebook
-from .models import Post, Context, Location
+from .models import Post, Context, Location, Mention
 from .auth import load_user
 
 from bs4 import BeautifulSoup
@@ -225,6 +225,16 @@ def updates_atom():
 @app.route("/articles.atom")
 def articles_atom():
     return render_posts_atom('Articles', 'articles.atom', ('article',), 10)
+
+
+@app.route("/mentions.atom")
+def mentions_atom():
+    mentions = Mention.load_recent()
+    return make_response(render_template('mentions.atom',
+                                         title='kylewm.com: Mentions',
+                                         feed_id='mentions.atom',
+                                         mentions=mentions), 200,
+                         {'Content-Type': 'application/atom+xml'})
 
 
 @app.route('/archive', defaults={'year': None, 'month': None})
