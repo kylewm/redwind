@@ -1,4 +1,3 @@
-import uwsgi
 import os
 from . import app
 from .models import User
@@ -6,8 +5,17 @@ from flask.ext.login import login_user
 from pickle import loads, dumps
 
 
+def init():
+    try:
+        import uwsgi
+        uwsgi.spooler = process_spool
+    except:
+        app.logger.warn("Running outside of uwsgi, spooler disabled")
+
+
 def spoolable(f):
     def spool(*args, **kwargs):
+        import uwsgi
         uwsgi.spool({
             b'f': dumps(f),
             b'args': dumps(args),
@@ -19,6 +27,7 @@ def spoolable(f):
 
 
 def process_spool(env):
+    import uwsgi
     try:
         func = loads(env[b'f'])
         args = loads(env[b'args'])
@@ -34,5 +43,3 @@ def process_spool(env):
         app.logger.exception("exception while processing queue")
 
     return uwsgi.SPOOL_OK
-
-uwsgi.spooler = process_spool

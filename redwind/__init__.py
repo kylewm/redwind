@@ -44,3 +44,5 @@ if not app.debug:
 
 from . import views
 from . import spool
+
+spool.init()
