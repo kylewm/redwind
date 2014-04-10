@@ -111,7 +111,8 @@ def share_on_twitter():
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
             twitter_client.handle_new_or_edit(post, preview, img_url)
             post.save()
-
+            post.update_syndication_index(post.twitter_url)
+            
             return """Shared on Twitter<br/>
             <a href="{}">Original</a><br/>
             <a href="{}">On Twitter</a><br/>

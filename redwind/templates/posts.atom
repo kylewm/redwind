@@ -25,11 +25,11 @@
     <title type="html">
 	{% if post.share_contexts %}
 	  {% for share in post.share_contexts %}
-	    Shared {{share.permalink|prettify_url}}
+	    Shared {{share.permalink or share.source|prettify_url}}
 	  {% endfor %}
         {% elif post.like_contexts %}
 	  {% for like in post.like_contexts %}
-	    Liked {{like.permalink|prettify_url}}
+	    Liked {{like.permalink or like.source|prettify_url}}
 	  {% endfor %}
 	{% else %}
   	  {{ (post.title or (post.html_content | html_to_plain)) | atom_sanitize }}
@@ -37,13 +37,13 @@
     </title>
     <content type="html" xml:base="http://kylewm.com/" xml:space="preserve">
 	{% for reply in post.reply_contexts %}
-	  &lt;p>In reply to &lt;a href="{{reply.permalink}}">{{reply.permalink|prettify_url}}&lt;/a>&lt;/p>
+	  &lt;p>In reply to &lt;a href="{{reply.permalink or reply.source}}">{{reply.permalink or reply.source|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 	{% for share in post.share_contexts %}
-	  &lt;p>Shared &lt;a href="{{share.permalink}}">{{share.permalink|prettify_url}}&lt;/a>&lt;/p>
+	  &lt;p>Shared &lt;a href="{{share.permalink or share.source}}">{{share.permalink or share.source|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 	{% for like in post.like_contexts %}
-	  &lt;p>Liked &lt;a href="{{like.permalink}}">{{like.permalink|prettify_url}}&lt;/a>&lt;/p>
+	  &lt;p>Liked &lt;a href="{{like.permalink or like.source}}">{{like.permalink or like.source|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 
         {{ post.html_content | atom_sanitize }}

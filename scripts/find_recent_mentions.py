@@ -6,10 +6,9 @@ from redwind.models import Post, Mention
 
 if __name__ == '__main__':
     mentions = []
-    for root, dirs, files in os.walk(os.path.join(app.root_path, '_data/posts')):
-        for filename in files:
-            post = Post.load(os.path.join(root, filename))
-            for mention in post.mentions:
+    for post in Post.iterate_all():
+        for mention in post.mentions:
+            if not mention.deleted:
                 mentions.append((post, mention))
 
     def sortkey(pair):
@@ -19,7 +18,7 @@ if __name__ == '__main__':
     mentions.sort(key=sortkey, reverse=True)
 
     recent_mentions = []
-    for pair in mentions[:10]:
+    for pair in mentions[:30]:
         post, mention = pair
         obj = {
             'post': {

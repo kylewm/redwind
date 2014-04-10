@@ -296,6 +296,18 @@ def shortlink(tag):
                             day=pub_date.day, index=index))
 
 
+@app.route('/original_post_discovery')
+def original_post_discovery():
+    url = request.args.get('syndication')
+    index = Post.load_syndication_index()
+    path = index.get(url)
+    if not path:
+        abort(404)
+        
+    post = Post.load_by_path(path)
+    return redirect(post.permalink)
+
+
 @app.route("/indieauth")
 def indie_auth():
     token = request.args.get('token')

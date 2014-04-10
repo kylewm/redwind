@@ -22,6 +22,7 @@ import datetime
 from collections import defaultdict
 import os
 import os.path
+import itertools
 import json
 import pytz
 import tempfile
@@ -166,7 +167,6 @@ class Location:
 
 
 class Post:
-
     @classmethod
     @contextmanager
     def writeable(cls, path):
@@ -186,35 +186,15 @@ class Post:
             return post
 
     @classmethod
+    def load_by_path(cls, path):
+        return cls.load(cls.relpath_to_fullpath(path))
+
+    @classmethod
     def load_recent(cls, count, post_types, include_drafts=False):
-        def walk(path, posts):
-            if len(posts) >= count:
-                return
-
-            ls = sorted(os.listdir(path), reverse=True)
-            for filename in ls:
-                newpath = os.path.join(path, filename)
-                if os.path.isdir(newpath):
-                    walk(newpath, posts)
-                else:
-                    filename = os.path.basename(newpath)
-
-                    # skip locks and emacs artifacts
-                    if filename.endswith('.lock') or filename.startswith('~') \
-                       or filename.startswith('.') or filename.startswith('#'):
-                        continue
-
-                    post_type, date_index = filename.split('_')
-                    if not post_types or post_type in post_types:
-                        post = cls.load(newpath)
-                        if not post.deleted and (not post.draft
-                                                 or include_drafts):
-                            posts.append(post)
-
-        posts = []
-        walk(os.path.join(app.root_path, '_data/posts'), posts)
-        posts.sort(key=attrgetter('pub_date'), reverse=True)
-        return posts[:count]
+        return list(itertools.islice(
+                cls.iterate_all(reverse=True, post_types=post_types, 
+                                include_drafts=include_drafts), 
+                0, count))
 
     @classmethod
     def load_by_month(cls, year, month):
@@ -240,6 +220,27 @@ class Post:
     @classmethod
     def load_by_shortid(cls, shortid):
         return cls.load(cls.shortid_to_path(shortid))
+
+    @classmethod
+    def iterate_all(cls, reverse=False, post_types=None, include_drafts=False):
+        path = os.path.join(app.root_path, '_data/posts')
+        for root, dirs, files in os.walk(path):
+            dirs.sort(reverse=reverse)
+            today = []
+            for filename in files:
+                if filename.endswith('.lock') or filename.startswith('~') \
+                        or filename.startswith('.') or filename.startswith('#'):
+                    continue
+
+                post_type, _ = filename.split('_')
+                if not post_types or post_type in post_types:
+                    post = cls.load(os.path.join(root, filename))
+                    if not post.deleted and (not post.draft
+                                             or include_drafts):
+                        today.append(post)
+
+            today.sort(key=attrgetter('pub_date'), reverse=reverse)
+            yield from today
 
     @classmethod
     def date_to_path(cls, post_type, year, month, day, index):
@@ -452,6 +453,18 @@ class Post:
                 return "https://facebook.com/{}/posts/{}"\
                     .format(user_id, post_id)
 
+    def update_syndication_index(self, url):
+        path = os.path.join(app.root_path, '_data/syndication_index')
+        with acquire_lock(path, 30):
+            obj = json.load(open(path, 'r'))
+            obj[url] = self.path
+            json.dump(obj, open(path, 'w'))
+
+    @classmethod
+    def load_syndication_index(cls):
+        path = os.path.join(app.root_path, '_data/syndication_index')
+        return json.load(open(path, 'r'))
+            
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.title)

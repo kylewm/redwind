@@ -72,6 +72,8 @@ def share_on_facebook():
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
             handle_new_or_edit(post, preview, img_url)
             post.save()
+            post.update_syndication_index(post.facebook_url)
+
 
             return """Shared on Facebook<br/>
             <a href="{}">Original</a><br/>
