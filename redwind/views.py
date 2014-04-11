@@ -302,8 +302,11 @@ def original_post_discovery():
     index = Post.load_syndication_index()
     path = index.get(url)
     if not path:
-        abort(404)
-        
+        redirected = requests.get(url)
+        path = index.get(redirected)
+        if not path:
+            abort(404)
+
     post = Post.load_by_path(path)
     return redirect(post.permalink)
 
