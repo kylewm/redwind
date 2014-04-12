@@ -6,7 +6,6 @@ import requests
 import json
 import re
 import datetime
-from dateutil.parser import parse as parsedate
 from bs4 import BeautifulSoup
 
 twitter_permalink_re = re.compile(

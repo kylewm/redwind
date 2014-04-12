@@ -26,7 +26,6 @@ from flask import request, redirect, url_for, make_response,\
 import requests
 import re
 import json
-import pytz
 import types
 
 from tempfile import mkstemp
@@ -112,7 +111,7 @@ def share_on_twitter():
             twitter_client.handle_new_or_edit(post, preview, img_url)
             post.save()
             post.update_syndication_index(post.twitter_url)
-            
+
             return """Shared on Twitter<br/>
             <a href="{}">Original</a><br/>
             <a href="{}">On Twitter</a><br/>
@@ -168,7 +167,7 @@ class TwitterClient:
             pub_date = datetime.strptime(status_data['created_at'],
                                          '%a %b %d %H:%M:%S %z %Y')
             if pub_date and pub_date.tzinfo:
-                pub_date = pub_date.astimezone(pytz.utc)
+                pub_date = pub_date.astimezone(util.timezone.utc)
             real_name = status_data['user']['name']
             screen_name = status_data['user']['screen_name']
             author_name = real_name

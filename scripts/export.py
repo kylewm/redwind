@@ -1,9 +1,9 @@
 from app import *
 from models import *
+import util
 import json
 import os
 import os.path
-import pytz
 import itertools
 import datetime
 
@@ -13,7 +13,7 @@ outdir = '_data'
 def format_date(date):
     if date:
         if date.tzinfo:
-            date = pytz.utc.localize(date)
+            date = date.astimezone(util.timezone.utc)
             date = date.replace(tzinfo=None)
         return date.isoformat('T')
 

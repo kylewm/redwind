@@ -24,7 +24,6 @@ import os
 import os.path
 import itertools
 import json
-import pytz
 import tempfile
 import shutil
 import time
@@ -33,17 +32,14 @@ from contextlib import contextmanager
 
 
 def isoparse(s):
-    if s:
-        try:
-            return datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%f')
-        except:
-            return datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+    """Parse (UTC) datetimes in ISO8601 format"""
+    return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
 
 
 def format_date(date):
     if date:
         if date.tzinfo:
-            date = date.astimezone(pytz.utc)
+            date = date.astimezone(util.timezone.utc)
             date = date.replace(tzinfo=None)
         date = date.replace(microsecond=0)
         return date.isoformat('T')
@@ -192,8 +188,8 @@ class Post:
     @classmethod
     def load_recent(cls, count, post_types, include_drafts=False):
         return list(itertools.islice(
-                cls.iterate_all(reverse=True, post_types=post_types, 
-                                include_drafts=include_drafts), 
+                cls.iterate_all(reverse=True, post_types=post_types,
+                                include_drafts=include_drafts),
                 0, count))
 
     @classmethod
@@ -464,7 +460,7 @@ class Post:
     def load_syndication_index(cls):
         path = os.path.join(app.root_path, '_data/syndication_index')
         return json.load(open(path, 'r'))
-            
+
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.title)
