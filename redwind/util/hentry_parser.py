@@ -16,7 +16,6 @@
 
 
 from mf2py.parser import Parser
-from . import timezone
 import datetime
 import re
 
@@ -111,7 +110,7 @@ def parse(txt, source):
             date_strs = hentry['properties'].get('published')
             pub_date = date_strs and parse_datetime(' '.join(date_strs))
             if pub_date and pub_date.tzinfo:
-                pub_date = pub_date.astimezone(timezone.utc)
+                pub_date = pub_date.astimezone(datetime.timezone.utc)
 
             content_html = ''.join(content['html'].strip() for content
                                    in hentry['properties'].get('content', []))
@@ -184,19 +183,18 @@ def parse_datetime(s):
         dt = datetime.datetime(int(year), int(month), int(day), int(hour),
                                int(minute), int(second))
         if m.group('tzz'):
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
         else:
             tzsign = m.group('tzsign')
             tzhour = m.group('tzhour')
             tzminute = m.group('tzminute') or "00"
 
             if tzsign and tzhour:
-                minute_offset = int(tzhour) * 60 + int(tzminute)
+                offset = datetime.timedelta(hours=int(tzhour),
+                                            minutes=int(tzminute))
                 if tzsign == '-':
-                    minute_offset = -minute_offset
-                tz = timezone.FixedOffset(minute_offset,
-                                          tzsign + tzhour + tzminute)
-                dt = dt.replace(tzinfo=tz)
+                    offset = -offset
+                dt = dt.replace(tzinfo=datetime.timezone(offset))
 
         return dt
 

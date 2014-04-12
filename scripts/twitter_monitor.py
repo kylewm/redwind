@@ -35,22 +35,22 @@ def get_api():
                                               consumer_key, consumer_secret))
 
 def max_id(s1, s2):
-    if not s1: 
+    if not s1:
         return s2
     if not s2:
         return s1
-    
+
     s1pad = s1.zfill(len(s2))
     s2pad = s2.zfill(len(s1))
     return s1 if s1 > s2 else s2
 
 
 def min_id(s1, s2):
-    if not s1: 
+    if not s1:
         return s2
     if not s2:
         return s1
-    
+
     s1pad = s1.zfill(len(s2))
     s2pad = s2.zfill(len(s1))
     return s1 if s1pad < s2pad else s2
@@ -119,7 +119,7 @@ def poll():
         print("waiting for {} seconds".format(wait))
         time.sleep(wait)
 
-          
-        
+
+
 if __name__ == '__main__':
     poll()

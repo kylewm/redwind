@@ -13,7 +13,7 @@ outdir = '_data'
 def format_date(date):
     if date:
         if date.tzinfo:
-            date = date.astimezone(util.timezone.utc)
+            date = date.astimezone(datetime.timezone.utc)
             date = date.replace(tzinfo=None)
         return date.isoformat('T')
 
