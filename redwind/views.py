@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from . import app, util, push, webmention_sender, webmention_receiver,\
     contexts, twitter, facebook
-from .models import Post, Context, Location, Mention
+from .models import Post, Location
+from .archive import load_json_from_archive
 from .auth import load_user
+from .util import hentry_parser
 
 from bs4 import BeautifulSoup
 from datetime import datetime, date
@@ -58,6 +59,7 @@ class DisplayPost:
 
     def __init__(self, wrapped):
         self.wrapped = wrapped
+        self._mentions = None
 
     def __getattr__(self, attr):
         return getattr(self.wrapped, attr)
@@ -91,6 +93,24 @@ class DisplayPost:
         return text
 
     @property
+    def reply_contexts(self):
+        if not self.in_reply_to:
+            return []
+        return [ContextProxy(url) for url in self.in_reply_to]
+
+    @property
+    def share_contexts(self):
+        if not self.repost_of:
+            return []
+        return [ContextProxy(url) for url in self.repost_of]
+
+    @property
+    def like_contexts(self):
+        if not self.like_of:
+            return []
+        return [ContextProxy(url) for url in self.like_of]
+
+    @property
     def html_content(self):
         return Markup(self.get_html_content(True))
 
@@ -112,20 +132,28 @@ class DisplayPost:
                 . format(self.permalink)
         return Markup(text)
 
+    @property
+    def mentions(self):
+        if self._mentions is None:
+            self._mentions = [MentionProxy(self, m) for m
+                              in self.wrapped.mentions]
+        return self._mentions
+
     def _mentions_sorted_by_date(self, mtype):
         def by_date(m):
             return m.pub_date or\
                 datetime.datetime(datetime.MIN_YEAR, 1, 1)
         filtered = [m for m in self.mentions
                     if not m.deleted
-                    and (not mtype or m.mention_type == mtype)]
+                    and (not mtype or m.reftype == mtype)]
         filtered.sort(key=by_date)
         return filtered
 
     def _mention_count(self, mtype):
-        return len([m for m in self.mentions
-                    if not m.deleted
-                    and (not mtype or m.mention_type == mtype)])
+        count = len([m for m in self.mentions
+                     if not m.deleted
+                     and (not mtype or m.reftype == mtype)])
+        return count
 
     @property
     def mention_count(self):
@@ -162,6 +190,51 @@ class DisplayPost:
     @property
     def reference_count(self):
         return self._mention_count('reference')
+
+
+class ContextProxy:
+    def __init__(self, url):
+        blob = load_json_from_archive(url)
+        self.entry = hentry_parser.parse_json(blob, url)
+        self.permalink = self.entry.permalink
+        self.author_name = self.entry.author.name
+        self.author_url = self.entry.author.url
+        self.author_image = self.entry.author.photo
+        self.content = self.entry.content
+        self.content_format = 'html'
+        self.pub_date = self.entry.pub_date
+        self.title = self.entry.title
+        self.deleted = False
+
+
+class MentionProxy:
+    def __init__(self, post, url):
+        self.source = url
+        blob = load_json_from_archive(url)
+        self.entry = hentry_parser.parse_json(blob, url)
+        self.permalink = self.entry.permalink
+        self.author_name = self.entry.author.name
+        self.author_url = self.entry.author.url
+        self.author_image = self.entry.author.photo
+        self.content = self.entry.content
+        self.content_format = 'html'
+        self.pub_date = self.entry.pub_date
+        self.title = self.entry.title
+        self.deleted = False
+        self.reftype = 'reference'
+
+        target_urls = (post.permalink,
+                       post.short_permalink,
+                       post.permalink.replace(app.config['SITE_URL'],
+                                              'http://kylewm.com'))
+
+        for ref in self.entry.references:
+            if ref.url in target_urls:
+                self.reftype = ref.reftype
+
+    def __repr__(self):
+        return """Mention(source={}, pub_date={} reftype={})""".format(
+            self.source, self.pub_date, self.reftype)
 
 
 def render_posts(title, post_types, page, per_page, include_drafts=False):
@@ -273,7 +346,6 @@ def post_by_date(post_type, year, month, day, index, slug):
                     slug=post.slug))
 
     dpost = DisplayPost(post)
-    #print("rendering post", post.short_cite, post.short_permalink)
     title = dpost.title
     if not title:
         title = "A {} from {}".format(dpost.post_type,

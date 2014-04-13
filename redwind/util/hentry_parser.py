@@ -56,7 +56,12 @@ class Entry:
             self.references, self.title, self.content[:100].replace('\n', ''))
 
 
-def parse(txt, source):
+def parse_html(txt, source):
+    p = Parser(doc=txt, url=source)
+    return parse_json(p.to_dict())
+
+
+def parse_json(d, source):
     def parse_references(objs, reftype):
         refs = []
         for obj in objs:
@@ -78,8 +83,6 @@ def parse(txt, source):
                           urls and urls[0],
                           photos and photos[0])
 
-    p = Parser(doc=txt, url=source)
-    d = p.to_dict()
     references = []
 
     for rel, rel_url in d['rels'].items():

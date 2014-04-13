@@ -19,7 +19,6 @@ from . import app
 from . import util
 
 import datetime
-from collections import defaultdict
 import os
 import os.path
 import itertools
@@ -27,6 +26,8 @@ import json
 import tempfile
 import shutil
 import time
+import re
+import urllib
 from operator import attrgetter
 from contextlib import contextmanager
 
@@ -84,6 +85,30 @@ def acquire_lock(path, retries):
         os.remove(lockfile)
 
 
+def format_to_extension(fmt):
+    if fmt == 'html':
+        return '.html'
+    elif fmt == 'markdown':
+        return '.md'
+    elif fmt == 'plain':
+        return '.txt'
+    else:
+        app.logger.warn("Unknown format type %s, assuming plain text", fmt)
+        return '.txt'
+
+
+def extension_to_format(ext):
+    if ext == '.html':
+        return 'html'
+    elif ext == '.md':
+        return 'markdown'
+    elif ext == '.txt':
+        return 'plain'
+    else:
+        app.logger.warn("Unknown extension type %s, assuming plain text", ext)
+        return 'plain'
+
+
 class User:
 
     @classmethod
@@ -116,10 +141,10 @@ class User:
         with open(temp, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
 
-        filename = os.path.join(app.root_path, '_data/user')
+        filename = os.path.join(app.root_path, '_data/user.json')
         if os.path.exists(filename):
             save_backup(os.path.join(app.root_path, '_data'),
-                        os.path.join(app.root_path, '_data/.backup'), 'user')
+                        os.path.join(app.root_path, '_data/.backup'), 'user.json')
         shutil.move(temp, filename)
 
     # Flask-Login integration
@@ -163,6 +188,33 @@ class Location:
 
 
 class Post:
+    FILE_PATTERN = re.compile('(\w+)_(\d+)(\.\w+)$')
+
+    @staticmethod
+    def parse_json_frontmatter(fp):
+        """parse a multipart file that starts with a json blob"""
+        depth = 0
+        json_lines = []
+        for line in fp:
+            prev = None
+            quoted = False
+            for c in line:
+                if c == '"' and prev != '\\':
+                    quoted = not quoted
+                else:
+                    if not quoted:
+                        if c == '{':
+                            depth += 1
+                        elif c == '}':
+                            depth -= 1
+                prev = c
+            json_lines.append(line)
+            if depth == 0:
+                break
+        head = json.loads(''.join(json_lines))
+        body = '\n'.join(fp.readlines()).strip()
+        return head, body
+
     @classmethod
     @contextmanager
     def writeable(cls, path):
@@ -175,11 +227,36 @@ class Post:
     @classmethod
     def load(cls, path):
         app.logger.debug("loading from path %s", path)
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                data = json.load(f)
-            post = cls.from_json(data)
-            return post
+        if not os.path.exists(path):
+            app.logger.debug("looking for post with any extension %s.*", path)
+            dirname, basename = os.path.split(path)
+            for poss in os.listdir(dirname):
+                if os.path.splitext(poss)[0] == basename:
+                    path = os.path.join(dirname, poss)
+                    app.logger.debug("loading from path %s", path)
+                    break
+
+        if not os.path.exists(path):
+            app.logger.warn("No post found at %s", path)
+            return None
+
+        basename = os.path.basename(path)
+        match = cls.FILE_PATTERN.match(basename)
+        if not match:
+            raise RuntimeError("trying to load from unrecognized path {}"
+                               .format(path))
+
+        post_type = match.group(1)
+        date_index = int(match.group(2))
+        content_format = extension_to_format(match.group(3))
+
+        with open(path, 'r') as fp:
+            head, body = Post.parse_json_frontmatter(fp)
+
+        post = cls(post_type, content_format, date_index)
+        post.read_json_blob(head)
+        post.content = body
+        return post
 
     @classmethod
     def load_by_path(cls, path):
@@ -188,9 +265,9 @@ class Post:
     @classmethod
     def load_recent(cls, count, post_types, include_drafts=False):
         return list(itertools.islice(
-                cls.iterate_all(reverse=True, post_types=post_types,
-                                include_drafts=include_drafts),
-                0, count))
+            cls.iterate_all(reverse=True, post_types=post_types,
+                            include_drafts=include_drafts),
+            0, count))
 
     @classmethod
     def load_by_month(cls, year, month):
@@ -201,10 +278,11 @@ class Post:
         for day in days:
             daypath = os.path.join(path, day)
             for filename in os.listdir(daypath):
-                filepath = os.path.join(daypath, filename)
-                post = cls.load(filepath)
-                if not post.deleted:
-                    posts.append(post)
+                if Post.FILE_PATTERN.match(filename):
+                    filepath = os.path.join(daypath, filename)
+                    post = cls.load(filepath)
+                    if not post.deleted:
+                        posts.append(post)
         posts.sort(key=attrgetter('pub_date'), reverse=True)
         return posts
 
@@ -224,16 +302,15 @@ class Post:
             dirs.sort(reverse=reverse)
             today = []
             for filename in files:
-                if filename.endswith('.lock') or filename.startswith('~') \
-                        or filename.startswith('.') or filename.startswith('#'):
-                    continue
 
-                post_type, _ = filename.split('_')
-                if not post_types or post_type in post_types:
-                    post = cls.load(os.path.join(root, filename))
-                    if not post.deleted and (not post.draft
-                                             or include_drafts):
-                        today.append(post)
+                match = cls.FILE_PATTERN.match(filename)
+                if match:
+                    post_type = match.group(1)
+                    if not post_types or post_type in post_types:
+                        post = cls.load(os.path.join(root, filename))
+                        if not post.deleted and (not post.draft
+                                                 or include_drafts):
+                            today.append(post)
 
             today.sort(key=attrgetter('pub_date'), reverse=reverse)
             yield from today
@@ -270,72 +347,54 @@ class Post:
         return result
 
     @classmethod
-    def from_json(cls, data):
-        post = cls(post_type=data.get('type', 'note'),
-                   content_format=data.get('format', 'plain'))
-        post.pub_date = isoparse(data.get('pub_date'))
-        post.date_index = data.get('date_index', 1)
-        post.slug = data.get('slug')
-        post.title = data.get('title')
-        post.content = data.get('content', '')
-        post.content_format = data.get('format')
+    def load_syndication_index(cls):
+        path = os.path.join(app.root_path, '_data/syndication_index.json')
+        return json.load(open(path, 'r'))
 
-        contexts = data.get('context', {})
-        post.reply_contexts = [Context.from_json(ctx) for ctx
-                               in contexts.get('reply', [])]
-        post.share_contexts = [Context.from_json(ctx) for ctx
-                               in contexts.get('share', [])]
-        post.like_contexts = [Context.from_json(ctx) for ctx
-                              in contexts.get('like', [])]
-
-        post.mentions = [Mention.from_json(mnt) for mnt
-                         in data.get('mentions', [])]
-        post.draft = data.get('draft', False)
-        post.deleted = data.get('deleted', False)
-
-        if 'location' in data:
-            post.location = Location.from_json(data.get('location', {}))
-
-        if 'syndication' in data:
-            synd = data.get('syndication', {})
-            post.twitter_status_id = synd.get('twitter_id')
-            post.facebook_post_id = synd.get('facebook_id')
-        return post
-
-    def __init__(self, post_type, content_format):
+    def __init__(self, post_type, content_format, date_index):
         self.post_type = post_type
         self.content_format = content_format
+        self.date_index = date_index
         self.draft = True
         self.deleted = False
-        self.reply_contexts = []
-        self.share_contexts = []
-        self.like_contexts = []
-        self.mentions = []
-
+        self.in_reply_to = []
+        self.repost_of = []
+        self.like_of = []
         self.pub_date = None
-        self.date_index = None
         self.slug = None
         self.twitter_status_id = None
         self.facebook_post_id = None
         self.location = None
+        self._mentions = None  # lazy load mentions
         self._writeable = False
 
-    def to_json(self):
+    def read_json_blob(self, data):
+        self.pub_date = isoparse(data.get('pub_date'))
+        self.slug = data.get('slug')
+        self.title = data.get('title')
+        self.in_reply_to = data.get('in_reply_to')
+        self.repost_of = data.get('repost_of')
+        self.like_of = data.get('like_of')
+        self.draft = data.get('draft', False)
+        self.deleted = data.get('deleted', False)
+
+        if 'location' in data:
+            self.location = Location.from_json(data.get('location', {}))
+
+        if 'syndication' in data:
+            synd = data.get('syndication', {})
+            self.twitter_status_id = synd.get('twitter_id')
+            self.facebook_post_id = synd.get('facebook_id')
+
+    def to_json_blob(self):
         data = {
             'type': self.post_type,
             'pub_date':  format_date(self.pub_date),
-            'date_index': self.date_index,
             'slug': self.slug,
             'title': self.title,
-            'content': self.content,
-            'format': self.content_format,
-
-            'context': {
-                'reply': [ctx.to_json() for ctx in self.reply_contexts],
-                'share': [ctx.to_json() for ctx in self.share_contexts],
-                'like': [ctx.to_json() for ctx in self.like_contexts]
-            },
-            'mentions': [mnt.to_json() for mnt in self.mentions],
+            'in_reply_to': self.in_reply_to,
+            'repost_of': self.repost_of,
+            'like_of': self.like_of,
             'location': self.location and self.location.to_json(),
             'syndication': {
                 'twitter_id': self.twitter_status_id,
@@ -348,10 +407,10 @@ class Post:
 
     def save(self):
         if not self._writeable:
-            raise RuntimeError("Cannot save post that was not opened with the 'writeable' flag")
+            raise RuntimeError("Cannot save post that was not opened "
+                               "with the 'writeable' flag")
 
         basedir = os.path.join(app.root_path, '_data/posts')
-
         # assign a new date index if we don't have one yet
         if not self.date_index:
             self.date_index = 1
@@ -365,7 +424,9 @@ class Post:
 
         _, temp = tempfile.mkstemp()
         with open(temp, 'w') as f:
-            json.dump(self.to_json(), f, indent=True)
+            json.dump(self.to_json_blob(), f, indent=True)
+            f.write('\n')
+            f.write(self.content)
 
         save_backup(basedir,
                     os.path.join(app.root_path, '_data/.backup/posts'),
@@ -373,29 +434,11 @@ class Post:
         shutil.move(temp, filename)
 
     @property
-    def reply_sources(self):
-        return '\n'.join(ctx.source for ctx in self.reply_contexts)
-
-    @property
-    def share_sources(self):
-        return '\n'.join(ctx.source for ctx in self.share_contexts)
-
-    @property
-    def like_sources(self):
-        return '\n'.join(ctx.source for ctx in self.like_contexts)
-
-    @property
     def path(self):
-        return "{}/{:02d}/{:02d}/{}_{}".format(
+        return "{}/{:02d}/{:02d}/{}_{}{}".format(
             self.pub_date.year, self.pub_date.month, self.pub_date.day,
-            self.post_type, self.date_index)
-
-    @property
-    def mentions_categorized(self):
-        cat = defaultdict(list)
-        for mention in self.mentions:
-            cat[mention.mention_type].append(mention)
-        return cat
+            self.post_type, self.date_index,
+            format_to_extension(self.content_format))
 
     @property
     def permalink(self):
@@ -449,163 +492,31 @@ class Post:
                 return "https://facebook.com/{}/posts/{}"\
                     .format(user_id, post_id)
 
+    @property
+    def mentions(self):
+        if self._mentions is None:
+            path = self.relpath_to_fullpath(
+                "{}/{:02d}/{:02d}/{}_{}.mentions.json".format(
+                    self.pub_date.year, self.pub_date.month, self.pub_date.day,
+                    self.post_type, self.date_index))
+            if os.path.exists(path):
+                blob = json.load(open(path, 'r'))
+                self._mentions = blob
+            else:
+                self._mentions = []
+            app.logger.debug("loaded mentions from %s: %s",
+                             path, self._mentions)
+        return self._mentions
+
     def update_syndication_index(self, url):
-        path = os.path.join(app.root_path, '_data/syndication_index')
+        path = os.path.join(app.root_path, '_data/syndication_index.json')
         with acquire_lock(path, 30):
             obj = json.load(open(path, 'r'))
             obj[url] = self.path
             json.dump(obj, open(path, 'w'))
-
-    @classmethod
-    def load_syndication_index(cls):
-        path = os.path.join(app.root_path, '_data/syndication_index')
-        return json.load(open(path, 'r'))
 
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.title)
         else:
             return 'post:{}'.format(self.content[:140])
-
-
-class Context:
-    """reply-context, repost-context, like-context
-       all contain nearly the same data"""
-
-    @classmethod
-    def from_json(cls, data):
-        return cls(data.get('source'),
-                   data.get('permalink'),
-                   data.get('title'),
-                   data.get('content'),
-                   data.get('format'),
-                   data.get('author', {}).get('name'),
-                   data.get('author', {}).get('url'),
-                   data.get('author', {}).get('image'),
-                   isoparse(data.get('pub_date')))
-
-    def __init__(self, source, permalink=None, title=None, content=None,
-                 content_format=None, author_name=None, author_url=None,
-                 author_image=None, pub_date=None):
-        self.source = source
-        self.permalink = permalink
-        self.title = title
-        self.content = content
-        self.content_format = content_format
-        self.author_name = author_name
-        self.author_url = author_url
-        self.author_image = author_image
-        self.pub_date = pub_date
-
-    def to_json(self):
-        data = {
-            'source': self.source,
-            'permalink': self.permalink,
-            'title': self.title,
-            'content': self.content,
-            'format': self.content_format,
-            'author': {
-                'name': self.author_name,
-                'url': self.author_url,
-                'image': self.author_image
-            },
-            'pub_date': format_date(self.pub_date)
-        }
-        return filter_empty_keys(data)
-
-    def __repr__(self):
-        return "<{}: source={}, permalink={}, content={}, date={}, "\
-            "author=({}, {}, {})>"\
-            .format(self.__class__.__name__,
-                    self.source, self.permalink, self.content, self.pub_date,
-                    self.author_name, self.author_url,
-                    self.author_image)
-
-
-class Mention:
-
-    @classmethod
-    def from_json(cls, data):
-        return cls(data.get('source'),
-                   data.get('permalink'),
-                   data.get('content'),
-                   data.get('type'),
-                   data.get('author', {}).get('name'),
-                   data.get('author', {}).get('url'),
-                   data.get('author', {}).get('image'),
-                   isoparse(data.get('pub_date')),
-                   data.get('deleted', False))
-
-    def __init__(self, source, permalink, content, mention_type,
-                 author_name, author_url, author_image,
-                 pub_date=None, deleted=False):
-        self.source = source
-        self.permalink = permalink
-        self.content = content
-        self.mention_type = mention_type
-        self.author_name = author_name
-        self.author_url = author_url
-        self.author_image = author_image
-        self.pub_date = pub_date or datetime.datetime.utcnow()
-        self.deleted = deleted
-
-    def to_json(self):
-        data = {
-            'source': self.source,
-            'permalink': self.permalink,
-            'type': self.mention_type,
-            'content': self.content,
-            'author': {
-                'name': self.author_name,
-                'url': self.author_url,
-                'image': self.author_image
-            },
-            'pub_date': format_date(self.pub_date),
-            'deleted': self.deleted
-        }
-        return filter_empty_keys(data)
-
-    @classmethod
-    def update_recent(cls, mentions, post):
-        """post received a comment(s), add it to the front of the list"""
-        filename = os.path.join(app.root_path, '_data/recent_mentions')
-        with acquire_lock(filename, 30):
-            if os.path.exists(filename):
-                recent = json.load(open(filename, 'r'))
-            else:
-                recent = []
-
-            for incoming in mentions:
-                obj = {
-                    'post': {
-                        'title': post.title or post.content,
-                        'permalink': post.permalink
-                    },
-                    'mention': incoming.to_json()
-                }
-                recent.insert(0, obj)
-
-            with open(filename, 'w') as f:
-                json.dump(recent[:30], f, indent=True)
-
-    @classmethod
-    def load_recent(cls):
-        filename = os.path.join(app.root_path, '_data/recent_mentions')
-        if os.path.exists(filename):
-            objs = json.load(open(filename, 'r'))
-        else:
-            objs = []
-
-        recent = []
-        for obj in objs:
-            mention = cls.from_json(obj['mention'])
-            mention.post_permalink = obj['post']['permalink']
-            mention.post_title = obj['post']['title']
-            recent.append(mention)
-
-        return recent
-
-    def __repr__(self):
-        return "<Mention: type={}, source={}, permalink={}, author=({}, {}, {})>"\
-            .format(self.mention_type, self.source, self.permalink,
-                    self.author_name, self.author_url, self.author_image)

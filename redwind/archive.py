@@ -16,15 +16,24 @@
 
 from . import app
 import os
-from .models import User
-from flask.ext.login import LoginManager
-
-login_mgr = LoginManager(app)
-login_mgr.login_view = 'index'
+import urllib
+import json
 
 
-@login_mgr.user_loader
-def load_user(domain):
-    user = User.load(os.path.join(app.root_path, '_data/user.json'))
-    if user.domain == domain:
-        return user
+def load_json_from_archive(url):
+    path = os.path.join(url_to_archive_path(url), 'parsed.json')
+    app.logger.debug("checking archive for %s => %s", url, path)
+
+    if os.path.exists(path):
+        app.logger.debug("path exists, loading %s", path)
+        return json.load(open(path, 'r'))
+    app.logger.debug("path does not exist %s", path)
+    raise RuntimeError("No archive entry for url: {}".format(url))
+
+
+def url_to_archive_path(url):
+    parsed = urllib.parse.urlparse(url)
+    path = os.path.join(parsed.scheme,
+                        parsed.netloc.strip('/'),
+                        parsed.path.strip('/'))
+    return os.path.join(app.root_path, '_data/archive', path)

@@ -31,7 +31,7 @@ app.jinja_options = ImmutableDict(
     extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
 )
 
-#toolbar = DebugToolbarExtension(app)
+toolbar = DebugToolbarExtension(app)
 
 if not app.debug:
     import logging

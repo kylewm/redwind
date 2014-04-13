@@ -52,7 +52,7 @@ def fetch_external_post(context):
     app.logger.debug("parsing for microformats {}".format(context))
     response = requests.get(context.source)
     if response.status_code // 2 == 100:
-        hentry = hentry_parser.parse(response.text, context.source)
+        hentry = hentry_parser.parse_html(response.text, context.source)
         if hentry:
             context.permalink = hentry.permalink
             context.title = hentry.title

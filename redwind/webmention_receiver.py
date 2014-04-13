@@ -17,7 +17,7 @@
 
 from . import push
 from . import app
-from .models import Post, Mention
+from .models import Post
 from .util import hentry_parser
 
 from flask import request, make_response
@@ -146,7 +146,7 @@ def do_process_webmention(source, target):
         return target_id, None, False,\
             "Could not find any links from source to target"
 
-    hentry = hentry_parser.parse(source_response.text, source)
+    hentry = hentry_parser.parse_html(source_response.text, source)
 
     if not hentry:
         app.logger.warn(

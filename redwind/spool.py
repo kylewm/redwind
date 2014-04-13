@@ -34,7 +34,7 @@ def process_spool(env):
         kwargs = loads(env[b'kwargs'])
 
         with app.test_request_context():
-            user = User.load(os.path.join(app.root_path, '_data/user'))
+            user = User.load(os.path.join(app.root_path, '_data/user.json'))
             app.logger.debug('loaded user %s', repr(user))
             login_user(user)
             func(*args, **kwargs)
