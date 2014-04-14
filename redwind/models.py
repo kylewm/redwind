@@ -469,13 +469,21 @@ class Post:
 
     @property
     def permalink(self):
+        return self._permalink(include_slug=True)
+
+    @property
+    def permalink_without_slug(self):
+        return self._permalink(include_slug=False)
+        
+
+    def _permalink(self, include_slug):
         site_url = app.config.get('SITE_URL') or 'http://localhost'
 
         path_components = [site_url,
                            self.post_type,
                            self.pub_date.strftime('%Y/%m/%d'),
                            str(self.date_index)]
-        if self.slug:
+        if include_slug and self.slug:
             path_components.append(self.slug)
 
         return '/'.join(path_components)

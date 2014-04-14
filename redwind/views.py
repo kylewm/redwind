@@ -230,11 +230,10 @@ class MentionProxy:
         self.reftype = 'reference'
 
         if post:
-            target_urls = (post.permalink,
+            target_urls = (post.permalink, post.permalink_without_slug,
                            post.short_permalink,
                            post.permalink.replace(app.config['SITE_URL'],
                                                   'http://kylewm.com'))
-
             for ref in self.entry.references:
                 if ref.url in target_urls:
                     self.reftype = ref.reftype
