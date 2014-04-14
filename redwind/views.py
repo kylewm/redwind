@@ -141,8 +141,12 @@ class DisplayPost:
 
     def _mentions_sorted_by_date(self, mtype):
         def by_date(m):
-            return m.pub_date or\
+            result = m.pub_date or\
                 datetime.datetime(datetime.MIN_YEAR, 1, 1)
+            if result and hasattr(result, 'tzinfo') and not result.tzinfo:
+                result = pytz.utc.localize(result)
+            return result
+        
         filtered = [m for m in self.mentions
                     if not m.deleted
                     and (not mtype or m.reftype == mtype)]
@@ -225,14 +229,15 @@ class MentionProxy:
         self.deleted = False
         self.reftype = 'reference'
 
-        target_urls = (post.permalink,
-                       post.short_permalink,
-                       post.permalink.replace(app.config['SITE_URL'],
-                                              'http://kylewm.com'))
+        if post:
+            target_urls = (post.permalink,
+                           post.short_permalink,
+                           post.permalink.replace(app.config['SITE_URL'],
+                                                  'http://kylewm.com'))
 
-        for ref in self.entry.references:
-            if ref.url in target_urls:
-                self.reftype = ref.reftype
+            for ref in self.entry.references:
+                if ref.url in target_urls:
+                    self.reftype = ref.reftype
 
     def __repr__(self):
         return """Mention(source={}, pub_date={} reftype={})""".format(
@@ -304,7 +309,8 @@ def articles_atom():
 
 @app.route("/mentions.atom")
 def mentions_atom():
-    mentions = Mention.load_recent()
+    mention_urls = Post.load_recent_mentions()
+    mentions = [MentionProxy(None, u) for u in mention_urls]
     return make_response(render_template('mentions.atom',
                                          title='kylewm.com: Mentions',
                                          feed_id='mentions.atom',
@@ -491,7 +497,9 @@ def strftime_filter(thedate, fmt='%Y %b %d'):
     if not thedate:
         thedate = date(1982, 11, 24)
     if hasattr(thedate, 'tzinfo'):
-        thedate = pytz.utc.localize(thedate).astimezone(TIMEZONE)
+        if not thedate.tzinfo:
+            thedate = pytz.utc.localize(thedate)
+        thedate = thedate.astimezone(TIMEZONE)
     return thedate.strftime(fmt)
 
 

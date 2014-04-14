@@ -345,6 +345,32 @@ class Post:
         path = os.path.join(app.root_path, '_data/syndication_index.json')
         return json.load(open(path, 'r'))
 
+    def update_syndication_index(self, url):
+        path = os.path.join(app.root_path, '_data/syndication_index.json')
+        with acquire_lock(path, 30):
+            obj = json.load(open(path, 'r'))
+            obj[url] = self.path
+            json.dump(obj, open(path, 'w'), indent=True)
+    
+    @classmethod
+    def load_recent_mentions(cls):
+        path = os.path.join(app.root_path, '_data/recent_mentions.json')
+        if os.path.exists(path):
+            return json.load(open(path, 'r'))
+        else:
+            return []
+
+    @classmethod
+    def update_recent_mentions(self, url):
+        path = os.path.join(app.root_path, '_data/recent_mentions.json')
+        with acquire_lock(path, 30):
+            if os.path.exists(path):
+                obj = json.load(open(path, 'r'))
+            else:
+                obj = []
+            obj.insert(0, url)
+            json.dump(obj[:10], open(path, 'w'), indent=True)
+    
     def __init__(self, post_type, content_format, date_index):
         self.post_type = post_type
         self.content_format = content_format
@@ -512,13 +538,6 @@ class Post:
             app.logger.debug("loaded mentions from %s: %s",
                              path, self._mentions)
         return self._mentions
-
-    def update_syndication_index(self, url):
-        path = os.path.join(app.root_path, '_data/syndication_index.json')
-        with acquire_lock(path, 30):
-            obj = json.load(open(path, 'r'))
-            obj[url] = self.path
-            json.dump(obj, open(path, 'w'), indent=True)
 
     def __repr__(self):
         if self.title:

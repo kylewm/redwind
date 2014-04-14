@@ -87,10 +87,8 @@ def process_webmention(source, target, callback):
 
             json.dump(mention_list, open(mentions_path, 'w'), indent=True)
 
-        # update recent mentions
-        #post = Post.load_by_shortid(post_id)
-        #Mention.update_recent(mentions, post)
-        #push.handle_new_mentions()
+        Post.update_recent_mentions(mention_url)
+        push.handle_new_mentions()
 
         call_callback(200, 'Success')
         return 200, 'Success'
