@@ -499,10 +499,13 @@ def strftime_filter(thedate, fmt='%Y %b %d'):
 def isotime_filter(thedate):
     if not thedate:
         thedate = date(1982, 11, 24)
-    if hasattr(thedate, 'tzinfo') and thedate.tzinfo:
-        thedate = thedate.astimezone(pytz.utc)
-    else:
-        thedate = pytz.utc.localize(thedate)
+       
+    if hasattr(thedate, 'tzinfo'):
+        if thedate.tzinfo:
+            thedate = thedate.astimezone(pytz.utc)
+        else:
+            thedate = pytz.utc.localize(thedate)
+            
     return thedate.isoformat()
 
 
@@ -512,6 +515,9 @@ def human_time(thedate):
         return None
 
     now = datetime.utcnow()
+
+    # if the date being formatted has a timezone, make
+    # sure utc now does too
     if hasattr(thedate, 'tzinfo') and thedate.tzinfo:
         now = pytz.utc.localize(now)
     delta = now - thedate

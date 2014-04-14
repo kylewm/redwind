@@ -27,11 +27,11 @@ import requests
 import re
 import json
 import types
+import datetime
 from . import hentry_template
 from . import archive
 
 from tempfile import mkstemp
-from datetime import datetime
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
@@ -166,7 +166,7 @@ class TwitterClient:
 
             status_data = status_response.json()
 
-            pub_date = datetime.strptime(status_data['created_at'],
+            pub_date = datetime.datetime.strptime(status_data['created_at'],
                                          '%a %b %d %H:%M:%S %z %Y')
             if pub_date and pub_date.tzinfo:
                 pub_date = pub_date.astimezone(datetime.timezone.utc)

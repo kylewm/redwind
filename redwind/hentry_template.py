@@ -30,3 +30,4 @@ def fill(author_url=None, author_name=None, author_image=None, pub_date=None,
         html += """<a class="u-url" href="{}">permalink</a><br/>\n""".format(permalink)
 
     html += "</div></body></html>\n"
+    return html

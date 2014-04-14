@@ -212,7 +212,7 @@ class Post:
             if depth == 0:
                 break
         head = json.loads(''.join(json_lines))
-        body = '\n'.join(fp.readlines()).strip()
+        body = '\n'.join(line.strip('\r\n') for line in fp.readlines())
         return head, body
 
     @classmethod
