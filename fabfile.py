@@ -1,14 +1,15 @@
-from fabric.api import local, prefix, cd, run, env, get
+from fabric.api import local, prefix, cd, run, env, get, lcd
 
 
 env.hosts = ['orin.kylewm.com']
 
 
 def getdata():
-    with cd("~/red-wind"):
-        run("tar czvf /tmp/redwind-data.tar.gz redwind/_data")
-    get('/tmp/redwind-data.tar.gz', '/tmp/')
-    local("tar zxvf /tmp/redwind-data.tar.gz")
+    with cd("~/redwind/redwind/_data"):
+        run("git add -A")
+        run("git diff-index --quiet HEAD || git commit -m \"Commit by fabric\"")
+    with lcd("./redwind/_data"):
+        local("git pull origin master")
 
 
 def commit():
@@ -21,16 +22,16 @@ def push():
 
 
 def pull():
-    with cd("~/red-wind"):
+    with cd("~/redwind"):
         run("git pull origin master")
         run("git submodule update")
 
 
 def restart():
-    with cd("~/red-wind"):
+    with cd("~/redwind"):
         with prefix("source venv/bin/activate"):
             run("pip install -r requirements.txt")
-            run("uwsgi --reload /tmp/red-wind.pid")
+            run("uwsgi --reload /tmp/redwind.pid")
 
 
 def deploy():
