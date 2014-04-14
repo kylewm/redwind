@@ -3,13 +3,16 @@
 
   <div class="reply-context">
 
-    {% if (reply.source and not reply.permalink) %}
+    {% if not reply.author_name and reply.permalink %}
 
-      <i class="fa fa-share"></i> <a class="u-in-reply-to" href="{{ reply.source }}">{{reply.source | prettify_url}}</a>
-
-    {% elif (not reply.author_name and reply.permalink and reply.title) %}
-
-      <i class="fa fa-share"></i> <a class="u-in-reply-to" href="{{ reply.permalink }}">{{reply.title}}</a>
+      <i class="fa fa-share"></i> In reply to
+      <a class="u-in-reply-to" href="{{ reply.permalink }}">
+        {% if reply.title %}
+          {{reply.title}}
+        {% else %}
+          {{ reply.permalink | prettify_url }}
+        {% endif %}
+      </a>
 
     {% else %}
 
@@ -17,8 +20,7 @@
         <span class="p-author h-card">
           {{ author_image(reply.author_image, reply.author_name) }}
 
-          <i class="fa fa-share"></i>
-          In reply to
+          <i class="fa fa-share"></i> In reply to
           {% if reply.author_name and reply.author_url %}
             <a class="p-name u-url" href="{{reply.author_url}}">{{ reply.author_name }}</a>,
           {% elif reply.author_name %}

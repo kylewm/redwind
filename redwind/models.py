@@ -518,7 +518,7 @@ class Post:
         with acquire_lock(path, 30):
             obj = json.load(open(path, 'r'))
             obj[url] = self.path
-            json.dump(obj, open(path, 'w'))
+            json.dump(obj, open(path, 'w'), indent=True)
 
     def __repr__(self):
         if self.title:
