@@ -100,8 +100,7 @@ def handle_new_or_edit(post, preview, img_url):
 
     post_args['name'] = post.title
 
-    share_link = next((share_context.source for share_context
-                       in post.share_contexts), None)
+    share_link = next(post.repost_of, None)
     if share_link:
         post_args['link'] = share_link
     elif img_url:

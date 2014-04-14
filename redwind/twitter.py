@@ -211,8 +211,8 @@ class TwitterClient:
             return
         # check for RT's
         is_retweet = False
-        for share_context in post.share_contexts:
-            repost_match = self.PERMALINK_RE.match(share_context.source)
+        for repost_of in post.repost_of:
+            repost_match = self.PERMALINK_RE.match(repost_of)
             if repost_match:
                 is_retweet = True
                 tweet_id = repost_match.group(2)
@@ -226,8 +226,8 @@ class TwitterClient:
                                                        result.content))
 
         is_favorite = False
-        for like_context in post.like_contexts:
-            like_match = self.PERMALINK_RE.match(like_context.source)
+        for like_of in post.like_of:
+            like_match = self.PERMALINK_RE.match(like_of)
             if like_match:
                 is_favorite = True
                 tweet_id = like_match.group(2)
@@ -248,8 +248,8 @@ class TwitterClient:
                 data['lat'] = str(post.location.latitude)
                 data['long'] = str(post.location.longitude)
 
-            for reply_context in post.reply_contexts:
-                reply_match = self.PERMALINK_RE.match(reply_context.source)
+            for in_reply_to in post.in_reply_to:
+                reply_match = self.PERMALINK_RE.match(in_reply_to)
                 if reply_match:
                     data['in_reply_to_status_id'] = reply_match.group(2)
                     break
