@@ -1,3 +1,8 @@
+title: Red Wind README
+author_name: Kyle Mahan
+author_url: http://kylewm.com
+
+
 # Intro
 
 Red Wind is a (micro)-blogging engine used on my personal website,
