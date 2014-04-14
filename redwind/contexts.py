@@ -1,40 +1,20 @@
 from . import app
-from .models import Post
-from .twitter import twitter_client
-from .util import hentry_parser
-from bs4 import BeautifulSoup
-import requests
+from . import archive
 from .spool import spoolable
+from .twitter import twitter_client
+import itertools
 
 
 def fetch_post_contexts(post):
-    do_fetch_post_contexts.spool(post.shortid)
+    for url in itertools.chain(post.in_reply_to, post.repost_of, post.like_of):
+        do_fetch_context.spool(url)
 
 
 @spoolable
-def do_fetch_post_contexts(post_id):
+def do_fetch_context(url):
     try:
-        with Post.writeable(Post.shortid_to_path(post_id)) as post:
-
-            app.logger.debug("fetching replies {}, shares {}, likes {}"
-                             .format(post.reply_contexts,
-                                     post.share_contexts,
-                                     post.like_contexts))
-
-            if post.reply_contexts:
-                for reply_ctx in post.reply_contexts:
-                    fetch_external_post(reply_ctx)
-
-            if post.share_contexts:
-                for share_ctx in post.share_contexts:
-                    fetch_external_post(share_ctx)
-
-            if post.like_contexts:
-                for like_ctx in post.like_contexts:
-                    fetch_external_post(like_ctx)
-
-            post.save()
-
+        app.logger.debug("fetching url %s", url)
+        fetch_external_post(url)
         return True, 'Success'
 
     except Exception as e:
@@ -42,30 +22,9 @@ def do_fetch_post_contexts(post_id):
         return False, "exception while fetching contexts {}".format(e)
 
 
-def fetch_external_post(context):
-    from .views import prettify_url
-
-    app.logger.debug("checking twitter for {}".format(context))
-    if twitter_client.fetch_external_post(context):
+def fetch_external_post(url):
+    app.logger.debug("checking twitter for %s", url)
+    if twitter_client.fetch_external_post(url):
         return True
 
-    app.logger.debug("parsing for microformats {}".format(context))
-    response = requests.get(context.source)
-    if response.status_code // 2 == 100:
-        hentry = hentry_parser.parse_html(response.text, context.source)
-        if hentry:
-            context.permalink = hentry.permalink
-            context.title = hentry.title
-            context.content = hentry.content
-            context.content_format = 'html'
-            context.author_name = hentry.author.name if hentry.author else ''
-            context.author_url = hentry.author.url if hentry.author else ''
-            context.author_image = hentry.author.photo if hentry.author else ''
-            context.pub_date = hentry.pub_date
-            return True
-
-    # get as much as we can without microformats
-    soup = BeautifulSoup(response.text)
-    title_tag = soup.find('title')
-    context.permalink = response.url
-    context.title = title_tag.text if title_tag else prettify_url(context.source)
+    archive.archive_url(url)

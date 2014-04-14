@@ -24,7 +24,7 @@
     {% if post.post_type == 'reply' %}
       <div class="in_reply_to">
         <label><span>In Reply To (URL)</span>
-          <textarea style="width:100%" name="in_reply_to" rows="2">{{post.reply_sources}}</textarea>
+          <textarea style="width:100%" name="in_reply_to" rows="2">{{post.in_reply_to | join('\n')}}</textarea>
         </label>
       </div>
     {% endif %}
@@ -32,14 +32,14 @@
     {% if post.post_type == 'share' %}
       <div class="repost_source">
         <label><span>Repost (URL)</span>
-          <textarea style="width:100%" name="repost_source" cols="50" rows="2">{{post.share_sources}}</textarea></label>
+          <textarea style="width:100%" name="repost_source" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea></label>
       </div>
     {% endif %}
 
     {% if post.post_type == 'like' %}
       <div class="like_of">
         <label><span>Like of (URL)</span>
-          <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_sources}}</textarea></label>
+          <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea></label>
       </div>
     {% endif %}
 

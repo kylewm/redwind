@@ -25,21 +25,26 @@ import requests
 
 def download_resource(url, path):
     app.logger.debug("downloading {} to {}".format(url, path))
-    response = requests.get(urljoin(app.config['SITE_URL'], url),
-                            stream=True)
 
-    if response.status_code // 2 == 100:
-        if not os.path.exists(os.path.dirname(path)):
-            os.makedirs(os.path.dirname(path))
+    try:
+        response = requests.get(urljoin(app.config['SITE_URL'], url),
+                                stream=True)
 
-        with open(path, 'wb') as f:
-            for chunk in response.iter_content(512):
-                f.write(chunk)
+        if response.status_code // 2 == 100:
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
 
-        return True
-    else:
-        app.logger.warn("Failed to download resource %s. Got response %s",
-                        url, str(response))
+            with open(path, 'wb') as f:
+                for chunk in response.iter_content(512):
+                    f.write(chunk)
+
+            return True
+        else:
+            app.logger.warn("Failed to download resource %s. Got response %s",
+                            url, str(response))
+    except:
+        app.logger.exception("trying to download resource")
+
 
 TWITTER_USERNAME_REGEX = r'(?<!\w)@([a-zA-Z0-9_]+)'
 LINK_REGEX = r'\b(?<!=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=]+)'

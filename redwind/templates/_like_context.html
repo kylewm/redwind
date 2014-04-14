@@ -4,9 +4,9 @@
       <i class="fa fa-thumbs-up"></i> Liked
       <a class="u-like u-like-of" href="{{ like.permalink or like.source }}">
         {% if like.title or like.content %}
-          {{like.title or like.content | format_as_text(like.content_format)}}
+          {{like.title or like.content | format_as_text('html')}}
         {% else %}
-          {{ like.source | prettify_url }}
+          {{ like.permalink | prettify_url }}
         {% endif %}
       </a>
     {% endfor %}

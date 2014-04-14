@@ -86,8 +86,8 @@ class DisplayPost:
 
     def get_share_preview(self):
         text = ''
-        for share_context in self.share_contexts:
-            preview, _ = self.repost_preview_filter(share_context.source)
+        for repost_of in self.repost_of:
+            preview, _ = self.repost_preview_filter(repost_of)
             if preview:
                 text += '<div>' + preview + '</div>'
         return text
@@ -195,21 +195,23 @@ class DisplayPost:
 class ContextProxy:
     def __init__(self, url):
         blob = load_json_from_archive(url)
-        self.entry = hentry_parser.parse_json(blob, url)
-        self.permalink = self.entry.permalink
-        self.author_name = self.entry.author.name
-        self.author_url = self.entry.author.url
-        self.author_image = self.entry.author.photo
-        self.content = self.entry.content
-        self.content_format = 'html'
-        self.pub_date = self.entry.pub_date
-        self.title = self.entry.title
-        self.deleted = False
+        if blob:
+            self.entry = hentry_parser.parse_json(blob, url)
+            self.permalink = self.entry.permalink
+            self.author_name = self.entry.author.name
+            self.author_url = self.entry.author.url
+            self.author_image = self.entry.author.photo
+            self.content = self.entry.content
+            self.content_format = 'html'
+            self.pub_date = self.entry.pub_date
+            self.title = self.entry.title
+            self.deleted = False
+        else:
+            self.permalink = url
 
 
 class MentionProxy:
     def __init__(self, post, url):
-        self.source = url
         blob = load_json_from_archive(url)
         self.entry = hentry_parser.parse_json(blob, url)
         self.permalink = self.entry.permalink
@@ -441,23 +443,23 @@ def delete_by_id():
 def new_post():
     post_type = request.args.get('type', 'note')
     content_format = 'markdown' if post_type == 'article' else 'plain'
-    post = Post(post_type, content_format)
+    post = Post(post_type, content_format, None)
     post.content = ''
 
     if post_type == 'reply':
         in_reply_to = request.args.get('in_reply_to')
         if in_reply_to:
-            post.reply_contexts.append(Context(in_reply_to))
+            post.in_reply_to = [in_reply_to]
 
     if post_type == 'share':
         repost_source = request.args.get('repost_source')
         if repost_source:
-            post.share_contexts.append(Context(repost_source))
+            post.repost_of = [repost_source]
 
     if post_type == 'like':
         like_of = request.args.get('like_of')
         if like_of:
-            post.like_contexts.append(Context(like_of))
+            post.like_of = [like_of]
 
     content = request.args.get('content')
     if content:
@@ -497,7 +499,9 @@ def strftime_filter(thedate, fmt='%Y %b %d'):
 def isotime_filter(thedate):
     if not thedate:
         thedate = date(1982, 11, 24)
-    if hasattr(thedate, 'tzinfo'):
+    if hasattr(thedate, 'tzinfo') and thedate.tzinfo:
+        thedate = thedate.astimezone(pytz.utc)
+    else:
         thedate = pytz.utc.localize(thedate)
     return thedate.isoformat()
 
@@ -506,7 +510,10 @@ def isotime_filter(thedate):
 def human_time(thedate):
     if not thedate:
         return None
+
     now = datetime.utcnow()
+    if hasattr(thedate, 'tzinfo') and thedate.tzinfo:
+        now = pytz.utc.localize(now)
     delta = now - thedate
 
     if delta.days < 1:
@@ -725,7 +732,7 @@ def save_post():
     def new_or_writeable(shortid):
         if shortid == 'new':
             post_type = request.form.get('post_type', 'note')
-            post = Post(post_type, 'plain')
+            post = Post(post_type, 'plain', None)
             post._writeable = True
             yield post
         else:
@@ -764,22 +771,19 @@ def save_post():
             post.repost_preview = None
 
             in_reply_to = request.form.get('in_reply_to')
-            post.reply_contexts = []
             if in_reply_to:
-                post.reply_contexts = [Context(url.strip()) for url
-                                       in in_reply_to.split('\n')]
+                post.in_reply_to = [url.strip() for url
+                                    in in_reply_to.split('\n')]
 
             repost_source = request.form.get('repost_source')
-            post.share_contexts = []
             if repost_source:
-                post.share_contexts = [Context(url.strip()) for url
-                                       in repost_source.split('\n')]
+                post.repost_of = [url.strip() for url
+                                  in repost_source.split('\n')]
 
             like_of = request.form.get('like_of')
-            post.like_contexts = []
             if like_of:
-                post.like_contexts = [Context(url.strip()) for url
-                                      in like_of.split('\n')]
+                post.like_of = [url.strip() for url
+                                in like_of.split('\n')]
 
             twitter_status_id = request.form.get("twitter_status_id")
             if twitter_status_id:

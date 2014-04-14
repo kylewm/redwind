@@ -188,7 +188,7 @@ class Location:
 
 
 class Post:
-    FILE_PATTERN = re.compile('(\w+)_(\d+)(\.\w+)$')
+    FILE_PATTERN = re.compile('(\w+)_(\d+)(\.html|\.md|\.txt)$')
 
     @staticmethod
     def parse_json_frontmatter(fp):
@@ -227,16 +227,10 @@ class Post:
     @classmethod
     def load(cls, path):
         app.logger.debug("loading from path %s", path)
-        if not os.path.exists(path):
-            app.logger.debug("looking for post with any extension %s.*", path)
-            dirname, basename = os.path.split(path)
-            for poss in os.listdir(dirname):
-                if os.path.splitext(poss)[0] == basename:
-                    path = os.path.join(dirname, poss)
-                    app.logger.debug("loading from path %s", path)
-                    break
 
-        if not os.path.exists(path):
+        path = next((path for path in (path, path+'.md', path+'.html', path+'.txt')
+                     if os.path.exists(path)), None)
+        if not path:
             app.logger.warn("No post found at %s", path)
             return None
 
@@ -372,9 +366,9 @@ class Post:
         self.pub_date = isoparse(data.get('pub_date'))
         self.slug = data.get('slug')
         self.title = data.get('title')
-        self.in_reply_to = data.get('in_reply_to')
-        self.repost_of = data.get('repost_of')
-        self.like_of = data.get('like_of')
+        self.in_reply_to = data.get('in_reply_to', [])
+        self.repost_of = data.get('repost_of', [])
+        self.like_of = data.get('like_of', [])
         self.draft = data.get('draft', False)
         self.deleted = data.get('deleted', False)
 
@@ -388,7 +382,6 @@ class Post:
 
     def to_json_blob(self):
         data = {
-            'type': self.post_type,
             'pub_date':  format_date(self.pub_date),
             'slug': self.slug,
             'title': self.title,
@@ -439,6 +432,14 @@ class Post:
             self.pub_date.year, self.pub_date.month, self.pub_date.day,
             self.post_type, self.date_index,
             format_to_extension(self.content_format))
+
+    @property
+    def path(self):
+        return "{}/{:02d}/{:02d}/{}_{}{}".format(
+            self.pub_date.year, self.pub_date.month, self.pub_date.day,
+            self.post_type, self.date_index,
+            format_to_extension(self.content_format))
+
 
     @property
     def permalink(self):
@@ -493,12 +494,16 @@ class Post:
                     .format(user_id, post_id)
 
     @property
+    def mentions_path(self):
+        return self.relpath_to_fullpath(
+            "{}/{:02d}/{:02d}/{}_{}.mentions.json".format(
+                self.pub_date.year, self.pub_date.month, self.pub_date.day,
+                self.post_type, self.date_index))
+
+    @property
     def mentions(self):
         if self._mentions is None:
-            path = self.relpath_to_fullpath(
-                "{}/{:02d}/{:02d}/{}_{}.mentions.json".format(
-                    self.pub_date.year, self.pub_date.month, self.pub_date.day,
-                    self.post_type, self.date_index))
+            path = self.mentions_path
             if os.path.exists(path):
                 blob = json.load(open(path, 'r'))
                 self._mentions = blob

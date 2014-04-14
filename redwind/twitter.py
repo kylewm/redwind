@@ -27,6 +27,8 @@ import requests
 import re
 import json
 import types
+from . import hentry_template
+from . import archive
 
 from tempfile import mkstemp
 from datetime import datetime
@@ -149,8 +151,8 @@ class TwitterClient:
             if embed_response.status_code // 2 == 100:
                 return embed_response.json().get('html')
 
-    def fetch_external_post(self, ctx):
-        match = self.PERMALINK_RE.match(ctx.source)
+    def fetch_external_post(self, url):
+        match = self.PERMALINK_RE.match(url)
         if match:
             tweet_id = match.group(2)
             status_response = requests.get(
@@ -179,16 +181,16 @@ class TwitterClient:
             author_image = status_data['user']['profile_image_url']
             tweet_text = self.expand_links(status_data['text'])
 
-            ctx.permalink = ctx.source
-            ctx.title = None
-            ctx.content = tweet_text
-            ctx.content_format = 'plain'
-            ctx.author_name = author_name
-            ctx.author_url = author_url
-            ctx.author_image = author_image
-            ctx.pub_date = pub_date
+            html = hentry_template.fill(author_name=author_name,
+                                        author_url=author_url,
+                                        author_image=author_image,
+                                        pub_date=pub_date,
+                                        content=tweet_text,
+                                        permalink=url)
+            archive.archive_html(url, html)
             return True
 
+    # TODO use twitter API entities to expand links without fetch requests
     def expand_links(self, text):
         return re.sub(util.LINK_REGEX,
                       lambda match: self.expand_link(match.group(0)),

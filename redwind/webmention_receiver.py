@@ -17,8 +17,8 @@
 
 from . import push
 from . import app
-from .models import Post
-from .util import hentry_parser
+from . import archive
+from .models import Post, acquire_lock
 
 from flask import request, make_response
 from werkzeug.exceptions import NotFound
@@ -26,7 +26,9 @@ from werkzeug.exceptions import NotFound
 import urllib.parse
 import urllib.request
 import requests
+import json
 from .spool import spoolable
+import os
 
 from bs4 import BeautifulSoup
 
@@ -62,34 +64,33 @@ def process_webmention(source, target, callback):
             })
 
     try:
-        post_id, mentions, delete, error = do_process_webmention(source, target)
-        if error:
+        mentions_path, mention_url, delete, error = do_process_webmention(source, target)
+
+        if error or not mentions_path or not mention_url:
             app.logger.debug("Failed to process webmention: %s", error)
             call_callback(400, error)
             return 400, error
 
-        with Post.writeable(Post.shortid_to_path(post_id)) as post:
+        with acquire_lock(mentions_path, 30):
+            mention_list = []
+            if os.path.exists(mentions_path):
+                mention_list = json.load(open(mentions_path, 'r'))
+
             if delete:
-                for existing in post.mentions:
-                    if existing.source == source or \
-                       existing.permalink == source:
-                        existing.deleted = True
-
+                mention_list.remove(mention_url)
             else:
-                # de-dup on incoming url
-                for existing in post.mentions:
-                    if existing.source == mentions[0].source and \
-                       existing.permalink == mentions[0].permalink:
-                        existing.deleted = True
+                if not mention_url in mention_list:
+                    mention_list.append(mention_url)
 
-                post.mentions += mentions
+            if not os.path.exists(os.path.dirname(mentions_path)):
+                os.makedirs(os.path.dirname(mentions_path))
 
-            post.save()
+            json.dump(mention_list, open(mentions_path, 'w'), indent=True)
 
         # update recent mentions
-        post = Post.load_by_shortid(post_id)
-        Mention.update_recent(mentions, post)
-        push.handle_new_mentions()
+        #post = Post.load_by_shortid(post_id)
+        #Mention.update_recent(mentions, post)
+        #push.handle_new_mentions()
 
         call_callback(200, 'Success')
         return 200, 'Success'
@@ -112,8 +113,8 @@ def do_process_webmention(source, target):
         return None, None, False, "Webmention could not find target post: {}"\
             .format(target)
 
-    target_urls = [target, target_post.permalink, target_post.short_permalink]
-    target_id = target_post.shortid
+    target_urls = (target, target_post.permalink, target_post.short_permalink)
+    mentions_path = target_post.mentions_path
 
     # confirm that source actually refers to the post
     source_response = requests.get(source)
@@ -121,12 +122,12 @@ def do_process_webmention(source, target):
 
     if source_response.status_code == 410:
         app.logger.debug("Webmention indicates original was deleted")
-        return target_id, None, True, None
+        return mentions_path, None, True, None
 
     if source_response.status_code // 100 != 2:
         app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
-        return target_id, None, False, \
+        return mentions_path, None, False, \
             "Bad response when reading source post: {}, {}"\
             .format(source, source_response)
 
@@ -134,7 +135,7 @@ def do_process_webmention(source, target):
 
     if source_length and int(source_length) > 2097152:
         app.logger.warn("Very large source. length=%s", source_length)
-        return target_id, None, False,\
+        return mentions_path, None, False,\
             "Source is very large. Length={}"\
             .format(source_length)
 
@@ -143,37 +144,12 @@ def do_process_webmention(source, target):
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
-        return target_id, None, False,\
+        return mentions_path, None, False,\
             "Could not find any links from source to target"
 
-    hentry = hentry_parser.parse_html(source_response.text, source)
+    archive.archive_html(source, source_response.text)
 
-    if not hentry:
-        app.logger.warn(
-            "Webmention could not find h-entry on source page: %s. Giving up",
-            source)
-        return target_id, None, False, "Could not find h-entry in source page"
-
-    reftypes = set()
-    for ref in hentry.references:
-        if ref.url in target_urls:
-            reftypes.add(ref.reftype)
-
-    # if it's not a reply, repost, or like, it's just a reference
-    if not reftypes:
-        reftypes.add('reference')
-
-    mentions = []
-    for reftype in reftypes:
-        mention = Mention(source, hentry.permalink,
-                          hentry.content, reftype,
-                          hentry.author and hentry.author.name,
-                          hentry.author and hentry.author.url,
-                          hentry.author and hentry.author.photo,
-                          hentry.pub_date)
-        mentions.append(mention)
-
-    return target_id, mentions, False, None
+    return mentions_path, source, False, None
 
 
 def find_link_to_target(source_url, source_response, target_urls):

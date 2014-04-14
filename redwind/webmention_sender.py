@@ -58,12 +58,9 @@ class MentionClient:
 
         target_urls = []
         # send mentions to 'in_reply_to' as well as all linked urls
-        target_urls += [reply_context.source for reply_context
-                        in post.reply_contexts]
-        target_urls += [share_context.source for share_context
-                        in post.share_contexts]
-        target_urls += [like_context.source for like_context
-                        in post.like_contexts]
+        target_urls += post.in_reply_to
+        target_urls += post.repost_of
+        target_urls += post.like_of
 
         html_content = DisplayPost(post)\
             .get_html_content(include_preview=False)
