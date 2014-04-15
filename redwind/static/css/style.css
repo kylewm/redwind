@@ -112,6 +112,7 @@ nav ul {
 nav li {
     display: inline;
     margin-right: 1em;
+    margin-left: 0em;
 }
 
 #indie_auth_form {
