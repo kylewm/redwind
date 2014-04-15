@@ -62,8 +62,18 @@ pre {
     white-space:pre;
 }
 
-p + p {
+p {
+    margin-bottom: 0.8em;
+}
+
+h1, h2, h3, h4, h5 {
     margin-top: 0.5em;
+    margin-bottom: 0.3em;
+    font-weight: normal;
+}
+
+li {
+    margin-left: 1em;
 }
 
 /* Details */
@@ -147,8 +157,8 @@ nav li {
     float: right;
 }
 
-.share-context, .reply-context {
-
+.share-context, .reply-context, .like-context {
+    margin-bottom: 1em;
 }
 
 .share-context .content, .reply-context .content {
@@ -161,10 +171,6 @@ nav li {
 
 .p-comment .e-content {
     margin-left: 66px;
-}
-
-.share-context + .p-name , .reply-context + .p-name {
-    margin-top: 1em;
 }
 
 .post .syndication-links {
