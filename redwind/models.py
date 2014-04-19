@@ -351,7 +351,7 @@ class Post:
             obj = json.load(open(path, 'r'))
             obj[url] = self.path
             json.dump(obj, open(path, 'w'), indent=True)
-    
+
     @classmethod
     def load_recent_mentions(cls):
         path = os.path.join(app.root_path, '_data/recent_mentions.json')
@@ -370,7 +370,7 @@ class Post:
                 obj = []
             obj.insert(0, url)
             json.dump(obj[:10], open(path, 'w'), indent=True)
-    
+
     def __init__(self, post_type, content_format, date_index):
         self.post_type = post_type
         self.content_format = content_format
@@ -474,7 +474,7 @@ class Post:
     @property
     def permalink_without_slug(self):
         return self._permalink(include_slug=False)
-        
+
 
     def _permalink(self, include_slug):
         site_url = app.config.get('SITE_URL') or 'http://localhost'

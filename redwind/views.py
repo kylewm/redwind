@@ -22,7 +22,6 @@ from .auth import load_user
 from .util import hentry_parser
 
 from bs4 import BeautifulSoup
-from datetime import datetime, date
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, jsonify, Markup
 from flask.ext.login import login_required, login_user, logout_user,\
@@ -32,6 +31,7 @@ from urllib.parse import urlparse
 
 from werkzeug import secure_filename
 
+import datetime
 import bleach
 import os
 import pytz
@@ -146,7 +146,6 @@ class DisplayPost:
             if result and hasattr(result, 'tzinfo') and not result.tzinfo:
                 result = pytz.utc.localize(result)
             return result
-        
         filtered = [m for m in self.mentions
                     if not m.deleted
                     and (not mtype or m.reftype == mtype)]
@@ -239,8 +238,8 @@ class MentionProxy:
                     self.reftype = ref.reftype
 
     def __repr__(self):
-        return """Mention(source={}, pub_date={} reftype={})""".format(
-            self.source, self.pub_date, self.reftype)
+        return """Mention(permalink={}, pub_date={} reftype={})""".format(
+            self.permalink, self.pub_date, self.reftype)
 
 
 def render_posts(title, post_types, page, per_page, include_drafts=False):
@@ -326,7 +325,7 @@ def archive(year, month):
     months = Post.get_archive_months()
     if year and month:
         posts = [DisplayPost(post) for post in Post.load_by_month(year, month)]
-        first_of_month = year and month and date(year, month, 1)
+        first_of_month = year and month and datetime.date(year, month, 1)
     else:
         posts = []
         first_of_month = None
@@ -494,7 +493,7 @@ def uploads_popup():
 @app.template_filter('strftime')
 def strftime_filter(thedate, fmt='%Y %b %d'):
     if not thedate:
-        thedate = date(1982, 11, 24)
+        thedate = datetime.date(1982, 11, 24)
     if hasattr(thedate, 'tzinfo'):
         if not thedate.tzinfo:
             thedate = pytz.utc.localize(thedate)
@@ -505,14 +504,14 @@ def strftime_filter(thedate, fmt='%Y %b %d'):
 @app.template_filter('isotime')
 def isotime_filter(thedate):
     if not thedate:
-        thedate = date(1982, 11, 24)
-       
+        thedate = datetime.date(1982, 11, 24)
+
     if hasattr(thedate, 'tzinfo'):
         if thedate.tzinfo:
             thedate = thedate.astimezone(pytz.utc)
         else:
             thedate = pytz.utc.localize(thedate)
-            
+
     return thedate.isoformat()
 
 
@@ -521,7 +520,7 @@ def human_time(thedate):
     if not thedate:
         return None
 
-    now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
 
     # if the date being formatted has a timezone, make
     # sure utc now does too
@@ -673,7 +672,7 @@ def local_mirror_resource(url):
 def upload_file():
     f = request.files['file']
     filename = secure_filename(f.filename)
-    now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
 
     file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
 
@@ -692,7 +691,7 @@ def upload_file():
 def upload_image():
     f = request.files['file']
     filename = secure_filename(f.filename)
-    now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
 
     file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
 
@@ -773,7 +772,7 @@ def save_post():
                 post.location = None
 
             if not post.pub_date:
-                post.pub_date = datetime.utcnow()
+                post.pub_date = datetime.datetime.utcnow()
 
             slug = request.form.get('slug')
             if slug:
