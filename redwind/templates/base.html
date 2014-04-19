@@ -10,12 +10,12 @@
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
 
-    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('updates_atom', _external=True) }}" title="Kyle Mahan: Updates" />
-    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom', _external=True) }}" title="Kyle Mahan: Articles" />
-    <link rel="all alternate" type="application/atom+xml" href="{{ url_for('all_atom', _external=True) }}" title="Kyle Mahan: All" />
-
-    <link rel="webmention" href="{{ url_for('receive_webmention', _external=True) }}"/>
-    <link rel="original-post-discovery" href="{{ url_for('original_post_discovery', _external=True) }}"/>
+    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('updates_atom') }}" title="Kyle Mahan: Updates" />
+    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom') }}" title="Kyle Mahan: Articles" />
+    <link rel="all alternate" type="application/atom+xml" href="{{ url_for('all_atom') }}" title="Kyle Mahan: All" />
+    <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
+    
+    <link rel="webmention" href="{{ url_for('receive_webmention') }}"/>
 
     <link rel="openid.delegate" href="http://kylewm.com/" />
     <link rel="openid.server" href="https://indieauth.com/openid" />

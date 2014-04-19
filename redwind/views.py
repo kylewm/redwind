@@ -142,14 +142,17 @@ class DisplayPost:
     def _mentions_sorted_by_date(self, mtype):
         def by_date(m):
             result = m.pub_date or\
-                datetime.datetime(datetime.MIN_YEAR, 1, 1)
+                datetime.datetime(datetime.MINYEAR, 1, 1)
             if result and hasattr(result, 'tzinfo') and not result.tzinfo:
                 result = pytz.utc.localize(result)
             return result
+        print("mentions unsorted", mtype, self.mentions)
         filtered = [m for m in self.mentions
                     if not m.deleted
                     and (not mtype or m.reftype == mtype)]
+        print("mentions filtered.", mtype, filtered)
         filtered.sort(key=by_date)
+        print("mentions sorted.", mtype, filtered)
         return filtered
 
     def _mention_count(self, mtype):
@@ -164,7 +167,10 @@ class DisplayPost:
 
     @property
     def likes(self):
-        return self._mentions_sorted_by_date('like')
+        try:
+            return self._mentions_sorted_by_date('like')
+        except:
+            app.logger.exception("fetching likes")
 
     @property
     def like_count(self):
@@ -374,21 +380,25 @@ def shortlink(tag):
                             day=pub_date.day, index=index))
 
 
-@app.route('/original_post_discovery')
-def original_post_discovery():
-    url = request.args.get('syndication')
-    index = Post.load_syndication_index()
-    path = index.get(url)
-    if not path:
-        r = requests.get(url)
-        if r.status_code // 100 == 2 and r.url != url:
-            path = index.get(r.url)
-
-    if not path:
-        abort(404)
-
-    post = Post.load_by_path(path)
-    return redirect(post.permalink)
+# disable this experimental feature
+# @app.route('/original_post_discovery')
+# def original_post_discovery():
+#     url = request.args.get('syndication')
+#     if not url:
+#         abort(404)
+#
+#     index = Post.load_syndication_index()
+#     path = index.get(url)
+#     if not path:
+#         r = requests.get(url)
+#         if r.status_code // 100 == 2 and r.url != url:
+#             path = index.get(r.url)
+#
+#     if not path:
+#         abort(404)
+#
+#     post = Post.load_by_path(path)
+#     return redirect(post.permalink)
 
 
 @app.route("/indieauth")
