@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
-
+from .. import app
+from collections import deque
 from mf2py.parser import Parser
 import datetime
 import re
@@ -94,8 +95,11 @@ def parse_json(d, source):
             references.append(Reference(rel_url, 'repost'))
 
     entry = None
-    for item in d['items']:
+    queue = deque(item for item in d['items'])
+    while queue:
+        item = queue.popleft()
         if 'h-entry' in item['type']:
+            app.logger.debug("found h-entry, parsing %s", item)
 
             hentry = item
             permalink = next((perma for perma
@@ -133,33 +137,36 @@ def parse_json(d, source):
 
             entry = Entry(author, permalink, pub_date, references, title,
                           content_html)
+            app.logger.debug("successfully parsed %s", entry)
             break
-
-    hcards = [item for item in d['items'] if 'h-card' in item['type']]
+        else:
+            queue.extend(item.get('children', []))
 
     if entry and not entry.author:
+        hcards = [item for item in d['items'] if 'h-card' in item['type']]
+
         for item in hcards:
             urls = item['properties'].get('url', [])
             if source in urls:
                 entry.author = parse_author(item)
                 break
 
-    if entry and not entry.author:
-        rel_mes = d["rels"].get("me", [])
-        for item in hcards:
-            urls = item['properties'].get('url', [])
-            if any(url in rel_mes for url in urls):
-                entry.author = parse_author(item)
-                break
+        if not entry.author:
+            rel_mes = d["rels"].get("me", [])
+            for item in hcards:
+                urls = item['properties'].get('url', [])
+                if any(url in rel_mes for url in urls):
+                    entry.author = parse_author(item)
+                    break
 
-    if entry and not entry.author:
-        for item in hcards:
-            if 'url' in item['properties']:
-                entry.author = parse_author(item)
-                break
+        if not entry.author:
+            for item in hcards:
+                if 'url' in item['properties']:
+                    entry.author = parse_author(item)
+                    break
 
-    if entry and not entry.author and hcards:
-        entry.author = parse_author(hcards[0])
+        if not entry.author and hcards:
+            entry.author = parse_author(hcards[0])
 
     return entry
 

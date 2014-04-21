@@ -94,21 +94,39 @@ class DisplayPost:
 
     @property
     def reply_contexts(self):
-        if not self.in_reply_to:
+        try:
+            if not self.in_reply_to:
+                return []
+            return [ContextProxy(url) for url in self.in_reply_to]
+        except AttributeError:
+            # FIXME if we fail to catch this attribute error, it gets swallowed up
+            # by the @property handler
+            app.logger.exception("getting reply contexts")
             return []
-        return [ContextProxy(url) for url in self.in_reply_to]
 
     @property
     def share_contexts(self):
-        if not self.repost_of:
+        try:
+            if not self.repost_of:
+                return []
+            return [ContextProxy(url) for url in self.repost_of]
+        except AttributeError:
+            # FIXME if we fail to catch this attribute error, it gets swallowed up
+            # by the @property handler
+            app.logger.exception("getting share contexts")
             return []
-        return [ContextProxy(url) for url in self.repost_of]
 
     @property
     def like_contexts(self):
-        if not self.like_of:
+        try:
+            if not self.like_of:
+                return []
+            return [ContextProxy(url) for url in self.like_of]
+        except AttributeError:
+            # FIXME if we fail to catch this attribute error, it gets swallowed up
+            # by the @property handler
+            app.logger.exception("getting like contexts")
             return []
-        return [ContextProxy(url) for url in self.like_of]
 
     @property
     def html_content(self):
@@ -146,13 +164,10 @@ class DisplayPost:
             if result and hasattr(result, 'tzinfo') and not result.tzinfo:
                 result = pytz.utc.localize(result)
             return result
-        print("mentions unsorted", mtype, self.mentions)
         filtered = [m for m in self.mentions
                     if not m.deleted
                     and (not mtype or m.reftype == mtype)]
-        print("mentions filtered.", mtype, filtered)
         filtered.sort(key=by_date)
-        print("mentions sorted.", mtype, filtered)
         return filtered
 
     def _mention_count(self, mtype):
@@ -203,36 +218,41 @@ class DisplayPost:
 
 class ContextProxy:
     def __init__(self, url):
+        self.permalink = url
+
         blob = load_json_from_archive(url)
         if blob:
             self.entry = hentry_parser.parse_json(blob, url)
-            self.permalink = self.entry.permalink
-            self.author_name = self.entry.author.name
-            self.author_url = self.entry.author.url
-            self.author_image = self.entry.author.photo
-            self.content = self.entry.content
-            self.content_format = 'html'
-            self.pub_date = self.entry.pub_date
-            self.title = self.entry.title
-            self.deleted = False
-        else:
-            self.permalink = url
+            if self.entry:
+                self.permalink = self.entry.permalink
+                self.author_name = self.entry.author.name if self.entry.author else ""
+                self.author_url = self.entry.author.url if self.entry.author else ""
+                self.author_image = self.entry.author.photo if self.entry.author else ""
+                self.content = self.entry.content
+                self.content_format = 'html'
+                self.pub_date = self.entry.pub_date
+                self.title = self.entry.title
+                self.deleted = False
 
 
 class MentionProxy:
     def __init__(self, post, url):
+        self.permalink = url
+
         blob = load_json_from_archive(url)
-        self.entry = hentry_parser.parse_json(blob, url)
-        self.permalink = self.entry.permalink
-        self.author_name = self.entry.author.name
-        self.author_url = self.entry.author.url
-        self.author_image = self.entry.author.photo
-        self.content = self.entry.content
-        self.content_format = 'html'
-        self.pub_date = self.entry.pub_date
-        self.title = self.entry.title
-        self.deleted = False
-        self.reftype = 'reference'
+        if blob:
+            self.entry = hentry_parser.parse_json(blob, url)
+            if self.entry:
+                self.permalink = self.entry.permalink
+                self.author_name = self.entry.author.name if self.entry.author else ""
+                self.author_url = self.entry.author.url if self.entry.author else ""
+                self.author_image = self.entry.author.photo if self.entry.author else ""
+                self.content = self.entry.content
+                self.content_format = 'html'
+                self.pub_date = self.entry.pub_date
+                self.title = self.entry.title
+                self.deleted = False
+                self.reftype = 'reference'
 
         if post:
             target_urls = (post.permalink, post.permalink_without_slug,
@@ -362,7 +382,6 @@ def post_by_date(post_type, year, month, day, index, slug):
     if not title:
         title = "A {} from {}".format(dpost.post_type,
                                       dpost.pub_date.strftime('%Y-%m-%d'))
-
     return render_template('post.html', post=dpost, title=title)
 
 
