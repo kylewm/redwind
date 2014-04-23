@@ -61,7 +61,12 @@
 	    said
           </div>
 
-          <p class="e-content">{{ reply.content | safe }}</p>
+          <div class="e-content">
+            <!-- start of foreign content -->
+            {{ reply.content | safe }}
+            <!-- end of foreign content -->
+          </div>
+
           <div style="clear:both"></div>
         </div>
       {% endfor %}
