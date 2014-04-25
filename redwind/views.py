@@ -869,3 +869,10 @@ def slugify(s):
     slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
     slug = re.sub(r'[-]+', '-', slug)
     return slug[:256]
+
+
+@app.route('/test/encoding')
+def test_encoding():
+    return make_response("<html><head></head><body>Tantek Çelik 😼 </body></html>",
+                         200,
+                         { 'Content-Type': 'text/html; charset=UTF-8' })
