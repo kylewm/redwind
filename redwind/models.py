@@ -193,7 +193,7 @@ class Post:
         app.logger.debug("loading from path %s", path)
 
         post_type = path.split('/', 1)[0]
-        date_index = os.path.basename(path)
+        date_index, _ = os.path.splitext(os.path.basename(path))
         path = os.path.join(app.root_path, '_data', path)
         if not path.endswith('.md'):
             path += '.md'
@@ -211,9 +211,11 @@ class Post:
         return post
 
     @classmethod
-    def load_recent(cls, count, post_types, include_drafts=False):
+    def load_recent(cls, count, post_types, include_hidden=False,
+                    include_drafts=False):
         return list(itertools.islice(
             cls.iterate_all(reverse=True, post_types=post_types,
+                            include_hidden=include_hidden,
                             include_drafts=include_drafts),
             0, count))
 
@@ -251,7 +253,7 @@ class Post:
 
     @classmethod
     def iterate_all(cls, reverse=False, post_types=POST_TYPES,
-                    include_drafts=False):
+                    include_hidden=False, include_drafts=False):
         # TODO there has to be a better way to do this...right now has
         # a generator for each post_type, and does sort of a merge
         # sort, always yielding the next post from each generator
@@ -266,8 +268,9 @@ class Post:
                         basename, ext = os.path.splitext(filename)
                         post = cls.load(
                             os.path.join(root[len(basepath)+1:], basename))
-                        if not post.deleted and (not post.draft
-                                                 or include_drafts):
+                        if not post.deleted \
+                           and (not post.draft or include_drafts)\
+                           and (not post.hidden or include_hidden):
                             today.append(post)
 
                 today.sort(key=attrgetter('pub_date'), reverse=reverse)
@@ -360,8 +363,9 @@ class Post:
     def __init__(self, post_type, date_index):
         self.post_type = post_type
         self.date_index = date_index
-        self.draft = True
+        self.draft = False
         self.deleted = False
+        self.hidden = False
         self.in_reply_to = []
         self.repost_of = []
         self.like_of = []
@@ -380,8 +384,10 @@ class Post:
         self.in_reply_to = data.get('in_reply_to', [])
         self.repost_of = data.get('repost_of', [])
         self.like_of = data.get('like_of', [])
+
         self.draft = data.get('draft', False)
         self.deleted = data.get('deleted', False)
+        self.hidden = data.get('hidden', False)
 
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
@@ -405,7 +411,8 @@ class Post:
                 'facebook_id': self.facebook_post_id
             },
             'draft': self.draft,
-            'deleted': self.deleted
+            'deleted': self.deleted,
+            'hidden': self.hidden,
         }
         return filter_empty_keys(data)
 

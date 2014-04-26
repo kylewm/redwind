@@ -281,9 +281,10 @@ class MentionProxy:
             self.permalink, self.pub_date, self.reftype)
 
 
-def render_posts(title, post_types, page, per_page, include_drafts=False):
-    posts = [DisplayPost(post) for post
-             in Post.load_recent(per_page, post_types)]
+def render_posts(title, post_types, page, per_page,
+                 include_hidden=False, include_drafts=False):
+    posts = [DisplayPost(post) for post in Post.load_recent(
+        per_page, post_types, include_hidden, include_drafts)]
     return render_template('posts.html', posts=posts, title=title)
 
 
@@ -301,8 +302,9 @@ def inject_user_authenticated():
 @app.route('/', defaults={'page': 1})
 @app.route('/page/<int:page>')
 def index(page):
-    # leave out replies and likes
-    return render_posts(None, ('article', 'note', 'share'), page, 30,
+    # leave out hidden posts
+    return render_posts(None, POST_TYPES, page, 30,
+                        include_hidden=False,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -310,6 +312,7 @@ def index(page):
 @app.route('/articles/page/<int:page>')
 def articles(page):
     return render_posts('All Articles', ('article',), page, 10,
+                        include_hidden=False,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -317,6 +320,7 @@ def articles(page):
 @app.route('/everything/page/<int:page>')
 def everything(page):
     return render_posts('Everything', POST_TYPES, page, 30,
+                        include_hidden=True,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -505,6 +509,7 @@ def new_post():
             post.repost_of = [repost_source]
 
     if post_type == 'like':
+        post.hidden = True
         like_of = request.args.get('like_of')
         if like_of:
             post.like_of = [like_of]
@@ -779,12 +784,6 @@ def resize_image(path, tag, side):
     return url_for('static', filename=newpath)
 
 
-
-# drafts can be saved or published
-# published can be moved back to draft or re-published
-# any time a post is 'published', it should send webmentions and
-# push notifications.
-
 @app.route('/admin/save', methods=['POST'])
 @login_required
 def save_post():
@@ -808,8 +807,8 @@ def save_post():
             post.title = request.form.get('title', '')
             post.content = request.form.get('content')
 
-            post.draft = False
-            # TODO post.draft = request.form.get('draft', 'true') == 'true'
+            post.draft = request.form.get('draft', 'true') == 'true'
+            post.hidden = request.form.get('hidden', 'true') == 'true'
 
             lat = request.form.get('latitude')
             lon = request.form.get('longitude')

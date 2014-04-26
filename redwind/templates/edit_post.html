@@ -52,6 +52,10 @@
       <label>Name <input id="location_name" name="location_name" size="21" value="{{ post.location.name if post.location else ''}}"/></label>
     </div>
 
+    <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/>
+    <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label><br/>
+
+
     {% if advanced %}
       <div class="twitter_status_id">
         <label><span class="heading">Twitter Status ID</span><input name="twitter_status_id" size="60" value="{{post.twitter_status_id or ''}}"></label>
