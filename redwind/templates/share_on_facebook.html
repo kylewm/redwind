@@ -12,7 +12,7 @@
 {{ post.title }}
 
 {% endif %}
-{{ post.content | format_as_text(post.content_format) }}
+{{ post.content | format_markdown_as_text }}
 </textarea><br/>
 
 {% if imgs %}

@@ -37,10 +37,10 @@
           {%if reply.title %}
             <p class="p-name">{{ reply.title }}</p>
           {% endif %}
-          {% set content_words = reply.content | format_as_text(reply.content_format) | wordcount %}
+          {% set content_words = reply.content | format_as_text | wordcount %}
           {% if content_words < 100 %}
             <p class="e-content">
-              {{ reply.content | format_as_html(reply.content_format) | bleach | safe }}
+              {{ reply.content |  bleach | safe }}
             </p>
           {% endif %}
         </div>

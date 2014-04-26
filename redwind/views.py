@@ -643,11 +643,14 @@ def bleach_html(html):
     return bleach.clean(html, strip=True)
 
 
+@app.template_filter('format_markdown_as_text')
+def format_markdown_as_text(content, remove_imgs=True):
+    html = markdown_filter(content)
+    return format_as_text(html, remove_imgs)
+
+
 @app.template_filter('format_as_text')
-def format_as_text(content, remove_imgs=True):
-    if not content:
-        return ''
-    html = format_as_html(content, linkify=False)
+def format_as_text(html, remove_imgs=True):
     soup = BeautifulSoup(html)
 
     # replace links with the URL

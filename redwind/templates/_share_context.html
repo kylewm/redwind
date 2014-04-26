@@ -35,10 +35,10 @@
             <span class="p-name">{{share.title or ''}}</span>
           {% endif %}
 
-          {% set content_length = share.content | format_as_text(share.content_format) | wordcount %}
+          {% set content_length = share.content | format_as_text | wordcount %}
           {% if content_length < 100 %}
             <div class="e-content">
-              {{ share.content | format_as_html(share.content_format) | bleach | safe }}
+              {{ share.content | bleach | safe }}
             </div>
           {% else %}
             <br /><a class="u-url" href="{{ share.permalink }}">{{ content_length }} words.</a><br />

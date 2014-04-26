@@ -13,7 +13,7 @@
           <a name="likes"></a>
           <i class="fa fa-star-o"></i>
           {% for like in likes %}
-            {% set img_title = like.content | format_as_text(like.content_format) | trim %}
+            {% set img_title = like.content | format_as_text | trim %}
             <a href="{{ like.permalink }}">
               {{ author_image_likes(like.author_image, like.author_name, like.author_name + ' ' + img_title) }}</a>
             {% endfor %}
@@ -25,7 +25,7 @@
           <a name="reposts"></a>
           <i class="fa fa-retweet"></i>
           {% for repost in reposts %}
-            {% set img_title = repost.content | format_as_text(repost.content_format) | trim %}
+            {% set img_title = repost.content | format_as_text | trim %}
             <a href="{{ repost.permalink }}">{{ author_image_likes(repost.author_image, repost.author_name, repost.author_name + ' ' + img_title) }}
             </a>
           {% endfor %}

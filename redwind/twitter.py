@@ -87,8 +87,8 @@ def authorize_twitter2():
 def collect_images(post):
     """find the first image (if any) that is in an <img> tag
     in the rendered post"""
-    from .views import format_as_html
-    html = format_as_html(post.content, post.content_format)
+    from .views import markdown_filter
+    html = markdown_filter(post.content)
     soup = BeautifulSoup(html)
     for img in soup.find_all('img'):
         src = img.get('src')
