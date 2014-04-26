@@ -64,13 +64,17 @@ def process_webmention(source, target, callback):
             })
 
     try:
-        mentions_path, mention_url, delete, error = do_process_webmention(source, target)
+        mentions_path, mention_url, delete, error = do_process_webmention(
+            source, target)
 
         if error or not mentions_path or not mention_url:
-            app.logger.debug("Failed to process webmention: %s", error)
+            app.logger.warn("Failed to process webmention: %s", error)
             call_callback(400, error)
             return 400, error
 
+        # TODO move this to models
+        mentions_path = os.path.join(app.root_path, '_data', mentions_path)
+        app.logger.debug("saving mentions to %s", mentions_path)
         with acquire_lock(mentions_path, 30):
             mention_list = []
             if os.path.exists(mentions_path):
@@ -79,13 +83,14 @@ def process_webmention(source, target, callback):
             if delete:
                 mention_list.remove(mention_url)
             else:
-                if not mention_url in mention_list:
+                if mention_url not in mention_list:
                     mention_list.append(mention_url)
 
             if not os.path.exists(os.path.dirname(mentions_path)):
                 os.makedirs(os.path.dirname(mentions_path))
 
             json.dump(mention_list, open(mentions_path, 'w'), indent=True)
+            app.logger.debug("saved mentions to %s", mentions_path)
 
         Post.update_recent_mentions(mention_url)
         push.handle_new_mentions()
@@ -187,8 +192,8 @@ def find_target_post(target_url):
         urls = app.url_map.bind(app.config['SITE_URL'])
         endpoint, args = urls.match(parsed_url.path)
     except NotFound:
-        app.logger.debug("Webmention could not find target for %s",
-                         parsed_url.path)
+        app.logger.warn("Webmention could not find target for %s",
+                        parsed_url.path)
         return None
 
     if endpoint == 'post_by_date':

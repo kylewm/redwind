@@ -16,10 +16,10 @@
 
 from . import app, util, push, webmention_sender, webmention_receiver,\
     contexts, twitter, facebook
-from .models import Post, Location
+from .models import Post, Location, POST_TYPES
 from .archive import load_json_from_archive
 from .auth import load_user
-from .util import hentry_parser
+from . import hentry_parser
 
 from bs4 import BeautifulSoup
 from flask import request, redirect, url_for, render_template, flash,\
@@ -46,10 +46,22 @@ bleach.ALLOWED_ATTRIBUTES.update({
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
-POST_TYPES = ['article', 'note', 'share', 'like', 'reply', 'checkin']
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
             '<int(fixed_digits=2):day>/<int:index>'
+
+
+def reraise_attribute_errors(func):
+    """@property and my override of getattr don't mix — they swallow up
+    AttributeErrors with no log messages, so I need this ugly hack to
+    turn them into RuntimeErrors
+    """
+    def go(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except AttributeError as e:
+            raise RuntimeError(e)
+    return go
 
 
 class DisplayPost:
@@ -93,18 +105,14 @@ class DisplayPost:
         return text
 
     @property
+    @reraise_attribute_errors
     def reply_contexts(self):
-        try:
-            if not self.in_reply_to:
-                return []
-            return [ContextProxy(url) for url in self.in_reply_to]
-        except AttributeError:
-            # FIXME if we fail to catch this attribute error, it gets swallowed up
-            # by the @property handler
-            app.logger.exception("getting reply contexts")
+        if not self.in_reply_to:
             return []
+        return [ContextProxy(url) for url in self.in_reply_to]
 
     @property
+    @reraise_attribute_errors
     def share_contexts(self):
         try:
             if not self.repost_of:
@@ -117,31 +125,28 @@ class DisplayPost:
             return []
 
     @property
+    @reraise_attribute_errors
     def like_contexts(self):
-        try:
-            if not self.like_of:
-                return []
-            return [ContextProxy(url) for url in self.like_of]
-        except AttributeError:
-            # FIXME if we fail to catch this attribute error, it gets swallowed up
-            # by the @property handler
-            app.logger.exception("getting like contexts")
+        if not self.like_of:
             return []
+        return [ContextProxy(url) for url in self.like_of]
 
     @property
+    @reraise_attribute_errors
     def html_content(self):
         return Markup(self.get_html_content(True))
 
     def get_html_content(self, include_preview=True):
-        text = format_as_html(self.content, self.content_format)
+        text = format_as_html(self.content)
         if include_preview and self.post_type == 'share':
             preview = self.get_share_preview()
             text += preview
         return text
 
     @property
+    @reraise_attribute_errors
     def html_excerpt(self):
-        text = format_as_html(self.content, self.content_format)
+        text = format_as_html(self.content)
         split = text.split('<!-- more -->', 1)
         if self.post_type == 'share':
             text += self.get_share_preview(split[0])
@@ -151,6 +156,7 @@ class DisplayPost:
         return Markup(text)
 
     @property
+    @reraise_attribute_errors
     def mentions(self):
         if self._mentions is None:
             self._mentions = [MentionProxy(self, m) for m
@@ -177,10 +183,12 @@ class DisplayPost:
         return count
 
     @property
+    @reraise_attribute_errors
     def mention_count(self):
         return self._mention_count(None)
 
     @property
+    @reraise_attribute_errors
     def likes(self):
         try:
             return self._mentions_sorted_by_date('like')
@@ -188,30 +196,37 @@ class DisplayPost:
             app.logger.exception("fetching likes")
 
     @property
+    @reraise_attribute_errors
     def like_count(self):
         return self._mention_count('like')
 
     @property
+    @reraise_attribute_errors
     def reposts(self):
         return self._mentions_sorted_by_date('repost')
 
     @property
+    @reraise_attribute_errors
     def repost_count(self):
         return self._mention_count('repost')
 
     @property
+    @reraise_attribute_errors
     def replies(self):
         return self._mentions_sorted_by_date('reply')
 
     @property
+    @reraise_attribute_errors
     def reply_count(self):
         return self._mention_count('reply')
 
     @property
+    @reraise_attribute_errors
     def references(self):
         return self._mentions_sorted_by_date('reference')
 
     @property
+    @reraise_attribute_errors
     def reference_count(self):
         return self._mention_count('reference')
 
@@ -229,7 +244,6 @@ class ContextProxy:
                 self.author_url = self.entry.author.url if self.entry.author else ""
                 self.author_image = self.entry.author.photo if self.entry.author else ""
                 self.content = self.entry.content
-                self.content_format = 'html'
                 self.pub_date = self.entry.pub_date
                 self.title = self.entry.title
                 self.deleted = False
@@ -248,7 +262,6 @@ class MentionProxy:
                 self.author_url = self.entry.author.url if self.entry.author else ""
                 self.author_image = self.entry.author.photo if self.entry.author else ""
                 self.content = self.entry.content
-                self.content_format = 'html'
                 self.pub_date = self.entry.pub_date
                 self.title = self.entry.title
                 self.deleted = False
@@ -303,7 +316,7 @@ def articles(page):
 @app.route('/everything', defaults={'page': 1})
 @app.route('/everything/page/<int:page>')
 def everything(page):
-    return render_posts('Everything', None, page, 30,
+    return render_posts('Everything', POST_TYPES, page, 30,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -348,7 +361,6 @@ def archive(year, month):
     # give the template the posts from this month,
     # and the list of all years/month
 
-    months = Post.get_archive_months()
     if year and month:
         posts = [DisplayPost(post) for post in Post.load_by_month(year, month)]
         first_of_month = year and month and datetime.date(year, month, 1)
@@ -356,8 +368,12 @@ def archive(year, month):
         posts = []
         first_of_month = None
 
+    years = {}
+    for m in Post.get_archive_months():
+        years.setdefault(m.year, []).append(m)
+
     return render_template(
-        'archive.html', months=months,
+        'archive.html', years=years,
         expanded_month=first_of_month, posts=posts)
 
 
@@ -475,8 +491,7 @@ def delete_by_id():
 @login_required
 def new_post():
     post_type = request.args.get('type', 'note')
-    content_format = 'markdown' if post_type == 'article' else 'plain'
-    post = Post(post_type, content_format, None)
+    post = Post(post_type, None)
     post.content = ''
 
     if post_type == 'reply':
@@ -611,16 +626,11 @@ def atom_sanitize(content):
 
 
 @app.template_filter('format_as_html')
-def format_as_html(content, content_format, linkify=True):
+def format_as_html(content, linkify=True):
     if not content:
-        html = ''
-    elif content_format == 'markdown':
-        html = markdown_filter(content)
-    elif content_format == 'plain' and linkify:
-        html = plain_text_filter(content)
-    else:
-        html = content
-    return html
+        return ''
+    return markdown_filter(content)
+
 
 
 @app.template_filter('bleach')
@@ -629,10 +639,10 @@ def bleach_html(html):
 
 
 @app.template_filter('format_as_text')
-def format_as_text(content, content_format, remove_imgs=True):
+def format_as_text(content, remove_imgs=True):
     if not content:
         return ''
-    html = format_as_html(content, content_format, linkify=False)
+    html = format_as_html(content, linkify=False)
     soup = BeautifulSoup(html)
 
     # replace links with the URL
@@ -685,10 +695,20 @@ def local_mirror_resource(url):
         mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
         mirror_file_path = os.path.join(app.root_path, 'static',
                                         mirror_url_path)
-
-        if os.path.exists(mirror_file_path) or \
-           util.download_resource(url, mirror_file_path):
+        app.logger.debug("checking for existence of mirrored resource %s -> %s",
+                         url, mirror_file_path)
+        if os.path.exists(mirror_file_path):
+            app.logger.debug("%s already mirrored, returning url path %s",
+                             mirror_file_path, mirror_url_path)
             return url_for('static', filename=mirror_url_path)
+
+        if util.download_resource(url, mirror_file_path):
+            app.logger.debug("%s did not exist, successfully mirrored to %s.",
+                             mirror_file_path, mirror_url_path)
+            return url_for('static', filename=mirror_url_path)
+        else:
+            app.logger.warn("failed to download %s to %s for some reason", url,
+                            mirror_file_path)
 
     return url
 
@@ -773,7 +793,7 @@ def save_post():
     def new_or_writeable(shortid):
         if shortid == 'new':
             post_type = request.form.get('post_type', 'note')
-            post = Post(post_type, 'plain', None)
+            post = Post(post_type, None)
             post._writeable = True
             yield post
         else:
@@ -788,7 +808,6 @@ def save_post():
             post.title = request.form.get('title', '')
             post.content = request.form.get('content')
 
-            post.content_format = request.form.get('content_format', 'plain')
             post.draft = False
             # TODO post.draft = request.form.get('draft', 'true') == 'true'
 

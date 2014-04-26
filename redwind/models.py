@@ -17,6 +17,7 @@
 
 from . import app
 from . import util
+from .util import IteratorWithLookahead
 
 import datetime
 import os
@@ -26,10 +27,11 @@ import json
 import tempfile
 import shutil
 import time
-import re
-import urllib
 from operator import attrgetter
 from contextlib import contextmanager
+
+
+POST_TYPES = ('article', 'note', 'like', 'share', 'reply', 'checkin')
 
 
 def isoparse(s):
@@ -83,30 +85,6 @@ def acquire_lock(path, retries):
         yield
     finally:
         os.remove(lockfile)
-
-
-def format_to_extension(fmt):
-    if fmt == 'html':
-        return '.html'
-    elif fmt == 'markdown':
-        return '.md'
-    elif fmt == 'plain':
-        return '.txt'
-    else:
-        app.logger.warn("Unknown format type %s, assuming plain text", fmt)
-        return '.txt'
-
-
-def extension_to_format(ext):
-    if ext == '.html':
-        return 'html'
-    elif ext == '.md':
-        return 'markdown'
-    elif ext == '.txt':
-        return 'plain'
-    else:
-        app.logger.warn("Unknown extension type %s, assuming plain text", ext)
-        return 'plain'
 
 
 class User:
@@ -188,29 +166,15 @@ class Location:
 
 
 class Post:
-    FILE_PATTERN = re.compile('(\w+)_(\d+)(\.html|\.md|\.txt)$')
-
     @staticmethod
     def parse_json_frontmatter(fp):
         """parse a multipart file that starts with a json blob"""
-        depth = 0
         json_lines = []
         for line in fp:
-            prev = None
-            quoted = False
-            for c in line:
-                if c == '"' and prev != '\\':
-                    quoted = not quoted
-                else:
-                    if not quoted:
-                        if c == '{':
-                            depth += 1
-                        elif c == '}':
-                            depth -= 1
-                prev = c
             json_lines.append(line)
-            if depth == 0:
+            if line.rstrip() == '}':
                 break
+
         head = json.loads(''.join(json_lines))
         body = '\n'.join(line.strip('\r\n') for line in fp.readlines())
         return head, body
@@ -228,33 +192,23 @@ class Post:
     def load(cls, path):
         app.logger.debug("loading from path %s", path)
 
-        path = next((path for path in (path, path+'.md', path+'.html', path+'.txt')
-                     if os.path.exists(path)), None)
-        if not path:
+        post_type = path.split('/', 1)[0]
+        date_index = os.path.basename(path)
+        path = os.path.join(app.root_path, '_data', path)
+        if not path.endswith('.md'):
+            path += '.md'
+
+        if not os.path.exists(path):
             app.logger.warn("No post found at %s", path)
             return None
-
-        basename = os.path.basename(path)
-        match = cls.FILE_PATTERN.match(basename)
-        if not match:
-            raise RuntimeError("trying to load from unrecognized path {}"
-                               .format(path))
-
-        post_type = match.group(1)
-        date_index = int(match.group(2))
-        content_format = extension_to_format(match.group(3))
 
         with open(path, 'r') as fp:
             head, body = Post.parse_json_frontmatter(fp)
 
-        post = cls(post_type, content_format, date_index)
+        post = cls(post_type, date_index)
         post.read_json_blob(head)
         post.content = body
         return post
-
-    @classmethod
-    def load_by_path(cls, path):
-        return cls.load(cls.relpath_to_fullpath(path))
 
     @classmethod
     def load_recent(cls, count, post_types, include_drafts=False):
@@ -266,18 +220,24 @@ class Post:
     @classmethod
     def load_by_month(cls, year, month):
         posts = []
-        path = os.path.join(app.root_path,
-                            '_data/posts/{}/{:02d}'.format(year, month))
-        days = os.listdir(path)
-        for day in days:
-            daypath = os.path.join(path, day)
-            for filename in os.listdir(daypath):
-                if Post.FILE_PATTERN.match(filename):
-                    filepath = os.path.join(daypath, filename)
-                    post = cls.load(filepath)
-                    if not post.deleted:
-                        posts.append(post)
-        posts.sort(key=attrgetter('pub_date'), reverse=True)
+        datadir = os.path.join(app.root_path, '_data')
+        for post_type in POST_TYPES:
+            path = os.path.join(datadir,
+                                '{}/{}/{:02d}'.format(post_type, year, month))
+
+            if not os.path.exists(path):
+                continue
+
+            for day in os.listdir(path):
+                daypath = os.path.join(path, day)
+                for filename in os.listdir(daypath):
+                    if filename.endswith('.md'):
+                        filepath = os.path.join(daypath, filename)
+                        post = cls.load(filepath[len(datadir)+1:])
+                        if not post.deleted:
+                            posts.append(post)
+
+        posts.sort(key=attrgetter('pub_date'))
         return posts
 
     @classmethod
@@ -290,55 +250,81 @@ class Post:
         return cls.load(cls.shortid_to_path(shortid))
 
     @classmethod
-    def iterate_all(cls, reverse=False, post_types=None, include_drafts=False):
-        path = os.path.join(app.root_path, '_data/posts')
-        for root, dirs, files in os.walk(path):
-            dirs.sort(reverse=reverse)
-            today = []
-            for filename in files:
-
-                match = cls.FILE_PATTERN.match(filename)
-                if match:
-                    post_type = match.group(1)
-                    if not post_types or post_type in post_types:
-                        post = cls.load(os.path.join(root, filename))
+    def iterate_all(cls, reverse=False, post_types=POST_TYPES,
+                    include_drafts=False):
+        # TODO there has to be a better way to do this...right now has
+        # a generator for each post_type, and does sort of a merge
+        # sort, always yielding the next post from each generator
+        def walk_post_type(post_type):
+            basepath = os.path.join(app.root_path, '_data')
+            path = os.path.join(basepath, post_type)
+            for root, dirs, files in os.walk(path):
+                dirs.sort(reverse=reverse)
+                today = []
+                for filename in files:
+                    if filename.endswith('.md'):
+                        basename, ext = os.path.splitext(filename)
+                        post = cls.load(
+                            os.path.join(root[len(basepath)+1:], basename))
                         if not post.deleted and (not post.draft
                                                  or include_drafts):
                             today.append(post)
 
-            today.sort(key=attrgetter('pub_date'), reverse=reverse)
-            yield from today
+                today.sort(key=attrgetter('pub_date'), reverse=reverse)
+                yield from today
+
+        def is_better(mygen, bestgen):
+            """figure out which generator will yield and earlier post (or later
+            if reversed)
+            """
+            mypost = mygen.lookahead
+            if not mypost:
+                return False
+
+            bestpost = bestgen and bestgen.lookahead
+            if not bestpost:
+                return True
+
+            return (reverse and mypost.pub_date > bestpost.pub_date) \
+                or (not reverse and mypost.pub_date < bestpost.pub_date)
+
+        generators = [IteratorWithLookahead(walk_post_type(post_type))
+                      for post_type in post_types]
+
+        while True:
+            best = None
+            for gen in generators:
+                if is_better(gen, best):
+                    best = gen
+            if not best:
+                break
+            yield next(best)
 
     @classmethod
     def date_to_path(cls, post_type, year, month, day, index):
-        return cls.relpath_to_fullpath("{}/{:02d}/{:02d}/{}_{}"
-                                       .format(year, month, day,
-                                               post_type, index))
+        return "{}/{}/{:02d}/{:02d}/{}".format(
+            post_type, year, month, day, index)
 
     @classmethod
     def shortid_to_path(cls, shortid):
         post_type = util.parse_type(shortid)
         pub_date = util.parse_date(shortid)
         index = util.parse_index(shortid)
-        return cls.relpath_to_fullpath('{}/{:02d}/{:02d}/{}_{}'
-                                       .format(pub_date.year, pub_date.month,
-                                               pub_date.day, post_type, index))
-
-    @classmethod
-    def relpath_to_fullpath(cls, path):
-        return os.path.join(app.root_path, '_data/posts', path)
+        return '{}/{}/{:02d}/{:02d}/{}'.format(
+            post_type, pub_date.year, pub_date.month, pub_date.day, index)
 
     @classmethod
     def get_archive_months(cls):
-        result = []
-        path = os.path.join(app.root_path, '_data/posts')
-        for year in os.listdir(path):
-            yearpath = os.path.join(path, year)
-            for month in os.listdir(yearpath):
-                first_of_month = datetime.date(int(year), int(month), 1)
-                result.append(first_of_month)
-        result.sort(reverse=True)
-        return result
+        result = set()
+        for post_type in POST_TYPES:
+            path = os.path.join(app.root_path, '_data', post_type)
+            for year in os.listdir(path):
+                yearpath = os.path.join(path, year)
+                for month in os.listdir(yearpath):
+                    first_of_month = datetime.date(int(year), int(month), 1)
+                    result.add(first_of_month)
+
+        return sorted(list(result))
 
     @classmethod
     def load_syndication_index(cls):
@@ -371,9 +357,8 @@ class Post:
             obj.insert(0, url)
             json.dump(obj[:10], open(path, 'w'), indent=True)
 
-    def __init__(self, post_type, content_format, date_index):
+    def __init__(self, post_type, date_index):
         self.post_type = post_type
-        self.content_format = content_format
         self.date_index = date_index
         self.draft = True
         self.deleted = False
@@ -429,7 +414,7 @@ class Post:
             raise RuntimeError("Cannot save post that was not opened "
                                "with the 'writeable' flag")
 
-        basedir = os.path.join(app.root_path, '_data/posts')
+        basedir = os.path.join(app.root_path, '_data')
         # assign a new date index if we don't have one yet
         if not self.date_index:
             self.date_index = 1
@@ -448,24 +433,15 @@ class Post:
             f.write(self.content)
 
         save_backup(basedir,
-                    os.path.join(app.root_path, '_data/.backup/posts'),
+                    os.path.join(app.root_path, '_data/.backup'),
                     self.path)
         shutil.move(temp, filename)
 
     @property
     def path(self):
-        return "{}/{:02d}/{:02d}/{}_{}{}".format(
-            self.pub_date.year, self.pub_date.month, self.pub_date.day,
-            self.post_type, self.date_index,
-            format_to_extension(self.content_format))
-
-    @property
-    def path(self):
-        return "{}/{:02d}/{:02d}/{}_{}{}".format(
-            self.pub_date.year, self.pub_date.month, self.pub_date.day,
-            self.post_type, self.date_index,
-            format_to_extension(self.content_format))
-
+        return "{}/{}/{:02d}/{:02d}/{}.md".format(
+            self.post_type, self.pub_date.year, self.pub_date.month,
+            self.pub_date.day, self.date_index)
 
     @property
     def permalink(self):
@@ -474,7 +450,6 @@ class Post:
     @property
     def permalink_without_slug(self):
         return self._permalink(include_slug=False)
-
 
     def _permalink(self, include_slug):
         site_url = app.config.get('SITE_URL') or 'http://localhost'
@@ -495,7 +470,7 @@ class Post:
         tag = util.tag_for_post_type(self.post_type)
         ordinal = util.date_to_ordinal(self.pub_date.date())
         return '{}{}{}'.format(tag, util.base60_encode(ordinal),
-                               util.base60_encode(self.date_index))
+                               self.date_index)
 
     @property
     def short_permalink(self):
@@ -529,22 +504,23 @@ class Post:
 
     @property
     def mentions_path(self):
-        return self.relpath_to_fullpath(
-            "{}/{:02d}/{:02d}/{}_{}.mentions.json".format(
-                self.pub_date.year, self.pub_date.month, self.pub_date.day,
-                self.post_type, self.date_index))
+        return "{}/{}/{:02d}/{:02d}/{}.mentions.json".format(
+            self.post_type, self.pub_date.year, self.pub_date.month,
+            self.pub_date.day, self.date_index)
 
     @property
     def mentions(self):
         if self._mentions is None:
-            path = self.mentions_path
+            path = os.path.join(app.root_path, '_data', self.mentions_path)
             if os.path.exists(path):
                 blob = json.load(open(path, 'r'))
                 self._mentions = blob
+                app.logger.debug("loaded mentions from %s: %s",
+                                 path, self._mentions)
             else:
                 self._mentions = []
-            app.logger.debug("loaded mentions from %s: %s",
-                             path, self._mentions)
+                app.logger.debug("no mentions file found at %s", path)
+
         return self._mentions
 
     def __repr__(self):

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
-from .. import app
+from . import app
 from collections import deque
 from mf2py.parser import Parser
 import datetime

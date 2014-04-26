@@ -1,17 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
+  {% for year,months in years.items() %}
 
-{% set prev_year = None %}
+    <div>
+      <span class="archive-year">{{ year }}</span>
 
-  {% for month in months %}
-    {% if month.year != prev_year %}
-      <h2>{{ month.year }}</h2>
-    {% endif %}
+      {% for month in months %}
+        {% if month == expanded_month %}
+          <span class="archive-month archive-month-current">
+            {{ month | strftime("%b") }}
+          </span>
 
-    {% if month == expanded_month %}
-      <div>{{ month | strftime("%B") }}</div>
+        {% else %}
+          <span class="archive-month">
+            <a href="{{url_for('archive', year=month.year, month=month.month)}}">
+              {{ month | strftime("%b") }}
+            </a>
+          </span>
+        {% endif %}
+      {% endfor %}
+    </div>
 
+  {% endfor %}
+
+  {% if expanded_month %}
+    <div class="h-feed">
+      <h2 class="p-name">
+        Kyle Mahan: Archive {{ expanded_month | strftime('%Y %B')}} </h2>
         {% for post in posts %}
           <div class="h-entry post">
             {% include "_reply_context.html" %}
@@ -23,14 +39,7 @@
             </div>
           </div>
         {% endfor %}
-
-    {% else %}
-      <div><a href="{{url_for('archive', year=month.year, month=month.month)}}">{{ month | strftime("%B") }}</a></div>
-    {% endif %}
-
-
-
-    {% set prev_year = month.year %}
-  {% endfor %}
+    </div>
+  {% endif %}
 
 {% endblock %}

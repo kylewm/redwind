@@ -14,13 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
-from .. import app
+from . import app
 from datetime import date
 from urllib.parse import urljoin
 import os
 import os.path
 import re
 import requests
+import itertools
+import collections
 
 
 def download_resource(url, path):
@@ -43,7 +45,7 @@ def download_resource(url, path):
             app.logger.warn("Failed to download resource %s. Got response %s",
                             url, str(response))
     except:
-        app.logger.exception("trying to download resource")
+        app.logger.exception('downloading resource')
 
 
 TWITTER_USERNAME_REGEX = r'(?<!\w)@([a-zA-Z0-9_]+)'
@@ -129,3 +131,16 @@ def base60_decode(s):
         n *= base
         n += RADIX.index(c)
     return n
+
+# http://stackoverflow.com/a/1518097/682648
+class IteratorWithLookahead(collections.Iterator):
+    def __init__(self, it):
+        self.it, self.nextit = itertools.tee(iter(it))
+        self._advance()
+
+    def _advance(self):
+        self.lookahead = next(self.nextit, None)
+
+    def __next__(self):
+        self._advance()
+        return next(self.it)
