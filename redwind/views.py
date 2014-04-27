@@ -801,8 +801,8 @@ def save_post():
             post.title = request.form.get('title', '')
             post.content = request.form.get('content')
 
-            post.draft = request.form.get('draft', 'true') == 'true'
-            post.hidden = request.form.get('hidden', 'true') == 'true'
+            post.draft = request.form.get('draft', 'false') == 'true'
+            post.hidden = request.form.get('hidden', 'false') == 'true'
 
             lat = request.form.get('latitude')
             lon = request.form.get('longitude')
