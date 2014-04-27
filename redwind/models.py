@@ -490,7 +490,7 @@ class Post:
         ordinal = util.date_to_ordinal(self.pub_date.date())
         cite = '{} {}{}{}'.format(app.config.get('SHORT_SITE_CITE'),
                                   tag, util.base60_encode(ordinal),
-                                  util.base60_encode(self.date_index))
+                                  self.date_index)
         return cite
 
     @property
