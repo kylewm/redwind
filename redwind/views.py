@@ -137,7 +137,7 @@ class DisplayPost:
         return Markup(self.get_html_content(True))
 
     def get_html_content(self, include_preview=True):
-        text = format_as_html(self.content)
+        text = markdown_filter(self.content)
         if include_preview and self.post_type == 'share':
             preview = self.get_share_preview()
             text += preview
@@ -146,7 +146,7 @@ class DisplayPost:
     @property
     @reraise_attribute_errors
     def html_excerpt(self):
-        text = format_as_html(self.content)
+        text = markdown_filter(self.content)
         split = text.split('<!-- more -->', 1)
         if self.post_type == 'share':
             text += self.get_share_preview(split[0])
@@ -630,14 +630,6 @@ def atom_sanitize(content):
     return Markup.escape(str(content))
 
 
-@app.template_filter('format_as_html')
-def format_as_html(content, linkify=True):
-    if not content:
-        return ''
-    return markdown_filter(content)
-
-
-
 @app.template_filter('bleach')
 def bleach_html(html):
     return bleach.clean(html, strip=True)
@@ -664,7 +656,6 @@ def format_as_text(html, remove_imgs=True):
             i.replace_with('[{}]'.format(i.get('title')
                                          or i.get('alt')
                                          or 'image'))
-
     return soup.get_text().strip()
 
 

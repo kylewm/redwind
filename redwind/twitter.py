@@ -21,12 +21,11 @@ from . import util
 
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response,\
-    jsonify, render_template
+    render_template
 
 import requests
 import re
 import json
-import types
 import datetime
 from . import hentry_template
 from . import archive
@@ -34,8 +33,10 @@ from . import archive
 from tempfile import mkstemp
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
+from mf2py.parser import Parser as Mf2Parser
 
 from requests_oauthlib import OAuth1Session, OAuth1
+from requests.exceptions import HTTPError
 
 REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
@@ -101,16 +102,26 @@ def collect_images(post):
 def share_on_twitter():
     if request.method == 'GET':
         post = Post.load_by_shortid(request.args.get('id'))
+
+        in_reply_to, repost_of, like_of \
+            = twitter_client.posse_post_discovery(post)
+
         return render_template('share_on_twitter.html', post=post,
+                               in_reply_to=in_reply_to,
+                               repost_of=repost_of, like_of=like_of,
                                imgs=list(collect_images(post)))
 
     try:
         post_id = request.form.get('post_id')
         preview = request.form.get('preview')
         img_url = request.form.get('img')
+        in_reply_to = request.form.get('in_reply_to')
+        repost_of = request.form.get('repost_of')
+        like_of = request.form.get('like_of')
 
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            twitter_client.handle_new_or_edit(post, preview, img_url)
+            twitter_client.handle_new_or_edit(post, preview, img_url,
+                                              in_reply_to, repost_of, like_of)
             post.save()
             post.update_syndication_index(post.twitter_url)
 
@@ -153,42 +164,43 @@ class TwitterClient:
 
     def fetch_external_post(self, url):
         match = self.PERMALINK_RE.match(url)
-        if match:
-            tweet_id = match.group(2)
-            status_response = requests.get(
-                'https://api.twitter.com/1.1/statuses/show/{}.json'.format(tweet_id),
-                auth=self.get_auth())
+        if not match:
+            return False
+        tweet_id = match.group(2)
+        status_response = requests.get(
+            'https://api.twitter.com/1.1/statuses/show/{}.json'.format(tweet_id),
+            auth=self.get_auth())
 
-            if status_response.status_code // 2 != 100:
-                app.logger.warn("failed to fetch tweet %s %s", status_response,
-                                status_response.content)
-                return None
+        if status_response.status_code // 2 != 100:
+            app.logger.warn("failed to fetch tweet %s %s", status_response,
+                            status_response.content)
+            return None
 
-            status_data = status_response.json()
+        status_data = status_response.json()
 
-            pub_date = datetime.datetime.strptime(status_data['created_at'],
-                                         '%a %b %d %H:%M:%S %z %Y')
-            if pub_date and pub_date.tzinfo:
-                pub_date = pub_date.astimezone(datetime.timezone.utc)
-            real_name = status_data['user']['name']
-            screen_name = status_data['user']['screen_name']
-            author_name = real_name
-            author_url = status_data['user']['url']
-            if author_url:
-                author_url = self.expand_link(author_url)
-            else:
-                author_url = 'http://twitter.com/{}'.format(screen_name)
-            author_image = status_data['user']['profile_image_url']
-            tweet_text = self.expand_links(status_data['text'])
+        pub_date = datetime.datetime.strptime(status_data['created_at'],
+                                     '%a %b %d %H:%M:%S %z %Y')
+        if pub_date and pub_date.tzinfo:
+            pub_date = pub_date.astimezone(datetime.timezone.utc)
+        real_name = status_data['user']['name']
+        screen_name = status_data['user']['screen_name']
+        author_name = real_name
+        author_url = status_data['user']['url']
+        if author_url:
+            author_url = self.expand_link(author_url)
+        else:
+            author_url = 'http://twitter.com/{}'.format(screen_name)
+        author_image = status_data['user']['profile_image_url']
+        tweet_text = self.expand_links(status_data['text'])
 
-            html = hentry_template.fill(author_name=author_name,
-                                        author_url=author_url,
-                                        author_image=author_image,
-                                        pub_date=pub_date,
-                                        content=tweet_text,
-                                        permalink=url)
-            archive.archive_html(url, html)
-            return True
+        html = hentry_template.fill(author_name=author_name,
+                                    author_url=author_url,
+                                    author_image=author_image,
+                                    pub_date=pub_date,
+                                    content=tweet_text,
+                                    permalink=url)
+        archive.archive_html(url, html)
+        return True
 
     # TODO use twitter API entities to expand links without fetch requests
     def expand_links(self, text):
@@ -206,12 +218,41 @@ class TwitterClient:
                 url = self.expand_link(url, depth_limit-1)
         return url
 
-    def handle_new_or_edit(self, post, preview, img):
+    def posse_post_discovery(self, post):
+        def find_syndicated(original):
+            if self.PERMALINK_RE.match(original):
+                return original
+            try:
+                d = Mf2Parser(url=original).to_dict()
+                urls = d['rels'].get('syndication', [])
+                for item in d['items']:
+                    if 'h-entry' in item['type']:
+                        urls += item['properties'].get('syndication', [])
+                for url in urls:
+                    if self.PERMALINK_RE.match(url):
+                        return url
+            except HTTPError:
+                app.logger.exception('Could not fetch original')
+
+        def find_first_syndicated(originals):
+            for original in originals:
+                syndicated = find_syndicated(original)
+                if syndicated:
+                    return syndicated
+
+        return (
+            find_first_syndicated(post.in_reply_to),
+            find_first_syndicated(post.repost_of),
+            find_first_syndicated(post.like_of),
+        )
+
+    def handle_new_or_edit(self, post, preview, img, in_reply_to,
+                           repost_of, like_of):
         if not self.is_twitter_authorized():
             return
         # check for RT's
         is_retweet = False
-        for repost_of in post.repost_of:
+        if repost_of:
             repost_match = self.PERMALINK_RE.match(repost_of)
             if repost_match:
                 is_retweet = True
@@ -226,7 +267,7 @@ class TwitterClient:
                                                        result.content))
 
         is_favorite = False
-        for like_of in post.like_of:
+        if like_of:
             like_match = self.PERMALINK_RE.match(like_of)
             if like_match:
                 is_favorite = True
@@ -248,11 +289,10 @@ class TwitterClient:
                 data['lat'] = str(post.location.latitude)
                 data['long'] = str(post.location.longitude)
 
-            for in_reply_to in post.in_reply_to:
+            if in_reply_to:
                 reply_match = self.PERMALINK_RE.match(in_reply_to)
                 if reply_match:
                     data['in_reply_to_status_id'] = reply_match.group(2)
-                    break
 
             if img:
                 tempfile = self.download_image_to_temp(img)
