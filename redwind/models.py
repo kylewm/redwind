@@ -29,6 +29,7 @@ import shutil
 import time
 from operator import attrgetter
 from contextlib import contextmanager
+from collections import deque
 
 
 POST_TYPES = ('article', 'note', 'like', 'share', 'reply', 'checkin')
@@ -424,9 +425,10 @@ class Post:
         basedir = os.path.join(app.root_path, '_data')
         # assign a new date index if we don't have one yet
         if not self.date_index:
-            self.date_index = 1
+            idx = 1
+            self.date_index = util.base60_encode(1)
             while os.path.exists(os.path.join(basedir, self.path)):
-                self.date_index += 1
+                idx += 1
 
         filename = os.path.join(basedir, self.path)
         parentdir = os.path.dirname(filename)

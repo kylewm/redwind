@@ -48,7 +48,7 @@ TIMEZONE = pytz.timezone('US/Pacific')
 
 POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
-            '<int(fixed_digits=2):day>/<int:index>'
+            '<int(fixed_digits=2):day>/<index>'
 
 
 def reraise_attribute_errors(func):
