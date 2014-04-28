@@ -27,7 +27,7 @@ from flask import request, redirect, url_for, render_template, flash,\
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
 from contextlib import contextmanager
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from werkzeug import secure_filename
 
@@ -154,6 +154,18 @@ class DisplayPost:
             text += "<br/><a href={}>Keep Reading...</a>"\
                 . format(self.permalink)
         return Markup(text)
+
+    @property
+    @reraise_attribute_errors
+    def first_image(self):
+        """find the first image (if any) that is in an <img> tag
+        in the rendered post"""
+        html = self.html_content
+        soup = BeautifulSoup(html)
+        for img in soup.find_all('img'):
+            src = img.get('src')
+            if src:
+                return urljoin(app.config['SITE_URL'], src)
 
     @property
     @reraise_attribute_errors
@@ -292,10 +304,13 @@ def render_posts(title, post_types, page, per_page,
 def inject_user_authenticated():
     with open(os.path.join(app.root_path, 'static/css/style.css')) as f:
         inline_style = f.read()
+    # minify
     # inline_style = re.sub('\s+', ' ', inline_style)
+    twitterbot = 'Twitterbot' in request.headers.get('User-Agent', '')
     return {
         'authenticated': current_user.is_authenticated(),
-        'inline_style': Markup(inline_style)
+        'inline_style': Markup(inline_style),
+        'is_twitter_user_agent': twitterbot,
     }
 
 
@@ -795,7 +810,10 @@ def save_post():
 
     try:
         post_id_str = request.form.get('post_id')
+        app.logger.debug("saving post %s", post_id_str)
         with new_or_writeable(post_id_str) as post:
+            app.logger.debug("acquired write lock %s", post)
+            
             # populate the Post object and save it to the database,
             # redirect to the view
             post.title = request.form.get('title', '')
@@ -845,6 +863,8 @@ def save_post():
             facebook_post_id = request.form.get("facebook_post_id")
             if facebook_post_id:
                 post.facebook_post_id = facebook_post_id
+
+            app.logger.debug("attempting to save post %s", post)
 
             post.save()
 

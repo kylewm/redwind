@@ -36,11 +36,10 @@ toolbar = DebugToolbarExtension(app)
 if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
-    app.logger.setLevel(logging.DEBUG)
+    app.logger.setLevel(logging.WARN)
 
     file_handler = RotatingFileHandler('app.log', maxBytes=1048576,
                                        backupCount=5)
-    file_handler.setLevel(logging.WARNING)
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)

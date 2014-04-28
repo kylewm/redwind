@@ -75,6 +75,7 @@ def acquire_lock(path, retries):
     if not os.path.exists(os.path.dirname(lockfile)):
         os.makedirs(os.path.dirname(lockfile))
     while os.path.exists(lockfile) and retries > 0:
+        app.logger.warn("Waiting for lock to become available %s", lockfile)
         time.sleep(1)
         retries -= 1
     if os.path.exists(lockfile):
@@ -119,7 +120,7 @@ class User:
         _, temp = tempfile.mkstemp()
         with open(temp, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
-
+        
         filename = os.path.join(app.root_path, '_data/user.json')
         if os.path.exists(filename):
             save_backup(os.path.join(app.root_path, '_data'),
@@ -253,7 +254,7 @@ class Post:
         return cls.load(cls.shortid_to_path(shortid))
 
     @classmethod
-    def iterate_all(cls, reverse=False, post_types=POST_TYPES,
+    def iterate_all(cls, reverse=False, post_types=None,
                     include_hidden=False, include_drafts=False):
         # TODO there has to be a better way to do this...right now has
         # a generator for each post_type, and does sort of a merge
@@ -292,6 +293,7 @@ class Post:
             return (reverse and mypost.pub_date > bestpost.pub_date) \
                 or (not reverse and mypost.pub_date < bestpost.pub_date)
 
+        post_types = post_types or POST_TYPES
         generators = [IteratorWithLookahead(walk_post_type(post_type))
                       for post_type in post_types]
 
@@ -426,8 +428,10 @@ class Post:
         # assign a new date index if we don't have one yet
         if not self.date_index:
             idx = 1
-            self.date_index = util.base60_encode(1)
-            while os.path.exists(os.path.join(basedir, self.path)):
+            while True:
+                self.date_index = util.base60_encode(idx)
+                if not os.path.exists(os.path.join(basedir, self.path)):
+                    break
                 idx += 1
 
         filename = os.path.join(basedir, self.path)

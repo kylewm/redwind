@@ -89,11 +89,8 @@ def parse_date(tag):
 
 
 def parse_index(tag):
-    try:
-        index_enc = tag[4:]
-        return base60_decode(index_enc)
-    except ValueError:
-        app.logger.warn("Could not parse base60 index %s", tag)
+    index_enc = tag[4:]
+    return index_enc
 
 
 def date_to_ordinal(date0):
