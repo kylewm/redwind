@@ -488,14 +488,15 @@ class Metadata:
 
                     for mention in post.mentions:
                         mention_pub_date = post.pub_date
-                        json = archiver.load_json_from_archive(mention)
-                        if json:
-                            entry = hentry_parser.parse(json)
+                        parsed = archiver.load_json_from_archive(mention)
+                        if parsed:
+                            entry = hentry_parser.parse_json(parsed, mention)
                             if entry:
                                 mention_pub_date = entry.pub_date
 
                         mentions.append((post.path, mention,
-                                         format_date(mention_pub_date)))
+                                         format_date(mention_pub_date) 
+                                         or '1970-01-01'))
 
         # keep the 30 most recent mentions
         mentions.sort(key=itemgetter(2), reverse=True)
