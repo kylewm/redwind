@@ -253,8 +253,9 @@ class Post:
         return cls.load(cls.shortid_to_path(shortid))
 
     @classmethod
-    def iterate_all(cls, reverse=False, post_types=POST_TYPES,
+    def iterate_all(cls, reverse=False, post_types=None,
                     include_hidden=False, include_drafts=False):
+        basepath = os.path.join(app.root_path, '_data')
         # TODO there has to be a better way to do this...right now has
         # a generator for each post_type, and does sort of a merge
         # sort, always yielding the next post from each generator
