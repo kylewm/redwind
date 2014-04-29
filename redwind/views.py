@@ -246,47 +246,70 @@ class DisplayPost:
 class ContextProxy:
     def __init__(self, url):
         self.permalink = url
+        self.author_name = None
+        self.author_url = None
+        self.author_image = None
+        self.content = None
+        self.pub_date = None
+        self.title = None
+        self.deleted = False
 
         blob = load_json_from_archive(url)
-        if blob:
-            self.entry = hentry_parser.parse_json(blob, url)
-            if self.entry:
-                self.permalink = self.entry.permalink
-                self.author_name = self.entry.author.name if self.entry.author else ""
-                self.author_url = self.entry.author.url if self.entry.author else ""
-                self.author_image = self.entry.author.photo if self.entry.author else ""
-                self.content = self.entry.content
-                self.pub_date = self.entry.pub_date
-                self.title = self.entry.title
-                self.deleted = False
+        if not blob:
+            return
+        self.entry = hentry_parser.parse_json(blob, url)
+        if not self.entry:
+            return
+
+        self.permalink = self.entry.permalink
+        self.author_name = self.entry.author.name if self.entry.author else ""
+        self.author_url = self.entry.author.url if self.entry.author else ""
+        self.author_image = self.entry.author.photo if self.entry.author else ""
+        self.content = self.entry.content
+        self.pub_date = self.entry.pub_date
+        self.title = self.entry.title
+        self.deleted = False
 
 
 class MentionProxy:
     def __init__(self, post, url):
         self.permalink = url
+        self.reftype = 'reference'
+        self.author_name = None
+        self.author_url = None
+        self.author_image = None
+        self.content = None
+        self.pub_date = None
+        self.title = None
+        self.deleted = False
 
         blob = load_json_from_archive(url)
-        if blob:
-            self.entry = hentry_parser.parse_json(blob, url)
-            if self.entry:
-                self.permalink = self.entry.permalink
-                self.author_name = self.entry.author.name if self.entry.author else ""
-                self.author_url = self.entry.author.url if self.entry.author else ""
-                self.author_image = self.entry.author.photo if self.entry.author else ""
-                self.content = self.entry.content
-                self.pub_date = self.entry.pub_date
-                self.title = self.entry.title
-                self.deleted = False
-                self.reftype = 'reference'
+        if not blob:
+            return
 
-        if post:
-            target_urls = (post.permalink, post.permalink_without_slug,
-                           post.short_permalink,
-                           post.permalink.replace(app.config['SITE_URL'],
-                                                  'http://kylewm.com'))
-            for ref in self.entry.references:
-                if ref.url in target_urls:
-                    self.reftype = ref.reftype
+        self.entry = hentry_parser.parse_json(blob, url)
+        if not self.entry:
+            return
+
+        self.permalink = self.entry.permalink
+        self.author_name = self.entry.author.name if self.entry.author else ""
+        self.author_url = self.entry.author.url if self.entry.author else ""
+        self.author_image = self.entry.author.photo if self.entry.author else ""
+        self.content = self.entry.content
+        self.pub_date = self.entry.pub_date
+        self.title = self.entry.title
+
+        target_urls = (
+            post.permalink,
+            post.permalink_without_slug,
+            post.short_permalink,
+            post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com')
+        )
+
+        for ref in self.entry.references:
+            if ref.url in target_urls:
+                self.reftype = ref.reftype
+
 
     def __repr__(self):
         return """Mention(permalink={}, pub_date={} reftype={})""".format(
@@ -813,7 +836,7 @@ def save_post():
         app.logger.debug("saving post %s", post_id_str)
         with new_or_writeable(post_id_str) as post:
             app.logger.debug("acquired write lock %s", post)
-            
+
             # populate the Post object and save it to the database,
             # redirect to the view
             post.title = request.form.get('title', '')

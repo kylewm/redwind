@@ -14,8 +14,9 @@
     <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom') }}" title="Kyle Mahan: Articles" />
     <link rel="all alternate" type="application/atom+xml" href="{{ url_for('all_atom') }}" title="Kyle Mahan: All" />
     <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
-    
+
     <link rel="webmention" href="{{ url_for('receive_webmention') }}"/>
+    <link rel="pingback" href="http://webmention.io/webmention?forward={{ url_for('receive_webmention', _external=True) }}" />
 
     <link rel="openid.delegate" href="http://kylewm.com/" />
     <link rel="openid.server" href="https://indieauth.com/openid" />
