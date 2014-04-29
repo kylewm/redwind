@@ -32,17 +32,18 @@
 
         <div class="content">
           {% if share.title %}
-            <span class="p-name">{{share.title or ''}}</span>
+            <span class="p-name">{{share.title}}</span>
           {% endif %}
 
-          {% set content_length = share.content | format_as_text | wordcount %}
-          {% if content_length < 100 %}
-            <div class="e-content">
+          <div class="e-content">
+            {% set content_words = share.content | format_as_text | wordcount %}
+            {% if content_words < 200 %}
               {{ share.content | bleach | safe }}
-            </div>
-          {% else %}
-            <br /><a class="u-url" href="{{ share.permalink }}">{{ content_length }} words.</a><br />
-          {% endif %}
+            {% else %}
+              {{ share.content | format_as_text | truncate(200) }}
+              <a class="u-url" href="{{ share.permalink }}">continued</a>
+            {% endif %}
+          </div>
         </div>
 
 

@@ -3,6 +3,7 @@
   {% if is_twitter_user_agent %}
     <meta name="twitter:site" content="@kyle_wm"/>
     <meta name="twitter:creator" content="@kyle_wm"/>
+    <meta name="twitter:domain" content="kylewm.com to see the original"/>
     <meta name="twitter:title" content="{{ title }}"/>
     <meta name="twitter:description" content="{{ post.content | format_markdown_as_text | truncate(300) | replace('\n', '') }}"/>
     {% set img = post.first_image %}
