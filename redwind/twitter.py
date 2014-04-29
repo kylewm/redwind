@@ -28,7 +28,7 @@ import re
 import json
 import datetime
 from . import hentry_template
-from . import archive
+from . import archiver
 
 from tempfile import mkstemp
 from urllib.parse import urljoin
@@ -199,7 +199,7 @@ class TwitterClient:
                                     pub_date=pub_date,
                                     content=tweet_text,
                                     permalink=url)
-        archive.archive_html(url, html)
+        archiver.archive_html(url, html)
         return True
 
     # TODO use twitter API entities to expand links without fetch requests

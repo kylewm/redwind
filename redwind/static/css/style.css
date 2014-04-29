@@ -203,6 +203,24 @@ nav li {
     margin-top: 2em;
 }
 
+.page-arrows {
+    margin-top: 40px;
+}
+
+.page-left, .page-right {
+    padding: 5px;
+    background-color: #f0f0ff;
+    border-radius: 5px;
+}
+
+.page-left {
+    float: left;
+}
+
+.page-right {
+    float: right;
+}
+
 form .heading {
     width: 150px;
     display: inline-block;

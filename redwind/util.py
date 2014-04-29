@@ -128,16 +128,3 @@ def base60_decode(s):
         n *= base
         n += RADIX.index(c)
     return n
-
-# http://stackoverflow.com/a/1518097/682648
-class IteratorWithLookahead(collections.Iterator):
-    def __init__(self, it):
-        self.it, self.nextit = itertools.tee(iter(it))
-        self._advance()
-
-    def _advance(self):
-        self.lookahead = next(self.nextit, None)
-
-    def __next__(self):
-        self._advance()
-        return next(self.it)

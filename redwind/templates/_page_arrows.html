@@ -1,14 +1,14 @@
-<div class="section group" style="margin: 20px; clear: both;">
-  {% if pagination %}
-  {% if pagination.has_prev %}
-  <div class="pager-left">
-    <a href="{{ url_for_other_page( pagination.prev_num ) }}">&larr; Newer</a>
-  </div>
+<div class="page-arrows">
+  {% if prev_page %}
+    <div class="page-left">
+      <a href="{{ url_for_other_page( prev_page ) }}">&larr; Newer</a>
+    </div>
   {% endif %}
-  {% if pagination.has_next %}
-  <div class="pager-right">
-    <a href="{{ url_for_other_page( pagination.next_num ) }}">Older &rarr;</a>
-  </div>
+  {% if next_page %}
+    <div class="page-right">
+      <a href="{{ url_for_other_page( next_page ) }}">Older &rarr;</a>
+    </div>
   {% endif %}
-  {% endif %}
+
+    <div style="clear: both;"></div>
 </div>

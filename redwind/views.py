@@ -14,12 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
-from . import app, util, push, webmention_sender, webmention_receiver,\
-    contexts, twitter, facebook
-from .models import Post, Location, POST_TYPES
-from .archive import load_json_from_archive
-from .auth import load_user
+from . import app
+from . import archiver
+from . import auth
+from . import contexts
+from . import facebook
 from . import hentry_parser
+from . import push
+from . import twitter
+from . import util
+from . import webmention_sender
+from . import webmention_receiver
+from .models import Post, Location, Metadata, POST_TYPES
 
 from bs4 import BeautifulSoup
 from flask import request, redirect, url_for, render_template, flash,\
@@ -248,7 +254,7 @@ class ContextProxy:
         self.title = None
         self.deleted = False
 
-        blob = load_json_from_archive(url)
+        blob = archiver.load_json_from_archive(url)
         if not blob:
             return
         self.entry = hentry_parser.parse_json(blob, url)
@@ -268,6 +274,7 @@ class ContextProxy:
 class MentionProxy:
     def __init__(self, post, url):
         self.permalink = url
+        self.target = None
         self.reftype = 'reference'
         self.author_name = None
         self.author_url = None
@@ -277,7 +284,7 @@ class MentionProxy:
         self.title = None
         self.deleted = False
 
-        blob = load_json_from_archive(url)
+        blob = archiver.load_json_from_archive(url)
         if not blob:
             return
 
@@ -302,8 +309,9 @@ class MentionProxy:
             )
             for ref in self.entry.references:
                 if ref.url in target_urls:
+                    self.target = ref.url
                     self.reftype = ref.reftype
-
+                    break
 
     def __repr__(self):
         return """Mention(permalink={}, pub_date={} reftype={})""".format(
@@ -312,9 +320,16 @@ class MentionProxy:
 
 def render_posts(title, post_types, page, per_page,
                  include_hidden=False, include_drafts=False):
-    posts = [DisplayPost(post) for post in Post.load_recent(
-        per_page, post_types, include_hidden, include_drafts)]
-    return render_template('posts.html', posts=posts, title=title)
+    mdata = Metadata()
+    posts = mdata.load_posts(reverse=True, post_types=post_types,
+                             include_hidden=include_hidden,
+                             include_drafts=include_drafts,
+                             page=page, per_page=per_page)
+
+    dposts = [DisplayPost(post) for post in posts]
+    return render_template('posts.html', posts=dposts, title=title,
+                           prev_page=page-1,
+                           next_page=page+1)
 
 
 @app.context_processor
@@ -357,10 +372,13 @@ def everything(page):
 
 
 def render_posts_atom(title, feed_id, post_types, count):
-    posts = [DisplayPost(post) for post in Post.load_recent(count, post_types)]
+    mdata = Metadata()
+    posts = mdata.load_posts(reverse=True, post_types=post_types,
+                             page=1, per_page=10)
+    dposts = [DisplayPost(post) for post in posts]
     return make_response(render_template('posts.atom', title=title,
                                          feed_id=feed_id,
-                                         posts=posts), 200,
+                                         posts=dposts), 200,
                          {'Content-Type': 'application/atom+xml'})
 
 
@@ -382,12 +400,18 @@ def articles_atom():
 
 @app.route("/mentions.atom")
 def mentions_atom():
-    mention_urls = Post.load_recent_mentions()
-    mentions = [MentionProxy(None, u) for u in mention_urls]
+    mdata = Metadata()
+    mentions = mdata.get_recent_mentions()
+    proxies = []
+    for mention in mentions:
+        post_path = mention.get('post')
+        post = Post.load(post_path) if post_path else None
+        mention_url = mention.get('mention')
+        proxies.append(MentionProxy(post, mention_url))
     return make_response(render_template('mentions.atom',
                                          title='kylewm.com: Mentions',
                                          feed_id='mentions.atom',
-                                         mentions=mentions), 200,
+                                         mentions=proxies), 200,
                          {'Content-Type': 'application/atom+xml'})
 
 
@@ -480,7 +504,7 @@ def indie_auth():
 
     if response.status_code == 200:
         domain = response.json().get('me')
-        user = load_user(domain)
+        user = auth.load_user(domain)
         if user:
             login_user(user, remember=True)
             flash('Logged in with domain {}'.format(domain))
@@ -517,6 +541,10 @@ def delete_by_id():
             abort(404)
         post.deleted = True
         post.save()
+
+    with Metadata.writeable() as mdata:
+        mdata.add_or_update_post(post)
+        mdata.save()
 
     redirect_url = request.args.get('redirect') or url_for('index')
     app.logger.debug("redirecting to {}".format(redirect_url))
@@ -828,6 +856,7 @@ def save_post():
     try:
         post_id_str = request.form.get('post_id')
         app.logger.debug("saving post %s", post_id_str)
+
         with new_or_writeable(post_id_str) as post:
             app.logger.debug("acquired write lock %s", post)
 
@@ -885,15 +914,19 @@ def save_post():
 
             post.save()
 
-            app.logger.debug("saved post %s %s", post.shortid, post.permalink)
-            redirect_url = post.permalink
+        with Metadata.writeable() as mdata:
+            mdata.add_or_update_post(post)
+            mdata.save()
 
-            contexts.fetch_post_contexts(post)
-            if request.form.get('send_push') == 'true':
-                push.send_notifications(post)
+        app.logger.debug("saved post %s %s", post.shortid, post.permalink)
+        redirect_url = post.permalink
 
-            if request.form.get('send_webmentions') == 'true':
-                webmention_sender.send_webmentions(post)
+        contexts.fetch_post_contexts(post)
+        if request.form.get('send_push') == 'true':
+            push.send_notifications(post)
+
+        if request.form.get('send_webmentions') == 'true':
+            webmention_sender.send_webmentions(post)
 
         return redirect(redirect_url)
 

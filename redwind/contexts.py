@@ -1,5 +1,5 @@
 from . import app
-from . import archive
+from . import archiver
 from .spool import spoolable
 from .twitter import twitter_client
 import itertools
@@ -27,4 +27,4 @@ def fetch_external_post(url):
     if twitter_client.fetch_external_post(url):
         return True
 
-    archive.archive_url(url)
+    archiver.archive_url(url)

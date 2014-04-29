@@ -17,8 +17,8 @@
 
 from . import push
 from . import app
-from . import archive
-from .models import Post, acquire_lock
+from . import archiver
+from .models import Post, Metadata, acquire_lock
 
 from flask import request, make_response
 from werkzeug.exceptions import NotFound
@@ -62,10 +62,9 @@ def process_webmention(source, target, callback):
                 'status': status,
                 'reason': reason
             })
-
     try:
-        mentions_path, mention_url, delete, error = do_process_webmention(
-            source, target)
+        target_post, mentions_path, mention_url, delete, error \
+            = do_process_webmention(source, target)
 
         if error or not mentions_path or not mention_url:
             app.logger.warn("Failed to process webmention: %s", error)
@@ -92,7 +91,11 @@ def process_webmention(source, target, callback):
             json.dump(mention_list, open(mentions_path, 'w'), indent=True)
             app.logger.debug("saved mentions to %s", mentions_path)
 
-        Post.update_recent_mentions(mention_url)
+        with Metadata.writeable() as mdata:
+            mdata.insert_recent_mention(target_post, mention_url)
+            Post.update_recent_mentions(mention_url)
+            mdata.save()
+
         push.handle_new_mentions()
 
         call_callback(200, 'Success')
@@ -113,8 +116,8 @@ def do_process_webmention(source, target):
     if not target_post:
         app.logger.warn(
             "Webmention could not find target post: %s. Giving up", target)
-        return None, None, False, "Webmention could not find target post: {}"\
-            .format(target)
+        return None, None, None, False, \
+            "Webmention could not find target post: {}".format(target)
 
     target_urls = (target, target_post.permalink, target_post.short_permalink)
     mentions_path = target_post.mentions_path
@@ -130,7 +133,7 @@ def do_process_webmention(source, target):
     if source_response.status_code // 100 != 2:
         app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
-        return mentions_path, None, False, \
+        return target_post, mentions_path, None, False, \
             "Bad response when reading source post: {}, {}"\
             .format(source, source_response)
 
@@ -138,7 +141,7 @@ def do_process_webmention(source, target):
 
     if source_length and int(source_length) > 2097152:
         app.logger.warn("Very large source. length=%s", source_length)
-        return mentions_path, None, False,\
+        return target_post, mentions_path, None, False,\
             "Source is very large. Length={}"\
             .format(source_length)
 
@@ -147,12 +150,12 @@ def do_process_webmention(source, target):
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
-        return mentions_path, None, False,\
+        return target_post, mentions_path, None, False,\
             "Could not find any links from source to target"
 
-    archive.archive_html(source, source_response.text)
+    archiver.archive_html(source, source_response.text)
 
-    return mentions_path, source, False, None
+    return target_post, mentions_path, source, False, None
 
 
 def find_link_to_target(source_url, source_response, target_urls):

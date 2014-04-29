@@ -99,8 +99,6 @@ def parse_json(d, source):
     while queue:
         item = queue.popleft()
         if 'h-entry' in item['type']:
-            app.logger.debug("found h-entry, parsing %s", item)
-
             hentry = item
             permalink = next((perma for perma
                               in hentry['properties'].get('url', [])), source)

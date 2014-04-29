@@ -21,6 +21,7 @@ import json
 import requests
 from mf2py.parser import Parser
 
+
 def load_json_from_archive(url):
     path = os.path.join(url_to_archive_path(url), 'parsed.json')
     app.logger.debug("checking archive for %s => %s", url, path)
@@ -52,6 +53,7 @@ def archive_url(url):
     response = requests.get(url)
     if response.status_code // 2 == 100:
         archive_html(url, response.text)
+
 
 def archive_html(url, html):
     hpath = url_to_html_path(url)

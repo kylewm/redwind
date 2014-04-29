@@ -17,19 +17,18 @@
 
 from . import app
 from . import util
-from .util import IteratorWithLookahead
+from . import archiver
+from . import hentry_parser
 
 import datetime
 import os
 import os.path
-import itertools
 import json
 import tempfile
 import shutil
 import time
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from contextlib import contextmanager
-from collections import deque
 
 
 POST_TYPES = ('article', 'note', 'like', 'share', 'reply', 'checkin')
@@ -120,7 +119,7 @@ class User:
         _, temp = tempfile.mkstemp()
         with open(temp, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
-        
+
         filename = os.path.join(app.root_path, '_data/user.json')
         if os.path.exists(filename):
             save_backup(os.path.join(app.root_path, '_data'),
@@ -213,15 +212,6 @@ class Post:
         return post
 
     @classmethod
-    def load_recent(cls, count, post_types, include_hidden=False,
-                    include_drafts=False):
-        return list(itertools.islice(
-            cls.iterate_all(reverse=True, post_types=post_types,
-                            include_hidden=include_hidden,
-                            include_drafts=include_drafts),
-            0, count))
-
-    @classmethod
     def load_by_month(cls, year, month):
         posts = []
         datadir = os.path.join(app.root_path, '_data')
@@ -254,60 +244,6 @@ class Post:
         return cls.load(cls.shortid_to_path(shortid))
 
     @classmethod
-    def iterate_all(cls, reverse=False, post_types=None,
-                    include_hidden=False, include_drafts=False):
-        basepath = os.path.join(app.root_path, '_data')
-        # TODO there has to be a better way to do this...right now has
-        # a generator for each post_type, and does sort of a merge
-        # sort, always yielding the next post from each generator
-        def walk_post_type(post_type):
-            basepath = os.path.join(app.root_path, '_data')
-            path = os.path.join(basepath, post_type)
-            for root, dirs, files in os.walk(path):
-                dirs.sort(reverse=reverse)
-                today = []
-                for filename in files:
-                    if filename.endswith('.md'):
-                        basename, ext = os.path.splitext(filename)
-                        post = cls.load(
-                            os.path.join(root[len(basepath)+1:], basename))
-                        if not post.deleted \
-                           and (not post.draft or include_drafts)\
-                           and (not post.hidden or include_hidden):
-                            today.append(post)
-
-                today.sort(key=attrgetter('pub_date'), reverse=reverse)
-                yield from today
-
-        def is_better(mygen, bestgen):
-            """figure out which generator will yield and earlier post (or later
-            if reversed)
-            """
-            mypost = mygen.lookahead
-            if not mypost:
-                return False
-
-            bestpost = bestgen and bestgen.lookahead
-            if not bestpost:
-                return True
-
-            return (reverse and mypost.pub_date > bestpost.pub_date) \
-                or (not reverse and mypost.pub_date < bestpost.pub_date)
-
-        post_types = post_types or POST_TYPES
-        generators = [IteratorWithLookahead(walk_post_type(post_type))
-                      for post_type in post_types]
-
-        while True:
-            best = None
-            for gen in generators:
-                if is_better(gen, best):
-                    best = gen
-            if not best:
-                break
-            yield next(best)
-
-    @classmethod
     def date_to_path(cls, post_type, year, month, day, index):
         return "{}/{}/{:02d}/{:02d}/{}".format(
             post_type, year, month, day, index)
@@ -333,37 +269,6 @@ class Post:
 
         return sorted(list(result))
 
-    @classmethod
-    def load_syndication_index(cls):
-        path = os.path.join(app.root_path, '_data/syndication_index.json')
-        return json.load(open(path, 'r'))
-
-    def update_syndication_index(self, url):
-        path = os.path.join(app.root_path, '_data/syndication_index.json')
-        with acquire_lock(path, 30):
-            obj = json.load(open(path, 'r'))
-            obj[url] = self.path
-            json.dump(obj, open(path, 'w'), indent=True)
-
-    @classmethod
-    def load_recent_mentions(cls):
-        path = os.path.join(app.root_path, '_data/recent_mentions.json')
-        if os.path.exists(path):
-            return json.load(open(path, 'r'))
-        else:
-            return []
-
-    @classmethod
-    def update_recent_mentions(self, url):
-        path = os.path.join(app.root_path, '_data/recent_mentions.json')
-        with acquire_lock(path, 30):
-            if os.path.exists(path):
-                obj = json.load(open(path, 'r'))
-            else:
-                obj = []
-            obj.insert(0, url)
-            json.dump(obj[:10], open(path, 'w'), indent=True)
-
     def __init__(self, post_type, date_index):
         self.post_type = post_type
         self.date_index = date_index
@@ -373,6 +278,8 @@ class Post:
         self.in_reply_to = []
         self.repost_of = []
         self.like_of = []
+        self.title = None
+        self.content = None
         self.pub_date = None
         self.slug = None
         self.twitter_status_id = None
@@ -541,4 +448,137 @@ class Post:
         if self.title:
             return 'post:{}'.format(self.title)
         else:
-            return 'post:{}'.format(self.content[:140])
+            return 'post:{}'.format(
+                self.content[:140] if self.content else 'BLANK')
+
+
+class Metadata:
+    PATH = os.path.join(app.root_path, '_data', 'metadata.json')
+
+    @staticmethod
+    def post_to_blob(post):
+        return {
+            'type': post.post_type,
+            'published': format_date(post.pub_date),
+            'draft': post.draft,
+            'deleted': post.deleted,
+            'hidden': post.hidden,
+            'path': post.path,
+        }
+
+    @staticmethod
+    def regenerate():
+        posts = []
+        mentions = []
+
+        basedir = os.path.join(app.root_path, '_data')
+        for post_type in POST_TYPES:
+            for root, dirs, files in os.walk(os.path.join(basedir, post_type)):
+                for filen in files:
+                    if filen.endswith('.mentions.json'):
+                        continue
+                    index, ext = os.path.splitext(filen)
+                    postpath = os.path.join(
+                        os.path.relpath(root, basedir), index)
+                    post = Post.load(postpath)
+                    if not post:
+                        continue
+
+                    posts.append(Metadata.post_to_blob(post))
+
+                    for mention in post.mentions:
+                        mention_pub_date = post.pub_date
+                        json = archiver.load_json_from_archive(mention)
+                        if json:
+                            entry = hentry_parser.parse(json)
+                            if entry:
+                                mention_pub_date = entry.pub_date
+
+                        mentions.append((post.path, mention,
+                                         format_date(mention_pub_date)))
+
+        # keep the 30 most recent mentions
+        mentions.sort(key=itemgetter(2), reverse=True)
+        recent_mentions = [{
+            'mention': mention,
+            'post': post_path,
+        } for post_path, mention, pub_date in mentions[:30]]
+
+        filter_empty_keys(posts)
+        blob = {
+            'posts': posts,
+            'mentions': recent_mentions,
+        }
+
+        json.dump(blob,
+                  open(os.path.join(basedir, 'metadata.json'), 'w'),
+                  indent=True)
+        return blob
+
+    @classmethod
+    @contextmanager
+    def writeable(cls):
+        with acquire_lock(cls.PATH, 30):
+            mdata = cls()
+            mdata._writeable = True
+            yield mdata
+            mdata._writeable = False
+
+    def __init__(self):
+        self._writeable = False
+        if os.path.exists(self.PATH):
+            self.blob = json.load(open(self.PATH, 'r'))
+        else:
+            self.blob = self.regenerate()
+
+    def save(self):
+        if not self._writeable:
+            raise RuntimeError("Cannot save metadata that was"
+                               "not opened with 'writeable' flag")
+        json.dump(self.blob, open(self.PATH, 'w'), indent=True)
+
+    def get_recent_mentions(self):
+        return self.blob['mentions']
+
+    def insert_recent_mention(self, post, url):
+        mentions = self.get_recent_mentions()
+        mentions.insert(0, {
+            'mention': url,
+            'post': post.path,
+        })
+        self.blob['mentions'] = mentions[:30]
+        self.save()
+
+    def load_posts(self, reverse=False, post_types=None,
+                   include_hidden=False, include_drafts=False,
+                   per_page=30, page=1):
+        if not post_types:
+            post_types = POST_TYPES
+
+        app.logger.debug('loading post metadata %s, page=%d, per page=%d',
+                         post_types, page, per_page)
+
+        posts = [post for post in self.blob['posts']
+                 if not post.get('deleted')
+                 and (not post.get('hidden') or include_hidden)
+                 and (not post.get('draft') or include_drafts)
+                 and post.get('type') in post_types]
+
+        app.logger.debug('found %d posts', len(posts))
+
+        posts.sort(reverse=reverse,
+                   key=lambda post: post.get('published', '1970-01-01'))
+
+        start = per_page * (page-1)
+        end = start + per_page
+
+        app.logger.debug('return posts %d through %d', start, end)
+
+        return [Post.load(post['path']) for post in posts[start:end]]
+
+    def add_or_update_post(self, post):
+        post_path = post.path
+        posts = [other for other in self.blob['posts']
+                 if other.get('path') != post_path]
+        posts.append(Metadata.post_to_blob(post))
+        self.blob['posts'] = posts
