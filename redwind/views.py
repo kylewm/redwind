@@ -114,15 +114,9 @@ class DisplayPost:
     @property
     @reraise_attribute_errors
     def share_contexts(self):
-        try:
-            if not self.repost_of:
-                return []
-            return [ContextProxy(url) for url in self.repost_of]
-        except AttributeError:
-            # FIXME if we fail to catch this attribute error, it gets swallowed up
-            # by the @property handler
-            app.logger.exception("getting share contexts")
+        if not self.repost_of:
             return []
+        return [ContextProxy(url) for url in self.repost_of]
 
     @property
     @reraise_attribute_errors
@@ -299,16 +293,16 @@ class MentionProxy:
         self.pub_date = self.entry.pub_date
         self.title = self.entry.title
 
-        target_urls = (
-            post.permalink,
-            post.permalink_without_slug,
-            post.short_permalink,
-            post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com')
-        )
-
-        for ref in self.entry.references:
-            if ref.url in target_urls:
-                self.reftype = ref.reftype
+        if post:
+            target_urls = (
+                post.permalink,
+                post.permalink_without_slug,
+                post.short_permalink,
+                post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com')
+            )
+            for ref in self.entry.references:
+                if ref.url in target_urls:
+                    self.reftype = ref.reftype
 
 
     def __repr__(self):
