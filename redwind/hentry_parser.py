@@ -103,14 +103,17 @@ def parse_json(d, source):
             permalink = next((perma for perma
                               in hentry['properties'].get('url', [])), source)
 
-            references += parse_references(
-                hentry['properties'].get('in-reply-to', []), 'reply')
+            for prop in ('in-reply-to', 'reply-to', 'reply'):
+                references += parse_references(
+                    hentry['properties'].get(prop, []), 'reply')
 
-            references += parse_references(
-                hentry['properties'].get('like-of', []), 'like')
+            for prop in ('like-of', 'like'):
+                references += parse_references(
+                    hentry['properties'].get(prop, []), 'like')
 
-            references += parse_references(
-                hentry['properties'].get('repost-of', []), 'repost')
+            for prop in ('repost-of', 'repost'):
+                references += parse_references(
+                    hentry['properties'].get(prop, []), 'repost')
 
             date_strs = hentry['properties'].get('published')
             pub_date = date_strs and parse_datetime(' '.join(date_strs))

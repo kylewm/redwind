@@ -5,10 +5,11 @@ article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,su
 
 html,body {
     color: #333;
-    background-color: #344;
+    /*background-color: #344;*/
+    background-color: #f3f3f3;
     line-height: 1.3;
     font-family: 'Source Sans Pro', sans-serif;
-    font-size: 15pt;
+    font-size: 14pt;
 }
 
 ul, ol {
@@ -25,11 +26,11 @@ a:hover {
 }
 
 #wrapper {
-    background-color: white;
+    /*background-color: white;
     border: 1px solid black;
     border-radius: 3px;
-    padding: 1em;
-    max-width: 800px;
+    padding: 1em;*/
+    max-width: 750px;
     margin: 10px auto 10px auto;
     min-height: 100%;
 }
@@ -41,8 +42,14 @@ a:hover {
 blockquote {
     margin-left: 0px;
     border-left: 5px solid lightgray;
-    background-color: #f0f0ff;
+    background-color: #f3f3f6;
     padding: 10px;
+}
+
+.post {
+    background-color: white;
+    padding: 1em;
+    border-radius: 3px;
 }
 
 .post .p-name img, .post .e-content img {
@@ -85,7 +92,7 @@ header {
 footer {
     color: #666;
     width: 100%;
-    mragin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 footer #site-info {
@@ -94,7 +101,7 @@ footer #site-info {
     font-size: 0.9em;
 }
 footer .h-card {
-    margin-top: 100px;
+    margin-top: 60px;
 }
 
 footer .h-card .u-photo {
@@ -126,7 +133,7 @@ nav li {
 }
 
 .post + .post {
-    margin-top: 80px;
+    margin-top: 40px;
 }
 
 .site-name, .site-name-separator {
@@ -159,7 +166,7 @@ nav li {
 }
 
 .share-context, .reply-context, .like-context {
-    margin-bottom: 5pt;
+    margin-bottom: 1em;
 }
 
 .share-context .content, .reply-context .content {
@@ -207,11 +214,16 @@ nav li {
     margin-top: 40px;
 }
 
-.page-left, .page-right {
+/*.page-left, .page-right {
     padding: 5px;
-    background-color: #f0f0ff;
+    color: #f3f3f3;
+    background-color: #333;
     border-radius: 5px;
 }
+
+.page-left a, .page-right a {
+    color: #f3f3f3;
+}*/
 
 .page-left {
     float: left;

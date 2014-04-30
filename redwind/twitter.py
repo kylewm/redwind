@@ -123,7 +123,7 @@ def share_on_twitter():
             twitter_client.handle_new_or_edit(post, preview, img_url,
                                               in_reply_to, repost_of, like_of)
             post.save()
-            post.update_syndication_index(post.twitter_url)
+            #post.update_syndication_index(post.twitter_url)
 
             return """Shared on Twitter<br/>
             <a href="{}">Original</a><br/>
