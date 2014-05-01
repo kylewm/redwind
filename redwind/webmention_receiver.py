@@ -93,7 +93,6 @@ def process_webmention(source, target, callback):
 
         with Metadata.writeable() as mdata:
             mdata.insert_recent_mention(target_post, mention_url)
-            Post.update_recent_mentions(mention_url)
             mdata.save()
 
         push.handle_new_mentions()
