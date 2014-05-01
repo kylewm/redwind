@@ -16,6 +16,9 @@
 
 from . import app
 from . import util
+from . import hentry_parser
+from .models import Post, Location, Metadata
+
 
 from flask import request, url_for, jsonify, abort, make_response
 from flask.ext.login import login_required
@@ -161,8 +164,49 @@ def token_endpoint():
         {'Content-Type': 'application/x-www-form-urlencoded'})
 
 
-@app.route('/micropub', methods=['POST'])
+@app.route('/api/micropub', methods=['POST'])
 def micropub_endpoint():
     app.logger.info("received micropub request %s, args=%s, form=%s",
                     request, request.args, request.form)
-    abort(400)
+
+    post = Post('note', None)
+    post._writeable = True
+
+    published_str = request.form.get('published')
+    if published_str:
+        published = hentry_parser.parse_datetime(published_str)
+        if published.tzinfo:
+            published = published.astimezone(datetime.timezone.utc)
+            published = published.replace(tzinfo=None)
+        post.pub_date = published
+    else:
+        post.pub_date = datetime.datetime.utcnow()
+
+    loc_str = request.form.get('location')
+    if loc_str and loc_str.startswith('geo:'):
+        lat, lon = loc_str[4:].split(',', 1)
+        if lat and lon:
+            post.location = Location(float(lat), float(lon),
+                                     request.form.get('place_name'))
+
+    synd_url = request.form.get('syndication')
+    # todo save syndication url here
+
+    post.save()
+
+    photo_file = request.files['photo']
+    if photo_file:
+        relpath = os.path.join('uploads', post.path, 'photo.jpg')
+        fullpath = os.path.join(app.root_path, 'static', relpath)
+        if not os.path.exists(os.path.dirname(fullpath)):
+            os.makedirs(os.path.dirname(fullpath))
+        photo_file.save(fullpath)
+        photo_url = url_for('static', filename=relpath)
+        post.content = '![]({})'.format(photo_url)
+        post.save()
+    
+    with Metadata.writeable() as mdata:
+        mdata.add_or_update_post(post)
+        mdata.save()
+
+    return make_response('', 201, {'Location': post.permalink})

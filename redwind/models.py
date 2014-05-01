@@ -316,11 +316,11 @@ class Post:
             idx = 1
             while True:
                 self.date_index = util.base60_encode(idx)
-                if not os.path.exists(os.path.join(basedir, self.path)):
+                if not os.path.exists(os.path.join(basedir, self.path) + '.md'):
                     break
                 idx += 1
 
-        filename = os.path.join(basedir, self.path)
+        filename = os.path.join(basedir, self.path) + '.md'
         parentdir = os.path.dirname(filename)
         if not os.path.exists(parentdir):
             os.makedirs(parentdir)
@@ -329,7 +329,8 @@ class Post:
         with open(temp, 'w') as f:
             json.dump(self.to_json_blob(), f, indent=True)
             f.write('\n')
-            f.write(self.content)
+            if self.content:
+                f.write(self.content)
 
         save_backup(basedir,
                     os.path.join(app.root_path, '_data/.backup'),
@@ -338,7 +339,7 @@ class Post:
 
     @property
     def path(self):
-        return "{}/{}/{:02d}/{:02d}/{}.md".format(
+        return "{}/{}/{:02d}/{:02d}/{}".format(
             self.post_type, self.pub_date.year, self.pub_date.month,
             self.pub_date.day, self.date_index)
 

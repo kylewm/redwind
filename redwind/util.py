@@ -31,6 +31,11 @@ def isoparse(s):
     return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
 
 
+def isoparse_with_tz(s):
+    """Parse datetimes with a timezone in ISO8601 format"""
+    return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S%z')
+
+
 def isoformat(date):
     if date:
         if date.tzinfo:
