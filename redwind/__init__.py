@@ -36,7 +36,7 @@ toolbar = DebugToolbarExtension(app)
 if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
-    app.logger.setLevel(logging.WARN)
+    app.logger.setLevel(logging.DEBUG)
 
     file_handler = RotatingFileHandler('app.log', maxBytes=1048576,
                                        backupCount=5)

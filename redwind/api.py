@@ -101,7 +101,7 @@ def convert_mf2():
     return jsonify(json)
 
 
-@app.route('/api/token')
+@app.route('/api/token', methods=['POST'])
 def token_endpoint():
     code = request.form.get('code')
     me = request.form.get('me')
@@ -122,20 +122,21 @@ def token_endpoint():
         'client_id': client_id,
         'state': state,
     })
-    response.raise_status_code()
-    auth_me = response.get('me')
-    auth_client_id = response.get('client_id')
-    auth_scope = response.get('scope')
+    response.raise_for_status()
+
+    app.logger.debug("raw verification response from indieauth=%s", 
+                     response.text)
+
+    resp_data = urllib.parse.parse_qs(response.text)
+    auth_me = resp_data.get('me', [])
+    auth_scope = resp_data.get('scope', [])
 
     app.logger.debug("verification response from indieauth. me=%s, "
-                     "client_id=%s, scope=%s", auth_me, auth_client_id,
-                     auth_scope)
+                     "client_id=%s, scope=%s", auth_me, auth_scope)
 
-    if me != auth_me or client_id != auth_client_id:
+    if me not in auth_me:
         app.logger.warn(
-            "rejecting access token request me=%s, client_id=%s, "
-            "expected me=%s, client_id=%s",
-            me, client_id, auth_me, auth_client_id)
+            "rejecting access token request me=%s, expected me=%s", me, auth_me)
         abort(400)
 
     token = jwt.encode({
@@ -143,7 +144,7 @@ def token_endpoint():
         'client_id': client_id,
         'scope': auth_scope,
         'date_issued': util.isoformat(datetime.datetime.utcnow()),
-        'nonce': random.random(1000000, 2**31),
+        'nonce': random.randint(1000000, 2**31),
     }, app.config['SECRET_KEY'])
 
     app.logger.debug("generating access token %s", token)
