@@ -34,35 +34,12 @@ from contextlib import contextmanager
 POST_TYPES = ('article', 'note', 'like', 'share', 'reply', 'checkin')
 
 
-def isoparse(s):
-    """Parse (UTC) datetimes in ISO8601 format"""
-    return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
-
-
-def format_date(date):
-    if date:
-        if date.tzinfo:
-            date = date.astimezone(datetime.timezone.utc)
-            date = date.replace(tzinfo=None)
-        date = date.replace(microsecond=0)
-        return date.isoformat('T')
-
-
-def filter_empty_keys(data):
-    if isinstance(data, list):
-        return list(filter_empty_keys(v) for v in data if filter_empty_keys(v))
-    if isinstance(data, dict):
-        return dict((k, filter_empty_keys(v)) for k, v in data.items()
-                    if filter_empty_keys(v))
-    return data
-
-
 def save_backup(sourcedir, destdir, relpath):
     source = os.path.join(sourcedir, relpath)
     if os.path.exists(source):
         now = datetime.datetime.now()
         target = os.path.join(destdir, relpath
-                              + "-" + format_date(now))
+                              + "-" + util.isoformat(now))
         if not os.path.exists(os.path.dirname(target)):
             os.makedirs(os.path.dirname(target))
         shutil.copy(source, target)
@@ -113,7 +90,7 @@ class User:
             'twitter_oauth_token_secret': self.twitter_oauth_token_secret,
             'facebook_access_token': self.facebook_access_token
         }
-        return filter_empty_keys(data)
+        return util.filter_empty_keys(data)
 
     def save(self):
         _, temp = tempfile.mkstemp()
@@ -123,7 +100,8 @@ class User:
         filename = os.path.join(app.root_path, '_data/user.json')
         if os.path.exists(filename):
             save_backup(os.path.join(app.root_path, '_data'),
-                        os.path.join(app.root_path, '_data/.backup'), 'user.json')
+                        os.path.join(app.root_path, '_data/.backup'),
+                        'user.json')
         shutil.move(temp, filename)
 
     # Flask-Login integration
@@ -289,7 +267,7 @@ class Post:
         self._writeable = False
 
     def read_json_blob(self, data):
-        self.pub_date = isoparse(data.get('pub_date'))
+        self.pub_date = util.isoparse(data.get('pub_date'))
         self.slug = data.get('slug')
         self.title = data.get('title')
         self.in_reply_to = data.get('in_reply_to', [])
@@ -310,7 +288,7 @@ class Post:
 
     def to_json_blob(self):
         data = {
-            'pub_date':  format_date(self.pub_date),
+            'pub_date':  util.isoformat(self.pub_date),
             'slug': self.slug,
             'title': self.title,
             'in_reply_to': self.in_reply_to,
@@ -325,7 +303,7 @@ class Post:
             'deleted': self.deleted,
             'hidden': self.hidden,
         }
-        return filter_empty_keys(data)
+        return util.filter_empty_keys(data)
 
     def save(self):
         if not self._writeable:
@@ -459,7 +437,7 @@ class Metadata:
     def post_to_blob(post):
         return {
             'type': post.post_type,
-            'published': format_date(post.pub_date),
+            'published': util.isoformat(post.pub_date),
             'draft': post.draft,
             'deleted': post.deleted,
             'hidden': post.hidden,
@@ -495,7 +473,7 @@ class Metadata:
                                 mention_pub_date = entry.pub_date
 
                         mentions.append((post.path, mention,
-                                         format_date(mention_pub_date) 
+                                         util.isoformat(mention_pub_date)
                                          or '1970-01-01'))
 
         # keep the 30 most recent mentions
@@ -505,7 +483,7 @@ class Metadata:
             'post': post_path,
         } for post_path, mention, pub_date in mentions[:30]]
 
-        filter_empty_keys(posts)
+        util.filter_empty_keys(posts)
         blob = {
             'posts': posts,
             'mentions': recent_mentions,

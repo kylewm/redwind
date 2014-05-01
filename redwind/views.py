@@ -15,6 +15,7 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 from . import app
+from . import api
 from . import archiver
 from . import auth
 from . import contexts
@@ -29,13 +30,11 @@ from .models import Post, Location, Metadata, POST_TYPES
 
 from bs4 import BeautifulSoup
 from flask import request, redirect, url_for, render_template, flash,\
-    abort, make_response, jsonify, Markup
+    abort, make_response, Markup
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
 from contextlib import contextmanager
 from urllib.parse import urlparse, urljoin
-
-from werkzeug import secure_filename
 
 import datetime
 import bleach
@@ -475,27 +474,6 @@ def shortlink(tag):
                             day=pub_date.day, index=index))
 
 
-# disable this experimental feature
-# @app.route('/original_post_discovery')
-# def original_post_discovery():
-#     url = request.args.get('syndication')
-#     if not url:
-#         abort(404)
-#
-#     index = Post.load_syndication_index()
-#     path = index.get(url)
-#     if not path:
-#         r = requests.get(url)
-#         if r.status_code // 100 == 2 and r.url != url:
-#             path = index.get(r.url)
-#
-#     if not path:
-#         abort(404)
-#
-#     post = Post.load_by_path(path)
-#     return redirect(post.permalink)
-
-
 @app.route("/indieauth")
 def indie_auth():
     token = request.args.get('token')
@@ -772,72 +750,6 @@ def local_mirror_resource(url):
     return url
 
 
-## API Methods
-
-
-@app.route('/api/upload_file', methods=['POST'])
-@login_required
-def upload_file():
-    f = request.files['file']
-    filename = secure_filename(f.filename)
-    now = datetime.datetime.utcnow()
-
-    file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
-
-    url_path = url_for('static', filename=file_path)
-    full_file_path = os.path.join(app.root_path, 'static', file_path)
-
-    if not os.path.exists(os.path.dirname(full_file_path)):
-        os.makedirs(os.path.dirname(full_file_path))
-
-    f.save(full_file_path)
-    return jsonify({'path': url_path})
-
-
-@app.route('/api/upload_image', methods=['POST'])
-@login_required
-def upload_image():
-    f = request.files['file']
-    filename = secure_filename(f.filename)
-    now = datetime.datetime.utcnow()
-
-    file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
-
-    full_file_path = os.path.join(app.root_path, 'static', file_path)
-    if not os.path.exists(os.path.dirname(full_file_path)):
-        os.makedirs(os.path.dirname(full_file_path))
-    f.save(full_file_path)
-
-    result = {'original': url_for('static', filename=file_path)}
-
-    sizes = [('small', 300), ('medium', 600), ('large', 1024)]
-    for tag, side in sizes:
-        result[tag] = resize_image(file_path, tag, side)
-
-    return jsonify(result)
-
-
-def resize_image(path, tag, side):
-    from PIL import Image
-
-    dirname, filename = os.path.split(path)
-    ext = '.jpg'
-
-    split = filename.rsplit('.', 1)
-    if len(split) > 1:
-        filename, ext = split
-
-    newpath = os.path.join(dirname, '{}-{}.{}'.format(filename, tag, ext))
-    im = Image.open(os.path.join(app.root_path, 'static', path))
-
-    origw, origh = im.size
-    ratio = side / max(origw, origh)
-
-    im = im.resize((int(origw * ratio), int(origh * ratio)), Image.ANTIALIAS)
-    im.save(os.path.join(app.root_path, 'static', newpath))
-    return url_for('static', filename=newpath)
-
-
 @app.route('/admin/save', methods=['POST'])
 @login_required
 def save_post():
@@ -852,6 +764,12 @@ def save_post():
         else:
             with Post.writeable(Post.shortid_to_path(shortid)) as post:
                 yield post
+
+    def slugify(s):
+        slug = unicodedata.normalize('NFKD', s).lower()
+        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
+        slug = re.sub(r'[-]+', '-', slug)
+        return slug[:256]
 
     try:
         post_id_str = request.form.get('post_id')
@@ -935,26 +853,3 @@ def save_post():
         flash('failed to save post {}'.format(e))
 
         return redirect(url_for('index'))
-
-
-@app.route('/api/mf2')
-def convert_mf2():
-    from mf2py.parser import Parser
-    url = request.args.get('url')
-    p = Parser(url=url)
-    json = p.to_dict()
-    return jsonify(json)
-
-
-def slugify(s):
-    slug = unicodedata.normalize('NFKD', s).lower()
-    slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
-    slug = re.sub(r'[-]+', '-', slug)
-    return slug[:256]
-
-
-@app.route('/test/encoding')
-def test_encoding():
-    return make_response("<html><head></head><body>Tantek Çelik 😼 </body></html>",
-                         200,
-                         { 'Content-Type': 'text/html; charset=UTF-8' })

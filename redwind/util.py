@@ -23,6 +23,30 @@ import re
 import requests
 import itertools
 import collections
+import datetime
+
+
+def isoparse(s):
+    """Parse (UTC) datetimes in ISO8601 format"""
+    return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+
+
+def isoformat(date):
+    if date:
+        if date.tzinfo:
+            date = date.astimezone(datetime.timezone.utc)
+            date = date.replace(tzinfo=None)
+        date = date.replace(microsecond=0)
+        return date.isoformat('T')
+
+
+def filter_empty_keys(data):
+    if isinstance(data, list):
+        return list(filter_empty_keys(v) for v in data if filter_empty_keys(v))
+    if isinstance(data, dict):
+        return dict((k, filter_empty_keys(v)) for k, v in data.items()
+                    if filter_empty_keys(v))
+    return data
 
 
 def download_resource(url, path):
