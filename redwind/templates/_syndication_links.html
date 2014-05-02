@@ -1,4 +1,4 @@
-{% if post.twitter_url or post.facebook_url or authenticated %}
+{% if post.syndication or authenticated %}
   <div class="syndication-links">
 
     {% if authenticated %}
@@ -13,7 +13,6 @@
       </ul>
     {% endif %}
 
-
     {% if post.syndication %}
       View on
       <ul>
@@ -24,24 +23,6 @@
         {% endfor %}
       </ul>
     {% endif %}
-
-    <!--
-    {% if post.twitter_url or post.facebook_url %}
-      View on
-      <ul>
-        {% if post.twitter_url %}
-          <li><a rel="syndication" class="u-syndication" href="{{ post.twitter_url }}">
-              <i class="fa fa-twitter"></i> Twitter
-          </a></li>
-        {% endif %}
-        {% if post.facebook_url %}
-          <li><a rel="syndication" class="u-syndication" href="{{ post.facebook_url }}">
-              <i class="fa fa-facebook"></i> Facebook
-          </a></li>
-        {% endif %}
-      </ul>
-    {% endif %}
-    -->
 
   </div>
 {% endif %}
