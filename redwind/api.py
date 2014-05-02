@@ -166,8 +166,10 @@ def token_endpoint():
 
 @app.route('/api/micropub', methods=['POST'])
 def micropub_endpoint():
-    app.logger.info("received micropub request %s, args=%s, form=%s",
-                    request, request.args, request.form)
+    app.logger.info("received micropub request %s, args=%s, form=%s, headers=%s",
+                    request, request.args, request.form, request.headers)
+
+    
 
     post = Post('note', None)
     post._writeable = True
