@@ -138,7 +138,7 @@ def share_on_twitter():
 class TwitterClient:
 
     PERMALINK_RE = re.compile(
-        "https?://(?:www.)?twitter.com/(\w+)/status(?:es)?/(\w+)")
+        "https?://(?:www\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)")
 
     def get_auth(self):
         return OAuth1(

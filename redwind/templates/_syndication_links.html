@@ -18,7 +18,7 @@
       <ul>
         {% for syndication in post.syndication %}
           <li><a rel="syndication" class="u-syndication" href="{{ syndication }}">
-              {{ syndication | prettify_url }}
+              {{ syndication | format_syndication_url | safe }}
           </a></li>
         {% endfor %}
       </ul>
