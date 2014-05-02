@@ -1,28 +1,11 @@
-{% if post.syndication or authenticated %}
+{% if post.syndication %}
   <div class="syndication-links">
-
-    {% if authenticated %}
-      Share on
-      <ul>
-        <li><a href="{{ url_for('share_on_twitter', id=post.shortid) }}">
-            <i class="fa fa-twitter"></i> Twitter
-        </a></li>
-        <li><a href="{{ url_for('share_on_facebook', id=post.shortid) }}">
-            <i class="fa fa-facebook"></i> Facebook
-        </a></li>
-      </ul>
-    {% endif %}
-
-    {% if post.syndication %}
-      View on
-      <ul>
+      Also on
         {% for syndication in post.syndication %}
-          <li><a rel="syndication" class="u-syndication" href="{{ syndication }}">
+          <a rel="syndication" class="u-syndication" href="{{ syndication }}">
               {{ syndication | format_syndication_url | safe }}
-          </a></li>
+          </a>{% if not loop.last %}&nbsp;{% endif %}
         {% endfor %}
       </ul>
-    {% endif %}
-
   </div>
 {% endif %}

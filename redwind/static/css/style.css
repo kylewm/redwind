@@ -50,6 +50,7 @@ blockquote {
     background-color: white;
     padding: 1em;
     border-radius: 3px;
+    position: relative;
 }
 
 .post .p-name img, .post .e-content img {
@@ -161,8 +162,30 @@ nav li {
     font-size: 0.9em;
 }
 
-.post .admin-post-controls {
+.post .admin-post-controls-arrow {
+    color: #ccc;
     float: right;
+    top: -12px;
+    position: relative;
+    white-space: nowrap;
+}
+
+.post .admin-post-controls {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    display: none;
+    font-size: 0.9em;
+    list-style-type: none;
+    padding: 5px;
+    position: absolute;
+}
+
+.post .admin-post-controls hr {
+    color: #ddd;
+}
+
+.post .admin-post-controls li {
+    margin-left: 0px;
 }
 
 .share-context, .reply-context, .like-context {
@@ -182,8 +205,7 @@ nav li {
 }
 
 .post .syndication-links {
-    margin-top: 2em;
-    font-size: 0.9em;
+    margin-top: 1em;
 }
 
 .post .syndication-links li {
@@ -195,7 +217,7 @@ nav li {
 }
 
 .post .likes-and-reposts, .post .replies, .post .references {
-    margin-top: 2em;
+    margin-top: 3em;
 }
 
 .post .likes + .reposts {

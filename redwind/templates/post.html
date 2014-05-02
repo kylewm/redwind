@@ -22,6 +22,7 @@
 {% block content %}
 
   <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
+    {% include "_admin_post_controls.html" %}
     {% include "_hcard_author.html" %}
 
     {% include "_reply_context.html" %}
@@ -30,7 +31,6 @@
     {% include "_post_content.html" %}
 
     <div class="links">
-      {% include "_admin_post_controls.html" %}
       {% include "_single_post_links.html" %}
       <div style="clear: both;"></div>
       {% include "_syndication_links.html" %}
