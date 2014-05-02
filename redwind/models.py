@@ -24,25 +24,12 @@ import datetime
 import os
 import os.path
 import json
-import tempfile
-import shutil
 import time
 from operator import attrgetter, itemgetter
 from contextlib import contextmanager
 
 
 POST_TYPES = ('article', 'note', 'like', 'share', 'reply', 'checkin')
-
-
-def save_backup(sourcedir, destdir, relpath):
-    source = os.path.join(sourcedir, relpath)
-    if os.path.exists(source):
-        now = datetime.datetime.now()
-        target = os.path.join(destdir, relpath
-                              + "-" + util.isoformat(now))
-        if not os.path.exists(os.path.dirname(target)):
-            os.makedirs(os.path.dirname(target))
-        shutil.copy(source, target)
 
 
 @contextmanager
@@ -93,16 +80,9 @@ class User:
         return util.filter_empty_keys(data)
 
     def save(self):
-        _, temp = tempfile.mkstemp()
-        with open(temp, 'w') as f:
-            json.dump(self.to_json(), f, indent=True)
-
         filename = os.path.join(app.root_path, '_data/user.json')
-        if os.path.exists(filename):
-            save_backup(os.path.join(app.root_path, '_data'),
-                        os.path.join(app.root_path, '_data/.backup'),
-                        'user.json')
-        shutil.move(temp, filename)
+        with open(filename, 'w') as f:
+            json.dump(self.to_json(), f, indent=True)
 
     # Flask-Login integration
     def is_authenticated(self):
@@ -260,9 +240,9 @@ class Post:
         self.content = None
         self.pub_date = None
         self.slug = None
-        self.twitter_status_id = None
-        self.facebook_post_id = None
         self.location = None
+        self.syndication = []
+        self.tags = []
         self._mentions = None  # lazy load mentions
         self._writeable = False
 
@@ -273,6 +253,8 @@ class Post:
         self.in_reply_to = data.get('in_reply_to', [])
         self.repost_of = data.get('repost_of', [])
         self.like_of = data.get('like_of', [])
+        self.tags = data.get('tags', [])
+        self.syndication = data.get('syndication', [])
 
         self.draft = data.get('draft', False)
         self.deleted = data.get('deleted', False)
@@ -280,11 +262,6 @@ class Post:
 
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
-
-        if 'syndication' in data:
-            synd = data.get('syndication', {})
-            self.twitter_status_id = synd.get('twitter_id')
-            self.facebook_post_id = synd.get('facebook_id')
 
     def to_json_blob(self):
         data = {
@@ -295,10 +272,8 @@ class Post:
             'repost_of': self.repost_of,
             'like_of': self.like_of,
             'location': self.location and self.location.to_json(),
-            'syndication': {
-                'twitter_id': self.twitter_status_id,
-                'facebook_id': self.facebook_post_id
-            },
+            'syndication': self.syndication,
+            'tags': self.tags,
             'draft': self.draft,
             'deleted': self.deleted,
             'hidden': self.hidden,
@@ -325,17 +300,11 @@ class Post:
         if not os.path.exists(parentdir):
             os.makedirs(parentdir)
 
-        _, temp = tempfile.mkstemp()
-        with open(temp, 'w') as f:
+        with open(filename, 'w') as f:
             json.dump(self.to_json_blob(), f, indent=True)
             f.write('\n')
             if self.content:
                 f.write(self.content)
-
-        save_backup(basedir,
-                    os.path.join(app.root_path, '_data/.backup'),
-                    self.path)
-        shutil.move(temp, filename)
 
     @property
     def path(self):
@@ -385,22 +354,6 @@ class Post:
                                   tag, util.base60_encode(ordinal),
                                   self.date_index)
         return cite
-
-    @property
-    def twitter_url(self):
-        if self.twitter_status_id:
-            return "https://twitter.com/{}/status/{}".format(
-                'kyle_wm',  # FIXME
-                self.twitter_status_id)
-
-    @property
-    def facebook_url(self):
-        if self.facebook_post_id:
-            split = self.facebook_post_id.split('_', 1)
-            if split and len(split) == 2:
-                user_id, post_id = split
-                return "https://facebook.com/{}/posts/{}"\
-                    .format(user_id, post_id)
 
     @property
     def mentions_path(self):

@@ -1,5 +1,6 @@
 {% if post.twitter_url or post.facebook_url or authenticated %}
   <div class="syndication-links">
+
     {% if authenticated %}
       Share on
       <ul>
@@ -11,6 +12,20 @@
         </a></li>
       </ul>
     {% endif %}
+
+
+    {% if post.syndication %}
+      View on
+      <ul>
+        {% for syndication in post.syndication %}
+          <li><a rel="syndication" class="u-syndication" href="{{ syndication }}">
+              {{ syndication | prettify_url }}
+          </a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <!--
     {% if post.twitter_url or post.facebook_url %}
       View on
       <ul>
@@ -26,5 +41,7 @@
         {% endif %}
       </ul>
     {% endif %}
+    -->
+
   </div>
 {% endif %}
