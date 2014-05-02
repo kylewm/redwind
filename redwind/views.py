@@ -85,7 +85,7 @@ class DisplayPost:
 
     def repost_preview_filter(self, url):
         # youtube embeds
-        m = self.YOUTUBE_RE.match(url)
+        m = YOUTUBE_RE.match(url)
         if m:
             preview = """<iframe width="560" height="315" """\
                 """src="//www.youtube.com/embed/{}" frameborder="0" """\
@@ -94,7 +94,7 @@ class DisplayPost:
             return preview, False
 
         # instagram embeds
-        m = self.INSTAGRAM_RE.match(url)
+        m = INSTAGRAM_RE.match(url)
         if m:
             preview = """<iframe src="//instagram.com/p/{}/embed/" """\
                 """width="400" height="500" frameborder="0" scrolling="no" """\
