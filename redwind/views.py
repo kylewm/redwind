@@ -55,6 +55,11 @@ POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
             '<int(fixed_digits=2):day>/<index>'
 
+TWITTER_RE = twitter.TwitterClient.PERMALINK_RE
+FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/(\w+)/posts/(\w+)')
+YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
+INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
+
 
 def reraise_attribute_errors(func):
     """@property and my override of getattr don't mix — they swallow up
@@ -71,9 +76,6 @@ def reraise_attribute_errors(func):
 
 class DisplayPost:
 
-    YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
-    INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)/?#?')
-
     def __init__(self, wrapped):
         self.wrapped = wrapped
         self._mentions = None
@@ -82,7 +84,7 @@ class DisplayPost:
         return getattr(self.wrapped, attr)
 
     def repost_preview_filter(self, url):
-        #youtube embeds
+        # youtube embeds
         m = self.YOUTUBE_RE.match(url)
         if m:
             preview = """<iframe width="560" height="315" """\
@@ -91,7 +93,7 @@ class DisplayPost:
                 .format(m.group(1))
             return preview, False
 
-        #instagram embeds
+        # instagram embeds
         m = self.INSTAGRAM_RE.match(url)
         if m:
             preview = """<iframe src="//instagram.com/p/{}/embed/" """\
@@ -721,6 +723,17 @@ def prettify_url(url):
     else:
         path = url
     return path.strip('/')
+
+
+@app.template_filter('format_syndication_url')
+def format_syndication_url(url):
+    if TWITTER_RE.match(url):
+        return """<i class="fa fa-twitter"></i> Twitter"""
+    if FACEBOOK_RE.match(url):
+        return """<i class="fa fa-facebook"></i> Facebook"""
+    if INSTAGRAM_RE.match(url):
+        return """<i class="fa fa-instagram"></i> Instagram"""
+    return prettify_url(url)
 
 
 @app.template_filter('local_mirror')
