@@ -15,6 +15,7 @@
 # along with Red Wind.  If not, see <http://www.gnu.org/licenses/>.
 
 from . import app
+from . import auth
 from . import util
 from . import hentry_parser
 from .models import Post, Location, Metadata
@@ -127,7 +128,7 @@ def token_endpoint():
     })
     response.raise_for_status()
 
-    app.logger.debug("raw verification response from indieauth=%s", 
+    app.logger.debug("raw verification response from indieauth=%s",
                      response.text)
 
     resp_data = urllib.parse.parse_qs(response.text)
@@ -166,10 +167,33 @@ def token_endpoint():
 
 @app.route('/api/micropub', methods=['POST'])
 def micropub_endpoint():
-    app.logger.info("received micropub request %s, args=%s, form=%s, headers=%s",
-                    request, request.args, request.form, request.headers)
+    app.logger.info(
+        "received micropub request %s, args=%s, form=%s, headers=%s",
+        request, request.args, request.form, request.headers)
 
-    
+    # validate token
+    bearer_prefix = 'Bearer '
+    header_token = request.headers.get('authorization')
+    if header_token and header_token.startswith(bearer_prefix):
+        token = header_token[len(bearer_prefix):]
+    else:
+        token = request.form.get('access_token')
+
+    if not token:
+        app.logger.warn('hit micropub endpoint with no access token')
+        abort(401)
+
+    try:
+        decoded = jwt.decode(token, app.config['SECRET_KEY'])
+    except jwt.DecodeError as e:
+        app.logger.warn('could not decode access token: %s', e)
+        abort(401)
+
+    me = decoded.get('me')
+    user = auth.load_user(me)
+    if not user:
+        app.logger.warn('received valid access token for invalid user: %s', me)
+        abort(401)
 
     post = Post('note', None)
     post._writeable = True
@@ -206,7 +230,7 @@ def micropub_endpoint():
         photo_url = url_for('static', filename=relpath)
         post.content = '![]({})'.format(photo_url)
         post.save()
-    
+
     with Metadata.writeable() as mdata:
         mdata.add_or_update_post(post)
         mdata.save()
