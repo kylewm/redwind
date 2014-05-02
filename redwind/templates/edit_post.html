@@ -23,7 +23,7 @@
 
     {% if post.post_type == 'reply' %}
       <div class="in_reply_to">
-        <label><span>In Reply To (URL)</span>
+        <label><span>In Reply To (URLs)</span>
           <textarea style="width:100%" name="in_reply_to" rows="2">{{post.in_reply_to | join('\n')}}</textarea>
         </label>
       </div>
@@ -31,14 +31,14 @@
 
     {% if post.post_type == 'share' %}
       <div class="repost_source">
-        <label><span>Repost (URL)</span>
+        <label><span>Repost (URLs)</span>
           <textarea style="width:100%" name="repost_source" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea></label>
       </div>
     {% endif %}
 
     {% if post.post_type == 'like' %}
       <div class="like_of">
-        <label><span>Like of (URL)</span>
+        <label><span>Like of (URLs)</span>
           <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea></label>
       </div>
     {% endif %}
@@ -55,14 +55,12 @@
     <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/>
     <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label><br/>
 
+    <div class="syndication">
+      <label><span>Syndication (URLs)</span>
+        <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.syndication | join('\n')}}</textarea></label>
+    </div>
 
     {% if advanced %}
-      <div class="twitter_status_id">
-        <label><span class="heading">Twitter Status ID</span><input name="twitter_status_id" size="60" value="{{post.twitter_status_id or ''}}"></label>
-      </div>
-      <div class="facebook_post_id">
-        <label><span class="heading">Facebook Post ID</span><input name="facebook_post_id" size="60" value="{{post.facebook_post_id or ''}}"></label>
-      </div>
       <a href="#" id="uploads_link">Uploads</a>
     {% endif %}
 
