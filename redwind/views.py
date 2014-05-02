@@ -533,7 +533,7 @@ def delete_by_id():
 @login_required
 def new_post():
     post_type = request.args.get('type', 'note')
-    post = Post(post_type, None)
+    post = Post(post_type)
     post.content = ''
 
     if post_type == 'reply':
@@ -758,7 +758,7 @@ def save_post():
     def new_or_writeable(shortid):
         if shortid == 'new':
             post_type = request.form.get('post_type', 'note')
-            post = Post(post_type, None)
+            post = Post(post_type)
             post._writeable = True
             yield post
         else:
@@ -826,7 +826,6 @@ def save_post():
                                     syndication.split('\n')]
 
             app.logger.debug("attempting to save post %s", post)
-
             post.save()
 
         with Metadata.writeable() as mdata:

@@ -227,7 +227,7 @@ class Post:
 
         return sorted(list(result))
 
-    def __init__(self, post_type, date_index):
+    def __init__(self, post_type, date_index=None):
         self.post_type = post_type
         self.date_index = date_index
         self.draft = False

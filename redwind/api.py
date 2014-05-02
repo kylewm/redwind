@@ -33,44 +33,45 @@ import jwt
 import urllib
 
 
-@app.route('/api/upload_file', methods=['POST'])
-@login_required
-def upload_file():
+def generate_upload_path(f):
     f = request.files['file']
     filename = secure_filename(f.filename)
     now = datetime.datetime.utcnow()
 
-    file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
+    relpath = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
+    url = url_for('static', filename=relpath)
+    fullpath = os.path.join(app.root_path, 'static', relpath)
+    return relpath, url, fullpath
 
-    url_path = url_for('static', filename=file_path)
-    full_file_path = os.path.join(app.root_path, 'static', file_path)
 
-    if not os.path.exists(os.path.dirname(full_file_path)):
-        os.makedirs(os.path.dirname(full_file_path))
+@app.route('/api/upload_file', methods=['POST'])
+@login_required
+def upload_file():
+    f = request.files['file']
+    relpath, url, fullpath = generate_upload_path(f)
 
-    f.save(full_file_path)
-    return jsonify({'path': url_path})
+    if not os.path.exists(os.path.dirname(fullpath)):
+        os.makedirs(os.path.dirname(fullpath))
+
+    f.save(fullpath)
+    return jsonify({'path': url})
 
 
 @app.route('/api/upload_image', methods=['POST'])
 @login_required
 def upload_image():
     f = request.files['file']
-    filename = secure_filename(f.filename)
-    now = datetime.datetime.utcnow()
+    relpath, url, fullpath = generate_upload_path(f)
 
-    file_path = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
+    if not os.path.exists(os.path.dirname(fullpath)):
+        os.makedirs(os.path.dirname(fullpath))
+    f.save(fullpath)
 
-    full_file_path = os.path.join(app.root_path, 'static', file_path)
-    if not os.path.exists(os.path.dirname(full_file_path)):
-        os.makedirs(os.path.dirname(full_file_path))
-    f.save(full_file_path)
-
-    result = {'original': url_for('static', filename=file_path)}
+    result = {'original': url}
 
     sizes = [('small', 300), ('medium', 600), ('large', 1024)]
     for tag, side in sizes:
-        result[tag] = resize_image(file_path, tag, side)
+        result[tag] = resize_image(relpath, tag, side)
 
     return jsonify(result)
 
@@ -195,41 +196,49 @@ def micropub_endpoint():
         app.logger.warn('received valid access token for invalid user: %s', me)
         abort(401)
 
-    post = Post('note', None)
+    app.logger.debug('successfully authenticated as user %s => %s', me, user)
+
+    post = Post('note')
     post._writeable = True
 
-    published_str = request.form.get('published')
-    if published_str:
-        published = hentry_parser.parse_datetime(published_str)
-        if published.tzinfo:
-            published = published.astimezone(datetime.timezone.utc)
-            published = published.replace(tzinfo=None)
-        post.pub_date = published
+    post.title = request.form.get('name')
+    post.content = request.form.get('content')
+
+    pub_str = request.form.get('published')
+    if pub_str:
+        pub = hentry_parser.parse_datetime(pub_str)
+        if pub.tzinfo:
+            pub = pub.astimezone(datetime.timezone.utc)
+            pub = pub.replace(tzinfo=None)
+        post.pub_date = pub
     else:
         post.pub_date = datetime.datetime.utcnow()
 
     loc_str = request.form.get('location')
-    if loc_str and loc_str.startswith('geo:'):
-        lat, lon = loc_str[4:].split(',', 1)
+    geo_prefix = 'geo:'
+    if loc_str and loc_str.startswith(geo_prefix):
+        lat, lon = loc_str[len(geo_prefix):].split(',', 1)
         if lat and lon:
             post.location = Location(float(lat), float(lon),
                                      request.form.get('place_name'))
 
     synd_url = request.form.get('syndication')
-    # todo save syndication url here
-
-    post.save()
+    if synd_url:
+        post.syndication.append(synd_url)
 
     photo_file = request.files['photo']
     if photo_file:
-        relpath = os.path.join('uploads', post.path, 'photo.jpg')
-        fullpath = os.path.join(app.root_path, 'static', relpath)
+        relpath, photo_url, fullpath = generate_upload_path(photo_file)
         if not os.path.exists(os.path.dirname(fullpath)):
             os.makedirs(os.path.dirname(fullpath))
         photo_file.save(fullpath)
-        photo_url = url_for('static', filename=relpath)
-        post.content = '![]({})'.format(photo_url)
-        post.save()
+
+        content = '![]({})'.format(photo_url)
+        if post.content:
+            content += '\n\n' + post.content
+        post.content = content
+
+    post.save()
 
     with Metadata.writeable() as mdata:
         mdata.add_or_update_post(post)
