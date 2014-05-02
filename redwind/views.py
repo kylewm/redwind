@@ -820,13 +820,10 @@ def save_post():
                 post.like_of = [url.strip() for url
                                 in like_of.split('\n')]
 
-            twitter_status_id = request.form.get("twitter_status_id")
-            if twitter_status_id:
-                post.twitter_status_id = twitter_status_id
-
-            facebook_post_id = request.form.get("facebook_post_id")
-            if facebook_post_id:
-                post.facebook_post_id = facebook_post_id
+            syndication = request.form.get('syndication')
+            if syndication:
+                post.syndication = [url.strip() for url in
+                                    syndication.split('\n')]
 
             app.logger.debug("attempting to save post %s", post)
 
