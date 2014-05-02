@@ -34,7 +34,6 @@ import urllib
 
 
 def generate_upload_path(f):
-    f = request.files['file']
     filename = secure_filename(f.filename)
     now = datetime.datetime.utcnow()
 
@@ -172,7 +171,6 @@ def micropub_endpoint():
         "received micropub request %s, args=%s, form=%s, headers=%s",
         request, request.args, request.form, request.headers)
 
-    # validate token
     bearer_prefix = 'Bearer '
     header_token = request.headers.get('authorization')
     if header_token and header_token.startswith(bearer_prefix):
@@ -226,7 +224,7 @@ def micropub_endpoint():
     if synd_url:
         post.syndication.append(synd_url)
 
-    photo_file = request.files['photo']
+    photo_file = request.files.get('photo')
     if photo_file:
         relpath, photo_url, fullpath = generate_upload_path(photo_file)
         if not os.path.exists(os.path.dirname(fullpath)):
@@ -239,9 +237,11 @@ def micropub_endpoint():
         post.content = content
 
     post.save()
+    post._writeable = False
 
     with Metadata.writeable() as mdata:
         mdata.add_or_update_post(post)
         mdata.save()
 
     return make_response('', 201, {'Location': post.permalink})
+
