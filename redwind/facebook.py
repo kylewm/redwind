@@ -70,15 +70,13 @@ def share_on_facebook():
         img_url = request.form.get('img')
 
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            handle_new_or_edit(post, preview, img_url)
+            facebook_url = handle_new_or_edit(post, preview, img_url)
             post.save()
-            #post.update_syndication_index(post.facebook_url)
-
 
             return """Shared on Facebook<br/>
             <a href="{}">Original</a><br/>
             <a href="{}">On Facebook</a><br/>
-            """.format(post.permalink, post.facebook_url)
+            """.format(post.permalink, facebook_url)
 
     except Exception as e:
         app.logger.exception('posting to facebook')
@@ -123,4 +121,10 @@ def handle_new_or_edit(post, preview, img_url):
 
     app.logger.debug('published to facebook. response {}'.format(result))
     if result:
-        post.facebook_post_id = result['id']
+        facebook_post_id = result['id']
+        split = facebook_post_id.split('_', 1)
+        if split and len(split) == 2:
+            user_id, post_id = split
+            fb_url = 'https://facebook.com/{}/posts/{}'.format(user_id, post_id)
+            post.syndication.append(fb_url)
+            return fb_url

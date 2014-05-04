@@ -24,12 +24,12 @@ from mf2py.parser import Parser
 
 def load_json_from_archive(url):
     path = os.path.join(url_to_archive_path(url), 'parsed.json')
-    app.logger.debug("checking archive for %s => %s", url, path)
+    #app.logger.debug("checking archive for %s => %s", url, path)
 
     if os.path.exists(path):
-        app.logger.debug("path exists, loading %s", path)
+        #app.logger.debug("path exists, loading %s", path)
         return json.load(open(path, 'r'))
-    app.logger.debug("path does not exist %s", path)
+    app.logger.debug("archive path does not exist %s", path)
     return None
 
 

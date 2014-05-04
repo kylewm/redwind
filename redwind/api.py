@@ -122,14 +122,14 @@ def token_endpoint():
     response = requests.post(auth_endpoint, data={
         'code': code,
         'me': me,
-        'redirect_uri': redirect_uri,
         'client_id': client_id,
         'state': state,
+        'response_type': 'token',
     })
+    app.logger.debug("raw verification response from indieauth=%s, %s, %s",
+                     response, response.headers, response.text)
     response.raise_for_status()
 
-    app.logger.debug("raw verification response from indieauth=%s",
-                     response.text)
 
     resp_data = urllib.parse.parse_qs(response.text)
     auth_me = resp_data.get('me', [])
