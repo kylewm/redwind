@@ -259,7 +259,6 @@ class TwitterClient:
                 result = requests.post(
                     'https://api.twitter.com/1.1/statuses/retweet/{}.json'
                     .format(tweet_id),
-                    data={'trim_user': True},
                     auth=self.get_auth())
                 if result.status_code // 2 != 100:
                     raise RuntimeError("{}: {}".format(result,
@@ -273,7 +272,7 @@ class TwitterClient:
                 tweet_id = like_match.group(2)
                 result = requests.post(
                     'https://api.twitter.com/1.1/favorites/create.json',
-                    data={'id': tweet_id, 'trim_user': True},
+                    data={'id': tweet_id},
                     auth=self.get_auth())
                 if result.status_code // 2 != 100:
                     raise RuntimeError("{}: {}".format(result,
@@ -282,7 +281,6 @@ class TwitterClient:
         if not is_retweet and not is_favorite:
             data = {}
             data['status'] = preview
-            data['trim_user'] = True
 
             if post.location:
                 data['lat'] = str(post.location.latitude)
@@ -313,12 +311,15 @@ class TwitterClient:
                                    .format(result.status_code, result.headers,
                                            result.content))
 
+        result_json = result.json()
+        app.logger.debug("response from twitter {}".format(
+            json.dumps(result_json, indent=True)))
         twitter_url = 'https://twitter.com/{}/status/{}'.format(
-            result.json().get('user', {}).get('screen_name'),
-            result.json().get('id_str'))
+            result_json.get('user', {}).get('screen_name'),
+            result_json.get('id_str'))
         post.syndication.append(twitter_url)
         return twitter_url
-            
+
     def download_image_to_temp(self, url):
         _, tempfile = mkstemp()
         util.download_resource(url, tempfile)
