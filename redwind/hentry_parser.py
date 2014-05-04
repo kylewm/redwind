@@ -16,7 +16,7 @@
 
 from . import app
 from collections import deque
-from mf2py.parser import Parser
+import mf2py
 import datetime
 import re
 
@@ -58,7 +58,7 @@ class Entry:
 
 
 def parse_html(txt, source):
-    p = Parser(doc=txt, url=source)
+    p = mf2py.Parser(doc=txt, url=source)
     return parse_json(p.to_dict())
 
 
@@ -144,7 +144,7 @@ def parse_json(d, source):
             queue.extend(item.get('children', []))
 
     if entry and not entry.author:
-        hcards = [item for item in d['items'] if 'h-card' in item['type']]
+        hcards = [card for card in d['items'] if 'h-card' in card['type']]
 
         for item in hcards:
             urls = item['properties'].get('url', [])

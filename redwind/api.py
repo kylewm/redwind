@@ -126,6 +126,10 @@ def token_endpoint():
         'client_id': client_id,
         'state': state,
     })
+
+    app.logger.debug("raw verification response from indieauth %s, %s, %s",
+                     response, response.headers, response.text)
+
     response.raise_for_status()
 
     app.logger.debug("raw verification response from indieauth=%s",
@@ -244,4 +248,3 @@ def micropub_endpoint():
         mdata.save()
 
     return make_response('', 201, {'Location': post.permalink})
-
