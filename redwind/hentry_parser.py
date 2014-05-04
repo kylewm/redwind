@@ -138,7 +138,7 @@ def parse_json(d, source):
 
             entry = Entry(author, permalink, pub_date, references, title,
                           content_html)
-            app.logger.debug("successfully parsed %s", entry)
+            #app.logger.debug("successfully parsed %s", entry)
             break
         else:
             queue.extend(item.get('children', []))

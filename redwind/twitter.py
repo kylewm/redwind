@@ -120,15 +120,14 @@ def share_on_twitter():
         like_of = request.form.get('like_of')
 
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            twitter_client.handle_new_or_edit(post, preview, img_url,
-                                              in_reply_to, repost_of, like_of)
+            twitter_url = twitter_client.handle_new_or_edit(
+                post, preview, img_url, in_reply_to, repost_of, like_of)
             post.save()
-            #post.update_syndication_index(post.twitter_url)
 
             return """Shared on Twitter<br/>
             <a href="{}">Original</a><br/>
             <a href="{}">On Twitter</a><br/>
-            """.format(post.permalink, post.twitter_url)
+            """.format(post.permalink, twitter_url)
 
     except Exception as e:
         app.logger.exception('posting to twitter')
@@ -314,8 +313,12 @@ class TwitterClient:
                                    .format(result.status_code, result.headers,
                                            result.content))
 
-        post.twitter_status_id = result.json().get('id_str')
-
+        twitter_url = 'https://twitter.com/{}/status/{}'.format(
+            result.json().get('user', {}).get('screen_name'),
+            result.json().get('id_str'))
+        post.syndication.append(twitter_url)
+        return twitter_url
+            
     def download_image_to_temp(self, url):
         _, tempfile = mkstemp()
         util.download_resource(url, tempfile)

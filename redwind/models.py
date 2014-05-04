@@ -56,7 +56,7 @@ class User:
 
     @classmethod
     def load(cls, path):
-        app.logger.debug("loading from path %s", os.path.abspath(path))
+        #app.logger.debug("loading from path %s", os.path.abspath(path))
         if os.path.exists(path):
             with open(path, 'r') as f:
                 data = json.load(f)
@@ -149,7 +149,7 @@ class Post:
 
     @classmethod
     def load(cls, path):
-        app.logger.debug("loading from path %s", path)
+        #app.logger.debug("loading from path %s", path)
 
         post_type = path.split('/', 1)[0]
         date_index, _ = os.path.splitext(os.path.basename(path))
@@ -368,11 +368,11 @@ class Post:
             if os.path.exists(path):
                 blob = json.load(open(path, 'r'))
                 self._mentions = blob
-                app.logger.debug("loaded mentions from %s: %s",
-                                 path, self._mentions)
+                #app.logger.debug("loaded mentions from %s: %s",
+                #                 path, self._mentions)
             else:
                 self._mentions = []
-                app.logger.debug("no mentions file found at %s", path)
+                #app.logger.debug("no mentions file found at %s", path)
 
         return self._mentions
 

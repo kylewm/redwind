@@ -57,7 +57,8 @@
 
     <div class="syndication">
       <label><span>Syndication (URLs)</span>
-        <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.syndication | join('\n')}}</textarea></label>
+        <textarea style="width:100%" name="syndication" cols="50" rows="2">{{post.syndication | join('\n')}}</textarea>
+      </label>
     </div>
 
     {% if advanced %}
