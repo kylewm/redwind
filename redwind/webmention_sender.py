@@ -161,7 +161,8 @@ class MentionClient:
     def find_webmention_endpoint_in_html(self, body):
         soup = BeautifulSoup(body)
         link = (soup.find('link', attrs={'rel': 'webmention'})
-                or soup.find('link', attrs={'rel': 'http://webmention.org/'}))
+                or soup.find('link', attrs={'rel': 'http://webmention.org/'})
+                or soup.find('a', attrs={'rel': 'webmention'}))
         return link and link.get('href')
 
     def send_webmention(self, post, target_url):
