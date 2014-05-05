@@ -122,6 +122,7 @@ def token_endpoint():
     response = requests.post(auth_endpoint, data={
         'code': code,
         'me': me,
+        'redirect_uri': redirect_uri,
         'client_id': client_id,
         'state': state,
     })
@@ -130,7 +131,6 @@ def token_endpoint():
                      response, response.headers, response.text)
 
     response.raise_for_status()
-
 
     resp_data = urllib.parse.parse_qs(response.text)
     auth_me = resp_data.get('me', [])
