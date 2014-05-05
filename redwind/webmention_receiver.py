@@ -20,7 +20,7 @@ from . import app
 from . import archiver
 from .models import Post, Metadata, acquire_lock
 
-from flask import request, make_response
+from flask import request, make_response, render_template
 from werkzeug.exceptions import NotFound
 
 import urllib.parse
@@ -33,8 +33,11 @@ import os
 from bs4 import BeautifulSoup
 
 
-@app.route('/webmention', methods=["POST"])
+@app.route('/webmention', methods=['GET', 'POST'])
 def receive_webmention():
+    if request.method == 'GET':
+        return render_template('webmention.html')
+
     source = request.form.get('source')
     target = request.form.get('target')
     callback = request.form.get('callback')
