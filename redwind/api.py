@@ -33,11 +33,29 @@ import jwt
 import urllib
 
 
-def generate_upload_path(f):
+def generate_upload_path(f, default_ext=None):
     filename = secure_filename(f.filename)
+    basename, ext = os.path.splitext(filename)
+    
+    if ext:
+        app.logger.debug('file has extension: %s, %s', basename, ext)
+    else:
+        app.logger.debug('no file extension, checking mime_type: %s',
+                         f.mimetype)
+        if f.mimetype == 'image/png':
+            ext = '.png'
+        elif f.mimetype == 'image/jpeg':
+            ext = '.jpg'
+        elif default_ext:
+            # fallback application/octet-stream
+            ext = default_ext
+
+        filename = basename + ext
+
     now = datetime.datetime.utcnow()
 
-    relpath = 'uploads/{}/{:02d}/{}'.format(now.year, now.month, filename)
+    relpath = 'uploads/{}/{:02d}/{:02d}/{}'.format(now.year, now.month, now.day,
+                                               filename)
     url = url_for('static', filename=relpath)
     fullpath = os.path.join(app.root_path, 'static', relpath)
     return relpath, url, fullpath
@@ -60,7 +78,7 @@ def upload_file():
 @login_required
 def upload_image():
     f = request.files['file']
-    relpath, url, fullpath = generate_upload_path(f)
+    relpath, url, fullpath = generate_upload_path(f, '.jpg')
 
     if not os.path.exists(os.path.dirname(fullpath)):
         os.makedirs(os.path.dirname(fullpath))
@@ -227,7 +245,7 @@ def micropub_endpoint():
 
     photo_file = request.files.get('photo')
     if photo_file:
-        relpath, photo_url, fullpath = generate_upload_path(photo_file)
+        relpath, photo_url, fullpath = generate_upload_path(photo_file, '.jpg')
         if not os.path.exists(os.path.dirname(fullpath)):
             os.makedirs(os.path.dirname(fullpath))
         photo_file.save(fullpath)

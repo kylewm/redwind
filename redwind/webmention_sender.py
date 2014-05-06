@@ -187,8 +187,8 @@ class MentionClient:
             if response.status_code // 100 != 2:
                 app.logger.warn(
                     "Failed to send webmention for %s. "
-                    "Response status code: %s",
-                    target_url, response.status_code)
+                    "Response status code: %s, %s",
+                    target_url, response.status_code, response.text)
                 return False, "Status code: {}, Response: {}".format(
                     response.status_code, response.text)
             else:
