@@ -704,7 +704,7 @@ def markdown_filter(data):
     from markdown import markdown
     from smartypants import smartypants
     return smartypants(
-        markdown(data, extensions=['codehilite']))
+        markdown(data, extensions=['codehilite', 'fenced_code']))
 
 
 @app.template_filter('autolink')
