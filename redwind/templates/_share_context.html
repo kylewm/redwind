@@ -38,7 +38,7 @@
           <div class="e-content">
             {% set content_words = share.content | format_as_text | wordcount %}
             {% if content_words < 200 %}
-              {{ share.content | bleach | safe }}
+              {{ share.content | autolink | bleach | safe }}
             {% else %}
               {{ share.content | format_as_text | truncate(200) }}
               <a class="u-url" href="{{ share.permalink }}">continued</a>

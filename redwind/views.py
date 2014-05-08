@@ -431,11 +431,12 @@ def archive(year, month):
 
     years = {}
     for m in Post.get_archive_months():
-        years.setdefault(m.year, []).append(m)
+        years.setdefault(m.year, []).append(m.month)
 
     return render_template(
         'archive.html', years=years,
-        expanded_month=first_of_month, posts=posts)
+        expanded_year=year, expanded_month=month,
+        posts=posts)
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
@@ -650,6 +651,16 @@ def pluralize(number, singular='', plural='s'):
         return plural
 
 
+@app.template_filter('month_shortname')
+def month_shortname(month):
+    return datetime.date(1990, month, 1).strftime('%b')
+
+
+@app.template_filter('month_name')
+def month_name(month):
+    return datetime.date(1990, month, 1).strftime('%B')
+
+
 def url_for_other_page(page):
     args = request.view_args.copy()
     args['page'] = page
@@ -660,7 +671,7 @@ app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 @app.template_filter('html_to_plain')
 def html_to_plain(content):
-    soup = BeautifulSoup(str(content), 'html5lib')
+    soup = BeautifulSoup(str(content), 'lxml')
     text = soup.get_text()
     return Markup.escape(text)
 
@@ -703,16 +714,16 @@ def format_as_text(html, remove_imgs=True):
 def markdown_filter(data):
     from markdown import markdown
     from smartypants import smartypants
-    return smartypants(
-        markdown(data, extensions=['codehilite', 'fenced_code']))
+    
+    result = markdown(data, extensions=['codehilite', 'fenced_code'])
+    result = util.autolink(result)
+    result = smartypants(result)
+    return result
 
 
 @app.template_filter('autolink')
-def plain_text_filter(plain):
-    plain = util.autolink(plain)
-    for endl in ('\r\n', '\n', '\r'):
-        plain = plain.replace(endl, '<br />')
-    return plain
+def autolink(plain):
+    return util.autolink(plain)
 
 
 @app.template_filter('prettify_url')

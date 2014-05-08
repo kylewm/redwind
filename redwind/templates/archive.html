@@ -6,17 +6,20 @@
     <div>
       <span class="archive-year">{{ year }}</span>
 
-      {% for month in months %}
-        {% if month == expanded_month %}
+      {% for month in range(1, 13) %}
+        {% if year == expanded_year and month == expanded_month %}
           <span class="archive-month archive-month-current">
-            {{ month | strftime("%b") }}
+            {{ month | month_shortname }}
           </span>
-
+        {% elif month in months %}
+          <span class="archive-month">
+            <a href="{{url_for('archive', year=year, month=month)}}">
+              {{ month | month_shortname }}
+            </a>
+          </span>
         {% else %}
           <span class="archive-month">
-            <a href="{{url_for('archive', year=month.year, month=month.month)}}">
-              {{ month | strftime("%b") }}
-            </a>
+            {{ month | month_shortname }}
           </span>
         {% endif %}
       {% endfor %}
@@ -26,8 +29,7 @@
 
   {% if expanded_month %}
     <div class="h-feed">
-      <h2 class="p-name">
-        Kyle Mahan: Archive {{ expanded_month | strftime('%Y %B')}} </h2>
+      <h2 class="p-name">Kyle Mahan: Archive {{ expanded_year }} {{ expanded_month | month_name }}</h2>
         {% for post in posts %}
           <div class="h-entry post">
             {% include "_reply_context.html" %}
