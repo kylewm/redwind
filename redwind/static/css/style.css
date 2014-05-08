@@ -123,14 +123,20 @@ nav li {
     margin-left: 0em;
 }
 
-#indie_auth_form {
+#login_area {
     float: right;
+}
+
+#indie_auth_form {
     display: inline;
+}
+
+#login_area {
+    font-size: 0.8em;
 }
 
 #sign_in_button {
     border: solid 1px #333;
-    font-size: 0.8em;
 }
 
 .post + .post {

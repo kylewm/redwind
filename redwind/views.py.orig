@@ -327,7 +327,7 @@ def render_posts(title, post_types, page, per_page,
                              include_drafts=include_drafts,
                              page=page, per_page=per_page)
 
-    dposts = [DisplayPost(post) for post in posts if check_audience(post)]
+    dposts = [DisplayPost(post) for post in posts]
     return render_template('posts.html', posts=dposts, title=title,
                            prev_page=page-1,
                            next_page=page+1)
@@ -341,6 +341,7 @@ def inject_user_authenticated():
     # inline_style = re.sub('\s+', ' ', inline_style)
     twitterbot = 'Twitterbot' in request.headers.get('User-Agent', '')
     return {
+        'authenticated': current_user.is_authenticated(),
         'inline_style': Markup(inline_style),
         'is_twitter_user_agent': twitterbot,
     }
@@ -375,7 +376,7 @@ def render_posts_atom(title, feed_id, post_types, count):
     mdata = Metadata()
     posts = mdata.load_posts(reverse=True, post_types=post_types,
                              page=1, per_page=10)
-    dposts = [DisplayPost(post) for post in posts if check_audience(post)]
+    dposts = [DisplayPost(post) for post in posts]
     return make_response(render_template('posts.atom', title=title,
                                          feed_id=feed_id,
                                          posts=dposts), 200,
@@ -420,35 +421,22 @@ def mentions_atom():
 def archive(year, month):
     # give the template the posts from this month,
     # and the list of all years/month
-    posts = []
-    if year and month:
-        posts = [DisplayPost(post) for post
-                 in Metadata().load_by_month(year, month)
-                 if check_audience(post)]
 
-    years = Metadata().get_archive_months()
+    if year and month:
+        posts = [DisplayPost(post) for post in Post.load_by_month(year, month)]
+        first_of_month = year and month and datetime.date(year, month, 1)
+    else:
+        posts = []
+        first_of_month = None
+
+    years = {}
+    for m in Post.get_archive_months():
+        years.setdefault(m.year, []).append(m.month)
+
     return render_template(
         'archive.html', years=years,
         expanded_year=year, expanded_month=month,
         posts=posts)
-
-
-def check_audience(post):
-    app.logger.debug('checking audience for post {}: {}'.format(post.title, post.audience))
-    if not post.audience:
-        # all posts public by default
-        return True
-
-    if current_user.is_authenticated():
-        # admin user can see everything
-        return True
-
-    if current_user.is_anonymous():
-        # anonymous users can't see stuff
-        return False
-
-    # check that their username is listed in the post's audience
-    return current_user.get_id() in post.audience
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
@@ -460,9 +448,6 @@ def post_by_date(post_type, year, month, day, index, slug):
 
     if post.deleted:
         abort(410)  # deleted permanently
-
-    if not check_audience(post):
-        abort(401)  # not authorized TODO a nicer page
 
     if not slug and post.slug:
         return redirect(
@@ -492,17 +477,8 @@ def shortlink(tag):
                             day=pub_date.day, index=index))
 
 
-# for testing -- allows arbitrary logins as any user
-# @app.route('/fakeauth')
-# def fakeauth():
-#     domain = request.args.get('url')
-#     user = auth.load_user(domain)
-#     login_user(user, remember=True)
-#     return redirect(url_for('index'))
-
-
 @app.route("/indieauth")
-def indieauth():
+def indie_auth():
     token = request.args.get('token')
     response = requests.get('http://indieauth.com/verify',
                             params={'token': token})
@@ -525,6 +501,7 @@ def indieauth():
 
 
 @app.route("/admin/logout")
+@login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
@@ -556,6 +533,7 @@ def delete_by_id():
 
 
 @app.route('/admin/new')
+@login_required
 def new_post():
     post_type = request.args.get('type', 'note')
     post = Post(post_type)
@@ -586,6 +564,7 @@ def new_post():
 
 
 @app.route('/admin/edit')
+@login_required
 def edit_by_id():
     shortid = request.args.get('id')
     post = Post.load_by_shortid(shortid)
@@ -735,11 +714,16 @@ def format_as_text(html, remove_imgs=True):
 def markdown_filter(data):
     from markdown import markdown
     from smartypants import smartypants
-
+<<<<<<< HEAD
+    return smartypants(
+        markdown(data, extensions=['codehilite', 'fenced_code']))
+=======
+    
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
     result = util.autolink(result)
     result = smartypants(result)
     return result
+>>>>>>> 10196edefc84b51df48bcab1c01bc6bb9d6fcb83
 
 
 @app.template_filter('autolink')
@@ -806,7 +790,6 @@ def save_post():
             post = Post(post_type)
             post._writeable = True
             yield post
-            post._writeable = False
         else:
             with Post.writeable(Post.shortid_to_path(shortid)) as post:
                 yield post

@@ -20,7 +20,6 @@ from . import util
 from . import archiver
 from . import hentry_parser
 
-import datetime
 import os
 import os.path
 import json
@@ -56,7 +55,7 @@ class User:
 
     @classmethod
     def load(cls, path):
-        #app.logger.debug("loading from path %s", os.path.abspath(path))
+        # app.logger.debug("loading from path %s", os.path.abspath(path))
         if os.path.exists(path):
             with open(path, 'r') as f:
                 data = json.load(f)
@@ -69,6 +68,10 @@ class User:
         user.twitter_oauth_token_secret = data.get('twitter_oauth_token_secret')
         user.facebook_access_token = data.get('facebook_access_token')
         return user
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.authenticated = False
 
     def to_json(self):
         data = {
@@ -85,8 +88,10 @@ class User:
             json.dump(self.to_json(), f, indent=True)
 
     # Flask-Login integration
+
     def is_authenticated(self):
-        return True
+        # user matching user.json is authenticated, all others are guests
+        return self.authenticated
 
     def is_active(self):
         return True
@@ -96,9 +101,6 @@ class User:
 
     def get_id(self):
         return self.domain
-
-    def __init__(self, domain):
-        self.domain = domain
 
     def __repr__(self):
         return '<User:{}>'.format(self.domain)
@@ -176,30 +178,6 @@ class Post:
         return post
 
     @classmethod
-    def load_by_month(cls, year, month):
-        # TODO use Metadata
-        posts = []
-        datadir = os.path.join(app.root_path, '_data')
-        for post_type in POST_TYPES:
-            path = os.path.join(datadir,
-                                '{}/{}/{:02d}'.format(post_type, year, month))
-
-            if not os.path.exists(path):
-                continue
-
-            for day in os.listdir(path):
-                daypath = os.path.join(path, day)
-                for filename in os.listdir(daypath):
-                    if filename.endswith('.md'):
-                        filepath = os.path.join(daypath, filename)
-                        post = cls.load(filepath[len(datadir)+1:])
-                        if not post.deleted:
-                            posts.append(post)
-
-        posts.sort(key=attrgetter('pub_date'))
-        return posts
-
-    @classmethod
     def load_by_date(cls, post_type, year, month, day, index):
         return cls.load(
             cls.date_to_path(post_type, year, month, day, index))
@@ -221,20 +199,6 @@ class Post:
         return '{}/{}/{:02d}/{:02d}/{}'.format(
             post_type, pub_date.year, pub_date.month, pub_date.day, index)
 
-    @classmethod
-    def get_archive_months(cls):
-        # TODO use Metadata
-        result = set()
-        for post_type in POST_TYPES:
-            path = os.path.join(app.root_path, '_data', post_type)
-            for year in os.listdir(path):
-                yearpath = os.path.join(path, year)
-                for month in os.listdir(yearpath):
-                    first_of_month = datetime.date(int(year), int(month), 1)
-                    result.add(first_of_month)
-
-        return sorted(list(result))
-
     def __init__(self, post_type, date_index=None):
         self.post_type = post_type
         self.date_index = date_index
@@ -251,6 +215,7 @@ class Post:
         self.location = None
         self.syndication = []
         self.tags = []
+        self.audience = None  # public
         self._mentions = None  # lazy load mentions
         self._writeable = False
 
@@ -267,6 +232,7 @@ class Post:
         self.draft = data.get('draft', False)
         self.deleted = data.get('deleted', False)
         self.hidden = data.get('hidden', False)
+        self.audience = data.get('audience')
 
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
@@ -285,6 +251,7 @@ class Post:
             'draft': self.draft,
             'deleted': self.deleted,
             'hidden': self.hidden,
+            'audience': self.audience,
         }
         return util.filter_empty_keys(data)
 
@@ -522,3 +489,26 @@ class Metadata:
                  if other.get('path') != post_path]
         posts.append(Metadata.post_to_blob(post))
         self.blob['posts'] = posts
+
+    def get_archive_months(self):
+        """Find months that have post content, for the archive page
+
+        Returns: a dict of year -> set of months
+        """
+        result = {}
+        for post in self.blob['posts']:
+            published = util.isoparse(post.get('published'))
+            if not post.get('deleted') and published:
+                result.setdefault(published.year, set()).add(published.month)
+        return result
+
+    def load_by_month(self, year, month):
+        posts = []
+        for post in self.blob['posts']:
+            published = util.isoparse(post.get('published'))
+            if not post.get('deleted') and published \
+               and published.year == year and published.month == month:
+                posts.append(Post.load(post['path']))
+
+        posts.sort(key=attrgetter('pub_date'))
+        return posts
