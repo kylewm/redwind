@@ -1,4 +1,4 @@
-{% if authenticated %}
+{% if current_user.is_authenticated() %}
 
 <a class="admin-post-controls-arrow" href="#">
   <i class="fa fa-caret-down"></i>

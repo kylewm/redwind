@@ -1,3 +1,11 @@
+{% if post.audience %}
+<div class="audience">
+  shared with:
+  {% for recipient in post.audience %}
+    <a href="{{ recipient }}">{{ recipient | prettify_url }}</a>
+  {% endfor %}
+</div>
+{% endif %}
 
 <a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | human_time }}</time></a>
 {% if post.location %}

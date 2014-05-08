@@ -9,7 +9,7 @@
 
     {% for post in posts %}
 
-      <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }}">
+      <div class="post {{post.post_type}} h-entry {{ 'draft' if post.draft else '' }} {{ 'private' if post.audience else '' }}">
 	{% include "_admin_post_controls.html" %}
         {% include "_reply_context.html" %}
         {% include "_like_context.html" %}

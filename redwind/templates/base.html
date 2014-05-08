@@ -39,13 +39,8 @@
     {% block head_content %}{% endblock %}
   </head>
   <body>
-    <!--[if lt IE 7]>
-        <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-        <![endif]-->
-
     <div id="wrapper">
       <header>
-
         <div id="login_area">
           {% if current_user.is_anonymous() %}
             <form id="indie_auth_form" action="http://indieauth.com/auth" method="get">
@@ -83,7 +78,7 @@
       <div class="flashes">
         {% with messages = get_flashed_messages() %}
           {% if messages %}
-            <ul class=flashes>
+            <ul class="flashes">
               {% for message in messages %}
                 <li>{{ message }}</li>
               {% endfor %}
