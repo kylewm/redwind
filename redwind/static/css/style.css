@@ -269,6 +269,14 @@ form input {
     margin: 3px;
 }
 
+.archive-month-current {
+    font-weight: bold;
+}
+
+.archive-year, .archive-month {
+    margin: 3px;
+}
+
 @media(max-width: 600px) {
     html, body {
         word-wrap: break-word;

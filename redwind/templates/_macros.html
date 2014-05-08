@@ -1,12 +1,12 @@
 {% macro author_image(image_url, alt_text) %}
   <div class="author-image-holder">
-    <img class="u-photo" src="{% if image_url %}{{ image_url }}{% else %}{{ url_for('static', filename='img/users/placeholder.png') }}{% endif %}"
+    <img class="u-photo" src="{% if image_url %}{{ image_url | local_mirror }}{% else %}{{ url_for('static', filename='img/users/placeholder.png') }}{% endif %}"
          alt="{{alt_text}}"/>
   </div>
 {% endmacro %}
 
 {% macro author_image_likes(image_url, alt_text, title) %}<img
    class="author-image-likes u-photo"
-   src="{% if image_url %}{{ image_url }}{% else %}{{ url_for('static', filename='img/users/placeholder.png') }}{% endif %}"
+   src="{% if image_url %}{{ image_url | local_mirror }}{% else %}{{ url_for('static', filename='img/users/placeholder.png') }}{% endif %}"
    alt="{{alt_text}}"
    title="{{title}}"/>{% endmacro %}
