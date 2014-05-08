@@ -112,17 +112,24 @@ def process_webmention(source, target, callback):
 
 def do_process_webmention(source, target):
     app.logger.debug("processing webmention from %s to %s", source, target)
-    # confirm that target is a valid link to a post
-    target_post = find_target_post(target)
+    if target and target.strip('/') == app.config['SITE_URL'].strip('/'):
+        # received a domain-level mention
+        app.logger.debug('received domain-level webmention from %s', source)
+        target_post = None
+        target_urls = (target,)
+        mentions_path = 'domain.mentions.json'
+    else:
+        # confirm that target is a valid link to a post
+        target_post = find_target_post(target)
 
-    if not target_post:
-        app.logger.warn(
-            "Webmention could not find target post: %s. Giving up", target)
-        return None, None, None, False, \
-            "Webmention could not find target post: {}".format(target)
+        if not target_post:
+            app.logger.warn(
+                "Webmention could not find target post: %s. Giving up", target)
+            return None, None, None, False, \
+                "Webmention could not find target post: {}".format(target)
 
-    target_urls = (target, target_post.permalink, target_post.short_permalink)
-    mentions_path = target_post.mentions_path
+        target_urls = (target, target_post.permalink, target_post.short_permalink)
+        mentions_path = target_post.mentions_path
 
     # confirm that source actually refers to the post
     source_response = requests.get(source)

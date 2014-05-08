@@ -434,7 +434,6 @@ def archive(year, month):
 
 
 def check_audience(post):
-    app.logger.debug('checking audience for post {}: {}'.format(post.title, post.audience))
     if not post.audience:
         # all posts public by default
         return True
@@ -448,6 +447,8 @@ def check_audience(post):
         return False
 
     # check that their username is listed in the post's audience
+    app.logger.debug('checking that logged in user %s is in post audience %s',
+                     current_user.get_id(), post.audience)
     return current_user.get_id() in post.audience
 
 

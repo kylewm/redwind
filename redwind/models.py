@@ -451,7 +451,7 @@ class Metadata:
         mentions = self.get_recent_mentions()
         mentions.insert(0, {
             'mention': url,
-            'post': post.path,
+            'post': post and post.path,
         })
         self.blob['mentions'] = mentions[:30]
         self.save()
