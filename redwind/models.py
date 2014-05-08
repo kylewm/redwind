@@ -138,10 +138,17 @@ class Post:
         body = '\n'.join(line.strip('\r\n') for line in fp.readlines())
         return head, body
 
+    @staticmethod
+    def _get_fs_path(path):
+        """get the filesystem path from a relative path
+        e.g., note/2014/04/29/1 -> root/_data/note/2014/04/29/1
+        """
+        return os.path.join(app.root_path, '_data', path)
+
     @classmethod
     @contextmanager
     def writeable(cls, path):
-        with acquire_lock(path, 30):
+        with acquire_lock(cls._get_fs_path(path), 30):
             post = cls.load(path)
             post._writeable = True
             yield post
@@ -149,11 +156,10 @@ class Post:
 
     @classmethod
     def load(cls, path):
-        #app.logger.debug("loading from path %s", path)
-
+        # app.logger.debug("loading from path %s", path)
         post_type = path.split('/', 1)[0]
         date_index, _ = os.path.splitext(os.path.basename(path))
-        path = os.path.join(app.root_path, '_data', path)
+        path = cls._get_fs_path(path)
         if not path.endswith('.md'):
             path += '.md'
 
@@ -171,6 +177,7 @@ class Post:
 
     @classmethod
     def load_by_month(cls, year, month):
+        # TODO use Metadata
         posts = []
         datadir = os.path.join(app.root_path, '_data')
         for post_type in POST_TYPES:
@@ -216,6 +223,7 @@ class Post:
 
     @classmethod
     def get_archive_months(cls):
+        # TODO use Metadata
         result = set()
         for post_type in POST_TYPES:
             path = os.path.join(app.root_path, '_data', post_type)
@@ -285,17 +293,16 @@ class Post:
             raise RuntimeError("Cannot save post that was not opened "
                                "with the 'writeable' flag")
 
-        basedir = os.path.join(app.root_path, '_data')
         # assign a new date index if we don't have one yet
         if not self.date_index:
             idx = 1
             while True:
                 self.date_index = util.base60_encode(idx)
-                if not os.path.exists(os.path.join(basedir, self.path) + '.md'):
+                if not os.path.exists(self._get_fs_path(self.path) + '.md'):
                     break
                 idx += 1
 
-        filename = os.path.join(basedir, self.path) + '.md'
+        filename = self._get_fs_path(self.path) + '.md'
         parentdir = os.path.dirname(filename)
         if not os.path.exists(parentdir):
             os.makedirs(parentdir)
@@ -364,15 +371,15 @@ class Post:
     @property
     def mentions(self):
         if self._mentions is None:
-            path = os.path.join(app.root_path, '_data', self.mentions_path)
+            path = self._get_fs_path(self.mentions_path)
             if os.path.exists(path):
                 blob = json.load(open(path, 'r'))
                 self._mentions = blob
-                #app.logger.debug("loaded mentions from %s: %s",
+                # app.logger.debug("loaded mentions from %s: %s",
                 #                 path, self._mentions)
             else:
                 self._mentions = []
-                #app.logger.debug("no mentions file found at %s", path)
+                # app.logger.debug("no mentions file found at %s", path)
 
         return self._mentions
 
