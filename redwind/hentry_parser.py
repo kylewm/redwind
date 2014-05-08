@@ -120,10 +120,10 @@ def parse_json(d, source):
             if pub_date and pub_date.tzinfo:
                 pub_date = pub_date.astimezone(datetime.timezone.utc)
 
-            content_html = ''.join(content['html'].strip() for content
-                                   in hentry['properties'].get('content', []))
-            content_value = ''.join(content['value'].strip() for content
-                                    in hentry['properties'].get('content', []))
+            content = hentry['properties'].get('content')
+            if content:
+                content_html = content[0]['html'].strip()
+                content_value = content[0]['value'].strip()
 
             title = ''.join(part.strip() for part
                             in hentry['properties'].get('name', ''))
