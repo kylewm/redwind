@@ -215,7 +215,7 @@ class Post:
         self.location = None
         self.syndication = []
         self.tags = []
-        self.audience = None  # public
+        self.audience = []  # public
         self._mentions = None  # lazy load mentions
         self._writeable = False
 
@@ -232,7 +232,7 @@ class Post:
         self.draft = data.get('draft', False)
         self.deleted = data.get('deleted', False)
         self.hidden = data.get('hidden', False)
-        self.audience = data.get('audience')
+        self.audience = data.get('audience', [])
 
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
@@ -370,6 +370,7 @@ class Metadata:
             'deleted': post.deleted,
             'hidden': post.hidden,
             'path': post.path,
+            'tags': post.tags,
         }
 
     @staticmethod
@@ -390,7 +391,8 @@ class Metadata:
                     if not post:
                         continue
 
-                    posts.append(Metadata.post_to_blob(post))
+                    posts.append(util.filter_empty_keys(
+                        Metadata.post_to_blob(post)))
 
                     for mention in post.mentions:
                         mention_pub_date = post.pub_date
@@ -456,7 +458,7 @@ class Metadata:
         self.blob['mentions'] = mentions[:30]
         self.save()
 
-    def load_posts(self, reverse=False, post_types=None,
+    def load_posts(self, reverse=False, post_types=None, tag=None,
                    include_hidden=False, include_drafts=False,
                    per_page=30, page=1):
         if not post_types:
@@ -467,6 +469,7 @@ class Metadata:
 
         posts = [post for post in self.blob['posts']
                  if not post.get('deleted')
+                 and (not tag or tag in post.get('tags', []))
                  and (not post.get('hidden') or include_hidden)
                  and (not post.get('draft') or include_drafts)
                  and post.get('type') in post_types]
@@ -487,7 +490,8 @@ class Metadata:
         post_path = post.path
         posts = [other for other in self.blob['posts']
                  if other.get('path') != post_path]
-        posts.append(Metadata.post_to_blob(post))
+        posts.append(util.filter_empty_keys(
+            Metadata.post_to_blob(post)))
         self.blob['posts'] = posts
 
     def get_archive_months(self):
