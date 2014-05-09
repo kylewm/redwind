@@ -70,7 +70,7 @@ pre {
     white-space:pre;
 }
 
-p {
+p, .e-content {
     margin-bottom: 0.8em;
 }
 
@@ -140,7 +140,7 @@ nav li {
 }
 
 .post + .post {
-    margin-top: 40px;
+    margin-top: 60px;
 }
 
 .site-name, .site-name-separator {
