@@ -8,9 +8,9 @@
 
 
     <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Publish"/>
-    <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" checked />Send Webmentions</label>
-    <label><input type="checkbox" id="send_push" name="send_push" value="true" checked />Send PuSH</label>
-
+    <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if not post.date_index %}checked{% endif %} />Send Webmentions</label>
+    <label><input type="checkbox" id="send_push" name="send_push" value="true" {% if not post.date_index %}checked{% endif %} />Send PuSH</label>
+    <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label>
 
     {% if post.post_type == 'article' %}
       <div class="title">
@@ -32,18 +32,22 @@
     {% if post.post_type == 'share' %}
       <div class="repost_source">
         <label><span>Repost (URLs)</span>
-          <textarea style="width:100%" name="repost_source" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea></label>
+          <textarea style="width:100%" name="repost_source" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea>
+        </label>
       </div>
     {% endif %}
 
     {% if post.post_type == 'like' %}
       <div class="like_of">
         <label><span>Like of (URLs)</span>
-          <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea></label>
+          <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
+        </label>
       </div>
     {% endif %}
 
-      <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
+    <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
+
+    <label>Tags <input id="tags" name="tags" type="text" size="30" value="{{ post.tags | join(' ') }}"/></label>
 
     <div class="location">
       <input type="button" id="get_coords_button" value="Location:"/>
@@ -52,25 +56,26 @@
       <label>Name <input id="location_name" name="location_name" size="21" value="{{ post.location.name if post.location else ''}}"/></label>
     </div>
 
-    <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/>
-    <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label><br/>
+    <!-- <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/> -->
+
+    <form id="image_upload">
+      <label>
+        <input type="file" id="image_upload_button" accept="image/*"></input>
+      </label>
+    </form>
 
     <div class="syndication">
       <label><span>Syndication (URLs)</span>
-        <textarea style="width:100%" name="syndication" cols="50" rows="2">{{post.syndication | join('\n')}}</textarea>
+        <textarea style="width:100%" name="syndication" cols="50" rows="2">{{ post.syndication | join('\n') }}</textarea>
       </label>
     </div>
 
-    {% if advanced %}
-      <a href="#" id="uploads_link">Uploads</a>
-    {% endif %}
+    <div class="audience">
+      <label><span>Audience</span>
+        <textarea style="width:100%" name="audience" cols="50" rows="2">{{ post.audience | join('\n') }}</textarea>
+      </label>
+    </div>
 
-  </form>
-
-  <form id="image_upload">
-    <label>
-      <input type="file" id="image_upload_button" accept="image/*"></input>
-    </label>
   </form>
 
   <ul id="result"></ul>

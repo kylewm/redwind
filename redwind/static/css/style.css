@@ -165,7 +165,11 @@ nav li {
 }
 
 .post .links {
-    font-size: 0.9em;
+    font-size: 11pt;
+}
+
+.post .links a {
+    color: #777;
 }
 
 .post .admin-post-controls-arrow {
@@ -213,6 +217,7 @@ nav li {
 .post .syndication-links {
     margin-top: 1em;
 }
+
 
 .post .syndication-links li {
     list-style-type: none;

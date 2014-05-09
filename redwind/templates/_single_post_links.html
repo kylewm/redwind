@@ -1,8 +1,18 @@
+
+{% if post.tags %}
+<div class="categories">
+  <i class="fa fa-tag" title="Tags"></i>&nbsp;
+  {% for tag in post.tags %}
+    <a class="p-category" href="{{ url_for('posts_by_tag', tag=tag) }}">{{ tag }}</a>{% if not loop.last %},{% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
 {% if post.audience %}
 <div class="audience">
-  shared with:
+  <i class="fa fa-envelope-o" title="This is a private post, shared with a specific audience"></i>&nbsp;
   {% for recipient in post.audience %}
-    <a href="{{ recipient }}">{{ recipient | prettify_url }}</a>
+    <a href="{{ recipient }}">{{ recipient | prettify_url }}</a>{% if not loop.last %},{% endif %}
   {% endfor %}
 </div>
 {% endif %}

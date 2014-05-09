@@ -319,10 +319,10 @@ class MentionProxy:
             self.permalink, self.pub_date, self.reftype)
 
 
-def render_posts(title, post_types, page, per_page,
+def render_posts(title, post_types, page, per_page, tag=None,
                  include_hidden=False, include_drafts=False):
     mdata = Metadata()
-    posts = mdata.load_posts(reverse=True, post_types=post_types,
+    posts = mdata.load_posts(reverse=True, post_types=post_types, tag=tag,
                              include_hidden=include_hidden,
                              include_drafts=include_drafts,
                              page=page, per_page=per_page)
@@ -367,6 +367,14 @@ def articles(page):
 @app.route('/everything/page/<int:page>')
 def everything(page):
     return render_posts('Everything', POST_TYPES, page, 30,
+                        include_hidden=True,
+                        include_drafts=current_user.is_authenticated())
+
+
+@app.route('/tag/<tag>', defaults={'page': 1})
+@app.route('/tag/<tag>/page/<int:page>')
+def posts_by_tag(tag, page):
+    return render_posts('All posts tagged ' + tag, POST_TYPES, page, 30, tag=tag,
                         include_hidden=True,
                         include_drafts=current_user.is_authenticated())
 
@@ -852,25 +860,27 @@ def save_post():
 
             post.repost_preview = None
 
-            in_reply_to = request.form.get('in_reply_to')
-            if in_reply_to:
-                post.in_reply_to = [url.strip() for url
-                                    in in_reply_to.split('\n')]
+            in_reply_to = request.form.get('in_reply_to', '')
+            post.in_reply_to = [url.strip() for url
+                                in in_reply_to.split('\n')]
 
-            repost_source = request.form.get('repost_source')
-            if repost_source:
-                post.repost_of = [url.strip() for url
-                                  in repost_source.split('\n')]
+            repost_source = request.form.get('repost_source', '')
+            post.repost_of = [url.strip() for url
+                              in repost_source.split('\n')]
 
-            like_of = request.form.get('like_of')
-            if like_of:
-                post.like_of = [url.strip() for url
-                                in like_of.split('\n')]
+            like_of = request.form.get('like_of', '')
+            post.like_of = [url.strip() for url
+                            in like_of.split('\n')]
 
-            syndication = request.form.get('syndication')
-            if syndication:
-                post.syndication = [url.strip() for url in
-                                    syndication.split('\n')]
+            syndication = request.form.get('syndication', '')
+            post.syndication = [url.strip() for url in
+                                syndication.split('\n')]
+
+            audience = request.form.get('audience', '')
+            post.audience = [url.strip() for url in
+                             audience.split('\n')]
+
+            post.tags = request.form.get('tags', '').split()
 
             app.logger.debug("attempting to save post %s", post)
             post.save()
