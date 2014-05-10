@@ -58,12 +58,6 @@
 
     <!-- <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/> -->
 
-    <form id="image_upload">
-      <label>
-        <input type="file" id="image_upload_button" accept="image/*"></input>
-      </label>
-    </form>
-
     <div class="syndication">
       <label><span>Syndication (URLs)</span>
         <textarea style="width:100%" name="syndication" cols="50" rows="2">{{ post.syndication | join('\n') }}</textarea>
@@ -77,6 +71,13 @@
     </div>
 
   </form>
+
+  <form id="image_upload">
+    <label>
+      <input type="file" id="image_upload_button" accept="image/*"></input>
+    </label>
+  </form>
+
 
   <ul id="result"></ul>
 

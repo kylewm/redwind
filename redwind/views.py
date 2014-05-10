@@ -652,22 +652,22 @@ def human_time(thedate):
         # resolve seconds into hours/minutes
         minutes = delta.seconds // 60
         if minutes < 1:
-            return "Just now"
+            return "just now"
         if minutes < 60:
             return "{} minute{} ago".format(minutes, pluralize(minutes))
         else:
             hours = round(minutes/60)
-            return "About {} hour{} ago".format(hours, pluralize(hours))
+            return "about {} hour{} ago".format(hours, pluralize(hours))
 
     if delta.days == 1:
-        return "Yesterday"
+        return "yesterday"
 
     if delta.days < 30:
         return "{} days ago".format(delta.days)
 
     if delta.days < 365:
         months = round(delta.days / 30)
-        return "About {} month{} ago".format(months, pluralize(months))
+        return "about {} month{} ago".format(months, pluralize(months))
 
     years = round(delta.days / 365)
     return "{} year{} ago".format(years, pluralize(years))
@@ -862,27 +862,32 @@ def save_post():
 
             in_reply_to = request.form.get('in_reply_to', '')
             post.in_reply_to = [url.strip() for url
-                                in in_reply_to.split('\n')]
+                                in in_reply_to.split('\n')
+                                if url.strip()]
 
             repost_source = request.form.get('repost_source', '')
             post.repost_of = [url.strip() for url
-                              in repost_source.split('\n')]
+                              in repost_source.split('\n')
+                              if url.strip()]
 
             like_of = request.form.get('like_of', '')
             post.like_of = [url.strip() for url
-                            in like_of.split('\n')]
+                            in like_of.split('\n')
+                            if url.strip()]
 
             syndication = request.form.get('syndication', '')
             post.syndication = [url.strip() for url in
-                                syndication.split('\n')]
+                                syndication.split('\n')
+                                if url.strip()]
 
             audience = request.form.get('audience', '')
             post.audience = [url.strip() for url in
-                             audience.split('\n')]
+                             audience.split('\n')
+                             if url.strip()]
 
             post.tags = request.form.get('tags', '').split()
 
-            app.logger.debug("attempting to save post %s", post)
+            app.logger.debug("attempting to save post %s with syndication links %s", post, post.syndication)
             post.save()
 
         with Metadata.writeable() as mdata:

@@ -512,7 +512,11 @@ class Metadata:
             published = util.isoparse(post.get('published'))
             if not post.get('deleted') and published \
                and published.year == year and published.month == month:
-                posts.append(Post.load(post['path']))
+                loaded = Post.load(post['path'])
+                if not loaded:
+                    app.logger.error("Could not load post for path %s", post['path'])
+                else:
+                    posts.append(loaded)
 
         posts.sort(key=attrgetter('pub_date'))
         return posts

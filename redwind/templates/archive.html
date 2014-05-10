@@ -32,6 +32,7 @@
       <h2 class="p-name">Kyle Mahan: Archive {{ expanded_year }} {{ expanded_month | month_name }}</h2>
         {% for post in posts %}
           <div class="h-entry post">
+	    {% include "_admin_post_controls.html" %}
             {% include "_reply_context.html" %}
             {% include "_share_context.html" %}
             {% include "_like_context.html" %}

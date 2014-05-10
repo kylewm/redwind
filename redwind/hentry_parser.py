@@ -121,8 +121,11 @@ def parse_json(d, source):
                 pub_date = pub_date.astimezone(datetime.timezone.utc)
 
             content_prop = hentry['properties'].get('content')
-            content_html = content_prop and content_prop[0]['html'].strip()
-            content_value = content_prop and content_prop[0]['value'].strip()
+            if content_prop:
+                content_html = content_prop[0]['html'].strip()
+                content_value = content_prop[0]['value'].strip()
+            else:
+                content_html = content_value = ''
 
             name_prop = hentry['properties'].get('name')
             title = name_prop and name_prop[0].strip()
