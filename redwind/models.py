@@ -1,8 +1,8 @@
 from . import app
 from . import util
 from . import archiver
-from . import hentry_parser
 
+import mf2util
 import os
 import os.path
 import json
@@ -381,9 +381,9 @@ class Metadata:
                         mention_pub_date = post.pub_date
                         parsed = archiver.load_json_from_archive(mention)
                         if parsed:
-                            entry = hentry_parser.parse_json(parsed, mention)
-                            if entry:
-                                mention_pub_date = entry.pub_date
+                            entry = mf2util.parse_comment(parsed, mention)
+                            if entry and 'published' in entry:
+                                mention_pub_date = entry.get('published')
 
                         mentions.append((post.path, mention,
                                          util.isoformat(mention_pub_date)

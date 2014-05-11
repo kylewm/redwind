@@ -4,7 +4,6 @@ from . import archiver
 from . import auth
 from . import contexts
 from . import facebook
-from . import hentry_parser
 from . import push
 from . import twitter
 from . import util
@@ -20,8 +19,9 @@ from flask.ext.login import login_required, login_user, logout_user,\
 from contextlib import contextmanager
 from urllib.parse import urlparse, urljoin
 
-import datetime
 import bleach
+import datetime
+import mf2util
 import os
 import pytz
 import re
@@ -242,17 +242,17 @@ class ContextProxy:
         blob = archiver.load_json_from_archive(url)
         if not blob:
             return
-        self.entry = hentry_parser.parse_json(blob, url)
+        self.entry = mf2util.interpret(blob, url)
         if not self.entry:
             return
 
-        self.permalink = self.entry.permalink
-        self.author_name = self.entry.author.name if self.entry.author else ""
-        self.author_url = self.entry.author.url if self.entry.author else ""
-        self.author_image = self.entry.author.photo if self.entry.author else ""
-        self.content = self.entry.content
-        self.pub_date = self.entry.pub_date
-        self.title = self.entry.title
+        self.permalink = self.entry.get('url')
+        self.author_name = self.entry.get('author', {}).get('name', '')
+        self.author_url = self.entry.get('author', {}).get('url', '')
+        self.author_image = self.entry.get('author', {}).get('photo', '')
+        self.content = self.entry.get('content', '')
+        self.pub_date = self.entry.get('published')
+        self.title = self.entry.get('name')
         self.deleted = False
 
 
@@ -273,30 +273,31 @@ class MentionProxy:
         if not blob:
             return
 
-        self.entry = hentry_parser.parse_json(blob, url)
-        if not self.entry:
-            return
-
-        self.permalink = self.entry.permalink
-        self.author_name = self.entry.author.name if self.entry.author else ""
-        self.author_url = self.entry.author.url if self.entry.author else ""
-        self.author_image = self.entry.author.photo if self.entry.author else ""
-        self.content = self.entry.content
-        self.pub_date = self.entry.pub_date
-        self.title = self.entry.title
-
         if post:
-            target_urls = (
+            target_urls = [
                 post.permalink,
                 post.permalink_without_slug,
                 post.short_permalink,
+                # for localhost testing
                 post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com')
-            )
-            for ref in self.entry.references:
-                if ref.url in target_urls:
-                    self.target = ref.url
-                    self.reftype = ref.reftype
-                    break
+            ]
+        else:
+            target_urls = []
+
+        self.entry = mf2util.interpret_comment(blob, url, target_urls)
+        if not self.entry:
+            return
+
+        self.permalink = self.entry.get('url', '')
+        self.author_name = self.entry.get('author', {}).get('name', '')
+        self.author_url = self.entry.get('author', {}).get('url', '')
+        self.author_image = self.entry.get('author', {}).get('photo', '')
+        self.content = self.entry.get('content', '')
+        self.pub_date = self.entry.get('published')
+        self.title = self.entry.get('name')
+
+        comment_type = self.entry.get('comment_type')
+        self.reftype = comment_type and comment_type[0]
 
     def __repr__(self):
         return """Mention(permalink={}, pub_date={} reftype={})""".format(
@@ -624,12 +625,20 @@ def human_time(thedate):
     if not thedate:
         return None
 
-    now = datetime.datetime.utcnow()
+    if isinstance(thedate, datetime.datetime):
+        now = datetime.datetime.utcnow()
+    else:
+        now = datetime.date.today()
+
+    print('now:', now, 'thedate:', thedate)
+
 
     # if the date being formatted has a timezone, make
     # sure utc now does too
-    if hasattr(thedate, 'tzinfo') and thedate.tzinfo:
+    if hasattr(now, 'tzinfo') and hasattr(thedate, 'tzinfo') \
+       and thedate.tzinfo:
         now = pytz.utc.localize(now)
+
     delta = now - thedate
 
     if delta.days < 1:

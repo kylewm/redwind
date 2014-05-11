@@ -1,7 +1,6 @@
 from . import app
 from . import auth
 from . import util
-from . import hentry_parser
 from .models import Post, Location, Metadata
 
 
@@ -10,10 +9,11 @@ from flask.ext.login import login_required
 from werkzeug import secure_filename
 
 import datetime
-import os
-import requests
-import random
 import jwt
+import mf2util
+import os
+import random
+import requests
 import urllib
 
 
@@ -207,7 +207,7 @@ def micropub_endpoint():
 
     pub_str = request.form.get('published')
     if pub_str:
-        pub = hentry_parser.parse_datetime(pub_str)
+        pub = mf2util.parse_dt(pub_str)
         if pub.tzinfo:
             pub = pub.astimezone(datetime.timezone.utc)
             pub = pub.replace(tzinfo=None)
