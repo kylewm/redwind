@@ -303,7 +303,7 @@ class MentionProxy:
         except:
             app.logger.exception('error interpreting {}', url)
             return
-            
+
         if not self.entry:
             return
 
@@ -580,9 +580,9 @@ def new_post():
             post.in_reply_to = [in_reply_to]
 
     if post_type == 'share':
-        repost_source = request.args.get('repost_source')
-        if repost_source:
-            post.repost_of = [repost_source]
+        repost_of = request.args.get('repost_of')
+        if repost_of:
+            post.repost_of = [repost_of]
 
     if post_type == 'like':
         post.hidden = True
@@ -877,9 +877,9 @@ def save_post():
                                 in in_reply_to.split('\n')
                                 if url.strip()]
 
-            repost_source = request.form.get('repost_source', '')
+            repost_of = request.form.get('repost_of', '')
             post.repost_of = [url.strip() for url
-                              in repost_source.split('\n')
+                              in repost_of.split('\n')
                               if url.strip()]
 
             like_of = request.form.get('like_of', '')

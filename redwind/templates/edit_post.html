@@ -30,9 +30,9 @@
     {% endif %}
 
     {% if post.post_type == 'share' %}
-      <div class="repost_source">
+      <div class="repost_of">
         <label><span>Repost (URLs)</span>
-          <textarea style="width:100%" name="repost_source" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea>
+          <textarea style="width:100%" name="repost_of" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea>
         </label>
       </div>
     {% endif %}
