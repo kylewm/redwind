@@ -97,6 +97,14 @@ class DisplayPost:
 
     @property
     @reraise_attribute_errors
+    def tweet_id(self):
+        for url in self.syndication:
+            match = TWITTER_RE.match(url)
+            if match:
+                return match.group(2)
+
+    @property
+    @reraise_attribute_errors
     def reply_contexts(self):
         if not self.in_reply_to:
             return []
@@ -242,7 +250,13 @@ class ContextProxy:
         blob = archiver.load_json_from_archive(url)
         if not blob:
             return
-        self.entry = mf2util.interpret(blob, url)
+
+        try:
+            self.entry = mf2util.interpret(blob, url)
+        except:
+            app.logger.exception('error interpreting {}', url)
+            return
+
         if not self.entry:
             return
 
@@ -284,7 +298,12 @@ class MentionProxy:
         else:
             target_urls = []
 
-        self.entry = mf2util.interpret_comment(blob, url, target_urls)
+        try:
+            self.entry = mf2util.interpret_comment(blob, url, target_urls)
+        except:
+            app.logger.exception('error interpreting {}', url)
+            return
+            
         if not self.entry:
             return
 
@@ -710,8 +729,8 @@ def bleach_html(html):
 
 
 @app.template_filter('format_markdown_as_text')
-def format_markdown_as_text(content, remove_imgs=True):
-    html = markdown_filter(content)
+def format_markdown_as_text(content, remove_imgs=True, link_twitter_names=True):
+    html = markdown_filter(content, link_twitter_names=link_twitter_names)
     return format_as_text(html, remove_imgs)
 
 
@@ -734,19 +753,19 @@ def format_as_text(html, remove_imgs=True):
 
 
 @app.template_filter('markdown')
-def markdown_filter(data):
+def markdown_filter(data, link_twitter_names=True):
     from markdown import markdown
     from smartypants import smartypants
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    result = util.autolink(result)
+    result = util.autolink(result, twitter_names=link_twitter_names)
     result = smartypants(result)
     return result
 
 
 @app.template_filter('autolink')
-def autolink(plain):
-    return util.autolink(plain)
+def autolink(plain, twitter_names=True):
+    return util.autolink(plain, twitter_names)
 
 
 @app.template_filter('prettify_url')

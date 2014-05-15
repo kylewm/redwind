@@ -18,6 +18,25 @@
 {% endif %}
 
 <a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | human_time }}</time></a>
+
 {% if post.location %}
-at <a href="http://www.openstreetmap.org/#map=18/{{post.location.latitude}}/{{post.location.longitude}}">{{post.location.name or 'Unnamed place'}}</a>
+at <a class="p-location h-geo" href="http://www.openstreetmap.org/#map=18/{{post.location.latitude}}/{{post.location.longitude}}" title="{{post.location.latitude}},{{post.location.longitude}}">
+    <data class="p-latitude" value="{{post.location.latitude}}"></data>
+    <data class="p-longitude" value="{{post.location.longitude}}"></data>
+    <span class="p-name">
+      {{post.location.name or 'an unnamed location'}}
+    </span>
+</a>
 {% endif %}
+
+<div class="webactions">
+  <action do="reply" with="{{post.permalink}}">
+    <a href="https://twitter.com/intent/tweet?in_reply_to={{post.tweet_id}}">reply</a>
+  </action>
+  <action do="repost" with="{{post.permalink}}">
+    <a href="https://twitter.com/intent/retweet?tweet_id={{post.tweet_id}}">retweet</a>
+  </action>
+  <action do="favorite" with="{{post.permalink}}">
+    <a href="https://twitter.com/intent/favorite?tweet_id={{post.tweet_id}}">favorite</a>
+  </action>
+</div>

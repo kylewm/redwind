@@ -45,7 +45,6 @@
           {% if current_user.is_anonymous() %}
             <form id="indie_auth_form" action="http://indieauth.com/auth" method="get">
               <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
-              <!-- <input id="indie_auth_url" type="hidden" name="me" value="http://kylewm.com"/> -->
               <button id="sign_in_button" type="submit">Sign In</button>
               <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
             </form>
@@ -59,6 +58,7 @@
             <li><span class="site-name">kylewm.com</span></li>
             <li><a href="{{ url_for('index') }}">stream</a></li>
             <li><a href="{{ url_for('articles') }}">articles</a></li>
+            <li><a href="{{ url_for('everything') }}">everything</a></li>
             <li><a href="{{ url_for('archive') }}">archive</a></li>
           </ul>
 

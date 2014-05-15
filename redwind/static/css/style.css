@@ -266,6 +266,10 @@ nav li {
     float: right;
 }
 
+.webactions {
+    float: right;
+}
+
 form .heading {
     width: 150px;
     display: inline-block;
