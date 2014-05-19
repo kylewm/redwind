@@ -33,7 +33,285 @@
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/kyle152.jpg') }}"/>
 
     <style type="text/css">
-      {{ inline_style }}
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,video{display:inline-block}audio:not([controls]){display:none;height:0}[hidden]{display:none}body,h1,h2,h3,h4,h5,h6,p,ul,ol,dl{margin:0;padding:0}a:focus{outline:thin dotted}a:active,a:hover{outline:0}b,strong{font-weight:bold}dfn{font-style:italic}hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}mark{background:#ff0;color:#000}code,kbd,pre,samp{font-family:monospace, serif;font-size:1em}pre{white-space:pre-wrap}q{quotes:"\201C" "\201D" "\2018" "\2019"}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}img{border:0}svg:not(:root){overflow:hidden}figure{margin:0}fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;padding:0}button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}button,input{line-height:normal}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}
+
+html,body {
+    color: #333;
+    line-height: 1.3;
+    font-family: sans-serif;
+    font-size: 14pt;
+}
+
+ul, ol {
+    margin-left: 1em;
+}
+
+a {
+    color: #2A5DB0;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+#wrapper {
+    max-width: 750px;
+    margin: 10px auto 10px auto;
+    min-height: 100%;
+}
+
+#wrapper #content-area {
+    width: 100%;
+    padding: 10px;
+}
+
+blockquote {
+    margin-left: 0px;
+    border-left: 5px solid lightgray;
+    background-color: #f3f3f6;
+    padding: 10px;
+}
+
+.post {
+    background-color: white;
+    /*padding: 1em;*/
+    border-radius: 3px;
+    position: relative;
+}
+
+.post .p-name img, .post .e-content img {
+    max-width: 100%;
+    text-align: center;
+}
+
+
+code, pre {
+    font-family: monospace;
+    font-size: 0.8em;
+    padding: 0.5em;
+}
+
+pre {
+    overflow-x: auto;
+    white-space:pre;
+}
+
+p, .e-content {
+    margin-bottom: 0.8em;
+}
+
+h1, h2, h3, h4, h5 {
+    margin-top: 0.5em;
+    margin-bottom: 0.3em;
+    font-weight: normal;
+}
+
+li {
+    margin-left: 1em;
+}
+
+header {
+    margin-bottom: 40px;
+}
+
+footer {
+    color: #666;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+footer #site-info {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.9em;
+}
+footer .h-card {
+    margin-top: 60px;
+}
+
+footer .h-card .u-photo {
+    float: left;
+    width: 92px;
+    margin-right: 0.5em;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav li {
+    display: inline;
+    margin-right: 1em;
+    margin-left: 0em;
+}
+
+#login_area {
+    float: right;
+}
+
+#indie_auth_form {
+    display: inline;
+}
+
+#login_area {
+    font-size: 0.8em;
+}
+
+#sign_in_button {
+    border: solid 1px #333;
+}
+
+.post + .post {
+    margin-top: 100px;
+}
+
+.site-name, .site-name-separator {
+    font-weight: bold;
+}
+
+.post .author-image-holder {
+    width: 56px;
+    float: left;
+    margin-right: 10px;
+}
+
+
+.post .author-image-likes {
+    width: 36px;
+    vertical-align: middle;
+}
+
+
+.post .author-image-holder img {
+    width: 100%;
+}
+
+.post .links {
+    font-size: 11pt;
+    color: #777;
+}
+
+.post .links a {
+    color: #777;
+}
+
+.post .admin-post-controls-arrow {
+    color: #ccc;
+    float: right;
+    top: -12px;
+    position: relative;
+    white-space: nowrap;
+}
+
+.post .admin-post-controls {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    display: none;
+    font-size: 0.9em;
+    list-style-type: none;
+    padding: 5px;
+    position: absolute;
+}
+
+.post .admin-post-controls hr {
+    color: #ddd;
+}
+
+.post .admin-post-controls li {
+    margin-left: 0px;
+}
+
+.share-context, .reply-context, .like-context {
+    margin-bottom: 1em;
+}
+
+.share-context .content, .reply-context .content {
+    margin-left: 66px;
+    background-color: #f3f3f6;
+    padding: 0.5em;
+    color: #666;
+    border-radius: 3px;
+}
+
+.p-comment .e-content {
+    margin-left: 66px;
+}
+
+.post .syndication-links {
+    margin-top: 1em;
+}
+
+
+.post .syndication-links li {
+    list-style-type: none;
+}
+
+.post .mentions {
+    font-size: 0.9em;
+}
+
+.post .likes-and-reposts, .post .replies, .post .references {
+    margin-top: 3em;
+}
+
+.post .likes + .reposts {
+    margin-top: 0.5em;
+}
+
+.p-comment + .p-comment {
+    margin-top: 1em;
+}
+
+#manual-webmention {
+    margin-top: 2em;
+}
+
+.page-arrows {
+    margin-top: 40px;
+}
+
+.page-left {
+    float: left;
+}
+
+.page-right {
+    float: right;
+}
+
+.webactions {
+    float: right;
+}
+
+form .heading {
+    width: 150px;
+    display: inline-block;
+}
+
+form .heading-small {
+    width: 100px;
+    display: inline-block;
+}
+
+form input {
+    margin: 3px;
+}
+
+.archive-month-current {
+    font-weight: bold;
+}
+
+.archive-year, .archive-month {
+    margin: 3px;
+}
+
+@media(max-width: 600px) {
+    html, body {
+        word-wrap: break-word;
+    }
+}
     </style>
 
     {% block head_content %}{% endblock %}
@@ -101,6 +379,5 @@
 </html>
 <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
 <script src="{{ url_for('static', filename='js/posts.js') }}"></script>
-<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Droid+Sans+Mono" rel="stylesheet" type="text/css">
 <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet" type="text/css">
 <link href="{{ url_for('static', filename='css/pygments.css') }}" rel="stylesheet" type="text/css">

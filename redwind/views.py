@@ -238,6 +238,7 @@ class DisplayPost:
 
 class ContextProxy:
     def __init__(self, url):
+        self.url = url
         self.permalink = url
         self.author_name = None
         self.author_url = None
@@ -339,13 +340,8 @@ def render_posts(title, post_types, page, per_page, tag=None,
 
 @app.context_processor
 def inject_user_authenticated():
-    with open(os.path.join(app.root_path, 'static/css/style.css')) as f:
-        inline_style = f.read()
-    # minify
-    # inline_style = re.sub('\s+', ' ', inline_style)
     twitterbot = 'Twitterbot' in request.headers.get('User-Agent', '')
     return {
-        'inline_style': Markup(inline_style),
         'is_twitter_user_agent': twitterbot,
     }
 
@@ -798,11 +794,11 @@ def local_mirror_resource(url):
         mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
         mirror_file_path = os.path.join(app.root_path, 'static',
                                         mirror_url_path)
-        app.logger.debug("checking for existence of mirrored resource %s -> %s",
-                         url, mirror_file_path)
+        #app.logger.debug("checking for existence of mirrored resource %s -> %s",
+        #                 url, mirror_file_path)
         if os.path.exists(mirror_file_path):
-            app.logger.debug("%s already mirrored, returning url path %s",
-                             mirror_file_path, mirror_url_path)
+            #app.logger.debug("%s already mirrored, returning url path %s",
+            #                 mirror_file_path, mirror_url_path)
             return url_for('static', filename=mirror_url_path)
 
         if util.download_resource(url, mirror_file_path):

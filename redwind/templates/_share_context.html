@@ -2,13 +2,13 @@
 {% for share in post.share_contexts %}
   <div class="share-context">
 
-    {% if not share.author_name and share.permalink %}
+    {% if not share.author_name and share.url %}
       <i class="fa fa-retweet"></i> Shared
-      <a class="u-repost-of" href="{{ share.permalink }}">
+      <a class="u-repost-of" href="{{ share.url }}">
         {% if share.title %}
           {{share.title}}
         {% else %}
-          {{ share.permalink | prettify_url }}
+          {{ share.url | prettify_url }}
         {% endif %}
       </a>
     {% else %}
@@ -28,7 +28,7 @@
         </span>
 
         from
-        <time class="dt-published" datetime="{{ share.pub_date | isotime }}"><a class="u-url" href="{{ share.permalink }}">{{ share.pub_date | human_time }}</a></time>
+        <time class="dt-published" datetime="{{ share.pub_date | isotime }}"><a class="u-url" href="{{ share.url }}">{{ share.pub_date | human_time }}</a></time>
 
         <div class="content">
           {% if share.title %}
@@ -41,7 +41,7 @@
               {{ share.content | autolink | bleach | safe }}
             {% else %}
               {{ share.content | format_as_text | truncate(200) }}
-              <a class="u-url" href="{{ share.permalink }}">continued</a>
+              <a class="u-url" href="{{ share.url }}">continued</a>
             {% endif %}
           </div>
         </div>

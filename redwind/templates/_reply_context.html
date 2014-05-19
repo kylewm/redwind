@@ -6,11 +6,11 @@
     {% if not reply.author_name and reply.permalink %}
 
       <i class="fa fa-share"></i> In reply to
-      <a class="u-in-reply-to" href="{{ reply.permalink }}">
+      <a class="u-in-reply-to" href="{{ reply.url }}">
         {% if reply.title %}
           {{reply.title}}
         {% else %}
-          {{ reply.permalink | prettify_url }}
+          {{ reply.url | prettify_url }}
         {% endif %}
       </a>
 
@@ -30,7 +30,7 @@
           {% endif %}
         </span>
         <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-          <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
+          <a class="u-url" href="{{ reply.url }}">{{ reply.pub_date | human_time }}</a>
         </time>
 
 

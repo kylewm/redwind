@@ -3,11 +3,11 @@
     {% for like in post.like_contexts %}
     
       <i class="fa fa-thumbs-up"></i> Liked
-      <a class="u-like u-like-of" href="{{ like.permalink }}">
+      <a class="u-like u-like-of" href="{{ like.url }}">
         {% if like.title or like.content %}
           {{ like.title or like.content | format_as_text }}
         {% else %}
-          {{ like.permalink | prettify_url }}
+          {{ like.url | prettify_url }}
         {% endif %}
       </a>
 
