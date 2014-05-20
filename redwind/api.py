@@ -42,7 +42,7 @@ def generate_upload_path(post, f, default_ext=None):
 
     relpath = '{}/files/{}'.format(post.path, filename)
     url = '/' + relpath
-    fullpath = os.path.join(app.root_path, '_data', url)
+    fullpath = os.path.join(app.root_path, '_data', relpath)
     return relpath, url, fullpath
 
 
