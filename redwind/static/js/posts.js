@@ -1,7 +1,5 @@
 (function(){
     $(document).ready(function() {
-        console.log('ready');
-
         $('.admin-post-controls-arrow').mouseenter(function (event) {
             var arrow = $(event.currentTarget);
             var post = arrow.closest('.post');
