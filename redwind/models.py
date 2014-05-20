@@ -381,7 +381,8 @@ class Metadata:
                         mention_pub_date = post.pub_date
                         parsed = archiver.load_json_from_archive(mention)
                         if parsed:
-                            entry = mf2util.parse_comment(parsed, mention)
+                            entry = mf2util.interpret_comment(
+                                parsed, mention, [post.permalink])
                             if entry and 'published' in entry:
                                 mention_pub_date = entry.get('published')
 
@@ -440,6 +441,10 @@ class Metadata:
         })
         self.blob['mentions'] = mentions[:30]
         self.save()
+
+    def iterate_all_posts(self):
+        for post in self.blob['posts']:
+            yield Post.load(post['path'])
 
     def load_posts(self, reverse=False, post_types=None, tag=None,
                    include_hidden=False, include_drafts=False,

@@ -13,11 +13,12 @@ from .models import Post, Location, Metadata, POST_TYPES
 
 from bs4 import BeautifulSoup
 from flask import request, redirect, url_for, render_template, flash,\
-    abort, make_response, Markup
+    abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
 from contextlib import contextmanager
 from urllib.parse import urlparse, urljoin
+from werkzeug.routing import BaseConverter
 
 import bleach
 import datetime
@@ -345,7 +346,6 @@ def inject_user_authenticated():
         'is_twitter_user_agent': twitterbot,
     }
 
-
 @app.route('/', defaults={'page': 1})
 @app.route('/page/<int:page>')
 def index(page):
@@ -458,6 +458,23 @@ def check_audience(post):
     app.logger.debug('checking that logged in user %s is in post audience %s',
                      current_user.get_id(), post.audience)
     return current_user.get_id() in post.audience
+
+
+@app.route('/{}/{}/files/<filename>'.format(POST_TYPE_RULE, DATE_RULE))
+def post_associated_file(post_type, year, month, day, index, filename):
+    post = Post.load_by_date(post_type, year, month, day, index)
+    if not post:
+        abort(404)
+
+    if post.deleted:
+        abort(410)  # deleted permanently
+
+    if not check_audience(post):
+        abort(401)  # not authorized TODO a nicer page
+
+    _, ext = os.path.splitext(filename)
+    return send_from_directory(os.path.join(app.root_path, '_data', post.path, 'files'),
+                               filename, mimetype='text/plain' if ext == '.md' else None)
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
@@ -644,9 +661,6 @@ def human_time(thedate):
         now = datetime.datetime.utcnow()
     else:
         now = datetime.date.today()
-
-    print('now:', now, 'thedate:', thedate)
-
 
     # if the date being formatted has a timezone, make
     # sure utc now does too
