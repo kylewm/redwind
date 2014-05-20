@@ -17,7 +17,7 @@ import requests
 import urllib
 
 
-def generate_upload_path(f, default_ext=None):
+def generate_upload_path(post, f, default_ext=None):
     filename = secure_filename(f.filename)
     basename, ext = os.path.splitext(filename)
 
@@ -36,66 +36,14 @@ def generate_upload_path(f, default_ext=None):
 
         filename = basename + ext
 
-    now = datetime.datetime.utcnow()
+    #now = datetime.datetime.utcnow()
+    #relpath = 'uploads/{}/{:02d}/{:02d}/{}'.format(now.year, now.month,
+    #                                               now.day, filename)
 
-    relpath = 'uploads/{}/{:02d}/{:02d}/{}'.format(now.year, now.month, now.day,
-                                               filename)
-    url = url_for('static', filename=relpath)
-    fullpath = os.path.join(app.root_path, 'static', relpath)
+    relpath = '{}/files/{}'.format(post.path, filename)
+    url = '/' + relpath
+    fullpath = os.path.join(app.root_path, '_data', url)
     return relpath, url, fullpath
-
-
-@app.route('/api/upload_file', methods=['POST'])
-@login_required
-def upload_file():
-    f = request.files['file']
-    relpath, url, fullpath = generate_upload_path(f)
-
-    if not os.path.exists(os.path.dirname(fullpath)):
-        os.makedirs(os.path.dirname(fullpath))
-
-    f.save(fullpath)
-    return jsonify({'path': url})
-
-
-@app.route('/api/upload_image', methods=['POST'])
-@login_required
-def upload_image():
-    f = request.files['file']
-    relpath, url, fullpath = generate_upload_path(f, '.jpg')
-
-    if not os.path.exists(os.path.dirname(fullpath)):
-        os.makedirs(os.path.dirname(fullpath))
-    f.save(fullpath)
-
-    result = {'original': url}
-
-    sizes = [('small', 300), ('medium', 600), ('large', 1024)]
-    for tag, side in sizes:
-        result[tag] = resize_image(relpath, tag, side)
-
-    return jsonify(result)
-
-
-def resize_image(path, tag, side):
-    from PIL import Image
-
-    dirname, filename = os.path.split(path)
-    ext = '.jpg'
-
-    split = filename.rsplit('.', 1)
-    if len(split) > 1:
-        filename, ext = split
-
-    newpath = os.path.join(dirname, '{}-{}.{}'.format(filename, tag, ext))
-    im = Image.open(os.path.join(app.root_path, 'static', path))
-
-    origw, origh = im.size
-    ratio = side / max(origw, origh)
-
-    im = im.resize((int(origw * ratio), int(origh * ratio)), Image.ANTIALIAS)
-    im.save(os.path.join(app.root_path, 'static', newpath))
-    return url_for('static', filename=newpath)
 
 
 @app.route('/api/mf2')
@@ -227,9 +175,13 @@ def micropub_endpoint():
     if synd_url:
         post.syndication.append(synd_url)
 
+    # save to reserve the date index
+    post.save()
+
     photo_file = request.files.get('photo')
     if photo_file:
-        relpath, photo_url, fullpath = generate_upload_path(photo_file, '.jpg')
+        relpath, photo_url, fullpath \
+            = generate_upload_path(post, photo_file, '.jpg')
         if not os.path.exists(os.path.dirname(fullpath)):
             os.makedirs(os.path.dirname(fullpath))
         photo_file.save(fullpath)

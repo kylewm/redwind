@@ -142,3 +142,25 @@ def base60_decode(s):
         n *= base
         n += RADIX.index(c)
     return n
+
+
+def resize_image(path, tag, side):
+    from PIL import Image
+    from flask import url_for
+
+    dirname, filename = os.path.split(path)
+    ext = '.jpg'
+
+    split = filename.rsplit('.', 1)
+    if len(split) > 1:
+        filename, ext = split
+
+    newpath = os.path.join(dirname, '{}-{}.{}'.format(filename, tag, ext))
+    im = Image.open(os.path.join(app.root_path, 'static', path))
+
+    origw, origh = im.size
+    ratio = side / max(origw, origh)
+
+    im = im.resize((int(origw * ratio), int(origh * ratio)), Image.ANTIALIAS)
+    im.save(os.path.join(app.root_path, 'static', newpath))
+    return url_for('static', filename=newpath)

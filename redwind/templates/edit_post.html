@@ -2,7 +2,7 @@
 
 {% block content %}
 
-  <form id="edit_form" method="POST" action="/admin/save">
+  <form id="edit_form" method="POST" action="/admin/save" enctype="multipart/form-data">
     <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
     <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
@@ -11,6 +11,7 @@
     <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if not post.date_index %}checked{% endif %} />Send Webmentions</label>
     <label><input type="checkbox" id="send_push" name="send_push" value="true" {% if not post.date_index %}checked{% endif %} />Send PuSH</label>
     <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label>
+    <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/>
 
     {% if post.post_type == 'article' %}
       <div class="title">
@@ -56,7 +57,9 @@
       <label>Name <input id="location_name" name="location_name" size="21" value="{{ post.location.name if post.location else ''}}"/></label>
     </div>
 
-    <!-- <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/> -->
+    <label>
+      <input type="file" name="files" accept="image/*" multiple></input>
+    </label>
 
     <div class="syndication">
       <label><span>Syndication (URLs)</span>
@@ -72,16 +75,14 @@
 
   </form>
 
+  <!--
   <form id="image_upload">
     <label>
       <input type="file" id="image_upload_button" accept="image/*"></input>
     </label>
   </form>
-
-
   <ul id="result"></ul>
-
-  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
   <script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
+  -->
 
 {% endblock %}
