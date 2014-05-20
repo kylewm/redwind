@@ -238,12 +238,8 @@ class Post:
         }
         return util.filter_empty_keys(data)
 
-    def save(self):
-        if not self._writeable:
-            raise RuntimeError("Cannot save post that was not opened "
-                               "with the 'writeable' flag")
-
-        # assign a new date index if we don't have one yet
+    def reserve_date_index(self):
+        """assign a new date index if we don't have one yet"""
         if not self.date_index:
             idx = 1
             while True:
@@ -252,6 +248,12 @@ class Post:
                     break
                 idx += 1
 
+    def save(self):
+        if not self._writeable:
+            raise RuntimeError("Cannot save post that was not opened "
+                               "with the 'writeable' flag")
+
+        self.reserve_date_index()
         filename = self._get_fs_path(self.path) + '.md'
         parentdir = os.path.dirname(filename)
         if not os.path.exists(parentdir):

@@ -2,10 +2,10 @@
 
 {% block content %}
 
-  <form id="edit_form" method="POST" action="/admin/save" enctype="multipart/form-data">
+  <form id="edit_form" method="POST" action="/admin/save_{{edit_type}}" enctype="multipart/form-data">
+    <data id="post_path" value="{{post.path}}">
     <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
     <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
-
 
     <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Publish"/>
     <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if not post.date_index %}checked{% endif %} />Send Webmentions</label>

@@ -585,6 +585,8 @@ def delete_by_id():
 def new_post():
     post_type = request.args.get('type', 'note')
     post = Post(post_type)
+    post.pub_date = datetime.datetime.utcnow()
+    post.reserve_date_index()
     post.content = ''
 
     if post_type == 'reply':
@@ -607,7 +609,7 @@ def new_post():
     if content:
         post.content = content
 
-    return render_template('edit_post.html', post=post,
+    return render_template('edit_post.html', edit_type='new', post=post,
                            advanced=request.args.get('advanced'))
 
 
@@ -618,7 +620,7 @@ def edit_by_id():
 
     if not post:
         abort(404)
-    return render_template('edit_post.html', post=post,
+    return render_template('edit_post.html', edit_type='edit', post=post,
                            advanced=request.args.get('advanced'))
 
 
@@ -826,22 +828,27 @@ def local_mirror_resource(url):
     return url
 
 
-@app.route('/admin/save', methods=['POST'])
+@app.route('/admin/save_edit', methods=['POST'])
 @login_required
-def save_post():
+def save_edit():
+    post_id_str = request.form.get('post_id')
+    app.logger.debug("saving post %s", post_id_str)
+    with Post.writeable(Post.shortid_to_path(shortid)) as post:
+        save_post(post)
 
-    @contextmanager
-    def new_or_writeable(shortid):
-        if shortid == 'new':
-            post_type = request.form.get('post_type', 'note')
-            post = Post(post_type)
-            post._writeable = True
-            yield post
-            post._writeable = False
-        else:
-            with Post.writeable(Post.shortid_to_path(shortid)) as post:
-                yield post
 
+@app.route('/admin/save_edit', methods=['POST'])
+@login_required
+def save_new():
+    post_type = request.form.get('post_type', 'note')
+    app.logger.debug("saving new post of type %s", post_type)
+    post = Post(post_type)
+    post._writeable = True
+    save_post(post)
+    post._writeable = False
+
+
+def save_post(post):
     def slugify(s):
         slug = unicodedata.normalize('NFKD', s).lower()
         slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
@@ -849,68 +856,62 @@ def save_post():
         return slug[:256]
 
     try:
-        post_id_str = request.form.get('post_id')
-        app.logger.debug("saving post %s", post_id_str)
+        app.logger.debug("acquired write lock %s", post)
 
-        with new_or_writeable(post_id_str) as post:
-            app.logger.debug("acquired write lock %s", post)
+        # populate the Post object and save it to the database,
+        # redirect to the view
+        post.title = request.form.get('title', '')
+        post.content = request.form.get('content')
 
-            # populate the Post object and save it to the database,
-            # redirect to the view
-            post.title = request.form.get('title', '')
-            post.content = request.form.get('content')
+        post.draft = request.form.get('draft', 'false') == 'true'
+        post.hidden = request.form.get('hidden', 'false') == 'true'
 
-            post.draft = request.form.get('draft', 'false') == 'true'
-            post.hidden = request.form.get('hidden', 'false') == 'true'
+        lat = request.form.get('latitude')
+        lon = request.form.get('longitude')
+        if lat and lon:
+            post.location = Location(float(lat), float(lon),
+                                     request.form.get('location_name'))
+        else:
+            post.location = None
 
-            lat = request.form.get('latitude')
-            lon = request.form.get('longitude')
-            if lat and lon:
-                post.location = Location(float(lat), float(lon),
-                                         request.form.get('location_name'))
-            else:
-                post.location = None
+        if not post.pub_date:
+            post.pub_date = datetime.datetime.utcnow()
 
-            if not post.pub_date:
-                post.pub_date = datetime.datetime.utcnow()
+        slug = request.form.get('slug')
+        if slug:
+            post.slug = slug
+        elif post.title and not post.slug:
+            post.slug = slugify(post.title)
 
-            slug = request.form.get('slug')
-            if slug:
-                post.slug = slug
-            elif post.title and not post.slug:
-                post.slug = slugify(post.title)
+        post.repost_preview = None
 
-            post.repost_preview = None
-
-            in_reply_to = request.form.get('in_reply_to', '')
-            post.in_reply_to = [url.strip() for url
-                                in in_reply_to.split('\n')
-                                if url.strip()]
-
-            repost_of = request.form.get('repost_of', '')
-            post.repost_of = [url.strip() for url
-                              in repost_of.split('\n')
-                              if url.strip()]
-
-            like_of = request.form.get('like_of', '')
-            post.like_of = [url.strip() for url
-                            in like_of.split('\n')
+        in_reply_to = request.form.get('in_reply_to', '')
+        post.in_reply_to = [url.strip() for url
+                            in in_reply_to.split('\n')
                             if url.strip()]
 
-            syndication = request.form.get('syndication', '')
-            post.syndication = [url.strip() for url in
-                                syndication.split('\n')
-                                if url.strip()]
+        repost_of = request.form.get('repost_of', '')
+        post.repost_of = [url.strip() for url
+                          in repost_of.split('\n')
+                          if url.strip()]
 
-            audience = request.form.get('audience', '')
-            post.audience = [url.strip() for url in
-                             audience.split('\n')
-                             if url.strip()]
+        like_of = request.form.get('like_of', '')
+        post.like_of = [url.strip() for url
+                        in like_of.split('\n')
+                        if url.strip()]
 
-            post.tags = request.form.get('tags', '').split()
+        syndication = request.form.get('syndication', '')
+        post.syndication = [url.strip() for url in
+                            syndication.split('\n')
+                            if url.strip()]
 
-            app.logger.debug("attempting to save post %s with syndication links %s", post, post.syndication)
-            post.save()
+        audience = request.form.get('audience', '')
+        post.audience = [url.strip() for url in
+                         audience.split('\n')
+                         if url.strip()]
+
+        post.tags = request.form.get('tags', '').split()
+        post.save()
 
         with Metadata.writeable() as mdata:
             mdata.add_or_update_post(post)

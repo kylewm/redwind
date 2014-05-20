@@ -163,6 +163,8 @@ def micropub_endpoint():
     else:
         post.pub_date = datetime.datetime.utcnow()
 
+    post.reserve_date_index()
+
     loc_str = request.form.get('location')
     geo_prefix = 'geo:'
     if loc_str and loc_str.startswith(geo_prefix):
@@ -174,9 +176,6 @@ def micropub_endpoint():
     synd_url = request.form.get('syndication')
     if synd_url:
         post.syndication.append(synd_url)
-
-    # save to reserve the date index
-    post.save()
 
     photo_file = request.files.get('photo')
     if photo_file:

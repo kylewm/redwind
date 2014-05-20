@@ -1,0 +1,34 @@
+
+
+<html>
+  <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+  <script type="text/javascript">
+
+$(document).ready(function() {
+    $("#add_row").click(function() {
+        $("#target_container").append(
+            $(".target_row").first().clone()
+        );
+    });
+});
+
+  </script>
+
+  <form action="http://kylewm.com" method="POST">
+    <div id="target_container">
+      <div class="target_row">
+        <select name="target[][type]">
+          <option value="in_reply_to">Reply to</option>
+          <option value="repost_of">Repost of</option>
+          <option value="like_of">Like of</option>
+        </select>
+        <input name="target[][url]" type="text" size="30">
+      </div>
+    </div>
+
+    <input type="button" id="add_row" value="Add Row">
+    <input type="submit">
+
+  </form>
+
+</html>
