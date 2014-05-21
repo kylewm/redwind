@@ -914,16 +914,17 @@ def save_post(post):
         post.tags = request.form.get('tags', '').split()
 
         file_to_url = {}
-        infiles = request.files.getlist('files[]')
+        infiles = request.files.getlist('files')
         app.logger.debug('infiles: %s', infiles)
         for infile in infiles:
-            app.logger.debug('receiving uploaded file %s', infile)
-            relpath, photo_url, fullpath \
-                = api.generate_upload_path(post, infile)
-            if not os.path.exists(os.path.dirname(fullpath)):
-                os.makedirs(os.path.dirname(fullpath))
-            infile.save(fullpath)
-            file_to_url[infile] = photo_url
+            if infile and infile.filename:
+                app.logger.debug('receiving uploaded file %s', infile)
+                relpath, photo_url, fullpath \
+                    = api.generate_upload_path(post, infile)
+                if not os.path.exists(os.path.dirname(fullpath)):
+                    os.makedirs(os.path.dirname(fullpath))
+                infile.save(fullpath)
+                file_to_url[infile] = photo_url
 
         app.logger.debug('uploaded files map %s', file_to_url)
 
