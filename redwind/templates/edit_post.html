@@ -8,10 +8,10 @@
     <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
     <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Publish"/>
-    <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if not post.date_index %}checked{% endif %} />Send Webmentions</label>
-    <label><input type="checkbox" id="send_push" name="send_push" value="true" {% if not post.date_index %}checked{% endif %} />Send PuSH</label>
+    <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if not post.date_index %}checked{% endif %} />Webmentions</label>
+    <label><input type="checkbox" id="send_push" name="send_push" value="true" {% if not post.date_index %}checked{% endif %} />PuSH</label>
     <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label>
-    <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft (only visible to author)</label><br/>
+    <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft</label>
 
     {% if post.post_type == 'article' %}
       <div class="title">
@@ -58,8 +58,9 @@
     </div>
 
     <label>
-      <input type="file" name="files[]" accept="image/*" multiple></input>
+      <input type="file" id="image_upload_button" name="files[]" accept="image/*" multiple></input>
     </label>
+    <ul id="uploads"></ul>
 
     <div class="syndication">
       <label><span>Syndication (URLs)</span>
@@ -74,15 +75,8 @@
     </div>
 
   </form>
+{% endblock content %}
 
-  <!--
-  <form id="image_upload">
-    <label>
-      <input type="file" id="image_upload_button" accept="image/*"></input>
-    </label>
-  </form>
-  <ul id="result"></ul>
+{% block other_resources %}
   <script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
-  -->
-
-{% endblock %}
+{% endblock other_resources %}
