@@ -585,8 +585,6 @@ def delete_by_id():
 def new_post():
     post_type = request.args.get('type', 'note')
     post = Post(post_type)
-    post.pub_date = datetime.datetime.utcnow()
-    post.reserve_date_index()
     post.content = ''
 
     if post_type == 'reply':
@@ -831,21 +829,23 @@ def local_mirror_resource(url):
 @app.route('/admin/save_edit', methods=['POST'])
 @login_required
 def save_edit():
-    post_id_str = request.form.get('post_id')
-    app.logger.debug("saving post %s", post_id_str)
+    shortid = request.form.get('post_id')
+    app.logger.debug("saving post %s", shortid)
     with Post.writeable(Post.shortid_to_path(shortid)) as post:
-        save_post(post)
+        return save_post(post)
 
 
-@app.route('/admin/save_edit', methods=['POST'])
+@app.route('/admin/save_new', methods=['POST'])
 @login_required
 def save_new():
     post_type = request.form.get('post_type', 'note')
     app.logger.debug("saving new post of type %s", post_type)
     post = Post(post_type)
-    post._writeable = True
-    save_post(post)
-    post._writeable = False
+    try:
+        post._writeable = True
+        return save_post(post)
+    finally:
+        post._writeable = False
 
 
 def save_post(post):
@@ -876,6 +876,7 @@ def save_post(post):
 
         if not post.pub_date:
             post.pub_date = datetime.datetime.utcnow()
+        post.reserve_date_index()
 
         slug = request.form.get('slug')
         if slug:
@@ -911,6 +912,21 @@ def save_post(post):
                          if url.strip()]
 
         post.tags = request.form.get('tags', '').split()
+
+        file_to_url = {}
+        infiles = request.files.getlist('files[]')
+        app.logger.debug('infiles: %s', infiles)
+        for infile in infiles:
+            app.logger.debug('receiving uploaded file %s', infile)
+            relpath, photo_url, fullpath \
+                = api.generate_upload_path(post, infile)
+            if not os.path.exists(os.path.dirname(fullpath)):
+                os.makedirs(os.path.dirname(fullpath))
+            infile.save(fullpath)
+            file_to_url[infile] = photo_url
+
+        app.logger.debug('uploaded files map %s', file_to_url)
+
         post.save()
 
         with Metadata.writeable() as mdata:
