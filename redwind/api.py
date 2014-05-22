@@ -107,7 +107,7 @@ def token_endpoint():
     response_body = urllib.parse.urlencode({
         'access_token': token,
         'me': me,
-        'scope': auth_scope,
+        'scope': ' '.join(auth_scope),
     })
     app.logger.debug("returning urlencoded response %s", response_body)
 
