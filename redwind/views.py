@@ -387,7 +387,7 @@ def render_posts_atom(title, feed_id, post_types, count):
     return make_response(render_template('posts.atom', title=title,
                                          feed_id=feed_id,
                                          posts=dposts), 200,
-                         {'Content-Type': 'application/atom+xml'})
+                         {'Content-Type': 'application/atom+xml; charset=utf-8'})
 
 
 @app.route("/all.atom")
@@ -723,7 +723,7 @@ app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 @app.template_filter('html_to_plain')
 def html_to_plain(content):
-    soup = BeautifulSoup(str(content), 'lxml')
+    soup = BeautifulSoup(content)
     text = soup.get_text()
     return Markup.escape(text)
 
