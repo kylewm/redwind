@@ -481,7 +481,7 @@ def post_associated_file(post_type, year, month, day, index, filename):
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
     post = Post.load_by_date(post_type, year, month, day, index)
-    if not post:
+    if not post or (post.draft and not current_user.is_authenticated()):
         abort(404)
 
     if post.deleted:
@@ -938,10 +938,10 @@ def save_post(post):
         redirect_url = post.permalink
 
         contexts.fetch_post_contexts(post)
-        if request.form.get('send_push') == 'true':
+        if request.form.get('send_push') == 'true' and not post.draft:
             push.send_notifications(post)
 
-        if request.form.get('send_webmentions') == 'true':
+        if request.form.get('send_webmentions') == 'true' and not post.draft:
             webmention_sender.send_webmentions(post)
 
         return redirect(redirect_url)
