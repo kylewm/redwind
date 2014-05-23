@@ -130,8 +130,11 @@ class DisplayPost:
     def html_content(self):
         return Markup(self.get_html_content(True))
 
+    def get_image_path(self):
+        return '/' + self.path + '/files'
+
     def get_html_content(self, include_preview=True):
-        text = markdown_filter(self.content)
+        text = markdown_filter(self.content, img_path=self.get_image_path())
         if include_preview and self.post_type == 'share':
             preview = self.get_share_preview()
             text += preview
@@ -140,7 +143,7 @@ class DisplayPost:
     @property
     @reraise_attribute_errors
     def html_excerpt(self):
-        text = markdown_filter(self.content)
+        text = markdown_filter(self.content, img_path=self.get_image_path())
         split = text.split('<!-- more -->', 1)
         if self.post_type == 'share':
             text += self.get_share_preview(split[0])
@@ -739,7 +742,8 @@ def bleach_html(html):
 
 
 @app.template_filter('format_markdown_as_text')
-def format_markdown_as_text(content, remove_imgs=True, link_twitter_names=True):
+def format_markdown_as_text(content, remove_imgs=True,
+                            link_twitter_names=True):
     html = markdown_filter(content, link_twitter_names=link_twitter_names)
     return format_as_text(html, remove_imgs)
 
@@ -763,9 +767,15 @@ def format_as_text(html, remove_imgs=True):
 
 
 @app.template_filter('markdown')
-def markdown_filter(data, link_twitter_names=True):
+def markdown_filter(data, img_path=None, link_twitter_names=True):
     from markdown import markdown
     from smartypants import smartypants
+
+    if img_path:
+        # replace relative paths to images with absolute
+        data = re.sub(
+            '(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)',
+            '![\g<1>](' + img_path + '/\g<2>)', data)
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
     result = util.autolink(result, twitter_names=link_twitter_names)

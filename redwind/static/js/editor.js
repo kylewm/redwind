@@ -1,8 +1,9 @@
 (function() {
 
     function add_img_link(file) {
+        var filename = file.name.replace(' ', '_');
         $('#content').val(
-            $('#content').val() + '\n![/path/to/post/files/' + file.name + '](' + file.name + ')');
+            $('#content').val() + '\n![' + filename + '](' + filename + ')');
     }
 
     /* register events */
@@ -55,17 +56,18 @@
         $('#image_upload_button').change(function() {
             $('#uploads').empty();
             for (var ii = 0 ; ii < this.files.length ; ii++) {
-                var file = this.files[ii];
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    var link = $('<a>');
-                    link.append('<img style="max-width: 75px; max-height: 75px;" src="' + e.target.result + '"/>' + file.name);
-                    $('#uploads').append($('<ul>').append(link));
-                    link.click(function(){
-                        add_img_link(file);
-                    });
-                };
-                reader.readAsDataURL(file);
+                (function(file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var link = $('<a>');
+                        link.append('<img style="max-width: 75px; max-height: 75px;" src="' + e.target.result + '"/>' + file.name);
+                        $('#uploads').append($('<ul>').append(link));
+                        link.click(function(){
+                            add_img_link(file);
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                })(this.files[ii]);
             }
         });
     });
