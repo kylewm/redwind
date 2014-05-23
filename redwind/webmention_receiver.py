@@ -1,5 +1,6 @@
 from . import push
-from . import app, celery
+from . import app
+from . import queue
 from . import archiver
 from .models import Post, Metadata, acquire_lock
 
@@ -10,7 +11,6 @@ import urllib.parse
 import urllib.request
 import requests
 import json
-#from .spool import spoolable
 import os
 
 from bs4 import BeautifulSoup
@@ -38,7 +38,7 @@ def receive_webmention():
     return make_response('webmention queued for processing', 202)
 
 
-@celery.task
+@queue.queueable
 def process_webmention(source, target, callback):
     def call_callback(status, reason):
         if callback:

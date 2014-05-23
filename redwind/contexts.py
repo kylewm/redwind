@@ -1,7 +1,6 @@
 from . import app
 from . import archiver
-from . import celery
-#from .spool import spoolable
+from . import queue
 from .twitter import twitter_client
 import itertools
 
@@ -11,7 +10,7 @@ def fetch_post_contexts(post):
         do_fetch_context.delay(url)
 
 
-@celery.task
+@queue.queueable
 def do_fetch_context(url):
     try:
         app.logger.debug("fetching url %s", url)

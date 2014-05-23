@@ -1,5 +1,5 @@
 from . import app
-from . import celery
+from . import queue
 from .models import Post
 #from .spool import spoolable
 
@@ -23,7 +23,7 @@ def send_webmentions(post):
             .format(e)
 
 
-@celery.task
+@queue.queueable
 def do_send_webmentions(post_id):
     app.logger.debug("sending mentions for {}".format(post_id))
     post = Post.load_by_shortid(post_id)
