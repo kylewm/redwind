@@ -1,5 +1,5 @@
 from . import push
-from . import app
+from . import app, celery
 from . import archiver
 from .models import Post, Metadata, acquire_lock
 
@@ -10,7 +10,7 @@ import urllib.parse
 import urllib.request
 import requests
 import json
-from .spool import spoolable
+#from .spool import spoolable
 import os
 
 from bs4 import BeautifulSoup
@@ -34,11 +34,11 @@ def receive_webmention():
             'webmention missing required target parameter', 400)
 
     app.logger.debug("Webmention from %s to %s received", source, target)
-    process_webmention.spool(source, target, callback)
+    process_webmention.delay(source, target, callback)
     return make_response('webmention queued for processing', 202)
 
 
-@spoolable
+@celery.task
 def process_webmention(source, target, callback):
     def call_callback(status, reason):
         if callback:

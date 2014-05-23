@@ -1,21 +1,22 @@
 from . import app
-from .spool import spoolable
+from . import celery
+#from .spool import spoolable
 import requests
 
 
 def send_notifications(post):
     if post.post_type in ('article', 'note', 'share'):
-        publish.spool('http://kylewm.com/updates.atom')
+        publish.delay('http://kylewm.com/updates.atom')
     if post.post_type == 'article':
-        publish.spool('http://kylewm.com/articles.atom')
-    publish.spool('http://kylewm.com/all.atom')
+        publish.delay('http://kylewm.com/articles.atom')
+    publish.delay('http://kylewm.com/all.atom')
 
 
 def handle_new_mentions():
-    publish.spool('http://kylewm.com/mention.atom')
+    publish.delay('http://kylewm.com/mention.atom')
 
 
-@spoolable
+@celery.task
 def publish(url):
     app.logger.debug("sending PuSH notification to %s", url)
     data = {'hub.mode': 'publish', 'hub.url': url}

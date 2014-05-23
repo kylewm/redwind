@@ -1,16 +1,17 @@
 from . import app
 from . import archiver
-from .spool import spoolable
+from . import celery
+#from .spool import spoolable
 from .twitter import twitter_client
 import itertools
 
 
 def fetch_post_contexts(post):
     for url in itertools.chain(post.in_reply_to, post.repost_of, post.like_of):
-        do_fetch_context.spool(url)
+        do_fetch_context.delay(url)
 
 
-@spoolable
+@celery.task
 def do_fetch_context(url):
     try:
         app.logger.debug("fetching url %s", url)
