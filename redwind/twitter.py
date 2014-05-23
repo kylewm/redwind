@@ -175,6 +175,12 @@ class TwitterClient:
         author_image = status_data['user']['profile_image_url']
         tweet_text = self.expand_links(status_data['text'])
 
+        for media in status_data.get('entities', {}).get('media', []):
+            if media.get('type') == 'photo':
+                media_url = media.get('media_url')
+                if media_url:
+                    tweet_text += '<div><img src="{}"/></div>'.format(media_url)
+
         html = hentry_template.fill(author_name=author_name,
                                     author_url=author_url,
                                     author_image=author_image,
