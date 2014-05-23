@@ -1,8 +1,6 @@
 from . import app
 from . import queue
 from .models import Post
-#from .spool import spoolable
-
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from urllib.request import urlopen, Request

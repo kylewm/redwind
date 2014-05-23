@@ -5,9 +5,12 @@ if 'mf2py' not in sys.path:
 from flask import Flask
 #from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.datastructures import ImmutableDict
+from redis import Redis
 
 app = Flask(__name__)
 app.config.from_object('config.Configuration')
+
+redis = Redis()
 
 app.jinja_options = ImmutableDict(
     trim_blocks=True,
@@ -27,9 +30,5 @@ if not app.debug:
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
-
-
-from redis import Redis
-redis = Redis()
 
 from . import views

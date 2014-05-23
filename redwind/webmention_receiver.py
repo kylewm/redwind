@@ -4,7 +4,7 @@ from . import queue
 from . import archiver
 from .models import Post, Metadata, acquire_lock
 
-from flask import request, make_response, render_template
+from flask import request, make_response, render_template, url_for, jsonify
 from werkzeug.exceptions import NotFound
 
 import urllib.parse
@@ -34,28 +34,51 @@ def receive_webmention():
             'webmention missing required target parameter', 400)
 
     app.logger.debug("Webmention from %s to %s received", source, target)
-    process_webmention.delay(source, target, callback)
-    return make_response('webmention queued for processing', 202)
+    delayed = process_webmention.delay(source, target, callback)
+
+    key = delayed.key
+    prefix = app.config['REDIS_QUEUE_KEY'] + ':result:'
+    if key.startswith(prefix):
+        key = key[len(prefix):]
+
+    status_url = url_for('webmention_status', key=key, _external=True)
+    return make_response(
+        'Webmention queued for processing. Check status: {}'.format(status_url),
+        202)
+
+
+@app.route('/webmention/status/<key>')
+def webmention_status(key):
+    key = app.config['REDIS_QUEUE_KEY'] + ':result:' + key
+    delayed = queue.DelayedResult(key)
+    rv = delayed.return_value
+    if not rv:
+        return jsonify({
+            'status': 202,
+            'reason': 'Mention has not been processed or status has expired'
+        })
+    return jsonify(rv)
 
 
 @queue.queueable
 def process_webmention(source, target, callback):
-    def call_callback(status, reason):
+    def call_callback(result):
         if callback:
-            requests.post(callback, data={
-                'source': source,
-                'target': target,
-                'status': status,
-                'reason': reason
-            })
+            requests.post(callback, data=result)
     try:
         target_post, mentions_path, mention_url, delete, error \
             = do_process_webmention(source, target)
 
         if error or not mentions_path or not mention_url:
             app.logger.warn("Failed to process webmention: %s", error)
-            call_callback(400, error)
-            return 400, error
+            result = {
+                'source': source,
+                'target': target,
+                'status': 400,
+                'reason': error
+            }
+            call_callback(result)
+            return result
 
         # TODO move this to models
         mentions_path = os.path.join(app.root_path, '_data', mentions_path)
@@ -83,14 +106,25 @@ def process_webmention(source, target, callback):
 
         push.handle_new_mentions()
 
-        call_callback(200, 'Success')
-        return 200, 'Success'
+        result = {
+            'source': source,
+            'target': target,
+            'status': 200,
+            'reason': 'Success'
+        }
+        call_callback(result)
+        return result
 
     except Exception as e:
         app.logger.exception("exception while processing webmention")
-        error = "exception while processing webmention {}".format(e)
-        call_callback(400, error)
-        return 400, error
+        result = {
+            'source': source,
+            'target': target,
+            'status': 400,
+            'reason': "exception while processing webmention {}".format(e)
+        }
+        call_callback(result)
+        return result
 
 
 def do_process_webmention(source, target):
