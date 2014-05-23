@@ -100,6 +100,7 @@ def process_webmention(source, target, callback):
             json.dump(mention_list, open(mentions_path, 'w'), indent=True)
             app.logger.debug("saved mentions to %s", mentions_path)
 
+
         with Metadata.writeable() as mdata:
             mdata.insert_recent_mention(target_post, mention_url)
             mdata.save()
@@ -110,7 +111,7 @@ def process_webmention(source, target, callback):
             'source': source,
             'target': target,
             'status': 200,
-            'reason': 'Success'
+            'reason': 'Deleted' if delete else 'Created'
         }
         call_callback(result)
         return result
@@ -154,7 +155,7 @@ def do_process_webmention(source, target):
 
     if source_response.status_code == 410:
         app.logger.debug("Webmention indicates original was deleted")
-        return mentions_path, None, True, None
+        return target_post, mentions_path, source, True, None
 
     if source_response.status_code // 100 != 2:
         app.logger.warn(
