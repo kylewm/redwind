@@ -5,7 +5,6 @@ if 'mf2py' not in sys.path:
 from flask import Flask
 #from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.datastructures import ImmutableDict
-from celery import Celery
 
 app = Flask(__name__)
 app.config.from_object('config.Configuration')
