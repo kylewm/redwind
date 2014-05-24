@@ -72,7 +72,9 @@ def collect_images(post):
     """find the first image (if any) that is in an <img> tag
     in the rendered post"""
     from .views import markdown_filter
-    html = markdown_filter(post.content)
+    html = markdown_filter(post.content, img_path=post.get_image_path(),
+                           link_twitter_names=False,
+                           person_processor=lambda full, display, entry: '')
     soup = BeautifulSoup(html)
     for img in soup.find_all('img'):
         src = img.get('src')
@@ -117,8 +119,20 @@ def share_on_twitter():
         return """Share on Twitter Failed!<br/>Exception: {}""".format(e)
 
 
-class TwitterClient:
+@app.template_filter('format_markdown_as_tweet')
+def format_markdown_as_tweet(data, img_path):
+    def person_to_twitter_handle(fullname, displayname, entry):
+        handle = entry.get('twitter')
+        if handle:
+            return '@' + handle
+        return displayname
 
+    from .views import format_markdown_as_text
+    return format_markdown_as_text(data, img_path, link_twitter_names=False,
+                                   person_processor=person_to_twitter_handle)
+
+
+class TwitterClient:
     PERMALINK_RE = re.compile(
         "https?://(?:www\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)")
 

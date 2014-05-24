@@ -28,7 +28,7 @@
 
 <textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">{% if post.title %}
 {{ post.title }} {{ post.permalink }}{% else %}
-{{ post.content | format_markdown_as_text(link_twitter_names=False) }}{% endif %}
+{{ post.content | format_markdown_as_tweet(post.get_image_path()) }}{% endif %}
 </textarea><br/>
 
       <span size="8" type="text" name="char_count" id="char_count">&nbsp;</span>

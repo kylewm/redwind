@@ -9,7 +9,7 @@ from . import twitter
 from . import util
 from . import webmention_sender
 from . import webmention_receiver
-from .models import Post, Location, Metadata, POST_TYPES
+from .models import Post, Location, Metadata, AddressBook, POST_TYPES
 
 from bs4 import BeautifulSoup
 from flask import request, redirect, url_for, render_template, flash,\
@@ -40,7 +40,9 @@ POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
 DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
             '<int(fixed_digits=2):day>/<index>'
 
+TWITTER_PROFILE_RE = re.compile(r'https?://(?:www\.)?twitter\.com/(\w+)')
 TWITTER_RE = twitter.TwitterClient.PERMALINK_RE
+FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/(\w+)')
 FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/(\w+)/posts/(\w+)')
 YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
 INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
@@ -129,9 +131,6 @@ class DisplayPost:
     @reraise_attribute_errors
     def html_content(self):
         return Markup(self.get_html_content(True))
-
-    def get_image_path(self):
-        return '/' + self.path + '/files'
 
     def get_html_content(self, include_preview=True):
         text = markdown_filter(self.content, img_path=self.get_image_path())
@@ -741,10 +740,65 @@ def bleach_html(html):
     return bleach.clean(html, strip=True)
 
 
+@app.template_filter('markdown')
+def markdown_filter(data, img_path=None, link_twitter_names=True,
+                    person_processor=None):
+    def person_to_microcard(fullname, displayname, entry):
+        url = entry.get('url')
+        photo = entry.get('photo')
+        if url and photo:
+            return '<a class="microcard h-card" href="{}">'\
+                '<img src="{}" />{}</a>'.format(url, photo, displayname)
+        return displayname
+
+    if not person_processor:
+        person_processor = person_to_microcard
+
+    from markdown import markdown
+    from smartypants import smartypants
+
+    if img_path:
+        # replace relative paths to images with absolute
+        data = re.sub(
+            '(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)',
+            '![\g<1>](' + img_path + '/\g<2>)', data)
+
+    # substitute from address book
+    book = markdown_filter._book
+    if not book:
+        book = AddressBook()
+        markdown_filter._book = book
+
+    regex = re.compile(r'\[\[([\w ]+)(?:\|([\w ]+))?\]\]')
+    start = 0
+    while True:
+        print(repr(data))
+        m = regex.search(data, start)
+        if not m:
+            break
+        fullname = m.group(1)
+        displayname = m.group(2) or fullname
+        replacement = person_processor(fullname, displayname,
+                                       book.entries.get(fullname, {}))
+        data = data[:m.start()] + replacement + data[m.end():]
+        start = m.start() + len(replacement)
+
+    result = markdown(data, extensions=['codehilite', 'fenced_code'])
+    result = util.autolink(result, twitter_names=link_twitter_names)
+    result = smartypants(result)
+    return result
+
+markdown_filter._book = None
+
+
 @app.template_filter('format_markdown_as_text')
 def format_markdown_as_text(content, remove_imgs=True,
-                            link_twitter_names=True):
-    html = markdown_filter(content, link_twitter_names=link_twitter_names)
+                            link_twitter_names=True,
+                            person_processor=None):
+    if not person_processor:
+        person_processor = lambda full, display, entry: display
+    html = markdown_filter(content, link_twitter_names=link_twitter_names,
+                           person_processor=person_processor)
     return format_as_text(html, remove_imgs)
 
 
@@ -764,23 +818,6 @@ def format_as_text(html, remove_imgs=True):
                                          or i.get('alt')
                                          or 'image'))
     return soup.get_text().strip()
-
-
-@app.template_filter('markdown')
-def markdown_filter(data, img_path=None, link_twitter_names=True):
-    from markdown import markdown
-    from smartypants import smartypants
-
-    if img_path:
-        # replace relative paths to images with absolute
-        data = re.sub(
-            '(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)',
-            '![\g<1>](' + img_path + '/\g<2>)', data)
-
-    result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    result = util.autolink(result, twitter_names=link_twitter_names)
-    result = smartypants(result)
-    return result
 
 
 @app.template_filter('autolink')
@@ -961,3 +998,28 @@ def save_post(post):
         flash('failed to save post {}'.format(e))
 
         return redirect(url_for('index'))
+
+
+@app.route('/admin/addressbook', methods=['GET', 'POST'])
+@login_required
+def addressbook():
+    book = AddressBook()
+
+    if request.method == 'POST':
+        person = request.form.get('person').strip()
+        url = request.form.get('url').strip()
+        photo = request.form.get('photo').strip()
+        twitter_name = request.form.get('twitter').strip()
+        facebook_id = request.form.get('facebook').strip()
+
+        book.entries[person] = {
+            'url': url,
+            'photo': photo,
+            'twitter': twitter_name,
+            'facebook': facebook_id,
+        }
+
+        book.save()
+        return redirect(url_for('addressbook'))
+
+    return render_template('addressbook.html', entries=book.entries)

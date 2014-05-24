@@ -3,19 +3,21 @@ from . import auth
 from . import util
 from .models import Post, Location, Metadata
 
-
+from collections import deque
 from flask import request, url_for, jsonify, abort, make_response
 from flask.ext.login import login_required
 from werkzeug import secure_filename
+from bs4 import BeautifulSoup
 
 import datetime
 import jwt
+import mf2py
 import mf2util
 import os
 import random
 import requests
 import urllib
-
+import json
 
 def generate_upload_path(post, f, default_ext=None):
     filename = secure_filename(f.filename)
@@ -48,9 +50,8 @@ def generate_upload_path(post, f, default_ext=None):
 
 @app.route('/api/mf2')
 def convert_mf2():
-    from mf2py.parser import Parser
     url = request.args.get('url')
-    p = Parser(url=url)
+    p = mf2py.Parser(url=url)
     json = p.to_dict()
     return jsonify(json)
 
@@ -198,3 +199,63 @@ def micropub_endpoint():
         mdata.save()
 
     return make_response('', 201, {'Location': post.permalink})
+
+
+@app.route('/api/fetch_profile')
+def fetch_profile():
+    from .views import TWITTER_PROFILE_RE, FACEBOOK_PROFILE_RE
+
+    try:
+        url = request.args.get('url')
+        name = None
+        twitter = None
+        facebook = None
+        photo = None
+
+        d = mf2py.Parser(url=url).to_dict()
+
+        for alt in d['rels'].get('me', []):
+            m = TWITTER_PROFILE_RE.match(alt)
+            if m:
+                twitter = m.group(1)
+            else:
+                m = FACEBOOK_PROFILE_RE.match(alt)
+                if m:
+                    facebook = m.group(1)
+
+        # check for h-feed
+        hfeed = next((item for item in d['items']
+                      if 'h-feed' in item['type']), None)
+        if hfeed:
+            authors = hfeed.get('properties', {}).get('author')
+            photos = hfeed.get('properties', {}).get('photo')
+            if authors:
+                if isinstance(authors[0], dict):
+                    name = authors[0].get('properties', {}).get('name')
+                    photo = authors[0].get('properties', {}).get('photo')
+                else:
+                    name = authors[0]
+            if photos and not photo:
+                photo = photos[0]
+
+        # check for top-level h-card
+        for item in d['items']:
+            print('checking', item)
+            if 'h-card' in item.get('type', []):
+                print('item is h-card')
+                if not name:
+                    name = item.get('properties', {}).get('name')
+                if not photo:
+                    photo = item.get('properties', {}).get('photo')
+
+        return jsonify({
+            'name': name,
+            'photo': photo,
+            'twitter': twitter,
+            'facebook': facebook,
+        })
+
+    except BaseException as e:
+        resp = jsonify({'error': str(e)})
+        resp.status_code = 400
+        return resp

@@ -7,6 +7,7 @@ import os
 import os.path
 import json
 import time
+import urllib
 from operator import attrgetter, itemgetter
 from contextlib import contextmanager
 
@@ -271,6 +272,9 @@ class Post:
             self.post_type, self.pub_date.year, self.pub_date.month,
             self.pub_date.day, self.date_index)
 
+    def get_image_path(self):
+        return '/' + self.path + '/files'
+
     @property
     def permalink(self):
         return self._permalink(include_slug=True)
@@ -341,6 +345,30 @@ class Post:
         else:
             return 'post:{}'.format(
                 self.content[:140] if self.content else 'BLANK')
+
+
+class AddressBook:
+    """Address book contains entries like
+    {
+      'Kyle Mahan': {
+        'url': 'http://kylewm.com',
+        'photo': 'http://kylewm.com/static/images/kyle_large.jpg',
+        'twitter': 'kyle_wm',
+        'facebook': '0123456789'
+      }
+    }
+    """
+
+    PATH = os.path.join(app.root_path, '_data', 'addressbook.json')
+
+    def __init__(self):
+        if os.path.exists(self.PATH):
+            self.entries = json.load(open(self.PATH, 'r'))
+        else:
+            self.entries = {}
+
+    def save(self):
+        json.dump(self.entries, open(self.PATH, 'w'), indent=True)
 
 
 class Metadata:
