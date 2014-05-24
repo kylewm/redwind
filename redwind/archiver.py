@@ -22,7 +22,7 @@ def url_to_archive_path(url):
     path = os.path.join(parsed.scheme,
                         parsed.netloc.strip('/'),
                         parsed.path.strip('/'))
-    return os.path.join(app.root_path, '_data/archive', path)
+    return os.path.join(app.root_path, '_archive', path)
 
 
 def url_to_json_path(url):
