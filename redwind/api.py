@@ -185,7 +185,7 @@ def micropub_endpoint():
             os.makedirs(os.path.dirname(fullpath))
         photo_file.save(fullpath)
 
-        content = '![]({})'.format(photo_url)
+        content = '![]({})'.format(os.path.basename(photo_url))
         if post.content:
             content += '\n\n' + post.content
         post.content = content
