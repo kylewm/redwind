@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block head_content %}
+
+<meta property="fb:app_id" content="458928027540466" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="{{post.permalink}}" />
+<meta property="og:title" content="{{title}" />
+
   {% if is_twitter_user_agent %}
     <meta name="twitter:site" content="@kyle_wm"/>
     <meta name="twitter:creator" content="@kyle_wm"/>

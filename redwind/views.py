@@ -740,34 +740,21 @@ def bleach_html(html):
     return bleach.clean(html, strip=True)
 
 
-@app.template_filter('markdown')
-def markdown_filter(data, img_path=None, link_twitter_names=True,
-                    person_processor=None):
-    def person_to_microcard(fullname, displayname, entry):
-        url = entry.get('url')
-        photo = entry.get('photo')
-        if url and photo:
-            return '<a class="microcard h-card" href="{}">'\
-                '<img src="{}" />{}</a>'.format(url, photo, displayname)
-        return displayname
+def person_to_microcard(fullname, displayname, entry, pos):
+    url = entry.get('url')
+    photo = entry.get('photo')
+    if url and photo:
+        return '<a class="microcard h-card" href="{}">'\
+            '<img src="{}" />{}</a>'.format(url, photo, displayname)
+    return displayname
 
-    if not person_processor:
-        person_processor = person_to_microcard
 
-    from markdown import markdown
-    from smartypants import smartypants
-
-    if img_path:
-        # replace relative paths to images with absolute
-        data = re.sub(
-            '(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)',
-            '![\g<1>](' + img_path + '/\g<2>)', data)
-
+def process_people(data, person_processor):
     # substitute from address book
-    book = markdown_filter._book
+    book = process_people._book
     if not book:
         book = AddressBook()
-        markdown_filter._book = book
+        process_people._book = book
 
     regex = re.compile(r'\[\[([\w ]+)(?:\|([\w ]+))?\]\]')
     start = 0
@@ -779,24 +766,41 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
         fullname = m.group(1)
         displayname = m.group(2) or fullname
         replacement = person_processor(fullname, displayname,
-                                       book.entries.get(fullname, {}))
+                                       book.entries.get(fullname, {}),
+                                       m.start())
         data = data[:m.start()] + replacement + data[m.end():]
         start = m.start() + len(replacement)
+    return data
+
+process_people._book = None
+
+
+@app.template_filter('markdown')
+def markdown_filter(data, img_path=None, link_twitter_names=True,
+                    person_processor=person_to_microcard):
+    from markdown import markdown
+    from smartypants import smartypants
+
+    if img_path:
+        # replace relative paths to images with absolute
+        data = re.sub(
+            '(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)',
+            '![\g<1>](' + img_path + '/\g<2>)', data)
+
+    if person_processor:
+        data = process_people(data, person_processor)
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
     result = util.autolink(result, twitter_names=link_twitter_names)
     result = smartypants(result)
     return result
 
-markdown_filter._book = None
-
 
 @app.template_filter('format_markdown_as_text')
-def format_markdown_as_text(content, remove_imgs=True,
-                            link_twitter_names=True,
-                            person_processor=None):
-    if not person_processor:
-        person_processor = lambda full, display, entry: display
+def format_markdown_as_text(
+        content, remove_imgs=True,
+        link_twitter_names=True,
+        person_processor=lambda full, display, entry, pos: display):
     html = markdown_filter(content, link_twitter_names=link_twitter_names,
                            person_processor=person_processor)
     return format_as_text(html, remove_imgs)

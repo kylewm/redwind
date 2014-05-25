@@ -66,17 +66,50 @@ def share_on_facebook():
         return """Share on Facebook Failed!<br/>Exception: {}""".format(e)
 
 
+class PersonTagger:
+    def __init__(self):
+        self.tags = []
+        self.taggable_friends = None
+
+    def get_taggable_friends(self):
+        if not self.taggable_friends:
+            r = requests.get(
+                'https://graph.facebook.com/v2.0/me/taggable_friends',
+                params={
+                    'access_token': current_user.facebook_access_token
+                })
+            self.taggable_friends = r.json()
+
+        return self.taggable_friends or {}
+
+    def __call__(self, fullname, displayname, entry, pos):
+        friends = self.get_taggable_friends().get('data', [])
+
+        for friend in friends:
+            if friend.get('name') == fullname:
+                self.tags.append(friend.get('id'))
+                return '@[' + friend.get('id') + ']'
+
+        return displayname
+
+
 def handle_new_or_edit(post, preview, img_url):
+    from .views import process_people
     app.logger.debug('publishing to facebook')
+
+    tagger = PersonTagger()
+    preview = process_people(preview, tagger)
 
     post_args = {
         'access_token': current_user.facebook_access_token,
-        'message': preview,
+        'message': preview.strip(),
         'actions': json.dumps({
             'name': 'See Original',
-            'link': post.permalink
+            'link': post.permalink,
         }),
-        'privacy': json.dumps({'value': 'EVERYONE'})
+        #'privacy': json.dumps({'value': 'EVERYONE'}),
+        'privacy': json.dumps({'value': 'SELF'}),
+        'article': post.permalink,
     }
 
     post_args['name'] = post.title
@@ -90,8 +123,10 @@ def handle_new_or_edit(post, preview, img_url):
         post_args['link'] = post.permalink
         post_args['picture'] = img_url
 
-    response = requests.post('https://graph.facebook.com/me/feed',
-                             data=post_args)
+    app.logger.debug('Sending post %s', post_args)
+    response = requests.post(
+        'https://graph.facebook.com/me/news.publishes',
+        data=post_args)
 
     app.logger.debug("Got response from facebook %s", response)
 
@@ -111,3 +146,10 @@ def handle_new_or_edit(post, preview, img_url):
             fb_url = 'https://facebook.com/{}/posts/{}'.format(user_id, post_id)
             post.syndication.append(fb_url)
             return fb_url
+
+
+@app.template_filter('format_markdown_as_facebook')
+def format_markdown_as_facebook(data):
+    from .views import format_markdown_as_text
+    return format_markdown_as_text(data, link_twitter_names=False,
+                                   person_processor=None)
