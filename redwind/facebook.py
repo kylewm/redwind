@@ -83,13 +83,17 @@ class PersonTagger:
         return self.taggable_friends or {}
 
     def __call__(self, fullname, displayname, entry, pos):
-        friends = self.get_taggable_friends().get('data', [])
+        #friends = self.get_taggable_friends().get('data', [])
 
-        for friend in friends:
-            if friend.get('name') == fullname:
-                self.tags.append(friend.get('id'))
-                return '@[' + friend.get('id') + ']'
+        #for friend in friends:
+        #    if friend.get('name') == fullname:
+        #        self.tags.append(friend.get('id'))
+        #        return '@[' + friend.get('id') + ']'
 
+        fbid = entry.get('facebook')
+        if fbid:
+            return '@[' + fbid + ']'
+        
         return displayname
 
 
@@ -125,7 +129,7 @@ def handle_new_or_edit(post, preview, img_url):
 
     app.logger.debug('Sending post %s', post_args)
     response = requests.post(
-        'https://graph.facebook.com/me/news.publishes',
+        'https://graph.facebook.com/me/feed',
         data=post_args)
 
     app.logger.debug("Got response from facebook %s", response)
