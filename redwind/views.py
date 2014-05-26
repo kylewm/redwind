@@ -474,9 +474,19 @@ def post_associated_file(post_type, year, month, day, index, filename):
     if not check_audience(post):
         abort(401)  # not authorized TODO a nicer page
 
+    resourcedir = os.path.join(app.root_path, '_data', post.path, 'files')
+
+    size = request.args.get('size')
+    if size == 'small':
+        resourcedir, filename = util.resize_image(resourcedir, filename, 300)
+    elif size == 'medium':
+        resourcedir, filename = util.resize_image(resourcedir, filename, 800)
+    elif size == 'large':
+        resourcedir, filename = util.resize_image(resourcedir, filename, 1024)
+
     _, ext = os.path.splitext(filename)
-    return send_from_directory(os.path.join(app.root_path, '_data', post.path, 'files'),
-                               filename, mimetype='text/plain' if ext == '.md' else None)
+    return send_from_directory(resourcedir, filename,
+                               mimetype='text/plain' if ext == '.md' else None)
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})

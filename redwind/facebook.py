@@ -83,17 +83,10 @@ class PersonTagger:
         return self.taggable_friends or {}
 
     def __call__(self, fullname, displayname, entry, pos):
-        #friends = self.get_taggable_friends().get('data', [])
-
-        #for friend in friends:
-        #    if friend.get('name') == fullname:
-        #        self.tags.append(friend.get('id'))
-        #        return '@[' + friend.get('id') + ']'
-
         fbid = entry.get('facebook')
         if fbid:
-            return '@[' + fbid + ']'
-        
+            # return '@[' + fbid + ']'
+            self.tags.append(fbid)
         return displayname
 
 
@@ -111,9 +104,9 @@ def handle_new_or_edit(post, preview, img_url):
             'name': 'See Original',
             'link': post.permalink,
         }),
-        #'privacy': json.dumps({'value': 'EVERYONE'}),
-        'privacy': json.dumps({'value': 'SELF'}),
-        'article': post.permalink,
+        #'privacy': json.dumps({'value': 'SELF'}),
+        'privacy': json.dumps({'value': 'EVERYONE'}),
+        #'article': post.permalink,
     }
 
     post_args['name'] = post.title
