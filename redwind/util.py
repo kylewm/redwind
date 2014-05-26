@@ -144,23 +144,22 @@ def base60_decode(s):
     return n
 
 
-def resize_image(path, tag, side):
+def resize_image(sourcedir, filename, side):
     from PIL import Image
-    from flask import url_for
 
-    dirname, filename = os.path.split(path)
-    ext = '.jpg'
+    targetdir = os.path.join(app.root_path, '_resized',
+                             os.path.relpath(sourcedir, app.root_path),
+                             str(side))
+    targetpath = os.path.join(targetdir, filename)
 
-    split = filename.rsplit('.', 1)
-    if len(split) > 1:
-        filename, ext = split
+    if not os.path.exists(targetpath):
+        if not os.path.exists(targetdir):
+            os.makedirs(targetdir)
 
-    newpath = os.path.join(dirname, '{}-{}.{}'.format(filename, tag, ext))
-    im = Image.open(os.path.join(app.root_path, 'static', path))
+        im = Image.open(os.path.join(sourcedir, filename))
+        origw, origh = im.size
+        ratio = side / max(origw, origh)
+        im = im.resize((int(origw * ratio), int(origh * ratio)), Image.ANTIALIAS)
+        im.save(targetpath)
 
-    origw, origh = im.size
-    ratio = side / max(origw, origh)
-
-    im = im.resize((int(origw * ratio), int(origh * ratio)), Image.ANTIALIAS)
-    im.save(os.path.join(app.root_path, 'static', newpath))
-    return url_for('static', filename=newpath)
+    return targetdir, filename
