@@ -4,6 +4,7 @@ from . import archiver
 from . import auth
 from . import contexts
 from . import facebook
+from . import locations
 from . import push
 from . import twitter
 from . import util
@@ -777,7 +778,6 @@ def process_people(data, person_processor):
     regex = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
     start = 0
     while True:
-        print(repr(data))
         m = regex.search(data, start)
         if not m:
             break
@@ -938,8 +938,9 @@ def save_post(post):
         lat = request.form.get('latitude')
         lon = request.form.get('longitude')
         if lat and lon:
-            post.location = Location(float(lat), float(lon),
-                                     request.form.get('location_name'))
+            post.location = Location(latitude=float(lat),
+                                     longitude=float(lon),
+                                     name=request.form.get('location_name'))
         else:
             post.location = None
 
@@ -1007,6 +1008,7 @@ def save_post(post):
         redirect_url = post.permalink
 
         contexts.fetch_post_contexts(post)
+        locations.reverse_geocode(post)
         if request.form.get('send_push') == 'true' and not post.draft:
             push.send_notifications(post)
 

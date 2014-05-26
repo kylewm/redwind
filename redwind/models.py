@@ -93,21 +93,47 @@ class User:
 class Location:
     @classmethod
     def from_json(cls, data):
-        return cls(data.get('latitude'),
-                   data.get('longitude'),
-                   data.get('name'))
+        return cls(**data)
 
-    def __init__(self, lat, lon, name):
-        self.latitude = lat
-        self.longitude = lon
-        self.name = name
+    def __init__(self, **kwargs):
+        self.latitude = kwargs.get('latitude')
+        self.longitude = kwargs.get('longitude')
+        self.name = kwargs.get('name')
+        self.street_address = kwargs.get('street_address')
+        self.extended_address = kwargs.get('extended_address')
+        self.locality = kwargs.get('locality')
+        self.region = kwargs.get('region')
+        self.country_name = kwargs.get('country_name')
+        self.postal_code = kwargs.get('postal_code')
+        self.country_code = kwargs.get('country_code')
 
     def to_json(self):
         return {
             'latitude': self.latitude,
             'longitude': self.longitude,
-            'name': self.name
-            }
+            'name': self.name,
+            'street_address': self.street_address,
+            'extended_address': self.extended_address,
+            'locality': self.locality,
+            'region': self.region,
+            'country_name': self.country_name,
+            'postal_code': self.postal_code,
+            'country_code': self.country_code
+        }
+
+    def get_name(self):
+        if self.name:
+            return self.name
+        elif self.locality and self.region:
+            if self.street_address:
+                return "{}, {}, {}".format(self.street_address,
+                                           self.locality, self.region)
+            else:
+                return "{}, {}".format(self.locality, self.region)
+        elif self.latitude and self.longitude:
+            return "{:.2f}, {:.2f}".format(self.latitude, self.longitude)
+        else:
+            return "Unknown Location"
 
 
 class Post:

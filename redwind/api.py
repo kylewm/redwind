@@ -174,8 +174,9 @@ def micropub_endpoint():
         if loc_params:
             lat, lon = loc_params[0].split(',', 1)
             if lat and lon:
-                post.location = Location(float(lat), float(lon),
-                                         request.form.get('place_name'))
+                post.location = Location(latitude=float(lat),
+                                         longitude=float(lon),
+                                         name=request.form.get('place_name'))
 
     synd_url = request.form.get('syndication')
     if synd_url:
@@ -243,9 +244,7 @@ def fetch_profile():
 
         # check for top-level h-card
         for item in d['items']:
-            print('checking', item)
             if 'h-card' in item.get('type', []):
-                print('item is h-card')
                 if not name:
                     name = item.get('properties', {}).get('name')
                 if not photo:

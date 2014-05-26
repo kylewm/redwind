@@ -24,7 +24,7 @@ at <a class="p-location h-geo" href="http://www.openstreetmap.org/#map=18/{{post
     <data class="p-latitude" value="{{post.location.latitude}}"></data>
     <data class="p-longitude" value="{{post.location.longitude}}"></data>
     <span class="p-name">
-      {{post.location.name or 'an unnamed location'}}
+      {{ post.location.get_name() }}
     </span>
 </a>
 {% endif %}
