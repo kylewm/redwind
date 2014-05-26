@@ -365,6 +365,14 @@ def articles(page):
                         include_drafts=current_user.is_authenticated())
 
 
+@app.route('/checkins', defaults={'page': 1})
+@app.route('/checkins/page/<int:page>')
+def checkins(page):
+    return render_posts('All Check-ins', ('checkin',), page, 10,
+                        include_hidden=False,
+                        include_drafts=current_user.is_authenticated())
+
+
 @app.route('/everything', defaults={'page': 1})
 @app.route('/everything/page/<int:page>')
 def everything(page):
