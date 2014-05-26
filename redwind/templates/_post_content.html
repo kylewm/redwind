@@ -7,5 +7,12 @@
   <div class="p-name e-content">
     {{ post.html_content }}
   </div>
+{% endif %}
 
-  {% endif %}
+{% if post.post_type == 'checkin' and post.location %}
+  <div class="map"
+       data-latitude="{{post.location.latitude}}"
+       data-longitude="{{post.location.longitude}}"
+       data-location="{{post.location.name}}">
+  </div>
+{% endif %}
