@@ -756,7 +756,7 @@ def process_people(data, person_processor):
         book = AddressBook()
         process_people._book = book
 
-    regex = re.compile(r'\[\[([\w ]+)(?:\|([\w ]+))?\]\]')
+    regex = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
     start = 0
     while True:
         print(repr(data))

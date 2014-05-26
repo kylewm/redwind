@@ -169,10 +169,13 @@ def micropub_endpoint():
     loc_str = request.form.get('location')
     geo_prefix = 'geo:'
     if loc_str and loc_str.startswith(geo_prefix):
-        lat, lon = loc_str[len(geo_prefix):].split(',', 1)
-        if lat and lon:
-            post.location = Location(float(lat), float(lon),
-                                     request.form.get('place_name'))
+        loc_str = loc_str[len(geo_prefix):]
+        loc_params = loc_str.split(';')
+        if loc_params:
+            lat, lon = loc_params[0].split(',', 1)
+            if lat and lon:
+                post.location = Location(float(lat), float(lon),
+                                         request.form.get('place_name'))
 
     synd_url = request.form.get('syndication')
     if synd_url:
