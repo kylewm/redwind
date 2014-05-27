@@ -1,34 +1,4 @@
 
-{% if post.tags %}
-<div class="categories">
-  <!-- <i class="fa fa-tag" title="Tags"></i>&nbsp; -->
-  {% for tag in post.tags %}
-    <a class="p-category" href="{{ url_for('posts_by_tag', tag=tag) }}">{{ tag }}</a> <!-- {% if not loop.last %},{% endif %} -->
-  {% endfor %}
-</div>
-{% endif %}
-
-{% if post.audience %}
-<div class="audience">
-  <i class="fa fa-envelope-o" title="This is a private post, shared with a specific audience"></i>&nbsp;
-  {% for recipient in post.audience %}
-    <a href="{{ recipient }}">{{ recipient | prettify_url }}</a>{% if not loop.last %},{% endif %}
-  {% endfor %}
-</div>
-{% endif %}
-
-<a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | human_time }}</time></a>
-
-{% if post.location %}
-at <a class="p-location h-geo" href="http://www.openstreetmap.org/#map=18/{{post.location.latitude}}/{{post.location.longitude}}" title="{{post.location.latitude}},{{post.location.longitude}}">
-    <data class="p-latitude" value="{{post.location.latitude}}"></data>
-    <data class="p-longitude" value="{{post.location.longitude}}"></data>
-    <span class="p-name">
-      {{ post.location.get_name() }}
-    </span>
-</a>
-{% endif %}
-
 <div class="webactions">
   <action do="reply" with="{{post.permalink}}">
     <a href="https://twitter.com/intent/tweet?in_reply_to={{post.tweet_id}}">reply</a>
@@ -40,3 +10,65 @@ at <a class="p-location h-geo" href="http://www.openstreetmap.org/#map=18/{{post
     <a href="https://twitter.com/intent/favorite?tweet_id={{post.tweet_id}}">favorite</a>
   </action>
 </div>
+
+<div class="mention-counts">
+  {% set mention_count = post.mention_count %}
+  {% set like_count = post.like_count %}
+  {% set reply_count = post.reply_count %}
+  {% set repost_count = post.repost_count %}
+  {% set ref_count = post.reference_count %}
+
+  {% if mention_count %}
+    {% if reply_count %}
+      <a href="{{ post.permalink }}#replies"><i class="fa fa-comment-o"></i> {{ reply_count }}</a>
+    {% endif %}
+    {% if like_count %}
+      <a href="{{ post.permalink }}#likes"><i class="fa fa-star-o"></i> {{ like_count }}</a>
+    {% endif %}
+    {% if repost_count %}
+      <a href="{{ post.permalink }}#reposts"><i class="fa fa-retweet"></i> {{ repost_count }}</a>
+    {% endif %}
+    {% if ref_count %}
+      <a href="{{ post.permalink }}#references"><i class="fa fa-ellipsis-h"></i> {{ ref_count }}</a>
+    {% endif %}
+  {% endif %}
+</div>
+
+
+{% if post.tags %}
+  <div class="categories">
+    <i class="fa fa-tag" title="Tags"></i>
+    {% for tag in post.tags %}
+      <a class="p-category" href="{{ url_for('posts_by_tag', tag=tag) }}">{{ tag }}</a> <!-- {% if not loop.last %},{% endif %} -->
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if post.audience %}
+  <div class="audience">
+    <i class="fa fa-envelope-o" title="This is a private post, shared with a specific audience"></i>&nbsp;
+    {% for recipient in post.audience %}
+      <a href="{{ recipient }}">{{ recipient | prettify_url }}</a>{% if not loop.last %},{% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if post.location %}
+  <div class="location">
+    <i class="fa fa-map-marker"></i>
+    <a class="p-location h-geo" href="http://www.openstreetmap.org/#map=18/{{post.location.latitude}}/{{post.location.longitude}}" title="{{post.location.latitude}},{{post.location.longitude}}">
+      <data class="p-latitude" value="{{post.location.latitude}}"></data>
+      <data class="p-longitude" value="{{post.location.longitude}}"></data>
+      <span class="p-name">
+        {{ post.location.get_name() }}
+      </span>
+    </a>
+  </div>
+{% endif %}
+
+<div>
+  <i class="fa fa-clock-o"></i>
+  <a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | human_time }}</time></a>
+</div>
+
+<div style="clear:both"></div>

@@ -664,13 +664,11 @@ def isotime_filter(thedate):
     if not thedate:
         thedate = datetime.date(1982, 11, 24)
 
-    if hasattr(thedate, 'tzinfo'):
-        if thedate.tzinfo:
-            thedate = thedate.astimezone(pytz.utc)
-        else:
-            thedate = pytz.utc.localize(thedate)
+    if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
+        tz = pytz.timezone(app.config['TIMEZONE'])
+        thedate = tz.localize(thedate)
 
-    return thedate.isoformat()
+    return thedate.isoformat('T')
 
 
 @app.template_filter('human_time')
@@ -678,42 +676,11 @@ def human_time(thedate):
     if not thedate:
         return None
 
-    if isinstance(thedate, datetime.datetime):
-        now = datetime.datetime.utcnow()
-    else:
-        now = datetime.date.today()
+    if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
+        tz = pytz.timezone(app.config['TIMEZONE'])
+        thedate = tz.localize(thedate)
 
-    # if the date being formatted has a timezone, make
-    # sure utc now does too
-    if hasattr(now, 'tzinfo') and hasattr(thedate, 'tzinfo') \
-       and thedate.tzinfo:
-        now = pytz.utc.localize(now)
-
-    delta = now - thedate
-
-    if delta.days < 1:
-        # resolve seconds into hours/minutes
-        minutes = delta.seconds // 60
-        if minutes < 1:
-            return "just now"
-        if minutes < 60:
-            return "{} minute{} ago".format(minutes, pluralize(minutes))
-        else:
-            hours = round(minutes/60)
-            return "about {} hour{} ago".format(hours, pluralize(hours))
-
-    if delta.days == 1:
-        return "yesterday"
-
-    if delta.days < 30:
-        return "{} days ago".format(delta.days)
-
-    if delta.days < 365:
-        months = round(delta.days / 30)
-        return "about {} month{} ago".format(months, pluralize(months))
-
-    years = round(delta.days / 365)
-    return "{} year{} ago".format(years, pluralize(years))
+    return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
 
 
 @app.template_filter('pluralize')
