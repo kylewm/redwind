@@ -56,6 +56,9 @@ class User:
     def __init__(self, domain):
         self.domain = domain
         self.authenticated = False
+        self.twitter_oauth_token = None
+        self.twitter_oauth_token_secret = None
+        self.facebook_access_token = None
 
     def to_json(self):
         data = {
@@ -125,11 +128,7 @@ class Location:
         if self.name:
             return self.name
         elif self.locality and self.region:
-            if self.street_address:
-                return "{}, {}, {}".format(self.street_address,
-                                           self.locality, self.region)
-            else:
-                return "{}, {}".format(self.locality, self.region)
+            return "{}, {}".format(self.locality, self.region)
         elif self.latitude and self.longitude:
             return "{:.2f}, {:.2f}".format(self.latitude, self.longitude)
         else:

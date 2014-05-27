@@ -53,7 +53,7 @@
     <label><input type="checkbox" id="get_coords_button"/> Location</label>
     <input type="hidden" id="latitude" name="latitude" size="10" value="{{ post.location.latitude if post.location else ''}}"/>
     <input type="hidden" id="longitude" name="longitude" size="10" value="{{ post.location.longitude if post.location else ''}}"/>
-    <input id="location_name" name="location_name" size="21" value="{{ post.location.name if post.location else ''}}"/>
+    <input id="location_name" name="location_name" size="21" value="{{ post.location.name if post.location and post.location.name else ''}}"/>
     </div>
 
     <label>
