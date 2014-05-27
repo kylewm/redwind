@@ -35,16 +35,13 @@ def do_reverse_geocode(postid):
 
             # hat-tip https://gist.github.com/barnabywalters/8318401
             adr = data.get('address', {})
-            post.location = models.Location(
-                latitude=post.location.latitude,
-                longitude=post.location.longitude,
-                name=post.location.name,
-                street_address=adr.get('road'),
-                extended_address=adr.get('suburb'),
-                locality=adr.get('hamlet') or adr.get('village')
-                or adr.get('town') or adr.get('city'),
-                region=region(adr),
-                country_name=adr.get('country'),
-                postal_code=adr.get('postcode'),
-                country_code=adr.get('country_code'))
+                            
+            post.location.street_address = adr.get('road')
+            post.location.extended_address = adr.get('suburb')
+            post.location.locality = adr.get('hamlet') or adr.get('village') or adr.get('town') or adr.get('city')
+            post.location.region = region(adr)
+            post.location.country_name = adr.get('country')
+            post.location.postal_code = adr.get('postcode')
+            post.location.country_code = adr.get('country_code')
+            
             post.save()

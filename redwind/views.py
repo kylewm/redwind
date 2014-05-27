@@ -974,13 +974,22 @@ def save_post(post):
         app.logger.debug("saved post %s %s", post.shortid, post.permalink)
         redirect_url = post.permalink
 
-        contexts.fetch_post_contexts(post)
-        locations.reverse_geocode(post)
-        if request.form.get('send_push') == 'true' and not post.draft:
-            push.send_notifications(post)
+        try:
+            app.logger.debug("fetching contexts")
+            contexts.fetch_post_contexts(post)
 
-        if request.form.get('send_webmentions') == 'true' and not post.draft:
-            webmention_sender.send_webmentions(post)
+            app.logger.debug("fetching location info")
+            locations.reverse_geocode(post)
+
+            if request.form.get('send_push') == 'true' and not post.draft:
+                app.logger.debug("sending push notification")
+                push.send_notifications(post)
+
+            if request.form.get('send_webmentions') == 'true' and not post.draft:
+                app.logger.debug("sending webmentions")
+                webmention_sender.send_webmentions(post)
+        except:
+            app.logger.exception("exception while dispatching queued tasks")
 
         return redirect(redirect_url)
 

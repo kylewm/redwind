@@ -15,16 +15,12 @@ def do_fetch_context(url):
     try:
         app.logger.debug("fetching url %s", url)
         fetch_external_post(url)
-        return True, 'Success'
-
     except Exception as e:
         app.logger.exception("failure fetching contexts")
-        return False, "exception while fetching contexts {}".format(e)
 
 
 def fetch_external_post(url):
     app.logger.debug("checking twitter for %s", url)
     if twitter_client.fetch_external_post(url):
-        return True
-
+        return
     archiver.archive_url(url)
