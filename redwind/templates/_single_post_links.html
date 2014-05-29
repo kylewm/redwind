@@ -1,13 +1,14 @@
 
 <div class="webactions">
+  {% set tweet_id = post.tweet_id %}
   <action do="reply" with="{{post.permalink}}">
-    <a href="https://twitter.com/intent/tweet?in_reply_to={{post.tweet_id}}">reply</a>
+    {% if tweet_id %}<a href="https://twitter.com/intent/tweet?in_reply_to={{tweet_id}}">reply</a>{% endif %}
   </action>
   <action do="repost" with="{{post.permalink}}">
-    <a href="https://twitter.com/intent/retweet?tweet_id={{post.tweet_id}}">retweet</a>
+    {% if tweet_id %}<a href="https://twitter.com/intent/retweet?tweet_id={{tweet_id}}">retweet</a>{% endif %}
   </action>
   <action do="favorite" with="{{post.permalink}}">
-    <a href="https://twitter.com/intent/favorite?tweet_id={{post.tweet_id}}">favorite</a>
+    {% if tweet_id %}<a href="https://twitter.com/intent/favorite?tweet_id={{tweet_id}}">favorite</a>{% endif %}
   </action>
 </div>
 

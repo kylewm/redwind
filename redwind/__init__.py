@@ -31,4 +31,5 @@ if not app.debug:
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
 
+
 from . import views

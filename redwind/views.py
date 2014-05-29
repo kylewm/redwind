@@ -168,8 +168,20 @@ class DisplayPost:
     @reraise_attribute_errors
     def mentions(self):
         if self._mentions is None:
-            self._mentions = [MentionProxy(self, m) for m
-                              in self.wrapped.mentions]
+            # arrange posse'd mentions into a hierarchy based on rel-syndication
+            self._mentions = []
+            all_mentions = [MentionProxy(self, m) for m in self.wrapped.mentions]
+            for mention in all_mentions:
+                parent = next((parent for parent in all_mentions
+                               if mention != parent 
+                               and any(util.urls_match(mention.permalink, synd) 
+                                       for synd in parent.syndication)), 
+                              None)
+                if parent:
+                    parent.children.append(mention)
+                else:
+                    self._mentions.append(mention)
+
         return self._mentions
 
     def _mentions_sorted_by_date(self, mtype):
@@ -287,6 +299,8 @@ class MentionProxy:
         self.pub_date = None
         self.title = None
         self.deleted = False
+        self.syndication = []
+        self.children = []
 
         blob = archiver.load_json_from_archive(url)
         if not blob:
@@ -297,8 +311,12 @@ class MentionProxy:
                 post.permalink,
                 post.permalink_without_slug,
                 post.short_permalink,
+                post.permalink.replace('https://', 'http://'),
+                post.permalink_without_slug.replace('https://', 'http://'),
+                post.short_permalink.replace('https://', 'http://'),
                 # for localhost testing
-                post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com')
+                post.permalink.replace(app.config['SITE_URL'], 'https://kylewm.com'),
+                post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com'),
             ]
         else:
             target_urls = []
@@ -319,6 +337,7 @@ class MentionProxy:
         self.content = self.entry.get('content', '')
         self.pub_date = self.entry.get('published')
         self.title = self.entry.get('name')
+        self.syndication = self.entry.get('syndication')
 
         comment_type = self.entry.get('comment_type')
         self.reftype = comment_type and comment_type[0]
@@ -551,12 +570,12 @@ def shortlink(tag):
 @app.route("/indieauth")
 def indieauth():
     token = request.args.get('token')
-    response = requests.get('http://indieauth.com/verify',
+    response = requests.get('https://indieauth.com/verify',
                             params={'token': token})
 
     if response.status_code == 200:
         domain = response.json().get('me')
-        user = auth.load_user(domain)
+        user = auth.load_user(urlparse(domain).netloc)
         if user:
             login_user(user, remember=True)
             flash('Logged in with domain {}'.format(domain))
@@ -666,9 +685,11 @@ def isotime_filter(thedate):
 
     if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
         tz = pytz.timezone(app.config['TIMEZONE'])
-        thedate = tz.localize(thedate)
+        thedate = pytz.utc.localize(thedate).astimezone(tz)
 
-    return thedate.isoformat('T')
+    if isinstance(thedate, datetime.datetime):
+        return thedate.isoformat('T')
+    return thedate.isoformat()
 
 
 @app.template_filter('human_time')
@@ -678,7 +699,7 @@ def human_time(thedate):
 
     if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
         tz = pytz.timezone(app.config['TIMEZONE'])
-        thedate = tz.localize(thedate)
+        thedate = pytz.utc.localize(thedate).astimezone(tz)
 
     return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
 
@@ -730,17 +751,14 @@ def person_to_microcard(fullname, displayname, entry, pos):
     url = entry.get('url')
     photo = entry.get('photo')
     if url and photo:
+        photo_mirror = local_mirror_resource(photo)
         return '<a class="microcard h-card" href="{}">'\
-            '<img src="{}" />{}</a>'.format(url, photo, displayname)
+            '<img src="{}" />{}</a>'.format(url, photo_mirror, displayname)
     return displayname
 
 
 def process_people(data, person_processor):
-    # substitute from address book
-    book = process_people._book
-    if not book:
-        book = AddressBook()
-        process_people._book = book
+    book = None
 
     regex = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
     start = 0
@@ -748,6 +766,8 @@ def process_people(data, person_processor):
         m = regex.search(data, start)
         if not m:
             break
+        if not book:
+            book = AddressBook()
         fullname = m.group(1)
         displayname = m.group(2) or fullname
         replacement = person_processor(fullname, displayname,
@@ -756,8 +776,6 @@ def process_people(data, person_processor):
         data = data[:m.start()] + replacement + data[m.end():]
         start = m.start() + len(replacement)
     return data
-
-process_people._book = None
 
 
 @app.template_filter('markdown')

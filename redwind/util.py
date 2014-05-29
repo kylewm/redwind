@@ -1,6 +1,6 @@
 from . import app
 from datetime import date
-from urllib.parse import urljoin
+from bs4 import BeautifulSoup
 import os
 import os.path
 import re
@@ -8,6 +8,7 @@ import requests
 import itertools
 import collections
 import datetime
+import urllib
 
 
 def isoparse(s):
@@ -42,7 +43,7 @@ def download_resource(url, path):
     app.logger.debug("downloading {} to {}".format(url, path))
 
     try:
-        response = requests.get(urljoin(app.config['SITE_URL'], url),
+        response = requests.get(urllib.parse.urljoin(app.config['SITE_URL'], url),
                                 stream=True)
 
         if response.status_code // 2 == 100:
@@ -61,16 +62,22 @@ def download_resource(url, path):
         app.logger.exception('downloading resource')
 
 
+def urls_match(url1, url2):
+    if url1 == url2:
+        return True
+    p1 = urllib.parse.urlparse(url1)
+    p2 = urllib.parse.urlparse(url2)
+    return p1.netloc == p2.netloc and p1.path == p2.path
+                      
+
 TWITTER_USERNAME_REGEX = r'(?<!\w)@([a-zA-Z0-9_]+)'
-LINK_REGEX = r'\b(?<!=.)https?://([a-zA-Z0-9/\.\-_:%?@$#&=+]+)'
+LINK_REGEX = r'\b(?<!=[\'"])https?://([a-zA-Z0-9/\.\-_:%?@$#&=+]+)'
 
 
 def autolink(plain, twitter_names=True):
-    plain = re.sub(LINK_REGEX,
-                   r'<a href="\g<0>">\g<1></a>', plain)
+    plain = re.sub(LINK_REGEX, '<a href="\g<0>">\g<1></a>', plain)
     if twitter_names:
-        plain = re.sub(TWITTER_USERNAME_REGEX,
-                       r'<a href="http://twitter.com/\g<1>">\g<0></a>', plain)
+        plain = re.sub(TWITTER_USERNAME_REGEX, '<a href="https://twitter.com/\g<1>">\g<0></a>', plain)
     return plain
 
 

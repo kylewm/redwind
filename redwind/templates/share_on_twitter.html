@@ -60,7 +60,8 @@
 
 </form>
 
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-<script type="text/javascript" src="{{url_for('static', filename='js/twitter.js')}}"></script>
 
 {% endblock content %}
+{% block other_resources %}
+<script type="text/javascript" src="{{url_for('static', filename='js/twitter.js')}}"></script>
+{% endblock other_resources %}

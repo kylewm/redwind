@@ -128,8 +128,8 @@ class MentionClient:
         app.logger.debug("looking for webmention endpoint in headers and body")
         endpoint = (self.find_webmention_endpoint_in_headers(response.headers)
                     or self.find_webmention_endpoint_in_html(response.text))
-        app.logger.debug("webmention endpoint %s %s", target_url, endpoint)
-        return endpoint and urljoin(target_url, endpoint)
+        app.logger.debug("webmention endpoint %s %s", response.url, endpoint)
+        return endpoint and urljoin(response.url, endpoint)
 
     def find_webmention_endpoint_in_headers(self, headers):
         if 'link' in headers:

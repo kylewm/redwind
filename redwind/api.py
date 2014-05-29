@@ -141,7 +141,8 @@ def micropub_endpoint():
         abort(401)
 
     me = decoded.get('me')
-    user = auth.load_user(me)
+    parsed = urllib.parse.urlparse(me)
+    user = auth.load_user(parsed.netloc)
     if not user:
         app.logger.warn('received valid access token for invalid user: %s', me)
         abort(401)

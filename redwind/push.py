@@ -6,14 +6,14 @@ import requests
 
 def send_notifications(post):
     if post.post_type in ('article', 'note', 'share'):
-        publish.delay('http://kylewm.com/updates.atom')
+        publish.delay('https://kylewm.com/updates.atom')
     if post.post_type == 'article':
-        publish.delay('http://kylewm.com/articles.atom')
-    publish.delay('http://kylewm.com/all.atom')
+        publish.delay('https://kylewm.com/articles.atom')
+    publish.delay('https://kylewm.com/all.atom')
 
 
 def handle_new_mentions():
-    publish.delay('http://kylewm.com/mention.atom')
+    publish.delay('https://kylewm.com/mention.atom')
 
 
 @queue.queueable

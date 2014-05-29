@@ -159,6 +159,8 @@ class TwitterClient:
                 return embed_response.json().get('html')
 
     def fetch_external_post(self, url):
+        from .views import local_mirror_resource
+        
         match = self.PERMALINK_RE.match(url)
         if not match:
             return False
@@ -185,7 +187,7 @@ class TwitterClient:
         if author_url:
             author_url = self.expand_link(author_url)
         else:
-            author_url = 'http://twitter.com/{}'.format(screen_name)
+            author_url = 'https://twitter.com/{}'.format(screen_name)
         author_image = status_data['user']['profile_image_url']
         tweet_text = self.expand_links(status_data['text'])
 
@@ -193,7 +195,7 @@ class TwitterClient:
             if media.get('type') == 'photo':
                 media_url = media.get('media_url')
                 if media_url:
-                    tweet_text += '<div><img src="{}"/></div>'.format(media_url)
+                    tweet_text += '<div><img src="{}"/></div>'.format(local_mirror_resource(media_url))
 
         html = hentry_template.fill(author_name=author_name,
                                     author_url=author_url,

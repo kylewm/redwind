@@ -66,6 +66,17 @@
             <!-- end of foreign content -->
           </div>
 
+          {% if reply.children %}
+          <div class="links syndication-links">
+            Also on 
+            {% for child in reply.children %}
+              <a href="{{child.permalink}}">
+                {{child.permalink | format_syndication_url | safe}}
+              </a>
+            {% endfor %}
+          </div>
+          {% endif %}
+
           <div style="clear:both"></div>
         </div>
       {% endfor %}

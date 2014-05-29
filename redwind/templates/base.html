@@ -16,14 +16,14 @@
     <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
 
     <link rel="webmention" href="{{ url_for('receive_webmention') }}"/>
-    <link rel="pingback" href="http://webmention.io/webmention?forward={{ url_for('receive_webmention', _external=True) }}" />
+    <link rel="pingback" href="https://webmention.io/webmention?forward={{ url_for('receive_webmention', _external=True) }}" />
 
-    <link rel="openid.delegate" href="http://kylewm.com/" />
+    <link rel="openid.delegate" href="https://kylewm.com/" />
     <link rel="openid.server" href="https://indieauth.com/openid" />
 
     <link rel="authorization_endpoint" href="https://indieauth.com/auth">
-    <link rel="token_endpoint" href="http://kylewm.com/api/token">
-    <link rel="micropub" href="http://kylewm.com/api/micropub">
+    <link rel="token_endpoint" href="https://kylewm.com/api/token">
+    <link rel="micropub" href="https://kylewm.com/api/micropub">
 
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/users/kyle.jpg') }}"/>
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/users/kyle.jpg') }}"/>
@@ -107,8 +107,8 @@ pre {
     white-space:pre;
 }
 
-p, .e-content {
-    margin-bottom: 0.8em;
+p+p {
+    margin-top: 0.8em;
 }
 
 h1, h2, h3, h4, h5 {
@@ -202,6 +202,7 @@ nav li {
 .post .links {
     font-size: 11pt;
     color: #777;
+    margin-top: 0.5em;
 }
 
 .post .links a {
@@ -228,6 +229,16 @@ nav li {
     z-index: 1;
 }
 
+
+.admin-post-controls a {
+    display:block;
+    width: 100%;
+}
+
+.admin-post-controls a:hover {
+    background-color: #FFFF99;
+}
+
 .post .admin-post-controls hr {
     color: #ddd;
 }
@@ -237,7 +248,7 @@ nav li {
 }
 
 .share-context, .reply-context, .like-context {
-    margin-bottom: 1em;
+    margin-bottom: 0.5em;
 }
 
 .share-context .content, .reply-context .content {
@@ -344,13 +355,13 @@ form input {
       <header>
         <div id="login_area">
           {% if current_user.is_anonymous() %}
-            <form id="indie_auth_form" action="http://indieauth.com/auth" method="get">
+            <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
               <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
               <button id="sign_in_button" type="submit">Sign In</button>
               <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
             </form>
           {% else %}
-            {{current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
+            {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
           {% endif %}
         </div>
 
@@ -405,11 +416,11 @@ form input {
 <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet" type="text/css">
 <link href="{{ url_for('static', filename='css/pygments.css') }}" rel="stylesheet" type="text/css">
 <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="{{ url_for('static',  filename='css/leaflet.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',  filename='leaflet/leaflet.css') }}">
 
 <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
 <script src="{{ url_for('static', filename='js/posts.js') }}"></script>
-<script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='js/location.js') }}"></script>
 {% block other_resources %}
 {% endblock other_resources %}
