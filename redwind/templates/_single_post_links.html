@@ -49,7 +49,7 @@
   <div class="audience">
     <i class="fa fa-envelope-o" title="This is a private post, shared with a specific audience"></i>&nbsp;
     {% for recipient in post.audience %}
-      <a href="{{ recipient }}">{{ recipient | prettify_url }}</a>{% if not loop.last %},{% endif %}
+      <a href="http://{{ recipient }}">{{ recipient }}</a>{% if not loop.last %},{% endif %}
     {% endfor %}
   </div>
 {% endif %}
