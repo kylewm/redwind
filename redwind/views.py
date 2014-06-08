@@ -173,9 +173,9 @@ class DisplayPost:
             all_mentions = [MentionProxy(self, m) for m in self.wrapped.mentions]
             for mention in all_mentions:
                 parent = next((parent for parent in all_mentions
-                               if mention != parent 
-                               and any(util.urls_match(mention.permalink, synd) 
-                                       for synd in parent.syndication)), 
+                               if mention != parent
+                               and any(util.urls_match(mention.permalink, synd)
+                                       for synd in parent.syndication)),
                               None)
                 if parent:
                     parent.children.append(mention)
@@ -337,7 +337,7 @@ class MentionProxy:
         self.content = self.entry.get('content', '')
         self.pub_date = self.entry.get('published')
         self.title = self.entry.get('name')
-        self.syndication = self.entry.get('syndication')
+        self.syndication = self.entry.get('syndication', [])
 
         comment_type = self.entry.get('comment_type')
         self.reftype = comment_type and comment_type[0]

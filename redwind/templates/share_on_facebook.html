@@ -16,12 +16,20 @@
 </textarea><br/>
 
 {% if imgs %}
-  <label><input type="radio" name="img" value="">No Preview</label><br/>
+  <div>
+  <label><input type="radio" name="img" value="">No Photo</label><br/>
   {% for img in imgs %}
     <label><input type="radio" name="img" value="{{img}}"{% if loop.first %} checked{% endif %}>
         <img src="{{img}}" style="width:64px; vertical-align: middle"/>
     </label><br/>
   {% endfor %}
+  </div>
+
+  <div style="margin-top: 20px">
+    <label><input type="radio" name="post_type" value="photo"><abbr title="create a facebook photo post">As Photo</abbr></label><br/>
+    <label><input type="radio" name="post_type" value="post"><abbr title="share a link to the original with this preview image">As Preview</abbr></label><br/>
+  </div>
+
 {% endif %}
 
 </form>

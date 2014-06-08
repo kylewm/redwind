@@ -51,9 +51,11 @@ def share_on_facebook():
         post_id = request.form.get('post_id')
         preview = request.form.get('preview')
         img_url = request.form.get('img')
+        post_type = request.form.get('post_type')
 
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            facebook_url = handle_new_or_edit(post, preview, img_url)
+            facebook_url = handle_new_or_edit(post, preview,
+                                              img_url, post_type)
             post.save()
 
             return """Shared on Facebook<br/>
@@ -90,7 +92,7 @@ class PersonTagger:
         return displayname
 
 
-def handle_new_or_edit(post, preview, img_url):
+def handle_new_or_edit(post, preview, img_url, post_type):
     from .views import process_people
     app.logger.debug('publishing to facebook')
 
@@ -111,25 +113,24 @@ def handle_new_or_edit(post, preview, img_url):
 
     post_args['name'] = post.title
 
+    api_endpoint = 'https://graph.facebook.com/me/feed'
     share_link = next(iter(post.repost_of), None)
     if share_link:
         post_args['link'] = share_link
     elif img_url:
-        # if there is an image, link back to the original post,
-        # and use the image as the preview image
-        post_args['link'] = post.permalink
-        post_args['picture'] = img_url
+        if post_type == 'photo':
+            api_endpoint = 'https://graph.facebook.com/me/photos'
+            post_args['url'] = img_url
+        else:
+            # link back to the original post, and use the image
+            # as the preview image
+            post_args['link'] = post.permalink
+            post_args['picture'] = img_url
 
     app.logger.debug('Sending post %s', post_args)
-    response = requests.post(
-        'https://graph.facebook.com/me/feed',
-        data=post_args)
-
+    response = requests.post(api_endpoint, data=post_args)
+    response.raise_for_status()
     app.logger.debug("Got response from facebook %s", response)
-
-    if response.status_code // 100 != 2:
-        raise RuntimeError("Bad response from Facebook. Status: {}, Content: {}"
-                           .format(response.status_code, response.content))
 
     if 'json' in response.headers['content-type']:
         result = response.json()
