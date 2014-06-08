@@ -43,8 +43,8 @@ DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
 
 TWITTER_PROFILE_RE = re.compile(r'https?://(?:www\.)?twitter\.com/(\w+)')
 TWITTER_RE = twitter.TwitterClient.PERMALINK_RE
-FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/(\w+)')
-FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/(\w+)/posts/(\w+)')
+FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)')
+FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
 YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
 INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 
@@ -271,7 +271,7 @@ class ContextProxy:
         try:
             self.entry = mf2util.interpret(blob, url)
         except:
-            app.logger.exception('error interpreting {}', url)
+            app.logger.exception('error interpreting %s', url)
             return
 
         if not self.entry:
