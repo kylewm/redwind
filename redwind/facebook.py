@@ -113,17 +113,14 @@ def handle_new_or_edit(post, preview, img_url, post_type):
 
     post_args['name'] = post.title
 
-    # support posts to different endpoints (for now only /me/photos)
-    api_endpoint = 'https://graph.facebook.com/me/feed'
-    post_id_property = 'id'
+    is_photo = False
 
     share_link = next(iter(post.repost_of), None)
     if share_link:
         post_args['link'] = share_link
     elif img_url:
         if post_type == 'photo':
-            api_endpoint = 'https://graph.facebook.com/me/photos'
-            post_id_property = 'post_id'
+            is_photo = True # special case for posting photos
             post_args['url'] = img_url
         else:
             # link back to the original post, and use the image
@@ -131,8 +128,17 @@ def handle_new_or_edit(post, preview, img_url, post_type):
             post_args['link'] = post.permalink
             post_args['picture'] = img_url
 
-    app.logger.debug('Sending post %s', post_args)
-    response = requests.post(api_endpoint, data=post_args)
+    post_id_property = 'id'
+    post_id_property = 'post_id'
+
+    if is_photo:
+        app.logger.debug('Sending photo %s', post_args)
+        response = requests.post('https://graph.facebook.com/me/photos',
+                                 data=post_args)
+    else:
+        app.logger.debug('Sending post %s', post_args)
+        response = requests.post('https://graph.facebook.com/me/feed',
+                                 data=post_args)
     response.raise_for_status()
     app.logger.debug("Got response from facebook %s", response)
 
@@ -141,13 +147,27 @@ def handle_new_or_edit(post, preview, img_url, post_type):
 
     app.logger.debug('published to facebook. response {}'.format(result))
     if result:
-        facebook_post_id = result[post_id_property]
-        split = facebook_post_id.split('_', 1)
-        if split and len(split) == 2:
-            user_id, post_id = split
-            fb_url = 'https://facebook.com/{}/posts/{}'.format(user_id, post_id)
-            post.syndication.append(fb_url)
-            return fb_url
+        if is_photo:
+            facebook_photo_id = result['id']
+            facebook_post_id = result['post_id']  # actually the album
+
+            split = facebook_post_id.split('_', 1)
+            if split and len(split) == 2:
+                user_id, post_id = split
+                fb_url = 'https://facebook.com/{}/posts/{}'.format(
+                    user_id, facebook_photo_id)
+                post.syndication.append(fb_url)
+                return fb_url
+
+        else:
+            facebook_post_id = result['id']
+            split = facebook_post_id.split('_', 1)
+            if split and len(split) == 2:
+                user_id, post_id = split
+                fb_url = 'https://facebook.com/{}/posts/{}'.format(
+                    user_id, post_id)
+                post.syndication.append(fb_url)
+                return fb_url
 
 
 @app.template_filter('format_markdown_as_facebook')
