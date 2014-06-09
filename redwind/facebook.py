@@ -113,13 +113,17 @@ def handle_new_or_edit(post, preview, img_url, post_type):
 
     post_args['name'] = post.title
 
+    # support posts to different endpoints (for now only /me/photos)
     api_endpoint = 'https://graph.facebook.com/me/feed'
+    post_id_property = 'id'
+
     share_link = next(iter(post.repost_of), None)
     if share_link:
         post_args['link'] = share_link
     elif img_url:
         if post_type == 'photo':
             api_endpoint = 'https://graph.facebook.com/me/photos'
+            post_id_property = 'post_id'
             post_args['url'] = img_url
         else:
             # link back to the original post, and use the image
@@ -137,7 +141,7 @@ def handle_new_or_edit(post, preview, img_url, post_type):
 
     app.logger.debug('published to facebook. response {}'.format(result))
     if result:
-        facebook_post_id = result['id']
+        facebook_post_id = result[post_id_property]
         split = facebook_post_id.split('_', 1)
         if split and len(split) == 2:
             user_id, post_id = split
