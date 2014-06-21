@@ -124,6 +124,14 @@ class Location:
             'country_code': self.country_code
         }
 
+    @property
+    def approximate_latitude(self):
+        return self.latitude and '{:.2f}'.format(self.latitude)
+
+    @property
+    def approximate_longitude(self):
+        return self.longitude and '{:.2f}'.format(self.longitude)
+
     def get_name(self):
         if self.name:
             return self.name

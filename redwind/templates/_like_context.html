@@ -4,12 +4,12 @@
     
       <i class="fa fa-thumbs-up"></i> Liked
       <a class="u-like u-like-of" href="{{ like.url }}">
-        {% if like.title or like.content %}
-          {{ like.title or like.content | format_as_text }}
+        {% if like.title %}
+          {{like.title}}
         {% else %}
           {{ like.url | prettify_url }}
         {% endif %}
-      </a>
+     </a>
 
     {% endfor %}
   </div>

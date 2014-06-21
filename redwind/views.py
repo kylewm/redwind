@@ -834,6 +834,8 @@ def autolink(plain, twitter_names=True):
 
 @app.template_filter('prettify_url')
 def prettify_url(url):
+    if not url:
+        return url
     split = url.split('//', 1)
     if len(split) == 2:
         schema, path = split

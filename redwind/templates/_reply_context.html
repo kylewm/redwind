@@ -29,10 +29,14 @@
             <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>,
           {% endif %}
         </span>
-        <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-          <a class="u-url" href="{{ reply.url }}">{{ reply.pub_date | human_time }}</a>
-        </time>
 
+        {% if reply.pub_date %}
+          <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+            <a class="u-url" href="{{ reply.url }}">{{ reply.pub_date | human_time }}</a>
+          </time>
+        {% else %}
+          <a class="u-url" href="{{ reply.url }}">here</a>
+        {% endif %}
 
         <div class="content">
           {% if reply.title %}

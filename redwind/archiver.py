@@ -37,9 +37,11 @@ def archive_url(url):
     response = requests.get(url)
     if response.status_code // 2 == 100:
         archive_html(url, response.text)
-
+    else:
+        app.logger.warn('failed to fetch url %s. got response %s.', url, response)
 
 def archive_html(url, html):
+    app.logger.debug('archiving url %s', url)
     hpath = url_to_html_path(url)
 
     if not os.path.exists(os.path.dirname(hpath)):

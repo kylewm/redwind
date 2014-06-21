@@ -28,7 +28,11 @@
         </span>
 
         from
-        <time class="dt-published" datetime="{{ share.pub_date | isotime }}"><a class="u-url" href="{{ share.url }}">{{ share.pub_date | human_time }}</a></time>
+        {% if share.pub_date %}
+          <time class="dt-published" datetime="{{ share.pub_date | isotime }}"><a class="u-url" href="{{ share.url }}">{{ share.pub_date | human_time }}</a></time>
+        {% else %}
+          <a class="u-url" href="{{ share.url }}">here</a>
+        {% endif %}
 
         <div class="content">
           {% if share.title %}

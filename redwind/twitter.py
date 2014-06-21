@@ -163,7 +163,9 @@ class TwitterClient:
         
         match = self.PERMALINK_RE.match(url)
         if not match:
+            app.logger.debug('url is not a twitter permalink %s', url)
             return False
+        app.logger.debug('url is a twitter permalink')
         tweet_id = match.group(2)
         status_response = requests.get(
             'https://api.twitter.com/1.1/statuses/show/{}.json'.format(tweet_id),
@@ -175,7 +177,7 @@ class TwitterClient:
             return None
 
         status_data = status_response.json()
-
+        app.logger.debug('received response from twitter: %s', status_data)
         pub_date = datetime.datetime.strptime(status_data['created_at'],
                                      '%a %b %d %H:%M:%S %z %Y')
         #if pub_date and pub_date.tzinfo:
@@ -212,14 +214,15 @@ class TwitterClient:
                       lambda match: self.expand_link(match.group(0)),
                       text)
 
-    def expand_link(self, url, depth_limit=5):
-        if depth_limit > 0:
-            app.logger.debug("expanding %s", url)
-            r = requests.head(url)
-            if r and r.status_code == 301 and 'location' in r.headers:
-                url = r.headers['location']
-                app.logger.debug("redirected to %s", url)
-                url = self.expand_link(url, depth_limit-1)
+    def expand_link(self, url):
+        app.logger.debug('expanding %s', url)
+        try:
+            r = requests.head(url, allow_redirects=True, timeout=30)
+            if r and r.status_code // 100 == 2:
+                app.logger.debug('expanded to %s', r.url)
+                url = r.url
+        except requests.exceptions.Timeout:
+            app.logger.debug('request to %s timed out', url)
         return url
 
     def posse_post_discovery(self, post):

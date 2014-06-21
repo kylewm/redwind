@@ -17,8 +17,8 @@
 
             var map = L.map(element, {
                 center: [lat, lon],
-                zoom: 13,
-                layers: [OpenStreetMap_BlackAndWhite]
+                zoom: 11,
+                layers: [OpenStreetMap_Mapnik]
             });
 
             L.marker([lat, lon], {'title': loc}).addTo(map);

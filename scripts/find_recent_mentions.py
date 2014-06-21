@@ -1,7 +1,7 @@
 import os
 import json
 from redwind import app
-from redwind.models import Post, Mention
+from redwind.models import Post
 
 
 if __name__ == '__main__':

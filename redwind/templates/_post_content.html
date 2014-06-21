@@ -11,8 +11,8 @@
 
 {% if post.post_type == 'checkin' and post.location %}
   <div class="map"
-       data-latitude="{{post.location.latitude}}"
-       data-longitude="{{post.location.longitude}}"
+       data-latitude="{{post.location.approximate_latitude}}"
+       data-longitude="{{post.location.approximate_longitude}}"
        data-location="{{post.location.name}}">
   </div>
 {% endif %}
