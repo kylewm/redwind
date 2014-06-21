@@ -66,10 +66,10 @@ def process_webmention(source, target, callback):
         if callback:
             requests.post(callback, data=result)
     try:
-        target_post, mentions_path, mention_url, delete, error \
+        target_post, mention_url, delete, error \
             = do_process_webmention(source, target)
 
-        if error or not mentions_path or not mention_url:
+        if error or not target_post or not mention_url:
             app.logger.warn("Failed to process webmention: %s", error)
             result = {
                 'source': source,
@@ -80,26 +80,13 @@ def process_webmention(source, target, callback):
             call_callback(result)
             return result
 
-        # TODO move this to models
-        mentions_path = os.path.join(app.root_path, '_data', mentions_path)
-        app.logger.debug("saving mentions to %s", mentions_path)
-        with acquire_lock(mentions_path, 30):
-            mention_list = []
-            if os.path.exists(mentions_path):
-                mention_list = json.load(open(mentions_path, 'r'))
-
+        with Post.writeable(target_post.path) as writeable_post:
             if delete:
-                mention_list.remove(mention_url)
-            else:
-                if mention_url not in mention_list:
-                    mention_list.append(mention_url)
-
-            if not os.path.exists(os.path.dirname(mentions_path)):
-                os.makedirs(os.path.dirname(mentions_path))
-
-            json.dump(mention_list, open(mentions_path, 'w'), indent=True)
-            app.logger.debug("saved mentions to %s", mentions_path)
-
+                writeable_post.mentions.remove(mention_url)
+            elif mention_url not in writeable_post.mentions:
+                writeable_post.mentions.append(mention_url)
+            writeable_post.save()
+            app.logger.debug("saved mentions to %s", writeable_post.path)
 
         with Metadata.writeable() as mdata:
             mdata.insert_recent_mention(target_post, mention_url)
@@ -135,7 +122,7 @@ def do_process_webmention(source, target):
         app.logger.debug('received domain-level webmention from %s', source)
         target_post = None
         target_urls = (target,)
-        mentions_path = 'domain.mentions.json'
+        # TODO save domain-level webmention somewhere
     else:
         # confirm that target is a valid link to a post
         target_post = find_target_post(target)
@@ -147,7 +134,6 @@ def do_process_webmention(source, target):
                 "Webmention could not find target post: {}".format(target)
 
         target_urls = (target, target_post.permalink, target_post.short_permalink)
-        mentions_path = target_post.mentions_path
 
     # confirm that source actually refers to the post
     source_response = requests.get(source)
@@ -155,12 +141,12 @@ def do_process_webmention(source, target):
 
     if source_response.status_code == 410:
         app.logger.debug("Webmention indicates original was deleted")
-        return target_post, mentions_path, source, True, None
+        return target_post, source, True, None
 
     if source_response.status_code // 100 != 2:
         app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
-        return target_post, mentions_path, None, False, \
+        return target_post, None, False, \
             "Bad response when reading source post: {}, {}"\
             .format(source, source_response)
 
@@ -168,7 +154,7 @@ def do_process_webmention(source, target):
 
     if source_length and int(source_length) > 2097152:
         app.logger.warn("Very large source. length=%s", source_length)
-        return target_post, mentions_path, None, False,\
+        return target_post, None, False,\
             "Source is very large. Length={}"\
             .format(source_length)
 
@@ -177,12 +163,12 @@ def do_process_webmention(source, target):
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
-        return target_post, mentions_path, None, False,\
+        return target_post, None, False,\
             "Could not find any links from source to target"
 
     archiver.archive_html(source, source_response.text)
 
-    return target_post, mentions_path, source, False, None
+    return target_post, source, False, None
 
 
 def find_link_to_target(source_url, source_response, target_urls):

@@ -245,13 +245,11 @@ class Post:
         self.like_of = data.get('like_of', [])
         self.tags = data.get('tags', [])
         self.syndication = data.get('syndication', [])
-
         self.draft = data.get('draft', False)
         self.deleted = data.get('deleted', False)
         self.hidden = data.get('hidden', False)
         self.audience = data.get('audience', [])
         self.mentions = data.get('mentions', [])
-
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
 
