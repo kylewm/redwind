@@ -233,7 +233,7 @@ class Post:
         self.syndication = []
         self.tags = []
         self.audience = []  # public
-        self._mentions = None  # lazy load mentions
+        self.mentions = []
         self._writeable = False
 
     def read_json_blob(self, data):
@@ -250,6 +250,7 @@ class Post:
         self.deleted = data.get('deleted', False)
         self.hidden = data.get('hidden', False)
         self.audience = data.get('audience', [])
+        self.mentions = data.get('mentions', [])
 
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
@@ -269,6 +270,7 @@ class Post:
             'deleted': self.deleted,
             'hidden': self.hidden,
             'audience': self.audience,
+            'mentions': self.mentions,
         }
         return util.filter_empty_keys(data)
 
@@ -350,27 +352,6 @@ class Post:
                                   tag, util.base60_encode(ordinal),
                                   self.date_index)
         return cite
-
-    @property
-    def mentions_path(self):
-        return "{}/{}/{:02d}/{:02d}/{}.mentions.json".format(
-            self.post_type, self.pub_date.year, self.pub_date.month,
-            self.pub_date.day, self.date_index)
-
-    @property
-    def mentions(self):
-        if self._mentions is None:
-            path = self._get_fs_path(self.mentions_path)
-            if os.path.exists(path):
-                blob = json.load(open(path, 'r'))
-                self._mentions = blob
-                # app.logger.debug("loaded mentions from %s: %s",
-                #                 path, self._mentions)
-            else:
-                self._mentions = []
-                # app.logger.debug("no mentions file found at %s", path)
-
-        return self._mentions
 
     def __repr__(self):
         if self.title:
