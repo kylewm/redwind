@@ -342,6 +342,15 @@ form input {
     margin: 3px;
 }
 
+.elsewhere {
+display: inline;
+list-style-type: none;
+}
+
+.elsewhere li {
+    display: inline;
+}
+
 @media(max-width: 600px) {
     html, body {
         word-wrap: break-word;
@@ -414,7 +423,7 @@ form input {
   </body>
 </html>
 
-<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet" type="text/css">
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" rel="stylesheet" type="text/css">
 <link href="{{ url_for('static', filename='css/pygments.css') }}" rel="stylesheet" type="text/css">
 <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet" type="text/css">
 <link rel="stylesheet" href="{{ url_for('static',  filename='leaflet/leaflet.css') }}">
