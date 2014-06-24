@@ -14,31 +14,18 @@
     {% else %}
       <div class="p-repost-of h-cite">
 
-        <i class="fa fa-retweet"></i> Shared a post by
+        <i class="fa fa-retweet"></i> Shared
         <span class="p-author h-card">
-          {{ author_image(share.author_image, share.author_name) }}
-
-          {% if share.author_name and share.author_url %}
-            <a class="p-name u-url" href="{{share.author_url}}">{{ share.author_name }}</a>
-          {% elif share.author_name %}
-            <span class="p-name">{{ share.author_name}}</span>
-          {% elif share.author_url %}
-            <a class="u-url" href="{{share.author_url}}">{{ share.author_url | prettify_url }}</a>
+          {% if share.title %}
+            <a class="u-url" href="{{ share.url }}">{{ share.title }}</a> on
+          {% else %}
+            a post on
           {% endif %}
+          <a class="u-url" href="{{ share.url }}">{{ share.url | domain_from_url }}</a>
+          {{ author_image(share.author_image, share.author_name) }}
         </span>
 
-        from
-        {% if share.pub_date %}
-          <time class="dt-published" datetime="{{ share.pub_date | isotime }}"><a class="u-url" href="{{ share.url }}">{{ share.pub_date | human_time }}</a></time>
-        {% else %}
-          <a class="u-url" href="{{ share.url }}">here</a>
-        {% endif %}
-
         <div class="content">
-          {% if share.title %}
-            <span class="p-name">{{share.title}}</span>
-          {% endif %}
-
           <div class="e-content">
             {% set content_words = share.content | format_as_text | wordcount %}
             {% if content_words < 200 %}

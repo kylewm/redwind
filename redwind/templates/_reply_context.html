@@ -18,30 +18,17 @@
 
       <div class="p-in-reply-to h-cite">
         <span class="p-author h-card">
-          {{ author_image(reply.author_image, reply.author_name) }}
-
           <i class="fa fa-share"></i> In reply to
-          {% if reply.author_name and reply.author_url %}
-            <a class="p-name u-url" href="{{reply.author_url}}">{{ reply.author_name }}</a>,
-          {% elif reply.author_name %}
-            <span class="p-name">{{ reply.author_name}}</span>,
-          {% elif reply.author_url %}
-            <a class="u-url" href="{{reply.author_url}}">{{ reply.author_url | prettify_url }}</a>,
+          {% if reply.title %}
+            <a class="u-url" href="{{ reply.url }}">{{ reply.title }}</a> on
+          {% else %}
+            a post on
           {% endif %}
+          <a class="u-url" href="{{ reply.url }}">{{ reply.url | domain_from_url }}</a>
+          {{ author_image(reply.author_image, reply.author_name) }}
         </span>
 
-        {% if reply.pub_date %}
-          <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-            <a class="u-url" href="{{ reply.url }}">{{ reply.pub_date | human_time }}</a>
-          </time>
-        {% else %}
-          <a class="u-url" href="{{ reply.url }}">here</a>
-        {% endif %}
-
         <div class="content">
-          {% if reply.title %}
-            <p class="p-name">{{ reply.title }}</p>
-          {% endif %}
             <div class="e-content">
               {% set content_words = reply.content | format_as_text | wordcount %}
               {% if content_words < 200 %}

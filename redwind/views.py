@@ -18,7 +18,7 @@ from flask import request, redirect, url_for, render_template, flash,\
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
 from contextlib import contextmanager
-from urllib.parse import urlparse, urljoin
+import urllib.parse
 from werkzeug.routing import BaseConverter
 
 import bleach
@@ -162,7 +162,7 @@ class DisplayPost:
         for img in soup.find_all('img'):
             src = img.get('src')
             if src:
-                return urljoin(app.config['SITE_URL'], src)
+                return urllib.parse.urljoin(app.config['SITE_URL'], src)
 
     @property
     @reraise_attribute_errors
@@ -575,7 +575,7 @@ def indieauth():
 
     if response.status_code == 200:
         domain = response.json().get('me')
-        user = auth.load_user(urlparse(domain).netloc)
+        user = auth.load_user(urllib.parse.urlparse(domain).netloc)
         if user:
             login_user(user, remember=True)
             flash('Logged in with domain {}'.format(domain))
@@ -844,6 +844,13 @@ def prettify_url(url):
     return path.strip('/')
 
 
+@app.template_filter('domain_from_url')
+def domain_from_url(url):
+    if not url:
+        return url
+    return urllib.parse.urlparse(url).netloc
+
+
 @app.template_filter('format_syndication_url')
 def format_syndication_url(url):
     if TWITTER_RE.match(url):
@@ -857,9 +864,9 @@ def format_syndication_url(url):
 
 @app.template_filter('local_mirror')
 def local_mirror_resource(url):
-    site_netloc = urlparse(app.config['SITE_URL']).netloc
+    site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
 
-    o = urlparse(url)
+    o = urllib.parse.urlparse(url)
     if o.netloc and o.netloc != site_netloc:
         mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
         mirror_file_path = os.path.join(app.root_path, 'static',
