@@ -20,13 +20,22 @@ Sorted by category
 * Page (e.g., for a project): Expected to keep up-to-date, like a wiki
   page
 
-## Store images with post content
+## <strike>Store images with post content</strike>
 
 Saving to /static/uploads is lame.
 
-## Address Book
+
+## <strike>Address Book</strike>
 
 Refer to people by name, autolink their domain or primary silo
 profile, and include avatar.
 
 Automatically discover linked profiles by rel-me -- keep up-to-date.
+
+## Comment form
+
+Logged-in users with a micropub endpoint should see a comment form on post 
+permalink pages. Posted comments will be micropubbed to their site with 
+u-in-reply-to set properly.
+
+"Like" button too
