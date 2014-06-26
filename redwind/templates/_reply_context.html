@@ -18,15 +18,15 @@
 
       <div class="p-in-reply-to h-cite">
         <span class="p-author h-card">
+          {{ author_image(reply.author_image, reply.author_name, reply.author_url) }}
           <i class="fa fa-share"></i> In reply to
           {% if reply.title %}
             <a class="u-url" href="{{ reply.url }}">{{ reply.title }}</a> on
           {% else %}
             a post on
           {% endif %}
-          <a class="u-url" href="{{ reply.url }}">{{ reply.url | domain_from_url }}</a>
-          {{ author_image(reply.author_image, reply.author_name) }}
         </span>
+        <a class="u-url" href="{{ reply.url }}">{{ reply.url | domain_from_url }}</a>
 
         <div class="content">
             <div class="e-content">

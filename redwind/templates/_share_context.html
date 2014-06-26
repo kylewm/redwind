@@ -16,14 +16,14 @@
 
         <i class="fa fa-retweet"></i> Shared
         <span class="p-author h-card">
+          {{ author_image(share.author_image, share.author_name, share.author_url) }}
           {% if share.title %}
             <a class="u-url" href="{{ share.url }}">{{ share.title }}</a> on
           {% else %}
             a post on
           {% endif %}
-          <a class="u-url" href="{{ share.url }}">{{ share.url | domain_from_url }}</a>
-          {{ author_image(share.author_image, share.author_name) }}
         </span>
+        <a class="u-url" href="{{ share.url }}">{{ share.url | domain_from_url }}</a>
 
         <div class="content">
           <div class="e-content">

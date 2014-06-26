@@ -1,8 +1,14 @@
-{% macro author_image(image_url, alt_text) %}
+{% macro author_image(image_url, alt_text, author_url=None) %}
   <div class="author-image-holder">
     <img class="u-photo" src="{% if image_url %}{{ image_url | local_mirror }}{% else %}{{ url_for('static', filename='img/users/placeholder.png') }}{% endif %}"
-         alt="{{alt_text}}"/><br/>
-    {{ alt_text }}
+         alt="{{alt_text}}"/>
+    {% if author_url %}
+    <div>
+    <a class="u-url" href="{{author_url}}">
+      {{ alt_text }}
+    </a>
+    </div>
+    {% endif %}
   </div>
 {% endmacro %}
 

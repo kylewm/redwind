@@ -41,11 +41,9 @@
       <b>Replies</b>
       {% for reply in replies %}
         <div class="p-comment h-cite">
-          <div class="p-author h-card">
+          <span class="p-author h-card">
 
-            <div class="author-image-holder">
-              {{ author_image(reply.author_image, reply.author_name) }}
-            </div>
+            {{ author_image(reply.author_image, reply.author_name, reply.author_url) }}
 
 	    {% if reply.author_name and reply.author_url %}
               <a class="p-name u-url" href="{{ reply.author_url }}">{{ reply.author_name | bleach }}</a>
@@ -53,12 +51,9 @@
               <span class="p-name">{{ reply.author_name | bleach }}</span>
             {% elif reply.author_url %}
               <a class="u-url" href="{{ reply.author_url }}">{{ reply.author_url | bleach | prettify_url }}</a>
-            {% endif %} /
-	    <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
-	      <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
-	    </time>
-	    said
-          </div>
+            {% endif %}
+          </span>
+          on <a class="u-url" href="{{reply.permalink}}">{{reply.permalink | domain_from_url }}</a>:
 
           <div class="e-content">
             <!-- start of foreign content -->
@@ -66,17 +61,22 @@
             <!-- end of foreign content -->
           </div>
 
-          {% if reply.children %}
-          <div class="links syndication-links">
-            Also on 
-            {% for child in reply.children %}
+          <div class="links">
+            {% if reply.children %}
+            <div class="syndication-links">
+              Also on 
+              {% for child in reply.children %}
               <a href="{{child.permalink}}">
                 {{child.permalink | format_syndication_url | safe}}
               </a>
             {% endfor %}
+            </div>
+            {% endif %}
+            <i class="fa fa-clock-o"></i>
+            <time class="dt-published" datetime="{{ reply.pub_date | isotime }}">
+	      <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
+	    </time>
           </div>
-          {% endif %}
-
           <div style="clear:both"></div>
         </div>
       {% endfor %}
