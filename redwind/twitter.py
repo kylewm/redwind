@@ -77,9 +77,10 @@ def collect_images(post):
                            person_processor=None)
     soup = BeautifulSoup(html)
     for img in soup.find_all('img'):
-        src = img.get('src')
-        if src:
-            yield urljoin(app.config['SITE_URL'], src)
+        if not img.find_parent(class_='h-card'):
+            src = img.get('src')
+            if src:
+                yield urljoin(app.config['SITE_URL'], src)
 
 
 @app.route('/admin/share_on_twitter', methods=['GET', 'POST'])

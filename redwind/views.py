@@ -160,29 +160,27 @@ class DisplayPost:
         html = self.html_content
         soup = BeautifulSoup(html)
         for img in soup.find_all('img'):
-            src = img.get('src')
-            if src:
-                return urllib.parse.urljoin(app.config['SITE_URL'], src)
+            app.logger.debug('checking image %s', img)
+            hcard_parent = img.find_parent(class_='h-card')
+            app.logger.debug('h-card parent %s', hcard_parent)
+            if not hcard_parent: 
+                src = img.get('src')
+                if src:
+                    return urllib.parse.urljoin(app.config['SITE_URL'], src)
 
     @property
     @reraise_attribute_errors
     def mentions(self):
         if self._mentions is None:
-            app.logger.debug('creating mention proxies for %s', self.wrapped.mentions)
             # arrange posse'd mentions into a hierarchy based on rel-syndication
             self._mentions = []
             all_mentions = [MentionProxy(self, m) for m in self.wrapped.mentions]
             for mention in all_mentions:
-
-                app.logger.debug('processing mention %s', mention.permalink)
-                
                 parent = next((parent for parent in all_mentions
                                if mention != parent
                                and any(util.urls_match(mention.permalink, synd)
                                        for synd in parent.syndication)),
                               None)
-                app.logger.debug('mention parent %s', parent)
-
                 if parent:
                     parent.children.append(mention)
                 else:

@@ -6,7 +6,7 @@
   <meta property="og:url" content="{{post.permalink}}" />
   <meta property="og:title" content="{{title}}" />
 
-  {% if is_twitter_user_agent %}
+  <!-- % if is_twitter_user_agent % -->
     <meta name="twitter:site" content="@kyle_wm"/>
     <meta name="twitter:creator" content="@kyle_wm"/>
     <meta name="twitter:domain" content="kylewm.com to see the original"/>
@@ -19,7 +19,8 @@
     {% else %}
       <meta name="twitter:card" content="summary"/>
     {% endif %}
-  {% endif %}
+  <!-- % endif % -->
+
   {% for reply in post.reply_contexts %}
     <link rel="in-reply-to" href="{{ reply.permalink or reply.source }}"/>
   {% endfor %}
