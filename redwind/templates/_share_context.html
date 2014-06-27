@@ -14,16 +14,25 @@
     {% else %}
       <div class="p-repost-of h-cite">
 
-        <i class="fa fa-retweet"></i> Shared
-        <span class="p-author h-card">
-          {{ author_image(share.author_image, share.author_name, share.author_url) }}
+        <div>
+          <i class="fa fa-retweet"></i> Shared
           {% if share.title %}
-            <a class="u-url" href="{{ share.url }}">{{ share.title }}</a> on
+            <a class="u-url" href="{{ share.url }}">{{ share.title }}</a>
           {% else %}
-            a post on
+            a post
           {% endif %}
+
+          {% if share.author_name %}
+            by <a class="p-author h-card" href="{{ share.author_url }}">{{ share.author_name }}</a>
+          {% endif %}
+
+          on <a class="u-url" href="{{ share.url }}">{{ share.url | domain_from_url }}</a>
+        </div>
+
+        <span class="p-author h-card">
+          {{ author_image(share.author_image, share.author_name) }}
         </span>
-        <a class="u-url" href="{{ share.url }}">{{ share.url | domain_from_url }}</a>
+
 
         <div class="content">
           <div class="e-content">

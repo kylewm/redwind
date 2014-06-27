@@ -43,7 +43,7 @@
         <div class="p-comment h-cite">
           <span class="p-author h-card">
 
-            {{ author_image(reply.author_image, reply.author_name, reply.author_url) }}
+            {{ author_image(reply.author_image, reply.author_name) }}
 
 	    {% if reply.author_name and reply.author_url %}
               <a class="p-name u-url" href="{{ reply.author_url }}">{{ reply.author_name | bleach }}</a>
@@ -64,7 +64,7 @@
           <div class="links">
             {% if reply.children %}
             <div class="syndication-links">
-              Also on 
+              Also on
               {% for child in reply.children %}
               <a href="{{child.permalink}}">
                 {{child.permalink | format_syndication_url | safe}}
