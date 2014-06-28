@@ -668,6 +668,7 @@ def get_micropub_token():
 
     if r.status_code == 200:
         form = urllib.parse.parse_qs(r.content)
+        app.logger.debug('received form data back from token request %s', form)
         access_token = form.get('access_token')
         session['access_token'] = access_token
         flash('request access token successful')
