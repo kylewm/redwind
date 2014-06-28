@@ -44,19 +44,25 @@
 
 
     {% if micropub and access_token %}
+      <div class="micropub_comments">
+        Oh cool, you are logged in and support micropub! Comments entered here will be posted to <i>your</i> site.
 
-      Oh cool, you are logged in and support micropub! Comments entered here will be posted to <i>your</i> site.
+        <form action="{{micropub}}" method="POST">
+          <input type="hidden" name="access_token" value="{{access_token}}"></input>
+          <input type="hidden" name="h" value="entry"></input>
+          <input type="hidden" name="like-of" value="{{post.permalink}}"></input>
+          <textarea name="content">liked <a class="u-like-of" href="{{post.permalink}}">{{title}}</a></textarea>
+          <input type="submit" value="Post Like"></input>
+        </form>
 
-    <form action="{{micropub}}" method="POST">
-      <input type="hidden" name="access_token" value="{{access_token}}"></input>
-      <input type="hidden" name="h" value="entry"></input>
-      <input type="hidden" name="in-reply-to" value="{{post.permalink}}"></input>
-      <textarea name="content">
-      </textarea>
-      <input type="submit"></input>
-    </form>
-
-
+        <form action="{{micropub}}" method="POST">
+          <input type="hidden" name="access_token" value="{{access_token}}"></input>
+          <input type="hidden" name="h" value="entry"></input>
+          <input type="hidden" name="in-reply-to" value="{{post.permalink}}"></input>
+          <textarea name="content"></textarea>
+          <input type="submit" value="Post Comment"></input>
+        </form>
+      </div>
     {% endif %}
 
 

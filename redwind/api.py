@@ -3,8 +3,13 @@ from . import auth
 from . import util
 from .models import Post, Location, Metadata
 
+from . import contexts
+from . import locations
+from . import push
+from . import webmention_sender
+
 from collections import deque
-from flask import request, url_for, jsonify, abort, make_response
+from flask import request, url_for, jsonify, make_response, redirect
 from flask.ext.login import login_required
 from werkzeug import secure_filename
 from bs4 import BeautifulSoup
@@ -93,8 +98,11 @@ def token_endpoint():
 
     if me not in auth_me:
         app.logger.warn(
-            "rejecting access token request me=%s, expected me=%s", me, auth_me)
-        abort(400)
+            "rejecting access token request me=%s, expected me=%s",
+            me, auth_me)
+        return make_response(jsonify(
+            description='rejected access token request',
+            me=me, expected=auth_me), 400)
 
     token = jwt.encode({
         'me': me,
@@ -133,20 +141,25 @@ def micropub_endpoint():
 
     if not token:
         app.logger.warn('hit micropub endpoint with no access token')
-        abort(401)
-
+        return make_response(jsonify(
+            description='micropub request with no access token'), 401)
     try:
         decoded = jwt.decode(token, app.config['SECRET_KEY'])
     except jwt.DecodeError as e:
         app.logger.warn('could not decode access token: %s', e)
-        abort(401)
+        return make_response(jsonify(
+            description='could not decode access token',
+            token=token, error=str(e)), 401)
 
     me = decoded.get('me')
     parsed = urllib.parse.urlparse(me)
-    user = auth.load_user(parsed.netloc)
+    user = auth.load_user(parsed.netloc + parsed.path)
     if not user:
         app.logger.warn('received valid access token for invalid user: %s', me)
-        abort(401)
+        return make_response(jsonify(
+            description='valid access token for invalid user',
+            user=user,
+            token=token), 401)
 
     app.logger.debug('successfully authenticated as user %s => %s', me, user)
 
@@ -204,7 +217,23 @@ def micropub_endpoint():
         mdata.add_or_update_post(post)
         mdata.save()
 
-    return make_response('', 201, {'Location': post.permalink})
+    try:
+        app.logger.debug("fetching contexts")
+        contexts.fetch_post_contexts(post)
+
+        app.logger.debug("fetching location info")
+        locations.reverse_geocode(post)
+
+        app.logger.debug("sending push notification")
+        push.send_notifications(post)
+
+        app.logger.debug("sending webmentions")
+        webmention_sender.send_webmentions(post)
+    except:
+        app.logger.exception("exception while dispatching queued tasks")
+
+    #return make_response('', 201, {'Location': post.permalink})
+    return redirect(post.permalink)
 
 
 @app.route('/api/fetch_profile')

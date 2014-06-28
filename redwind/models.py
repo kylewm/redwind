@@ -59,6 +59,10 @@ class User:
         self.twitter_oauth_token = None
         self.twitter_oauth_token_secret = None
         self.facebook_access_token = None
+        self.authorization_endpoint = None
+        self.token_endpoint = None
+        self.micropub = None
+        self.micropub_access_token = None
 
     def to_json(self):
         data = {

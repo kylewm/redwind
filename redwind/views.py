@@ -18,7 +18,6 @@ from flask import request, session, redirect, url_for, render_template, flash,\
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
 from contextlib import contextmanager
-import urllib.parse
 from werkzeug.routing import BaseConverter
 
 import bleach
@@ -29,6 +28,7 @@ import pytz
 import re
 import requests
 import unicodedata
+import urllib.parse
 
 bleach.ALLOWED_TAGS += ['img', 'p', 'br']
 bleach.ALLOWED_ATTRIBUTES.update({
@@ -372,6 +372,7 @@ def inject_user_authenticated():
         'is_twitter_user_agent': twitterbot,
     }
 
+
 @app.route('/', defaults={'page': 1})
 @app.route('/page/<int:page>')
 def index(page):
@@ -408,8 +409,8 @@ def everything(page):
 @app.route('/tag/<tag>', defaults={'page': 1})
 @app.route('/tag/<tag>/page/<int:page>')
 def posts_by_tag(tag, page):
-    return render_posts('All posts tagged ' + tag, POST_TYPES, page, 30, tag=tag,
-                        include_hidden=True,
+    return render_posts('All posts tagged ' + tag, POST_TYPES, page, 30,
+                        tag=tag, include_hidden=True,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -565,18 +566,25 @@ def shortlink(tag):
 
 
 # for testing -- allows arbitrary logins as any user
-# @app.route('/fakeauth')
-# def fakeauth():
-#     domain = request.args.get('url')
-#     user = auth.load_user(domain)
-#     login_user(user, remember=True)
-#     return redirect(url_for('index'))
+@app.route('/fakeauth')
+def fakeauth():
+    domain = request.args.get('url')
+    user = auth.load_user(domain)
+    login_user(user, remember=True)
+    session['micropub'] = url_for('micropub_endpoint', _external=True)
+    session['access_token'] = 'abc123'
+    return redirect(url_for('index'))
+
 
 @app.route('/login')
 def login():
     me = request.args.get('me')
     r = requests.get(me)
-    r.raise_for_status()
+    if r.status_code != 200:
+        app.logger.warn('failed to load login url %s: %s', me, r)
+        flash('failed to load login url %s. %s: %s', me, r, r.text)
+        return
+
     soup = BeautifulSoup(r.text)
 
     rels = {
@@ -599,6 +607,7 @@ def login():
         session['authorization_endpoint'] = auth_ep
         session['token_endpoint'] = token_ep
         session['micropub'] = micropub_ep
+
         return redirect(auth_ep + '?' + urllib.parse.urlencode({
             'me': me,
             'redirect_uri': url_for('get_micropub_token', _external=True),
@@ -617,7 +626,6 @@ def login():
             auth_ep = 'https://indieauth.com/auth'
 
         # basic login
-        session['authorization_endpoint'] = auth_ep
         app.logger.info('attempting to authorize %s with %s', me, auth_ep)
         return redirect(auth_ep + '?' + urllib.parse.urlencode({
             'me': me,
@@ -656,7 +664,10 @@ def get_micropub_token():
     me = request.args.get('me')
     auth_token = request.args.get('code')
 
-    token_ep = session.get('token_endpoint')
+    #auth_ep = session.get('authorization_endpoint', None)
+    token_ep = session.get('token_endpoint', None)
+    #micropub_ep = session.get('micropub', None)
+
     if not token_ep:
         flash('micropub verify could not find expected token_endpoint '
               'session variable')
@@ -675,17 +686,20 @@ def get_micropub_token():
         form = urllib.parse.parse_qs(r.content)
         app.logger.debug('received form data back from token request %s', form)
         access_token = form.get('access_token')
-        session['access_token'] = access_token
-        flash('request access token successful')
+        if access_token:
+            flash('request access token successful')
 
-        parsed = urllib.parse.urlparse(me)
-        user = auth.load_user(parsed.netloc + parsed.path)
-        if user:
-            login_user(user, remember=True)
-            flash('Logged in with domain {}'.format(me))
+            parsed = urllib.parse.urlparse(me)
+            user = auth.load_user(parsed.netloc + parsed.path)
+            if user:
+                session['access_token'] = access_token[0]
+                login_user(user, remember=True)
+                flash('Logged in with domain {}'.format(me))
+            else:
+                flash('No user for domain {}'.format(me))
         else:
-            flash('No user for domain {}'.format(me))
-
+            app.logger.warn('success response from token endpoint but no '
+                            'access token!')
     else:
         app.logger.warn('could not get access token %s: %s', r, r.text)
         flash('failed to get access token ' + str(r))
@@ -696,6 +710,10 @@ def get_micropub_token():
 @app.route("/admin/logout")
 def logout():
     logout_user()
+    for key in ('authorization_endpoint', 'token_endpoint',
+                'micropub', 'access_token'):
+        if key in session:
+            del session[key]
     return redirect(url_for('index'))
 
 
