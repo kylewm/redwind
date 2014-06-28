@@ -651,7 +651,10 @@ def basic_verify():
 
 @app.route('/get_micropub_token')
 def get_micropub_token():
-    auth_token = request.args.get('token')
+    app.logger.debug('callback from auth endpoint with data %s', request.args)
+
+    me = request.args.get('me')
+    auth_token = request.args.get('code')
 
     token_ep = session.get('token_endpoint')
     if not token_ep:
@@ -661,6 +664,7 @@ def get_micropub_token():
 
     # request a micropub token
     r = requests.post(token_ep, data={
+        'me': me,
         'code': auth_token,
         'client_id': 'https://kylewm.com',
         'scope': 'post',
