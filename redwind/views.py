@@ -607,7 +607,6 @@ def login():
         session['authorization_endpoint'] = auth_ep
         session['token_endpoint'] = token_ep
         session['micropub'] = micropub_ep
-
         return redirect(auth_ep + '?' + urllib.parse.urlencode({
             'me': me,
             'redirect_uri': url_for('get_micropub_token', _external=True),
@@ -664,10 +663,7 @@ def get_micropub_token():
     me = request.args.get('me')
     auth_token = request.args.get('code')
 
-    #auth_ep = session.get('authorization_endpoint', None)
-    token_ep = session.get('token_endpoint', None)
-    #micropub_ep = session.get('micropub', None)
-
+    token_ep = session.get('token_endpoint')
     if not token_ep:
         flash('micropub verify could not find expected token_endpoint '
               'session variable')
@@ -698,6 +694,7 @@ def get_micropub_token():
             else:
                 flash('No user for domain {}'.format(me))
         else:
+            flash('success reply from token endpoint without an access_token!')
             app.logger.warn('success response from token endpoint but no '
                             'access token!')
     else:

@@ -229,6 +229,7 @@ def micropub_endpoint():
 
         app.logger.debug("sending webmentions")
         webmention_sender.send_webmentions(post)
+
     except:
         app.logger.exception("exception while dispatching queued tasks")
 
