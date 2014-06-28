@@ -19,6 +19,7 @@ import requests
 import urllib
 import json
 
+
 def generate_upload_path(post, f, default_ext=None):
     filename = secure_filename(f.filename)
     basename, ext = os.path.splitext(filename)
@@ -52,8 +53,8 @@ def generate_upload_path(post, f, default_ext=None):
 def convert_mf2():
     url = request.args.get('url')
     p = mf2py.Parser(url=url)
-    json = p.to_dict()
-    return jsonify(json)
+    blob = p.to_dict()
+    return jsonify(blob)
 
 
 @app.route('/api/token', methods=['POST'])

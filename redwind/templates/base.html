@@ -22,8 +22,8 @@
     <link rel="openid.server" href="https://indieauth.com/openid" />
 
     <link rel="authorization_endpoint" href="https://indieauth.com/auth">
-    <link rel="token_endpoint" href="https://kylewm.com/api/token">
-    <link rel="micropub" href="https://kylewm.com/api/micropub">
+    <link rel="token_endpoint" href="{{ url_for('token_endpoint', _external=True)}}">
+    <link rel="micropub" href="{{url_for('micropub_endpoint', _external=True)}}">
 
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/users/kyle.jpg') }}"/>
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/users/kyle.jpg') }}"/>
@@ -375,10 +375,9 @@ list-style-type: none;
       <header>
         <div id="login_area">
           {% if current_user.is_anonymous() %}
-            <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
+            <form id="indie_auth_form" action="{{ url_for('login') }}" method="get">
               <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
               <button id="sign_in_button" type="submit">Sign In</button>
-              <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
             </form>
           {% else %}
             {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)

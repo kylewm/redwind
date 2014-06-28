@@ -13,7 +13,7 @@ from . import webmention_receiver
 from .models import Post, Location, Metadata, AddressBook, POST_TYPES
 
 from bs4 import BeautifulSoup
-from flask import request, redirect, url_for, render_template, flash,\
+from flask import request, session, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
@@ -163,7 +163,7 @@ class DisplayPost:
             app.logger.debug('checking image %s', img)
             hcard_parent = img.find_parent(class_='h-card')
             app.logger.debug('h-card parent %s', hcard_parent)
-            if not hcard_parent: 
+            if not hcard_parent:
                 src = img.get('src')
                 if src:
                     return urllib.parse.urljoin(app.config['SITE_URL'], src)
@@ -545,7 +545,9 @@ def post_by_date(post_type, year, month, day, index, slug):
     if not title:
         title = "A {} from {}".format(dpost.post_type,
                                       dpost.pub_date.strftime('%Y-%m-%d'))
-    return render_template('post.html', post=dpost, title=title)
+    return render_template('post.html', post=dpost, title=title,
+                           micropub=session.get('micropub'),
+                           access_token=session.get('access_token'))
 
 
 @app.route('/short/<string(minlength=5,maxlength=6):tag>')
@@ -570,16 +572,69 @@ def shortlink(tag):
 #     login_user(user, remember=True)
 #     return redirect(url_for('index'))
 
+@app.route('/login')
+def login():
+    me = request.args.get('me')
+    r = requests.get(me)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text)
 
-@app.route("/indieauth")
-def indieauth():
+    rels = {
+        rel: link.get('href')
+        for link in soup.find_all('link')
+        for rel in link.get('rel', [])
+        if link.has_attr('href')
+    }
+
+    auth_ep = rels.get('authorization_endpoint')
+    token_ep = rels.get('token_endpoint')
+    micropub_ep = rels.get('micropub')
+
+    if auth_ep and token_ep and micropub_ep:
+        app.logger.info(
+            'found endpoints, doing full micropub authorization %s, %s, %s',
+            auth_ep, token_ep, micropub_ep)
+
+        # full micropub login
+        session['authorization_endpoint'] = auth_ep
+        session['token_endpoint'] = token_ep
+        session['micropub'] = micropub_ep
+        return redirect(auth_ep + '?' + urllib.parse.urlencode({
+            'me': me,
+            'redirect_uri': url_for('get_micropub_token', _external=True),
+            'client_id': 'https://kylewm.com',
+            'scope': 'post',
+        }))
+
+    else:
+        if auth_ep:
+            app.logger.info(
+                'found indieauth authorization_endpoint %s', auth_ep)
+        else:
+            app.logger.info(
+                'no indieauth authorization_endpoint, falling back to '
+                'indieauth.com')
+            auth_ep = 'https://indieauth.com/auth'
+
+        # basic login
+        session['authorization_endpoint'] = auth_ep
+        app.logger.info('attempting to authorize %s with %s', me, auth_ep)
+        return redirect(auth_ep + '?' + urllib.parse.urlencode({
+            'me': me,
+            'redirect_uri': url_for('basic_verify', _external=True),
+        }))
+
+
+@app.route("/basic_verify")
+def basic_verify():
     token = request.args.get('token')
     response = requests.get('https://indieauth.com/verify',
                             params={'token': token})
 
     if response.status_code == 200:
         domain = response.json().get('me')
-        user = auth.load_user(urllib.parse.urlparse(domain).netloc)
+        parsed = urllib.parse.urlparse(domain)
+        user = auth.load_user(parsed.netloc + parsed.path)
         if user:
             login_user(user, remember=True)
             flash('Logged in with domain {}'.format(domain))
@@ -590,6 +645,36 @@ def indieauth():
         respjson = response.json()
         flash('Login failed {}: {}'.format(respjson.get('error'),
                                            respjson.get('error_description')))
+
+    return redirect(url_for('index'))
+
+
+@app.route('/get_micropub_token')
+def get_micropub_token():
+    auth_token = request.args.get('token')
+
+    token_ep = session.get('token_endpoint')
+    if not token_ep:
+        flash('micropub verify could not find expected token_endpoint '
+              'session variable')
+        return redirect(url_for('index'))
+
+    # request a micropub token
+    r = requests.post(token_ep, data={
+        'code': auth_token,
+        'client_id': 'https://kylewm.com',
+        'scope': 'post',
+    })
+
+    if r.status_code == 200:
+        form = urllib.parse.parse_qs(r.content)
+        access_token = form.get('access_token')
+        session['access_token'] = access_token
+        flash('request access token successful')
+
+    else:
+        app.logger.warn('could not get access token %s: %s', r, r.text)
+        flash('failed to get access token ' + str(r))
 
     return redirect(url_for('index'))
 

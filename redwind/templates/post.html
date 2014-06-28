@@ -42,6 +42,25 @@
       {% include "_syndication_links.html" %}
     </div>
 
+
+    {% if micropub and access_token %}
+
+      Oh cool, you are logged in and support micropub! Comments entered here will be posted to <i>your</i> site.
+
+    <form action="{{micropub}}" method="POST">
+      <input type="hidden" name="access_token" value="{{access_token}}"></input>
+      <input type="hidden" name="h" value="entry"></input>
+      <input type="hidden" name="in-reply-to" value="{{post.permalink}}"></input>
+      <textarea name="content">
+      </textarea>
+      <input type="submit"></input>
+    </form>
+
+
+    {% endif %}
+
+
+
     {% include "_post_mentions.html" %}
 
     <form id="manual-webmention" method="POST" action="/webmention">

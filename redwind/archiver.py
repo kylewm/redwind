@@ -13,7 +13,7 @@ def load_json_from_archive(url):
     if os.path.exists(path):
         #app.logger.debug("path exists, loading %s", path)
         return json.load(open(path, 'r'))
-    app.logger.debug("archive path does not exist %s", path)
+    #app.logger.debug("archive path does not exist %s", path)
     return None
 
 
