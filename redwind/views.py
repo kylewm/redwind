@@ -678,6 +678,14 @@ def get_micropub_token():
         session['access_token'] = access_token
         flash('request access token successful')
 
+        parsed = urllib.parse.urlparse(me)
+        user = auth.load_user(parsed.netloc + parsed.path)
+        if user:
+            login_user(user, remember=True)
+            flash('Logged in with domain {}'.format(me))
+        else:
+            flash('No user for domain {}'.format(me))
+
     else:
         app.logger.warn('could not get access token %s: %s', r, r.text)
         flash('failed to get access token ' + str(r))
