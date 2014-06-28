@@ -667,6 +667,7 @@ def get_micropub_token():
         'me': me,
         'code': auth_token,
         'client_id': 'https://kylewm.com',
+        'redirect_uri': url_for('get_micropub_token', _external=True),
         'scope': 'post',
     })
 
