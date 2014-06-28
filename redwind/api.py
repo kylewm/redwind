@@ -1,6 +1,10 @@
 from . import app
 from . import auth
 from . import util
+from . import contexts
+from . import locations
+from . import webmention_sender
+from . import push
 from .models import Post, Location, Metadata
 
 from collections import deque
@@ -136,9 +140,10 @@ def micropub_endpoint():
         abort(401)
 
     try:
+        app.logger.debug('attempting to decode token %s', token)
         decoded = jwt.decode(token, app.config['SECRET_KEY'])
     except jwt.DecodeError as e:
-        app.logger.warn('could not decode access token: %s', e)
+        app.logger.exception('could not decode access token: %s', token)
         abort(401)
 
     me = decoded.get('me')
@@ -150,11 +155,19 @@ def micropub_endpoint():
 
     app.logger.debug('successfully authenticated as user %s => %s', me, user)
 
-    post = Post('note')
+    in_reply_to = request.form.get('in-reply-to')
+    like_of = request.form.get('like-of')
+
+    post = Post('reply' if in_reply_to else 'like' if like_of else 'note')
     post._writeable = True
 
     post.title = request.form.get('name')
     post.content = request.form.get('content')
+    if in_reply_to:
+        post.in_reply_to.append(in_reply_to)
+        
+    if like_of:
+        post.like_of.append(like_of)
 
     pub_str = request.form.get('published')
     if pub_str:
@@ -203,6 +216,22 @@ def micropub_endpoint():
     with Metadata.writeable() as mdata:
         mdata.add_or_update_post(post)
         mdata.save()
+
+    try:
+        app.logger.debug("fetching contexts")
+        contexts.fetch_post_contexts(post)
+
+        app.logger.debug("fetching location info")
+        locations.reverse_geocode(post)
+
+        app.logger.debug("sending push notification")
+        push.send_notifications(post)
+
+        app.logger.debug("sending webmentions")
+        webmention_sender.send_webmentions(post)
+
+    except:
+        app.logger.exception("exception while dispatching queued tasks")
 
     return make_response('', 201, {'Location': post.permalink})
 

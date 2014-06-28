@@ -42,24 +42,26 @@
       {% include "_syndication_links.html" %}
     </div>
 
-
+    <div class="micropub-comment-form">
     {% if micropub and access_token %}
-
       Oh cool, you are logged in and support micropub! Comments entered here will be posted to <i>your</i> site.
-
     <form action="{{micropub}}" method="POST">
       <input type="hidden" name="access_token" value="{{access_token}}"></input>
       <input type="hidden" name="h" value="entry"></input>
       <input type="hidden" name="in-reply-to" value="{{post.permalink}}"></input>
-      <textarea name="content">
-      </textarea>
-      <input type="submit"></input>
+      <textarea name="content" style="width:100%"></textarea>
+      <input type="submit" value="Comment"></input>
     </form>
-
-
+    <form action="{{micropub}}" method="POST">
+      <input type="hidden" name="access_token" value="{{access_token}}"></input>
+      <input type="hidden" name="h" value="entry"></input>
+      <input type="hidden" name="like-of" value="{{post.permalink}}"></input>
+      <input type="hidden" name="liked {{title}}"></textarea>
+      <input type="submit" value="Like"></input>
+    </form>
+    
     {% endif %}
-
-
+    <div>
 
     {% include "_post_mentions.html" %}
 

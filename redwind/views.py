@@ -672,19 +672,24 @@ def get_micropub_token():
     })
 
     if r.status_code == 200:
-        form = urllib.parse.parse_qs(r.content)
+        form = urllib.parse.parse_qs(r.text)
         app.logger.debug('received form data back from token request %s', form)
         access_token = form.get('access_token')
-        session['access_token'] = access_token
-        flash('request access token successful')
+        if access_token:
+            session['access_token'] = access_token[0]
+            flash('request access token successful')
 
-        parsed = urllib.parse.urlparse(me)
-        user = auth.load_user(parsed.netloc + parsed.path)
-        if user:
-            login_user(user, remember=True)
-            flash('Logged in with domain {}'.format(me))
+            parsed = urllib.parse.urlparse(me)
+            user = auth.load_user(parsed.netloc + parsed.path)
+            if user:
+                login_user(user, remember=True)
+                flash('Logged in with domain {}'.format(me))
+                
+            else:
+                flash('No user for domain {}'.format(me))
+                
         else:
-            flash('No user for domain {}'.format(me))
+            flash('success reply from token endpoint without an access_token!')
 
     else:
         app.logger.warn('could not get access token %s: %s', r, r.text)
@@ -696,6 +701,8 @@ def get_micropub_token():
 @app.route("/admin/logout")
 def logout():
     logout_user()
+    if 'access_token' in session:
+        del session['access_token']
     return redirect(url_for('index'))
 
 
@@ -1120,7 +1127,7 @@ def save_post(post):
                 webmention_sender.send_webmentions(post)
         except:
             app.logger.exception("exception while dispatching queued tasks")
-
+ 
         return redirect(redirect_url)
 
     except Exception as e:
