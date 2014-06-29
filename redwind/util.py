@@ -68,7 +68,7 @@ def urls_match(url1, url2):
     p1 = urllib.parse.urlparse(url1)
     p2 = urllib.parse.urlparse(url2)
     return p1.netloc == p2.netloc and p1.path == p2.path
-                      
+
 
 TWITTER_USERNAME_REGEX = r'(?<!\w)@([a-zA-Z0-9_]+)'
 LINK_REGEX = r'\b(?<!=[\'"])https?://([a-zA-Z0-9/\.\-_:%?@$#&=+]+)'
@@ -152,8 +152,7 @@ def base60_decode(s):
 
 
 def resize_image(sourcedir, filename, side):
-    #from PIL import Image
-    from wand.image import Image
+    from PIL import Image, ExifTags
 
     targetdir = os.path.join(app.root_path, '_resized',
                              os.path.relpath(sourcedir, app.root_path),
@@ -164,10 +163,23 @@ def resize_image(sourcedir, filename, side):
         if not os.path.exists(targetdir):
             os.makedirs(targetdir)
 
-        with Image(filename=os.path.join(sourcedir, filename)) as im:
-            origw, origh = im.size
-            ratio = side / max(origw, origh)
-            im.resize(int(origw * ratio), int(origh * ratio))
-            im.save(filename=targetpath)
+        im = Image.open(os.path.join(sourcedir, filename))
+
+        orientation = next((k for k, v in ExifTags.TAGS.items()
+                            if v == 'Orientation'), None)
+        exif = dict(im._getexif().items())
+
+        if exif[orientation] == 3:
+            im = im.transpose(Image.ROTATE_180)
+        elif exif[orientation] == 6:
+            im = im.transpose(Image.ROTATE_270)
+        elif exif[orientation] == 8:
+            im = im.transpose(Image.ROTATE_90)
+
+        origw, origh = im.size
+        ratio = side / max(origw, origh)
+        im = im.resize((int(origw * ratio), int(origh * ratio)),
+                       Image.ANTIALIAS)
+        im.save(targetpath)
 
     return targetdir, filename
