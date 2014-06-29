@@ -152,7 +152,8 @@ def base60_decode(s):
 
 
 def resize_image(sourcedir, filename, side):
-    from PIL import Image
+    #from PIL import Image
+    from wand.image import Image
 
     targetdir = os.path.join(app.root_path, '_resized',
                              os.path.relpath(sourcedir, app.root_path),
@@ -163,10 +164,10 @@ def resize_image(sourcedir, filename, side):
         if not os.path.exists(targetdir):
             os.makedirs(targetdir)
 
-        im = Image.open(os.path.join(sourcedir, filename))
-        origw, origh = im.size
-        ratio = side / max(origw, origh)
-        im = im.resize((int(origw * ratio), int(origh * ratio)), Image.ANTIALIAS)
-        im.save(targetpath)
+        with Image(filename=os.path.join(sourcedir, filename)) as im:
+            origw, origh = im.size
+            ratio = side / max(origw, origh)
+            im.resize(int(origw * ratio), int(origh * ratio))
+            im.save(filename=targetpath)
 
     return targetdir, filename
