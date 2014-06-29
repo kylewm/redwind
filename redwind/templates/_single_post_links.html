@@ -1,40 +1,4 @@
 
-<div class="webactions">
-  {% set tweet_id = post.tweet_id %}
-  <action do="reply" with="{{post.permalink}}">
-    {% if tweet_id %}<a href="https://twitter.com/intent/tweet?in_reply_to={{tweet_id}}">reply</a>{% endif %}
-  </action>
-  <action do="repost" with="{{post.permalink}}">
-    {% if tweet_id %}<a href="https://twitter.com/intent/retweet?tweet_id={{tweet_id}}">retweet</a>{% endif %}
-  </action>
-  <action do="favorite" with="{{post.permalink}}">
-    {% if tweet_id %}<a href="https://twitter.com/intent/favorite?tweet_id={{tweet_id}}">favorite</a>{% endif %}
-  </action>
-</div>
-
-<div class="mention-counts">
-  {% set mention_count = post.mention_count %}
-  {% set like_count = post.like_count %}
-  {% set reply_count = post.reply_count %}
-  {% set repost_count = post.repost_count %}
-  {% set ref_count = post.reference_count %}
-
-  {% if mention_count %}
-    {% if reply_count %}
-      <a href="{{ post.permalink }}#replies"><i class="fa fa-comment-o"></i> {{ reply_count }}</a>
-    {% endif %}
-    {% if like_count %}
-      <a href="{{ post.permalink }}#likes"><i class="fa fa-star-o"></i> {{ like_count }}</a>
-    {% endif %}
-    {% if repost_count %}
-      <a href="{{ post.permalink }}#reposts"><i class="fa fa-retweet"></i> {{ repost_count }}</a>
-    {% endif %}
-    {% if ref_count %}
-      <a href="{{ post.permalink }}#references"><i class="fa fa-ellipsis-h"></i> {{ ref_count }}</a>
-    {% endif %}
-  {% endif %}
-</div>
-
 
 {% if post.tags %}
   <div class="categories">
@@ -68,8 +32,60 @@
 {% endif %}
 
 <div>
+
   <i class="fa fa-clock-o"></i>
   <a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.pub_date | isotime }}">{{ post.pub_date | human_time }}</time></a>
+
+  {% if post.syndication %}
+    | <span class="syndication-links">
+      on
+      {% for syndication in post.syndication %}
+        <a rel="syndication" class="u-syndication" href="{{ syndication }}">
+          {{ syndication | format_syndication_url | safe }}
+        </a>{% if not loop.last %}&nbsp;{% endif %}
+      {% endfor %}
+    </span>
+{% endif %}
+
+
+  <span class="webactions">
+    {% set tweet_id = post.tweet_id %}
+    {% if tweet_id %} | {% endif %}
+    <action do="reply" with="{{post.permalink}}">
+      {% if tweet_id %}<a href="https://twitter.com/intent/tweet?in_reply_to={{tweet_id}}">reply</a>{% endif %}
+    </action>
+    <action do="repost" with="{{post.permalink}}">
+      {% if tweet_id %}<a href="https://twitter.com/intent/retweet?tweet_id={{tweet_id}}">retweet</a>{% endif %}
+    </action>
+    <action do="favorite" with="{{post.permalink}}">
+      {% if tweet_id %}<a href="https://twitter.com/intent/favorite?tweet_id={{tweet_id}}">favorite</a>{% endif %}
+    </action>
+  </span>
+
 </div>
+
+<div class="mention-counts">
+  {% set mention_count = post.mention_count %}
+  {% set like_count = post.like_count %}
+  {% set reply_count = post.reply_count %}
+  {% set repost_count = post.repost_count %}
+  {% set ref_count = post.reference_count %}
+
+  {% if mention_count %}
+    {% if reply_count %}
+      <a href="{{ post.permalink }}#replies"><i class="fa fa-comment-o"></i> {{ reply_count }} Repl{{ reply_count | pluralize('y', 'ies')}}</a>
+    {% endif %}
+    {% if like_count %}
+      <a href="{{ post.permalink }}#likes"><i class="fa fa-star-o"></i> {{ like_count }} Like{{ like_count | pluralize }}</a>
+    {% endif %}
+    {% if repost_count %}
+      <a href="{{ post.permalink }}#reposts"><i class="fa fa-retweet"></i> {{ repost_count }} Repost{{ repost_count | pluralize }}</a>
+    {% endif %}
+    {% if ref_count %}
+      <a href="{{ post.permalink }}#references"><i class="fa fa-ellipsis-h"></i> {{ ref_count }} Reference{{ ref_count | pluralize }}</a>
+    {% endif %}
+  {% endif %}
+</div>
+
 
 <div style="clear:both"></div>

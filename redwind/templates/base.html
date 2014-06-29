@@ -37,7 +37,7 @@ article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,su
 
 html,body {
     color: #333;
-    line-height: 1.3;
+    line-height: 1.4;
     font-family: Source Sans Pro, sans-serif;
     font-size: 14pt;
 }
@@ -118,8 +118,8 @@ h1, h2, h3, h4, h5 {
     font-weight: normal;
 }
 
-li {
-    margin-left: 1em;
+ul {
+    list-style-type: circle;
 }
 
 header {
@@ -130,13 +130,14 @@ footer {
     color: #666;
     width: 100%;
     margin-bottom: 20px;
+    margin-top: 100px;
 }
 
 footer #site-info {
     text-align: center;
-    margin-top: 30px;
     font-size: 0.9em;
 }
+
 footer .h-card {
     margin-top: 60px;
 }
@@ -160,7 +161,7 @@ nav li {
 }
 
 #login_area {
-    float: right;
+   text-align: center;
 }
 
 #indie_auth_form {
@@ -212,7 +213,8 @@ nav li {
 }
 
 .post .links {
-    font-size: 11pt;
+    font-size: 10pt;
+    text-transform: uppercase;
     color: #777;
     margin-top: 0.5em;
 }
@@ -241,7 +243,6 @@ nav li {
     z-index: 1;
 }
 
-
 .admin-post-controls a {
     display:block;
     width: 100%;
@@ -257,6 +258,10 @@ nav li {
 
 .post .admin-post-controls li {
     margin-left: 0px;
+}
+
+.post .e-content {
+    font-size: 18pt;
 }
 
 .share-context, .reply-context, .like-context {
@@ -321,13 +326,9 @@ nav li {
 }
 
 .webactions {
-    float: right;
-    clear: both;
 }
 
 .mention-counts {
-    float: right;
-    clear: both;
 }
 
 form .heading {
@@ -373,18 +374,6 @@ list-style-type: none;
   <body>
     <div id="wrapper">
       <header>
-        <div id="login_area">
-          {% if current_user.is_anonymous() %}
-            <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
-              <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
-              <button id="sign_in_button" type="submit">Sign In</button>
-              <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
-            </form>
-          {% else %}
-            {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
-          {% endif %}
-        </div>
-
         <nav>
           <ul>
             <li><span class="site-name">kylewm.com</span></li>
