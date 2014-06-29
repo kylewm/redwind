@@ -700,9 +700,9 @@ def isotime_filter(thedate):
 
 
 @app.template_filter('human_time')
-def human_time(thedate):
+def human_time(thedate, alternate=None):
     if not thedate:
-        return None
+        return alternate
 
     if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
         tz = pytz.timezone(app.config['TIMEZONE'])

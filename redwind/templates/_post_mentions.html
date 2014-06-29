@@ -73,8 +73,8 @@
             </div>
             {% endif %}
             <i class="fa fa-clock-o"></i>
-            <time class="dt-published" datetime="{% if reply.pub_date %}{{ reply.pub_date | isotime }}{% else %}{{ reply.pub_date_str }}{% endif %}">
-	      <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time }}</a>
+            <time class="dt-published" datetime="{{reply.pub_date | isotime }}">
+	      <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time(reply.pub_date_str) }}</a>
 	    </time>
           </div>
           <div style="clear:both"></div>
