@@ -163,7 +163,7 @@ class DisplayPost:
             app.logger.debug('checking image %s', img)
             hcard_parent = img.find_parent(class_='h-card')
             app.logger.debug('h-card parent %s', hcard_parent)
-            if not hcard_parent: 
+            if not hcard_parent:
                 src = img.get('src')
                 if src:
                     return urllib.parse.urljoin(app.config['SITE_URL'], src)
@@ -265,6 +265,7 @@ class ContextProxy:
         self.author_image = None
         self.content = None
         self.pub_date = None
+        self.pub_date_str = None
         self.title = None
         self.deleted = False
 
@@ -301,6 +302,7 @@ class MentionProxy:
         self.author_image = None
         self.content = None
         self.pub_date = None
+        self.pub_date_str = None
         self.title = None
         self.deleted = False
         self.syndication = []
@@ -340,6 +342,7 @@ class MentionProxy:
         self.author_image = self.entry.get('author', {}).get('photo', '')
         self.content = self.entry.get('content', '')
         self.pub_date = self.entry.get('published')
+        self.pub_date_str = self.entry.get('published-str')
         self.title = self.entry.get('name')
         self.syndication = self.entry.get('syndication', [])
 
