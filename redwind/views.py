@@ -579,6 +579,9 @@ def fakeauth():
 @app.route('/login')
 def login():
     me = request.args.get('me')
+    if not me.startswith('http://') and not me.startswith('https://'):
+        me = 'http://' + me
+
     r = requests.get(me)
     if r.status_code != 200:
         app.logger.warn('failed to load login url %s: %s', me, r)
