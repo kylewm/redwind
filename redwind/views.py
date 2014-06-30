@@ -8,8 +8,8 @@ from . import locations
 from . import push
 from . import twitter
 from . import util
-from . import webmention_sender
-from . import webmention_receiver
+from . import wm_sender
+from . import wm_receiver
 from .models import Post, Location, Metadata, AddressBook, POST_TYPES
 
 from bs4 import BeautifulSoup
@@ -1021,7 +1021,7 @@ def save_post(post):
 
             if request.form.get('send_webmentions') == 'true' and not post.draft:
                 app.logger.debug("sending webmentions")
-                webmention_sender.send_webmentions(post)
+                wm_sender.send_webmentions(post)
         except:
             app.logger.exception("exception while dispatching queued tasks")
 

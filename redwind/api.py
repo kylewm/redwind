@@ -149,11 +149,20 @@ def micropub_endpoint():
 
     app.logger.debug('successfully authenticated as user %s => %s', me, user)
 
-    post = Post('note')
+    in_reply_to = request.form.get('in-reply-to')
+    like_of = request.form.get('like-of')
+
+    post = Post('reply' if in_reply_to else 'like' if like_of else 'note')
     post._writeable = True
 
     post.title = request.form.get('name')
     post.content = request.form.get('content')
+
+    if in_reply_to:
+        post.in_reply_to.append(in_reply_to)
+
+    if like_of:
+        post.like_of.append(like_of)
 
     pub_str = request.form.get('published')
     if pub_str:
