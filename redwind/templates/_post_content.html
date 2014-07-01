@@ -1,10 +1,10 @@
 {% if post.title %}
   <h2 class="p-name">{{ post.title }}</h2>
-  <div class="e-content">
+  <div class="e-content post-content">
     {{ post.html_content }}
   </div>
 {% else %}
-  <div class="p-name e-content">
+  <div class="p-name e-content post-content">
     {{ post.html_content }}
   </div>
 {% endif %}

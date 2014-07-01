@@ -38,7 +38,7 @@ article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,su
 html,body {
     color: #333;
     line-height: 1.4;
-    font-family: Roboto, sans-serif;
+    font-family: Droid Sans, sans-serif;
     font-size: 14pt;
 }
 
@@ -99,7 +99,6 @@ blockquote {
 
 code, pre {
     font-family: monospace;
-    font-size: 0.8em;
     padding: 0.5em;
 }
 
@@ -260,8 +259,11 @@ nav li {
     margin-left: 0px;
 }
 
-.post .e-content {
-    font-size: 18pt;
+.note .post-content,
+.reply .post-content,
+.share .post-content,
+.checkin .post-content {
+  font-size: 18pt;
 }
 
 .share-context, .reply-context, .like-context {
@@ -281,11 +283,6 @@ nav li {
 
 .post .syndication-links {
     margin-top: 1em;
-}
-
-
-.post .syndication-links li {
-    list-style-type: none;
 }
 
 .post .mentions {
@@ -425,7 +422,7 @@ list-style-type: none;
 <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" rel="stylesheet" type="text/css">
 <link href="{{ url_for('static', filename='css/pygments.css') }}" rel="stylesheet" type="text/css">
 <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet" type="text/css">
-<link href='//fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'>
+<link href='//fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="{{ url_for('static',  filename='leaflet/leaflet.css') }}">
 
