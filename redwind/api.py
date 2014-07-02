@@ -217,7 +217,7 @@ def micropub_endpoint():
 
 @app.route('/api/fetch_profile')
 def fetch_profile():
-    from .views import TWITTER_PROFILE_RE, FACEBOOK_PROFILE_RE
+    from .controllers import TWITTER_PROFILE_RE, FACEBOOK_PROFILE_RE
 
     try:
         url = request.args.get('url')

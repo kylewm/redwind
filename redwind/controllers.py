@@ -22,8 +22,10 @@ import urllib.parse
 from werkzeug.routing import BaseConverter
 
 import bleach
+import collections
 import datetime
 import mf2util
+import operator
 import os
 import pytz
 import re
@@ -62,296 +64,277 @@ def reraise_attribute_errors(func):
     return go
 
 
-class DisplayPost:
+DPost = collections.namedtuple('DPost', [
+    'post_type',
+    'draft',
+    'permalink',
+    'short_permalink',
+    'short_cite',
+    'shortid',
+    'reply_contexts',
+    'share_contexts',
+    'like_contexts',
+    'title',
+    'content',
+    'first_image',
+    'pub_date_iso',
+    'pub_date_human',
+    'pub_day',
+    'location',
+    'syndication',
+    'tags',
+    'audience',
+    'reply_url',
+    'retweet_url',
+    'favorite_url',
+    'likes',
+    'reposts',
+    'replies',
+    'references',
+    'like_count',
+    'repost_count',
+    'reply_count',
+    'reference_count'
+])
 
-    def __init__(self, wrapped):
-        self.wrapped = wrapped
-        self._mentions = None
 
-    def __getattr__(self, attr):
-        return getattr(self.wrapped, attr)
+DContext = collections.namedtuple('DContext', [
+    'url',
+    'permalink',
+    'author_name',
+    'author_url',
+    'author_image',
+    'content',
+    'repost_preview',
+    'pub_date_iso',
+    'pub_date_human',
+    'title',
+    'deleted',
+])
 
-    def repost_preview_filter(self, url):
-        # youtube embeds
-        m = YOUTUBE_RE.match(url)
-        if m:
-            preview = """<iframe width="560" height="315" """\
-                """src="//www.youtube.com/embed/{}" frameborder="0" """\
-                """allowfullscreen></iframe>"""\
-                .format(m.group(1))
-            return preview, False
+DMention = collections.namedtuple('DMention', [
+    'permalink',
+    'reftype',
+    'author_name',
+    'author_url',
+    'author_image',
+    'content',
+    'pub_date_iso',
+    'pub_date_human',
+    'title',
+    'deleted',
+    'syndication',
+    'children',
+])
 
-        # instagram embeds
-        m = INSTAGRAM_RE.match(url)
-        if m:
-            preview = """<iframe src="//instagram.com/p/{}/embed/" """\
-                """width="400" height="500" frameborder="0" scrolling="no" """\
-                """allowtransparency="true"></iframe>"""\
-                .format(m.group(1))
-            return preview, False
-        return None, False
 
-    def get_share_preview(self):
-        text = ''
-        for repost_of in self.repost_of:
-            preview, _ = self.repost_preview_filter(repost_of)
-            if preview:
-                text += '<div>' + preview + '</div>'
-        return text
-
-    @property
-    @reraise_attribute_errors
-    def tweet_id(self):
-        for url in self.syndication:
-            match = TWITTER_RE.match(url)
-            if match:
-                return match.group(2)
-
-    @property
-    @reraise_attribute_errors
-    def reply_contexts(self):
-        if not self.in_reply_to:
-            return []
-        return [ContextProxy(url) for url in self.in_reply_to]
-
-    @property
-    @reraise_attribute_errors
-    def share_contexts(self):
-        if not self.repost_of:
-            return []
-        return [ContextProxy(url) for url in self.repost_of]
-
-    @property
-    @reraise_attribute_errors
-    def like_contexts(self):
-        if not self.like_of:
-            return []
-        return [ContextProxy(url) for url in self.like_of]
-
-    @property
-    @reraise_attribute_errors
-    def html_content(self):
-        return Markup(self.get_html_content(True))
-
-    def get_html_content(self, include_preview=True):
-        text = markdown_filter(self.content, img_path=self.get_image_path())
-        if include_preview and self.post_type == 'share':
-            preview = self.get_share_preview()
-            text += preview
-        return text
-
-    @property
-    @reraise_attribute_errors
-    def html_excerpt(self):
-        text = markdown_filter(self.content, img_path=self.get_image_path())
-        split = text.split('<!-- more -->', 1)
-        if self.post_type == 'share':
-            text += self.get_share_preview(split[0])
-        if len(split) > 1:
-            text += "<br/><a href={}>Keep Reading...</a>"\
-                . format(self.permalink)
-        return Markup(text)
-
-    @property
-    @reraise_attribute_errors
-    def first_image(self):
-        """find the first image (if any) that is in an <img> tag
-        in the rendered post"""
-        html = self.html_content
-        soup = BeautifulSoup(html)
-        for img in soup.find_all('img'):
-            app.logger.debug('checking image %s', img)
-            hcard_parent = img.find_parent(class_='h-card')
-            app.logger.debug('h-card parent %s', hcard_parent)
-            if not hcard_parent:
-                src = img.get('src')
-                if src:
-                    return urllib.parse.urljoin(app.config['SITE_URL'], src)
-
-    @property
-    @reraise_attribute_errors
-    def mentions(self):
-        if self._mentions is None:
-            # arrange posse'd mentions into a hierarchy based on rel-syndication
-            self._mentions = []
-            all_mentions = [MentionProxy(self, m) for m in self.wrapped.mentions]
-            for mention in all_mentions:
-                parent = next((parent for parent in all_mentions
-                               if mention != parent
-                               and any(util.urls_match(mention.permalink, synd)
-                                       for synd in parent.syndication)),
-                              None)
-                if parent:
-                    parent.children.append(mention)
-                else:
-                    self._mentions.append(mention)
-
-        return self._mentions
-
-    def _mentions_sorted_by_date(self, mtype):
-        def by_date(m):
-            result = m.pub_date or\
-                datetime.datetime(datetime.MINYEAR, 1, 1)
-            if result and hasattr(result, 'tzinfo') and not result.tzinfo:
-                result = pytz.utc.localize(result)
-            return result
-        filtered = [m for m in self.mentions
+def create_dpost(post):
+    def mentions_sorted_by_date(mentions, mtype):
+        filtered = [m for m in mentions
                     if not m.deleted
                     and (not mtype or m.reftype == mtype)]
-        filtered.sort(key=by_date)
+        filtered.sort(key=operator.attrgetter('pub_date_iso'))
         return filtered
 
-    def _mention_count(self, mtype):
-        count = len([m for m in self.mentions
-                     if not m.deleted
-                     and (not mtype or m.reftype == mtype)])
-        return count
+    content = Markup(markdown_filter(
+        post.content, img_path=post.get_image_path()))
 
-    @property
-    @reraise_attribute_errors
-    def mention_count(self):
-        return self._mention_count(None)
+    # arrange posse'd mentions into a hierarchy based on rel-syndication
+    mentions = []
+    all_mentions = [create_dmention(post, m) for m in post.mentions]
+    for mention in all_mentions:
+        parent = next((parent for parent in all_mentions
+                       if mention != parent
+                       and any(util.urls_match(mention.permalink, synd)
+                               for synd in parent.syndication)),
+                      None)
+        if parent:
+            parent.children.append(mention)
+        else:
+            mentions.append(mention)
 
-    @property
-    @reraise_attribute_errors
-    def likes(self):
+    likes = mentions_sorted_by_date(mentions, 'like')
+    reposts = mentions_sorted_by_date(mentions, 'repost')
+    replies = mentions_sorted_by_date(mentions, 'reply')
+    references = mentions_sorted_by_date(mentions, 'reference')
+
+    # find the first image (if any) that is in an <img> tag
+    # in the rendered post
+    soup = BeautifulSoup(content)
+    first_image = None
+    for img in soup.find_all('img'):
+        app.logger.debug('checking image %s', img)
+        hcard_parent = img.find_parent(class_='h-card')
+        app.logger.debug('h-card parent %s', hcard_parent)
+        if not hcard_parent:
+            src = img.get('src')
+            if src:
+                first_image = urllib.parse.urljoin(app.config['SITE_URL'], src)
+                break
+
+    tweet_id = None
+    for url in post.syndication:
+        match = TWITTER_RE.match(url)
+        if match:
+            tweet_id = match.group(2)
+            break
+
+    intent_url = 'https://twitter.com/intent'
+    reply_url = tweet_id and '{}/tweet?in_reply_to={}'.format(
+        intent_url, tweet_id)
+    retweet_url = tweet_id and '{}/retweet?tweet_id={}'.format(
+        intent_url, tweet_id)
+    favorite_url = tweet_id and '{}/favorite?tweet_id={}'.format(
+        intent_url, tweet_id)
+
+    return DPost(
+        post_type=post.post_type,
+        draft=post.draft,
+        permalink=post.permalink,
+        short_permalink=post.short_permalink,
+        short_cite=post.short_cite,
+        shortid=post.shortid,
+
+        reply_contexts=[create_dcontext(url) for url in post.in_reply_to],
+        share_contexts=[create_dcontext(url) for url in post.repost_of],
+        like_contexts=[create_dcontext(url) for url in post.like_of],
+        title=post.title,
+
+        content=content,
+        first_image=first_image,
+
+        pub_date_iso=isotime_filter(post.pub_date),
+        pub_date_human=human_time(post.pub_date),
+        pub_day=post.pub_date and post.pub_date.strftime('%Y-%m-%d'),
+
+        location=post.location,
+        syndication=post.syndication,
+        tags=post.tags,
+        audience=post.audience,
+
+        reply_url=reply_url,
+        retweet_url=retweet_url,
+        favorite_url=favorite_url,
+
+        likes=likes,
+        reposts=reposts,
+        replies=replies,
+        references=references,
+        like_count=len(likes),
+        repost_count=len(reposts),
+        reply_count=len(replies),
+        reference_count=len(references)
+    )
+
+
+def create_dcontext(url):
+    repost_preview = None
+    # youtube embeds
+    m = YOUTUBE_RE.match(url)
+    if m:
+        repost_preview = (
+            """<iframe width="560" height="315" """
+            """src="//www.youtube.com/embed/{}" frameborder="0" """
+            """allowfullscreen></iframe>"""
+            .format(m.group(1)))
+
+    # instagram embeds
+    m = INSTAGRAM_RE.match(url)
+    if m:
+        repost_preview = (
+            """<iframe src="//instagram.com/p/{}/embed/" """
+            """width="400" height="500" frameborder="0" scrolling="no" """
+            """allowtransparency="true"></iframe>"""
+            .format(m.group(1)))
+
+    blob = archiver.load_json_from_archive(url)
+    if blob:
         try:
-            return self._mentions_sorted_by_date('like')
-        except:
-            app.logger.exception("fetching likes")
-
-    @property
-    @reraise_attribute_errors
-    def like_count(self):
-        return self._mention_count('like')
-
-    @property
-    @reraise_attribute_errors
-    def reposts(self):
-        return self._mentions_sorted_by_date('repost')
-
-    @property
-    @reraise_attribute_errors
-    def repost_count(self):
-        return self._mention_count('repost')
-
-    @property
-    @reraise_attribute_errors
-    def replies(self):
-        return self._mentions_sorted_by_date('reply')
-
-    @property
-    @reraise_attribute_errors
-    def reply_count(self):
-        return self._mention_count('reply')
-
-    @property
-    @reraise_attribute_errors
-    def references(self):
-        return self._mentions_sorted_by_date('reference')
-
-    @property
-    @reraise_attribute_errors
-    def reference_count(self):
-        return self._mention_count('reference')
-
-
-class ContextProxy:
-    def __init__(self, url):
-        self.url = url
-        self.permalink = url
-        self.author_name = None
-        self.author_url = None
-        self.author_image = None
-        self.content = None
-        self.pub_date = None
-        self.pub_date_str = None
-        self.title = None
-        self.deleted = False
-
-        blob = archiver.load_json_from_archive(url)
-        if not blob:
-            return
-
-        try:
-            self.entry = mf2util.interpret(blob, url)
+            entry = mf2util.interpret(blob, url)
+            pub_date = entry.get('published')
+            return DContext(
+                url=url,
+                permalink=entry.get('url'),
+                author_name=entry.get('author', {}).get('name', ''),
+                author_url=entry.get('author', {}).get('url', ''),
+                author_image=entry.get('author', {}).get('photo', ''),
+                content=entry.get('content', ''),
+                repost_preview=repost_preview,
+                pub_date_iso=isotime_filter(pub_date),
+                pub_date_human=human_time(pub_date),
+                title=entry.get('name'),
+                deleted=False,
+            )
         except:
             app.logger.exception('error interpreting %s', url)
-            return
 
-        if not self.entry:
-            return
+    return DContext(
+        url=url,
+        permalink=url,
+        author_name=None,
+        author_url=None,
+        author_image=None,
+        content=None,
+        repost_preview=repost_preview,
+        pub_date_iso=None,
+        pub_date_human=None,
+        title=None,
+        deleted=False,
+    )
 
-        self.permalink = self.entry.get('url')
-        self.author_name = self.entry.get('author', {}).get('name', '')
-        self.author_url = self.entry.get('author', {}).get('url', '')
-        self.author_image = self.entry.get('author', {}).get('photo', '')
-        self.content = self.entry.get('content', '')
-        self.pub_date = self.entry.get('published')
-        self.title = self.entry.get('name')
-        self.deleted = False
 
+def create_dmention(post, url):
+    target_urls = [
+        post.permalink,
+        post.permalink_without_slug,
+        post.short_permalink,
+        post.permalink.replace('https://', 'http://'),
+        post.permalink_without_slug.replace('https://', 'http://'),
+        post.short_permalink.replace('https://', 'http://'),
+        # for localhost testing
+        post.permalink.replace(app.config['SITE_URL'], 'https://kylewm.com'),
+        post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com'),
+    ] if post else []
 
-class MentionProxy:
-    def __init__(self, post, url):
-        self.permalink = url
-        self.target = None
-        self.reftype = 'reference'
-        self.author_name = None
-        self.author_url = None
-        self.author_image = None
-        self.content = None
-        self.pub_date = None
-        self.pub_date_str = None
-        self.title = None
-        self.deleted = False
-        self.syndication = []
-        self.children = []
-
+    try:
         blob = archiver.load_json_from_archive(url)
-        if not blob:
-            return
+        if blob:
+            entry = mf2util.interpret_comment(blob, url, target_urls)
+            if entry:
+                comment_type = entry.get('comment_type')
 
-        if post:
-            target_urls = [
-                post.permalink,
-                post.permalink_without_slug,
-                post.short_permalink,
-                post.permalink.replace('https://', 'http://'),
-                post.permalink_without_slug.replace('https://', 'http://'),
-                post.short_permalink.replace('https://', 'http://'),
-                # for localhost testing
-                post.permalink.replace(app.config['SITE_URL'], 'https://kylewm.com'),
-                post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com'),
-            ]
-        else:
-            target_urls = []
+                return DMention(
+                    permalink=entry.get('url', ''),
+                    reftype=comment_type and comment_type[0],
+                    author_name=entry.get('author', {}).get('name', ''),
+                    author_url=entry.get('author', {}).get('url', ''),
+                    author_image=entry.get('author', {}).get('photo', ''),
+                    content=entry.get('content', ''),
+                    pub_date_iso=isotime_filter(entry.get('published')),
+                    pub_date_human=human_time(entry.get('published')),
+                    title=entry.get('name'),
+                    deleted=False,
+                    syndication=entry.get('syndication', []),
+                    children=[]
+                )
 
-        try:
-            self.entry = mf2util.interpret_comment(blob, url, target_urls)
-        except:
-            app.logger.exception('error interpreting {}', url)
-            return
+    except:
+        app.logger.exception('error interpreting {}', url)
 
-        if not self.entry:
-            return
-
-        self.permalink = self.entry.get('url', '')
-        self.author_name = self.entry.get('author', {}).get('name', '')
-        self.author_url = self.entry.get('author', {}).get('url', '')
-        self.author_image = self.entry.get('author', {}).get('photo', '')
-        self.content = self.entry.get('content', '')
-        self.pub_date = self.entry.get('published')
-        self.pub_date_str = self.entry.get('published-str')
-        self.title = self.entry.get('name')
-        self.syndication = self.entry.get('syndication', [])
-
-        comment_type = self.entry.get('comment_type')
-        self.reftype = comment_type and comment_type[0]
-
-    def __repr__(self):
-        return """Mention(permalink={}, pub_date={} reftype={})""".format(
-            self.permalink, self.pub_date, self.reftype)
+    return DMention(
+        permalink=url,
+        reftype='reference',
+        author_name=None,
+        author_url=None,
+        author_image=None,
+        content=None,
+        pub_date_iso=None,
+        pub_date_human=None,
+        title=None,
+        deleted=False,
+        syndication=[],
+        children=[]
+    )
 
 
 def render_posts(title, post_types, page, per_page, tag=None,
@@ -362,7 +345,7 @@ def render_posts(title, post_types, page, per_page, tag=None,
                              include_drafts=include_drafts,
                              page=page, per_page=per_page)
 
-    dposts = [DisplayPost(post) for post in posts if check_audience(post)]
+    dposts = [create_dpost(post) for post in posts if check_audience(post)]
     return render_template('posts.html', posts=dposts, title=title,
                            prev_page=page-1,
                            next_page=page+1)
@@ -420,7 +403,7 @@ def render_posts_atom(title, feed_id, post_types, count):
     mdata = Metadata()
     posts = mdata.load_posts(reverse=True, post_types=post_types,
                              page=1, per_page=10)
-    dposts = [DisplayPost(post) for post in posts if check_audience(post)]
+    dposts = [create_dpost(post) for post in posts if check_audience(post)]
     return make_response(render_template('posts.atom', title=title,
                                          feed_id=feed_id,
                                          posts=dposts), 200,
@@ -452,7 +435,7 @@ def mentions_atom():
         post_path = mention.get('post')
         post = Post.load(post_path) if post_path else None
         mention_url = mention.get('mention')
-        proxies.append(MentionProxy(post, mention_url))
+        proxies.append(create_dmention(post, mention_url))
     return make_response(render_template('mentions.atom',
                                          title='kylewm.com: Mentions',
                                          feed_id='mentions.atom',
@@ -467,7 +450,7 @@ def archive(year, month):
     # and the list of all years/month
     posts = []
     if year and month:
-        posts = [DisplayPost(post) for post
+        posts = [create_dpost(post) for post
                  in Metadata().load_by_month(year, month)
                  if check_audience(post)]
 
@@ -543,11 +526,10 @@ def post_by_date(post_type, year, month, day, index, slug):
                     year=year, month=month, day=day, index=index,
                     slug=post.slug))
 
-    dpost = DisplayPost(post)
+    dpost = create_dpost(post)
     title = dpost.title
     if not title:
-        title = "A {} from {}".format(dpost.post_type,
-                                      dpost.pub_date.strftime('%Y-%m-%d'))
+        title = "A {} from {}".format(dpost.post_type, dpost.pub_day)
     return render_template('post.html', post=dpost, title=title)
 
 
@@ -954,8 +936,6 @@ def save_post(post):
             post.slug = slug
         elif post.title and not post.slug:
             post.slug = slugify(post.title)
-
-        post.repost_preview = None
 
         in_reply_to = request.form.get('in_reply_to', '')
         post.in_reply_to = [url.strip() for url

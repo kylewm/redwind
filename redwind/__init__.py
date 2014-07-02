@@ -37,4 +37,4 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 
 
-from . import views
+from . import controllers

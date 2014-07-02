@@ -44,6 +44,12 @@
               <a class="u-url" href="{{ share.url }}">continued</a>
             {% endif %}
           </div>
+          {% if share.repost_preview %}
+            <div>
+              {{ share.repost_preview }}
+            </div>
+          {% endif %}
+
         </div>
 
 

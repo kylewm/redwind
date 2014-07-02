@@ -36,7 +36,7 @@ class MentionClient:
         return post.permalink
 
     def get_target_urls(self, post):
-        from .views import DisplayPost
+        from .controllers import DisplayPost
 
         target_urls = []
         # send mentions to 'in_reply_to' as well as all linked urls
