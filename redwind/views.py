@@ -876,13 +876,13 @@ def local_mirror_resource(url):
     o = urllib.parse.urlparse(url)
     if o.netloc and o.netloc != site_netloc:
         mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
-        mirror_file_path = os.path.join(app.root_path, 'static',
+        mirror_file_path = os.path.join(app.root_path, app.static_folder,
                                         mirror_url_path)
-        #app.logger.debug("checking for existence of mirrored resource %s -> %s",
-        #                 url, mirror_file_path)
+        app.logger.debug("checking for existence of mirrored resource %s -> %s",
+                         url, mirror_file_path)
         if os.path.exists(mirror_file_path):
-            #app.logger.debug("%s already mirrored, returning url path %s",
-            #                 mirror_file_path, mirror_url_path)
+            app.logger.debug("%s already mirrored, returning url path %s",
+                             mirror_file_path, mirror_url_path)
             return url_for('static', filename=mirror_url_path)
 
         if util.download_resource(url, mirror_file_path):
