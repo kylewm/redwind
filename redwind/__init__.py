@@ -1,15 +1,20 @@
 import sys
-if 'mf2py' not in sys.path:
-    sys.path.append('mf2py')
+import os
+for module in ('mf2py', 'mf2util'):
+    if module not in sys.path:
+        sys.path.append(module)
 
 from flask import Flask
-#from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
+from config import Configuration
 
-app = Flask(__name__)
-app.config.from_object('config.Configuration')
+app = Flask(
+    __name__,
+    template_folder=os.path.join(Configuration.THEME, 'templates'),
+    static_folder=os.path.join(Configuration.THEME, 'static'))
 
+app.config.from_object(Configuration)
 redis = Redis()
 
 app.jinja_options = ImmutableDict(
@@ -32,4 +37,4 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 
 
-from . import views
+from . import controllers

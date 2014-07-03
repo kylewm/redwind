@@ -93,7 +93,7 @@ class PersonTagger:
 
 
 def handle_new_or_edit(post, preview, img_url, post_type):
-    from .views import process_people
+    from .controllers import process_people
     app.logger.debug('publishing to facebook')
 
     tagger = PersonTagger()
@@ -172,6 +172,6 @@ def handle_new_or_edit(post, preview, img_url, post_type):
 
 @app.template_filter('format_markdown_as_facebook')
 def format_markdown_as_facebook(data):
-    from .views import format_markdown_as_text
+    from .controllers import format_markdown_as_text
     return format_markdown_as_text(data, link_twitter_names=False,
                                    person_processor=None)

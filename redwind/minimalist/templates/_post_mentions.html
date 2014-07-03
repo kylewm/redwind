@@ -1,0 +1,94 @@
+{% from '_macros.html' import author_image, author_image_likes %}
+<div class="mentions">
+
+  <a name="mentions"></a>
+
+  {% if post.likes or post.reposts %}
+    <div class="likes-and-reposts">
+      {% if post.likes %}
+        <div class="likes">
+          <a name="likes"></a>
+          <i class="fa fa-star-o"></i>
+          {% for like in post.likes %}
+            <a href="{{ like.permalink }}">
+              {{ author_image_likes(like.author_image, like.author_name, like.author_name + ' ' + like.content_plain) }}</a>
+            {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if post.reposts %}
+        <div class="reposts">
+          <a name="reposts"></a>
+          <i class="fa fa-retweet"></i>
+          {% for repost in post.reposts %}
+            <a href="{{ repost.permalink }}">
+              {{ author_image_likes(repost.author_image, repost.author_name, repost.author_name + ' ' + repost.content_plain) }}
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if post.replies %}
+    <div class="replies">
+      <a name="replies"></a>
+      <b>Replies</b>
+      {% for reply in post.replies %}
+        <div class="p-comment h-cite">
+          <span class="p-author h-card">
+
+            {{ author_image(reply.author_image, reply.author_name) }}
+
+	    {% if reply.author_name and reply.author_url %}
+              <a class="p-name u-url" href="{{ reply.author_url }}">{{ reply.author_name | bleach }}</a>
+            {% elif reply.author_name %}
+              <span class="p-name">{{ reply.author_name | bleach }}</span>
+            {% elif reply.author_url %}
+              <a class="u-url" href="{{ reply.author_url }}">{{ reply.author_url | bleach | prettify_url }}</a>
+            {% endif %}
+          </span>
+          on <a class="u-url" href="{{reply.permalink}}">{{reply.permalink | domain_from_url }}</a>:
+
+          <div class="e-content">
+            <!-- start of foreign content -->
+            {{ reply.content | bleach | safe }}
+            <!-- end of foreign content -->
+          </div>
+
+          <div class="links">
+            {% if reply.children %}
+            <div class="syndication-links">
+              Also on
+              {% for child in reply.children %}
+              <a href="{{child.permalink}}">
+                {{child.permalink | format_syndication_url | safe}}
+              </a>
+            {% endfor %}
+            </div>
+            {% endif %}
+            <i class="fa fa-clock-o"></i>
+            <time class="dt-published" datetime="{{reply.pub_date_iso }}">
+	      <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date_human}}</a>
+	    </time>
+          </div>
+          <div style="clear:both"></div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+
+  {% if post.references %}
+    <div class="references">
+      <a name="references"></a>
+      <h4>References</h4>
+      {% for reference in post.references %}
+        <p>
+          <i class="fa fa-ellipsis-h"></i> <a href="{{ reference.permalink }}">{{ reference.permalink | prettify_url }}</a>
+        </p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</div>

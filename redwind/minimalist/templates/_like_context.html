@@ -1,0 +1,16 @@
+{% if post.like_contexts %}
+  <div class="like-context">
+    {% for like in post.like_contexts %}
+    
+      <i class="fa fa-thumbs-up"></i> Liked
+      <a class="u-like u-like-of" href="{{ like.url }}">
+        {% if like.title %}
+          {{like.title}}
+        {% else %}
+          {{ like.url | prettify_url }}
+        {% endif %}
+     </a>
+
+    {% endfor %}
+  </div>
+{% endif %}

@@ -1,0 +1,18 @@
+<div id="site-info">
+  <p>
+    {% if current_user.is_anonymous() %}
+      <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
+        <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+        <button id="sign_in_button" type="submit">Sign In</button>
+        <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
+      </form>
+    {% else %}
+      Logged in as: {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
+    {% endif %}
+    <br/>
+    This site is powered by <a href="http://git.kylewm.com/?p=redwind.git;a=summary">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
+  </p>
+  <p>
+    <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png" /></a>
+  </p>
+</div>

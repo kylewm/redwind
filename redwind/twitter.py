@@ -71,7 +71,7 @@ def authorize_twitter2():
 def collect_images(post):
     """find the first image (if any) that is in an <img> tag
     in the rendered post"""
-    from .views import markdown_filter
+    from .controllers import markdown_filter
     html = markdown_filter(post.content, img_path=post.get_image_path(),
                            link_twitter_names=False,
                            person_processor=None)
@@ -128,7 +128,7 @@ def format_markdown_as_tweet(data, img_path):
             return '@' + handle
         return displayname
 
-    from .views import format_markdown_as_text
+    from .controllers import format_markdown_as_text
     return format_markdown_as_text(data, img_path, link_twitter_names=False,
                                    person_processor=person_to_twitter_handle)
 
@@ -160,8 +160,8 @@ class TwitterClient:
                 return embed_response.json().get('html')
 
     def fetch_external_post(self, url):
-        from .views import local_mirror_resource
-        
+        from .controllers import local_mirror_resource
+
         match = self.PERMALINK_RE.match(url)
         if not match:
             app.logger.debug('url is not a twitter permalink %s', url)
@@ -198,7 +198,8 @@ class TwitterClient:
             if media.get('type') == 'photo':
                 media_url = media.get('media_url')
                 if media_url:
-                    tweet_text += '<div><img src="{}"/></div>'.format(local_mirror_resource(media_url))
+                    tweet_text += '<div><img src="{}"/></div>'.format(
+                        local_mirror_resource(media_url))
 
         html = hentry_template.fill(author_name=author_name,
                                     author_url=author_url,

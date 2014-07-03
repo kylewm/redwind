@@ -12,7 +12,5 @@ TAGS
 *.log.*
 _data
 _data.backup/
-static/_mirror
-redwind/static/uploads/
-redwind/static/_mirror/
+_mirror
 _archive

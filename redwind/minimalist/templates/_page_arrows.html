@@ -1,0 +1,14 @@
+<div class="page-arrows">
+  {% if prev_page %}
+    <div class="page-left">
+      <a href="{{ url_for_other_page( prev_page ) }}">&larr; Newer</a>
+    </div>
+  {% endif %}
+  {% if next_page %}
+    <div class="page-right">
+      <a href="{{ url_for_other_page( next_page ) }}">Older &rarr;</a>
+    </div>
+  {% endif %}
+
+    <div style="clear: both;"></div>
+</div>
