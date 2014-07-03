@@ -5,7 +5,7 @@
       <i class="fa fa-thumbs-up"></i> Liked
       <a class="u-like u-like-of" href="{{ like.url }}">
         {% if like.title %}
-          {{like.title | truncate(20) }}
+          {{like.title | truncate(140) }}
         {% else %}
           {{ like.url | prettify_url }}
         {% endif %}
