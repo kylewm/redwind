@@ -1,11 +1,11 @@
 {% if post.like_contexts %}
   <div class="like-context">
     {% for like in post.like_contexts %}
-    
+
       <i class="fa fa-thumbs-up"></i> Liked
       <a class="u-like u-like-of" href="{{ like.url }}">
         {% if like.title %}
-          {{like.title}}
+          {{like.title | truncate(20) }}
         {% else %}
           {{ like.url | prettify_url }}
         {% endif %}
