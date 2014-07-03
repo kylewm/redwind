@@ -1035,11 +1035,13 @@ def save_post(post):
 
 
 @app.route('/admin/addressbook', methods=['GET', 'POST'])
-@login_required
 def addressbook():
     book = AddressBook()
 
     if request.method == 'POST':
+        if not current_user.is_authenticated():
+            return app.login_manager.unauthorized()
+
         person = request.form.get('person').strip()
         url = request.form.get('url').strip()
         photo = request.form.get('photo').strip()
