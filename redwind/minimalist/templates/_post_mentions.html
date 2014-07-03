@@ -41,18 +41,18 @@
             {{ author_image(reply.author_image, reply.author_name) }}
 
 	    {% if reply.author_name and reply.author_url %}
-              <a class="p-name u-url" href="{{ reply.author_url }}">{{ reply.author_name | bleach }}</a>
+              <a class="p-name u-url" href="{{ reply.author_url }}">{{ reply.author_name }}</a>
             {% elif reply.author_name %}
-              <span class="p-name">{{ reply.author_name | bleach }}</span>
+              <span class="p-name">{{ reply.author_name }}</span>
             {% elif reply.author_url %}
-              <a class="u-url" href="{{ reply.author_url }}">{{ reply.author_url | bleach | prettify_url }}</a>
+              <a class="u-url" href="{{ reply.author_url }}">{{ reply.author_url | prettify_url }}</a>
             {% endif %}
           </span>
           on <a class="u-url" href="{{reply.permalink}}">{{reply.permalink | domain_from_url }}</a>:
 
           <div class="e-content">
             <!-- start of foreign content -->
-            {{ reply.content | bleach | safe }}
+            {{ reply.content | safe }}
             <!-- end of foreign content -->
           </div>
 

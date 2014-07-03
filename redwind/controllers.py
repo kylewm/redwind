@@ -84,6 +84,7 @@ DPost = collections.namedtuple('DPost', [
     'pub_date_human',
     'pub_day',
     'location',
+    'location_url',
     'syndication',
     'tags',
     'audience',
@@ -108,8 +109,6 @@ DContext = collections.namedtuple('DContext', [
     'author_url',
     'author_image',
     'content',
-    'content_plain',
-    'content_words',
     'repost_preview',
     'pub_date_iso',
     'pub_date_human',
@@ -172,7 +171,6 @@ def create_dpost(post):
     for img in soup.find_all('img'):
         app.logger.debug('checking image %s', img)
         hcard_parent = img.find_parent(class_='h-card')
-        app.logger.debug('h-card parent %s', hcard_parent)
         if not hcard_parent:
             src = img.get('src')
             if src:
@@ -186,13 +184,12 @@ def create_dpost(post):
             tweet_id = match.group(2)
             break
 
-    intent_url = 'https://twitter.com/intent'
-    reply_url = tweet_id and '{}/tweet?in_reply_to={}'.format(
-        intent_url, tweet_id)
-    retweet_url = tweet_id and '{}/retweet?tweet_id={}'.format(
-        intent_url, tweet_id)
-    favorite_url = tweet_id and '{}/favorite?tweet_id={}'.format(
-        intent_url, tweet_id)
+    reply_url = tweet_id and 'https://twitter.com/intent/tweet?in_reply_to={}'.format(tweet_id)
+    retweet_url = tweet_id and 'https://twitter.com/intent/retweet?tweet_id={}'.format(tweet_id)
+    favorite_url = tweet_id and 'https://twitter.com/intent/favorite?tweet_id={}'.format(tweet_id)
+    location_url = post.location and 'http://www.openstreetmap.org/#map=11/{}/{}'.format(
+        post.location.approximate_latitude,
+        post.location.approximate_longitude)
 
     return DPost(
         post_type=post.post_type,
@@ -216,6 +213,7 @@ def create_dpost(post):
         pub_day=post.pub_date and post.pub_date.strftime('%Y-%m-%d'),
 
         location=post.location,
+        location_url=location_url,
         syndication=post.syndication,
         tags=post.tags,
         audience=post.audience,
@@ -262,9 +260,16 @@ def create_dcontext(url):
             pub_date = entry.get('published')
 
             content = entry.get('content', '')
-            content_words = jinja2.filters.do_wordcount(
-                format_as_text(content))
+            content_plain = format_as_text(content)
 
+            if len(content_plain) < 512:
+                content = bleach.clean(autolink(content), strip=True)
+            else:
+                content = (
+                    jinja2.filters.do_truncate(content_plain, 512) +
+                    ' <a class="u-url" href="{}">continued</a>'.format(url))
+
+            author_name = bleach.clean(entry.get('author', {}).get('name', ''))
             author_image = entry.get('author', {}).get('photo')
             if author_image:
                 author_image = local_mirror_resource(author_image)
@@ -272,13 +277,11 @@ def create_dcontext(url):
             return DContext(
                 url=url,
                 permalink=entry.get('url'),
-                author_name=entry.get('author', {}).get('name', ''),
+                author_name=author_name,
                 author_url=entry.get('author', {}).get('url', ''),
                 author_image=author_image or url_for(
                     'static', filename=AUTHOR_PLACEHOLDER),
                 content=content,
-                content_plain=format_as_text(content),
-                content_words=content_words,
                 repost_preview=repost_preview,
                 pub_date_iso=isotime_filter(pub_date),
                 pub_date_human=human_time(pub_date),
@@ -295,8 +298,6 @@ def create_dcontext(url):
         author_url=None,
         author_image=None,
         content=None,
-        content_plain=None,
-        content_words=0,
         repost_preview=repost_preview,
         pub_date_iso=None,
         pub_date_human=None,
@@ -326,9 +327,11 @@ def create_dmention(post, url):
                 comment_type = entry.get('comment_type')
 
                 content = entry.get('content', '')
-                content_words = jinja2.filters.do_wordcount(
-                    format_as_text(content))
+                content_plain = format_as_text(content)
+                content_words = jinja2.filters.do_wordcount(content_plain)
 
+                author_name = bleach.clean(
+                    entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
                     author_image = local_mirror_resource(author_image)
@@ -336,12 +339,12 @@ def create_dmention(post, url):
                 return DMention(
                     permalink=entry.get('url', ''),
                     reftype=comment_type and comment_type[0],
-                    author_name=entry.get('author', {}).get('name', ''),
+                    author_name=author_name,
                     author_url=entry.get('author', {}).get('url', ''),
                     author_image=author_image or url_for(
                         'static', filename=AUTHOR_PLACEHOLDER),
                     content=content,
-                    content_plain=format_as_text(content),
+                    content_plain=content_plain,
                     content_words=content_words,
                     pub_date_iso=isotime_filter(entry.get('published')),
                     pub_date_human=human_time(entry.get('published')),
@@ -737,11 +740,6 @@ app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 @app.template_filter('atom_sanitize')
 def atom_sanitize(content):
     return Markup.escape(str(content))
-
-
-@app.template_filter('bleach')
-def bleach_html(html):
-    return bleach.clean(html, strip=True)
 
 
 def person_to_microcard(fullname, displayname, entry, pos):

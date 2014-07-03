@@ -36,12 +36,7 @@
 
         <div class="content">
           <div class="e-content">
-            {% if share.content_words < 200 %}
-              {{ share.content | autolink | bleach | safe }}
-            {% else %}
-              {{ share.content_plain | truncate(200) }}
-              <a class="u-url" href="{{ share.url }}">continued</a>
-            {% endif %}
+            {{ share.content |  safe }}
           </div>
           {% if share.repost_preview %}
             <div>
