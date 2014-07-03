@@ -3,30 +3,26 @@
 
   <a name="mentions"></a>
 
-  {% set likes = post.likes %}
-  {% set reposts = post.reposts %}
-
-  {% if likes or reposts %}
+  {% if post.likes or post.reposts %}
     <div class="likes-and-reposts">
-      {% if likes %}
+      {% if post.likes %}
         <div class="likes">
           <a name="likes"></a>
           <i class="fa fa-star-o"></i>
-          {% for like in likes %}
-            {% set img_title = like.content | format_as_text | trim %}
+          {% for like in post.likes %}
             <a href="{{ like.permalink }}">
-              {{ author_image_likes(like.author_image, like.author_name, like.author_name + ' ' + img_title) }}</a>
+              {{ author_image_likes(like.author_image, like.author_name, like.author_name + ' ' + like.content_plain) }}</a>
             {% endfor %}
         </div>
       {% endif %}
 
-      {% if reposts %}
+      {% if post.reposts %}
         <div class="reposts">
           <a name="reposts"></a>
           <i class="fa fa-retweet"></i>
-          {% for repost in reposts %}
-            {% set img_title = repost.content | format_as_text | trim %}
-            <a href="{{ repost.permalink }}">{{ author_image_likes(repost.author_image, repost.author_name, repost.author_name + ' ' + img_title) }}
+          {% for repost in post.reposts %}
+            <a href="{{ repost.permalink }}">
+              {{ author_image_likes(repost.author_image, repost.author_name, repost.author_name + ' ' + repost.content_plain) }}
             </a>
           {% endfor %}
         </div>
@@ -34,12 +30,11 @@
     </div>
   {% endif %}
 
-  {% set replies = post.replies %}
-  {% if replies %}
+  {% if post.replies %}
     <div class="replies">
       <a name="replies"></a>
       <b>Replies</b>
-      {% for reply in replies %}
+      {% for reply in post.replies %}
         <div class="p-comment h-cite">
           <span class="p-author h-card">
 
@@ -73,8 +68,8 @@
             </div>
             {% endif %}
             <i class="fa fa-clock-o"></i>
-            <time class="dt-published" datetime="{{reply.pub_date | isotime }}">
-	      <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date | human_time(reply.pub_date_str) }}</a>
+            <time class="dt-published" datetime="{{reply.pub_date_iso }}">
+	      <a class="u-url" href="{{ reply.permalink }}">{{ reply.pub_date_human}}</a>
 	    </time>
           </div>
           <div style="clear:both"></div>
@@ -84,12 +79,11 @@
   {% endif %}
 
 
-  {% set references = post.references %}
-  {% if references %}
+  {% if post.references %}
     <div class="references">
       <a name="references"></a>
       <h4>References</h4>
-      {% for reference in references %}
+      {% for reference in post.references %}
         <p>
           <i class="fa fa-ellipsis-h"></i> <a href="{{ reference.permalink }}">{{ reference.permalink | prettify_url }}</a>
         </p>

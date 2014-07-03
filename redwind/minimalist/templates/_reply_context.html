@@ -37,11 +37,10 @@
 
         <div class="content">
             <div class="e-content">
-              {% set content_words = reply.content | format_as_text | wordcount %}
-              {% if content_words < 200 %}
+              {% if reply.content_words < 200 %}
                 {{ reply.content | autolink | bleach | safe }}
               {% else %}
-                {{ reply.content | format_as_text | truncate(200) }}
+                {{ reply.content_plain | truncate(200) }}
               {% endif %}
             </div>
         </div>

@@ -20,6 +20,7 @@ from flask.ext.login import login_required, login_user, logout_user,\
 from contextlib import contextmanager
 import urllib.parse
 from werkzeug.routing import BaseConverter
+import jinja2.filters
 
 import bleach
 import collections
@@ -50,6 +51,7 @@ FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w
 YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
 INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 
+AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
 def reraise_attribute_errors(func):
     """@property and my override of getattr don't mix — they swallow up
@@ -76,6 +78,7 @@ DPost = collections.namedtuple('DPost', [
     'like_contexts',
     'title',
     'content',
+    'content_plain',
     'first_image',
     'pub_date_iso',
     'pub_date_human',
@@ -105,6 +108,8 @@ DContext = collections.namedtuple('DContext', [
     'author_url',
     'author_image',
     'content',
+    'content_plain',
+    'content_words',
     'repost_preview',
     'pub_date_iso',
     'pub_date_human',
@@ -119,6 +124,8 @@ DMention = collections.namedtuple('DMention', [
     'author_url',
     'author_image',
     'content',
+    'content_plain',
+    'content_words',
     'pub_date_iso',
     'pub_date_human',
     'title',
@@ -201,6 +208,7 @@ def create_dpost(post):
         title=post.title,
 
         content=content,
+        content_plain=format_as_text(content),
         first_image=first_image,
 
         pub_date_iso=isotime_filter(post.pub_date),
@@ -252,13 +260,25 @@ def create_dcontext(url):
         try:
             entry = mf2util.interpret(blob, url)
             pub_date = entry.get('published')
+
+            content = entry.get('content', '')
+            content_words = jinja2.filters.do_wordcount(
+                format_as_text(content))
+
+            author_image = entry.get('author', {}).get('photo')
+            if author_image:
+                author_image = local_mirror_resource(author_image)
+
             return DContext(
                 url=url,
                 permalink=entry.get('url'),
                 author_name=entry.get('author', {}).get('name', ''),
                 author_url=entry.get('author', {}).get('url', ''),
-                author_image=entry.get('author', {}).get('photo', ''),
-                content=entry.get('content', ''),
+                author_image=author_image or url_for(
+                    'static', filename=AUTHOR_PLACEHOLDER),
+                content=content,
+                content_plain=format_as_text(content),
+                content_words=content_words,
                 repost_preview=repost_preview,
                 pub_date_iso=isotime_filter(pub_date),
                 pub_date_human=human_time(pub_date),
@@ -275,6 +295,7 @@ def create_dcontext(url):
         author_url=None,
         author_image=None,
         content=None,
+        content_words=0,
         repost_preview=repost_preview,
         pub_date_iso=None,
         pub_date_human=None,
@@ -303,13 +324,24 @@ def create_dmention(post, url):
             if entry:
                 comment_type = entry.get('comment_type')
 
+                content = entry.get('content', '')
+                content_words = jinja2.filters.do_wordcount(
+                    format_as_text(content))
+
+                author_image = entry.get('author', {}).get('photo')
+                if author_image:
+                    author_image = local_mirror_resource(author_image)
+
                 return DMention(
                     permalink=entry.get('url', ''),
                     reftype=comment_type and comment_type[0],
                     author_name=entry.get('author', {}).get('name', ''),
                     author_url=entry.get('author', {}).get('url', ''),
-                    author_image=entry.get('author', {}).get('photo', ''),
-                    content=entry.get('content', ''),
+                    author_image=author_image or url_for(
+                        'static', filename=AUTHOR_PLACEHOLDER),
+                    content=content,
+                    content_plain=format_as_text(content),
+                    content_words=content_words,
                     pub_date_iso=isotime_filter(entry.get('published')),
                     pub_date_human=human_time(entry.get('published')),
                     title=entry.get('name'),
@@ -350,13 +382,6 @@ def render_posts(title, post_types, page, per_page, tag=None,
                            prev_page=page-1,
                            next_page=page+1)
 
-
-@app.context_processor
-def inject_user_authenticated():
-    twitterbot = 'Twitterbot' in request.headers.get('User-Agent', '')
-    return {
-        'is_twitter_user_agent': twitterbot,
-    }
 
 @app.route('/', defaults={'page': 1})
 @app.route('/page/<int:page>')
@@ -656,18 +681,6 @@ def uploads_popup():
     return render_template('uploads_popup.html')
 
 
-@app.template_filter('strftime')
-def strftime_filter(thedate, fmt='%Y %b %d'):
-    if not thedate:
-        thedate = datetime.date(1982, 11, 24)
-    if hasattr(thedate, 'tzinfo'):
-        if not thedate.tzinfo:
-            thedate = pytz.utc.localize(thedate)
-        thedate = thedate.astimezone(TIMEZONE)
-    return thedate.strftime(fmt)
-
-
-@app.template_filter('isotime')
 def isotime_filter(thedate):
     if not thedate:
         thedate = datetime.date(1982, 11, 24)
@@ -681,7 +694,6 @@ def isotime_filter(thedate):
     return thedate.isoformat()
 
 
-@app.template_filter('human_time')
 def human_time(thedate, alternate=None):
     if not thedate:
         return alternate
@@ -717,13 +729,6 @@ def url_for_other_page(page):
     return url_for(request.endpoint, **args)
 
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
-
-
-@app.template_filter('html_to_plain')
-def html_to_plain(content):
-    soup = BeautifulSoup(content)
-    text = soup.get_text()
-    return Markup.escape(text)
 
 
 @app.template_filter('atom_sanitize')
@@ -767,7 +772,6 @@ def process_people(data, person_processor):
     return data
 
 
-@app.template_filter('markdown')
 def markdown_filter(data, img_path=None, link_twitter_names=True,
                     person_processor=person_to_microcard):
     from markdown import markdown
@@ -788,17 +792,6 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
     return result
 
 
-@app.template_filter('format_markdown_as_text')
-def format_markdown_as_text(
-        content, remove_imgs=True,
-        link_twitter_names=True,
-        person_processor=lambda full, display, entry, pos: display):
-    html = markdown_filter(content, link_twitter_names=link_twitter_names,
-                           person_processor=person_processor)
-    return format_as_text(html, remove_imgs)
-
-
-@app.template_filter('format_as_text')
 def format_as_text(html, remove_imgs=True):
     soup = BeautifulSoup(html)
 
@@ -851,7 +844,6 @@ def format_syndication_url(url):
     return prettify_url(url)
 
 
-@app.template_filter('local_mirror')
 def local_mirror_resource(url):
     site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
 

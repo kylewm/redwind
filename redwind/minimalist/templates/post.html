@@ -11,7 +11,7 @@
     <meta name="twitter:creator" content="@kyle_wm"/>
     <meta name="twitter:domain" content="kylewm.com to see the original"/>
     <meta name="twitter:title" content="{{ title }}"/>
-    <meta name="twitter:description" content="{{ post.content | format_markdown_as_text | truncate(300) | replace('\n', '') }}"/>
+    <meta name="twitter:description" content="{{ post.content_plain | truncate(300) | replace('\n', '') }}"/>
     {% set img = post.first_image %}
     {% if img %}
       <meta name="twitter:card" content="photo"/>

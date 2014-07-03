@@ -198,7 +198,8 @@ class TwitterClient:
             if media.get('type') == 'photo':
                 media_url = media.get('media_url')
                 if media_url:
-                    tweet_text += '<div><img src="{}"/></div>'.format(local_mirror_resource(media_url))
+                    tweet_text += '<div><img src="{}"/></div>'.format(
+                        local_mirror_resource(media_url))
 
         html = hentry_template.fill(author_name=author_name,
                                     author_url=author_url,
