@@ -110,6 +110,7 @@ DContext = collections.namedtuple('DContext', [
     'author_image',
     'content',
     'repost_preview',
+    'pub_date',
     'pub_date_iso',
     'pub_date_human',
     'title',
@@ -125,6 +126,7 @@ DMention = collections.namedtuple('DMention', [
     'content',
     'content_plain',
     'content_words',
+    'pub_date',
     'pub_date_iso',
     'pub_date_human',
     'title',
@@ -135,11 +137,17 @@ DMention = collections.namedtuple('DMention', [
 
 
 def create_dpost(post):
+
+    def get_pub_date(mention):
+        if mention.pub_date:
+            return mention.pub_date
+        return datetime.datetime(1982, 11, 24, tzinfo=pytz.utc)
+
     def mentions_sorted_by_date(mentions, mtype):
         filtered = [m for m in mentions
                     if not m.deleted
                     and (not mtype or m.reftype == mtype)]
-        filtered.sort(key=operator.attrgetter('pub_date_iso'))
+        filtered.sort(key=get_pub_date)
         return filtered
 
     content = Markup(markdown_filter(
@@ -283,6 +291,7 @@ def create_dcontext(url):
                     'static', filename=AUTHOR_PLACEHOLDER),
                 content=content,
                 repost_preview=repost_preview,
+                pub_date=pub_date,
                 pub_date_iso=isotime_filter(pub_date),
                 pub_date_human=human_time(pub_date),
                 title=entry.get('name'),
@@ -299,6 +308,7 @@ def create_dcontext(url):
         author_image=None,
         content=None,
         repost_preview=repost_preview,
+        pub_date=None,
         pub_date_iso=None,
         pub_date_human=None,
         title=None,
@@ -346,6 +356,7 @@ def create_dmention(post, url):
                     content=content,
                     content_plain=content_plain,
                     content_words=content_words,
+                    pub_date=entry.get('published'),
                     pub_date_iso=isotime_filter(entry.get('published')),
                     pub_date_human=human_time(entry.get('published')),
                     title=entry.get('name'),
@@ -366,6 +377,7 @@ def create_dmention(post, url):
         content=None,
         content_plain=None,
         content_words=0,
+        pub_date=None,
         pub_date_iso=None,
         pub_date_human=None,
         title=None,

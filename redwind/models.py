@@ -7,12 +7,12 @@ import os
 import os.path
 import json
 import time
-import urllib
 from operator import attrgetter, itemgetter
 from contextlib import contextmanager
 
 
-POST_TYPES = ('article', 'note', 'like', 'share', 'reply', 'checkin')
+POST_TYPES = ('article', 'note', 'like', 'share', 'reply',
+              'checkin', 'photo', 'bookmark')
 
 
 @contextmanager

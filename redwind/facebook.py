@@ -44,7 +44,12 @@ def share_on_facebook():
 
     if request.method == 'GET':
         post = Post.load_by_shortid(request.args.get('id'))
+
+        preview = post.title + '\n\n' if post.title else ''
+        preview += format_markdown_as_facebook(post.content)
+
         return render_template('share_on_facebook.html', post=post,
+                               preview=preview,
                                imgs=list(collect_images(post)))
 
     try:
@@ -128,9 +133,6 @@ def handle_new_or_edit(post, preview, img_url, post_type):
             post_args['link'] = post.permalink
             post_args['picture'] = img_url
 
-    post_id_property = 'id'
-    post_id_property = 'post_id'
-
     if is_photo:
         app.logger.debug('Sending photo %s', post_args)
         response = requests.post('https://graph.facebook.com/me/photos',
@@ -170,8 +172,8 @@ def handle_new_or_edit(post, preview, img_url, post_type):
                 return fb_url
 
 
-@app.template_filter('format_markdown_as_facebook')
 def format_markdown_as_facebook(data):
-    from .controllers import format_markdown_as_text
-    return format_markdown_as_text(data, link_twitter_names=False,
-                                   person_processor=None)
+    from .controllers import markdown_filter, format_as_text
+    return format_as_text(
+        markdown_filter(data, link_twitter_names=False,
+                        person_processor=None))

@@ -92,8 +92,16 @@ def share_on_twitter():
         in_reply_to, repost_of, like_of \
             = twitter_client.posse_post_discovery(post)
 
-        return render_template('share_on_twitter.html', post=post,
-                               in_reply_to=in_reply_to,
+        if post.title:
+            preview = post.title + ' ' + post.permalink
+        else:
+            preview = format_markdown_as_tweet(post.content,
+                                               post.get_image_path())
+            if len(preview) > 140:
+                preview = preview[:115] + '… ' + post.permalink
+
+        return render_template('share_on_twitter.html', preview=preview,
+                               post=post, in_reply_to=in_reply_to,
                                repost_of=repost_of, like_of=like_of,
                                imgs=list(collect_images(post)))
 
@@ -120,7 +128,6 @@ def share_on_twitter():
         return """Share on Twitter Failed!<br/>Exception: {}""".format(e)
 
 
-@app.template_filter('format_markdown_as_tweet')
 def format_markdown_as_tweet(data, img_path):
     def person_to_twitter_handle(fullname, displayname, entry, pos):
         handle = entry.get('twitter')
@@ -128,9 +135,10 @@ def format_markdown_as_tweet(data, img_path):
             return '@' + handle
         return displayname
 
-    from .controllers import format_markdown_as_text
-    return format_markdown_as_text(data, img_path, link_twitter_names=False,
-                                   person_processor=person_to_twitter_handle)
+    from .controllers import markdown_filter, format_as_text
+    return format_as_text(
+        markdown_filter(data, img_path, link_twitter_names=False,
+                        person_processor=person_to_twitter_handle))
 
 
 class TwitterClient:
