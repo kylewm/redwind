@@ -7,12 +7,12 @@ import os
 import os.path
 import json
 import time
-import urllib
 from operator import attrgetter, itemgetter
 from contextlib import contextmanager
 
 
-POST_TYPES = ('article', 'note', 'like', 'share', 'reply', 'checkin')
+POST_TYPES = ('article', 'note', 'like', 'share', 'reply',
+              'checkin', 'photo', 'bookmark')
 
 
 @contextmanager
@@ -132,7 +132,8 @@ class Location:
     def approximate_longitude(self):
         return self.longitude and '{:.2f}'.format(self.longitude)
 
-    def get_name(self):
+    @property
+    def geo_name(self):
         if self.name:
             return self.name
         elif self.locality and self.region:

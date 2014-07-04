@@ -7,13 +7,7 @@
 
     <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Share on Facebook"/>
 
-<textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">
-{% if post.title %}
-{{ post.title }}
-
-{% endif %}
-{{ post.content | format_markdown_as_facebook }}
-</textarea><br/>
+<textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">{{preview}}</textarea><br/>
 
 {% if imgs %}
   <div>

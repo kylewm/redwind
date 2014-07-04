@@ -35,14 +35,8 @@
           {{ author_image(reply.author_image, reply.author_name) }}
         </span>
 
-        <div class="content">
-            <div class="e-content">
-              {% if reply.content_words < 200 %}
-                {{ reply.content | autolink | bleach | safe }}
-              {% else %}
-                {{ reply.content_plain | truncate(200) }}
-              {% endif %}
-            </div>
+        <div class="content e-content">
+          {{ reply.content | safe }}
         </div>
 
         <div style="clear: both"></div>
