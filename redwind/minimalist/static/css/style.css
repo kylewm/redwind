@@ -64,6 +64,7 @@ blockquote {
 
 code, pre {
     font-family: monospace;
+    font-size: 0.8rem;
     padding: 0.5em;
 }
 

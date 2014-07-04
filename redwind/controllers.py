@@ -139,9 +139,12 @@ DMention = collections.namedtuple('DMention', [
 def create_dpost(post):
 
     def get_pub_date(mention):
-        if mention.pub_date:
-            return mention.pub_date
-        return datetime.datetime(1982, 11, 24, tzinfo=pytz.utc)
+        result = mention.pub_date
+        if not result:
+            result = datetime.datetime(1982, 11, 24, tzinfo=pytz.utc)
+        elif result and hasattr(result, 'tzinfo') and not result.tzinfo:
+            result = pytz.utc.localize(result)
+        return result
 
     def mentions_sorted_by_date(mentions, mtype):
         filtered = [m for m in mentions
