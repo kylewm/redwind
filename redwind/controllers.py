@@ -280,6 +280,10 @@ def create_dcontext(url):
                     jinja2.filters.do_truncate(content_plain, 512) +
                     ' <a class="u-url" href="{}">continued</a>'.format(url))
 
+            title = entry.get('name', 'a post')
+            if len(title) > 256:
+                title = jinja2.filters.do_truncate(title, 256)
+
             author_name = bleach.clean(entry.get('author', {}).get('name', ''))
             author_image = entry.get('author', {}).get('photo')
             if author_image:
@@ -297,7 +301,7 @@ def create_dcontext(url):
                 pub_date=pub_date,
                 pub_date_iso=isotime_filter(pub_date),
                 pub_date_human=human_time(pub_date),
-                title=entry.get('name', 'a post'),
+                title=title,
                 deleted=False,
             )
         except:
