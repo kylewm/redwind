@@ -28,7 +28,7 @@
 
 */
 
-body > .container {margin-top: 4em; margin-bottom: 4em;}
+body > .container {margin-top: 40px; margin-bottom: 40px;}
 
 .microcard img { height: 1em; width: auto; }
 article img { max-width: 100%; max-height: 512px; }
@@ -42,14 +42,14 @@ article img { max-width: 100%; max-height: 512px; }
     font-family: "HelveticaNeue","Helvetica Neue",Helvetica,Arial,sans-serif;}
 .sidebar ul li a, .sidebar ul li a:visited, .sidebar ul li a:active {
     font-size: 14px; color: #555; text-decoration: none; font-weight: bold;}
-.sidebar nav { text-align: right; }
+.sidebar nav, .sidebar h1 { text-align: right; }
 .sidebar .social { text-align: right; }
-.sidebar .widget { margin-top: 4rem; }
+.sidebar .widget { margin-top: 20px; }
 .post-metadata { color: #aaa; }
 .post-metadata a { color: #999; text-decoration: none; }
 .post-metadata a:hover { color: #999; text-decoration: underline; }
 .p-comment + .p-comment { margin-top: 1rem; }
-article + article { margin-top: 3rem; }
+article + article { margin-top: 50px; }
 .e-content p:last-child { margin-bottom: 0; }
 img.avatar { max-width: 64px; height: auto; }
 .map { height: 240px; max-width: 640px; width: 100%; }
@@ -58,6 +58,16 @@ img.avatar { max-width: 64px; height: auto; }
 .replies .avatar { max-width: 48px; height: auto; }
 .mentions { margin-top: 4rem; }
 .replies { margin-top: 1rem; }
+.main-content { float: right !important; }
+.page-arrows { margin: 10px; }
+.page-arrows .page-right { float: right; }
+.page-arrows .page-left { float: left; }
+
+
+code, pre {font-family: monospace; font-size: 0.8rem;
+           padding: 0.5em;}
+pre {overflow-x: auto; white-space:pre;}
+
 
 /* #Page Styles
 ================================================== */
@@ -76,16 +86,16 @@ img.avatar { max-width: 64px; height: auto; }
     .sidebar h1 { margin-bottom: 0px; }
     /* hide headers */
     .sidebar h2 { display: none; }
-    .sidebar .social { display: none; }
-    .sidebar .site-info { display: none; }
+    /*.sidebar .social { display: none; }
+    .sidebar .site-info { display: none; }*/
 
     .sidebar .h-card .u-photo { width: 80px; height: auto; float:left;
                                 border-radius: 40px;}
     .sidebar .widget {margin-top: 0px;}
-    .sidebar {text-align: right; margin-bottom: 2rem;}
-    .sidebar .h-card { text-align: right; }
-    .sidebar nav ul { margin-bottom: 5px; }
-    .sidebar nav ul li {display: inline;}
+    .sidebar nav {text-align: right; margin-bottom: 2rem !important;}
+    .sidebar .social {text-align: center; margin-top: 2rem !important;}
+    .sidebar ul { margin-bottom: 5px; }
+    .sidebar ul li {display: inline;}
     .sidebar input { display: inline; }
 }
 

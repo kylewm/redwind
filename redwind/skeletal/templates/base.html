@@ -41,75 +41,74 @@
   <body>
 
     <div class="container">
-      <div class="sixteen columns">
-        <div class="three columns sidebar">
 
-          <div class="h-card">
-            <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle114.jpg')}}"/>
-            <a class="u-url" href="/"><h1 class="p-name">Kyle Mahan</h1></a>
-          </div> <!-- .h-card -->
+      <div class="three columns sidebar primary">
+        <div class="h-card">
+          <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle114.jpg')}}"/>
+          <a class="u-url" href="/"><h1 class="p-name">Kyle Mahan</h1></a>
+        </div> <!-- .h-card -->
 
-          <nav class="widget">
-            <h2>Navigation</h2>
-            <ul>
-              <li><a href="{{url_for('index')}}">Stream</a></li>
-              <li><a href="{{url_for('articles')}}">Articles</a></li>
-              <li><a rel="feed" href="{{url_for('everything')}}">Everything</a></li>
-              <li><a href="{{url_for('archive')}}">Archives</a></li>
-            </ul>
-          </nav>
+        <nav class="widget">
+          <h2>Navigation</h2>
+          <ul>
+            <li><a href="{{url_for('index')}}">Stream</a></li>
+            <li><a href="{{url_for('articles')}}">Articles</a></li>
+            <li><a rel="feed" href="{{url_for('everything')}}">Everything</a></li>
+            <li><a href="{{url_for('archive')}}">Archives</a></li>
+          </ul>
+        </nav>
+      </div>
 
-          <div class="widget social">
-            <h2>Elsewhere</h2>
-            <ul>
-              <li><a rel="me" href="gtalk:kyle.mahan@gmail.com"></i>GChat</a></li>
-<li><a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a></li>
-<li><a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> (<a class="u-key" rel="key publickey pgpkey" type="application/pgp-keys" href="{{url_for('static', filename='kyle-mahan-public-key.asc')}}">Key</a><a rel="pgp-fingerprint" href="https://twitter.com/kyle_wm/status/454668100873379842"></a>)</li>
-<li><a rel="me" href="https://github.com/kylewm">GitHub</a></li>
-<li><a rel="me" href="https://twitter.com/kyle_wm">Twitter</a></li>
-<li><a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a></li>
-<li><a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a></li>
-<li><a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a></li>
-<li><a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a></li>
-</ul>
-</div> <!-- .social -->
+      <main class="main-content offset-by-one twelve columns">
+        {% block content %}{% endblock content %}
+      </main>
 
-<div class="widget">
-  {% if current_user.is_anonymous() %}
-  <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
-    <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
-    <button id="sign_in_button" type="submit">Sign In</button>
-    <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
-  </form>
-  {% else %}
-  {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
-  {% endif %}
-</div>
+      <div class="three columns sidebar secondary">
+        <div class="widget social">
+          <h2>Elsewhere</h2>
+          <ul>
+            <li><a rel="me" href="gtalk:kyle.mahan@gmail.com">GChat</a></li>
+            <li><a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a></li>
+            <li><a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> (<a class="u-key" rel="key publickey pgpkey" type="application/pgp-keys" href="{{url_for('static', filename='kyle-mahan-public-key.asc')}}">Key</a><a rel="pgp-fingerprint" href="https://twitter.com/kyle_wm/status/454668100873379842"></a>)</li>
+            <li><a rel="me" href="https://github.com/kylewm">GitHub</a></li>
+            <li><a rel="me" href="https://twitter.com/kyle_wm">Twitter</a></li>
+            <li><a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a></li>
+            <li><a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a></li>
+            <li><a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a></li>
+            <li><a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a></li>
+          </ul>
+        </div> <!-- .social -->
 
-<div class="widget site-info">
-  <p>
-    This site is powered by <a href="http://git.kylewm.com/?p=redwind.git;a=summary">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
-  </p>
-  <p>
-    <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png" /></a>
-  </p>
-</div>
-</div> <!-- .sidebar -->
+        <div class="widget">
+          {% if current_user.is_anonymous() %}
+            <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
+              <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+              <button id="sign_in_button" type="submit">Sign In</button>
+              <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
+            </form>
+          {% else %}
+            {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
+          {% endif %}
+        </div>
 
-<div class="main-content offset-by-one ten columns">
-  {% block content %}{% endblock content %}
-</div>
-</div> <!-- .row -->
-</div>
-</div>
+        <div class="widget site-info">
+          <p>
+            This site is powered by <a href="http://git.kylewm.com/?p=redwind.git;a=summary">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
+          </p>
+          <p>
+            <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png" /></a>
+          </p>
+        </div>
+      </div> <!-- .sidebar -->
+    </div> <!-- .container -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='css/pygments.css') }}" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='leaflet/leaflet.css') }}" rel="stylesheet"/>
 
-<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/>
-<link href="{{ url_for('static', filename='leaflet/leaflet.css') }}" rel="stylesheet"/>
+    <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
+    <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/location.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/posts.js') }}"></script>
 
-<script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
-<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
-<script src="{{ url_for('static', filename='js/location.js') }}"></script>
-<script src="{{ url_for('static', filename='js/posts.js') }}"></script>
-
-</body>
+  </body>
 </html>
