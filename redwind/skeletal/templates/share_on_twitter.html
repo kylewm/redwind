@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form id="share_on_twitter" method="POST">
+  <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid }}"/>
+
+  <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Share on Twitter"/>
+  <br/>
+
+  <label>
+    <span class="heading-small">Reply To:</span>
+    <input id="in_reply_to" name="in_reply_to" size="60" value="{{in_reply_to or ''}}"/>
+  </label>
+  <br/>
+
+  <label>
+    <span class="heading-small">Retweet:</span>
+    <input id="repost_of" name="repost_of" size="60" value="{{repost_of or ''}}"/>
+  </label>
+  <br/>
+
+  <label>
+    <span class="heading-small">Favorite:</span>
+    <input id="like_of" name="like_of" size="60" value="{{like_of or ''}}"/>
+  </label>
+  <br/>
+
+  <textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">{{preview}}</textarea><br/>
+
+  <span size="8" type="text" name="char_count" id="char_count">&nbsp;</span>
+  <br/>
+
+  <label><span class="heading-small">Permalink:</span>
+    <input id="permalink" size="60" value="{{post.permalink}}"/>
+  </label>
+  <br/>
+
+  <label><span class="heading-small">Short:</span>
+    <input id="permashortlink" size="60" value="({{post.short_permalink}})"/>
+  </label>
+  <br/>
+
+  <label><span class="heading-small">Cite:</span>
+    <input id="permashortcite" size="60" value="({{post.short_cite}})"/>
+  </label>
+  <br/>
+
+  {% if imgs %}
+  <label><input type="radio" name="img" value="">No Image</label><br/>
+  {% for img in imgs %}
+  <label><input type="radio" name="img" value="{{img}}" {% if loop.first %} checked{% endif %}>
+    <img src="{{img}}" style="width:64px; vertical-align: middle"/>
+  </label><br/>
+  {% endfor %}
+  {% endif %}
+
+</form>
+
+
+{% endblock content %}
+{% block other_resources %}
+<script type="text/javascript" src="{{url_for('static', filename='js/twitter.js')}}"></script>
+{% endblock other_resources %}

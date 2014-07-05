@@ -1,0 +1,228 @@
+<article>
+
+  {% for context in post.reply_contexts %}
+    <div class="p-in-reply-to h-cite">
+      In reply to
+      {% if context.author_name %}
+        <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a> in
+      {% endif %}
+      <a class="u-url" href="{{context.permalink}}">
+        {{ context.title }}
+      </a>
+      on {{context.permalink | domain_from_url}}
+      {% if context.content %}
+        <blockquote class="clearfix">
+          <div class="" style="float:left; padding-bottom: 5px; padding-right: 5px;">
+            <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}"/>
+          </div>
+          <div class="">{{context.content | safe}}</div>
+        </blockquote>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% for context in post.share_contexts %}
+    <div class="p-repost-of h-cite">
+      Shared
+      <a class="u-url" href="{{context.permalink}}">
+        {{ context.title }}
+      </a>
+      {% if context.author_name %}
+        by <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
+      {% endif %}
+      from {{context.permalink | domain_from_url}}
+
+      {% if context.content %}
+        <blockquote class="clearfix">
+          <div class="" style="float:left; padding-bottom: 5px; padding-right: 5px;">
+            <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}"/>
+          </div>
+          <div class="">{{context.content | safe}}</div>
+        </blockquote>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% for context in post.like_contexts %}
+    Liked <a class="u-like-of" href="{{context.permalink}}">{{context.title}}</a> on {{context.permalink | domain_from_url }}
+  {% endfor %}
+
+  {% if post.title %}
+    <h1 class="p-name">{{post.title}}</h1>
+  {% endif %}
+  <div class="e-content">
+    {{post.content}}
+  </div>
+
+  {% if post.post_type == 'checkin' and post.location %}
+    <div class="map"
+         data-latitude="{{post.location.approximate_latitude}}"
+         data-longitude="{{post.location.approximate_longitude}}"
+         data-location="{{post.location.name}}">
+    </div>
+  {% endif %}
+
+  <div class="post-metadata">
+
+    {% if is_single and post.location %}
+      <div class="location">
+        <i class="fa fa-map-marker"></i>
+        <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.approximate_latitude}},{{post.location.approximate_longitude}}">
+          <data class="p-latitude" value="{{post.location.approximate_latitude}}"></data>
+          <data class="p-longitude" value="{{post.location.approximate_longitude}}"></data>
+          <span class="p-name">
+            {{post.location.geo_name}}
+          </span>
+        </a>
+      </div>
+    {% endif %}
+
+    <div>
+      <a href="{{post.permalink}}"><i class="fa fa-link"></i>
+        <time value="{{post.pub_date_iso}}">{{post.pub_date_human}}</time>
+      </a>
+
+
+      {% if current_user.is_authenticated() %}
+        <a class="admin-post-controls-arrow" href="#">
+           | Admin <i class="fa fa-caret-right"></i>
+        </a>
+        <span class="admin-post-controls" style="display:none;">
+          |
+          <a href="{{ url_for('edit_by_id', id=post.shortid) }}">
+            <i class="fa fa-edit"></i> Edit
+          </a>
+          |
+          <a href="{{ url_for('share_on_twitter', id=post.shortid) }}">
+            <i class="fa fa-twitter"></i> Twitter
+          </a>
+          |
+          <a href="{{ url_for('share_on_facebook', id=post.shortid) }}">
+            <i class="fa fa-facebook"></i> Facebook
+          </a>
+          |
+          <a href="{{ url_for('delete_by_id', id=post.shortid) }}"
+             onclick="return window.confirm('Delete {{post.post_type}}?')">
+             <i class="fa fa-trash-o"></i> Delete
+          </a>
+        </span>
+      {% endif %}
+
+    </div>
+
+    {% if is_single and post.syndication %}
+      <div>
+        Also on
+        {% for s in post.syndication %}
+          {{ s | safe }}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+
+  </div>
+
+  {% if is_single %}
+  <div class="mentions">
+    <a name="mentions"></a>
+
+    {% if post.likes or post.reposts %}
+      <div class="likes-and-reposts">
+        {% if post.likes %}
+          <div class="likes">
+            <a name="likes"></a>
+            <i class="fa fa-star-o"></i>
+            {% for like in post.likes %}
+              <a href="{{ like.permalink }}">
+                <img class="avatar" src="{{like.author_image}}", alt="{{like.author_name}}">
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if post.reposts %}
+          <div class="reposts">
+            <a name="reposts"></a>
+            <i class="fa fa-retweet"></i>
+            {% for repost in post.reposts %}
+              <a href="{{ repost.permalink }}">
+                <img class="avatar" src="{{repost.author_image}}", alt="{{repost.author_name}}">
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if post.replies %}
+      <div class="replies">
+        <a name="replies"></a>
+        <h4>Replies</h4>
+        {% for reply in post.replies %}
+          <div class="p-comment h-cite row">
+            <div class="one columns alpha">
+              <img class="u-photo avatar" src="{{reply.author_image}}", alt="{{reply.author_name}}" />
+            </div>
+
+            <div class="nine columns omega">
+              <span class="p-author h-card">
+	        {% if reply.author_name and reply.author_url %}
+                  <a class="p-name u-url" href="{{ reply.author_url }}">
+                    {{ reply.author_name }}
+                  </a>
+                {% elif reply.author_name %}
+                  <span class="p-name">{{ reply.author_name }}</span>
+                {% elif reply.author_url %}
+                  <a class="u-url" href="{{ reply.author_url }}">
+                    {{ reply.author_url | prettify_url }}
+                  </a>
+                {% endif %}
+              </span>
+              on <a class="u-url" href="{{reply.permalink}}">{{reply.permalink | domain_from_url }}</a>:
+
+              <div class="e-content">
+                <!-- start of foreign content -->
+                {{ reply.content | safe }}
+                <!-- end of foreign content -->
+              </div>
+
+              <div class="post-metadata">
+                {% if reply.children %}
+                  <div class="syndication">
+                    Also on
+                    {% for child in reply.children %}
+                      {{ child | safe}}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                <i class="fa fa-link"></i>
+                <time class="dt-published" datetime="{{reply.pub_date_iso }}">
+	          <a class="u-url" href="{{ reply.permalink }}">
+                    {{ reply.pub_date_human}}
+                  </a>
+	        </time>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if post.references %}
+      <div class="references">
+        <a name="references"></a>
+        <h4>References</h4>
+        {% for reference in post.references %}
+          <p>
+            <i class="fa fa-ellipsis-h"></i> <a href="{{ reference.permalink }}">{{ reference.permalink | prettify_url }}</a>
+          </p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+
+</article>

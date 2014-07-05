@@ -126,8 +126,13 @@ nav ul {
 
 nav li {
     display: inline;
-    margin-right: 1em;
-    margin-left: 0em;
+    /*margin-right: 1em;
+    margin-left: 0em;*/
+}
+
+nav a {
+    display: inline-block;
+    padding: 5px;
 }
 
 .new-post-bar {
@@ -167,10 +172,7 @@ nav li {
 
 #indie_auth_form {
     display: inline;
-}
-
-#login_area {
-    font-size: 0.8em;
+    font-size: 0.8rem;
 }
 
 #sign_in_button {

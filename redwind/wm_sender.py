@@ -36,7 +36,7 @@ class MentionClient:
         return post.permalink
 
     def get_target_urls(self, post):
-        from .controllers import DisplayPost
+        from .controllers import create_dpost
 
         target_urls = []
         # send mentions to 'in_reply_to' as well as all linked urls
@@ -44,12 +44,10 @@ class MentionClient:
         target_urls += post.repost_of
         target_urls += post.like_of
 
-        html_content = DisplayPost(post)\
-            .get_html_content(include_preview=False)
+        dpost = create_dpost(post)
+        app.logger.debug("search post content {}".format(dpost.content))
 
-        app.logger.debug("search post content {}".format(html_content))
-
-        soup = BeautifulSoup(html_content)
+        soup = BeautifulSoup(dpost.content)
         for link in soup.find_all('a'):
             link_target = link.get('href')
             if link_target:

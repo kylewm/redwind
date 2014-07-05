@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-feed">
+  {% for post in posts %}
+    {% include "_post.html" %}
+  {% endfor %}
+</div>
+{% endblock content %}

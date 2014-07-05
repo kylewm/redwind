@@ -1,3 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+
 <form id="edit_form" method="POST" action="/admin/save_{{edit_type}}" enctype="multipart/form-data">
   <data id="post_path" value="{{post.path}}" />
   <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
@@ -82,3 +85,5 @@
 
 </form>
 <script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
+
+{% endblock content %}

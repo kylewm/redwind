@@ -225,7 +225,7 @@ def create_dpost(post):
 
         location=post.location,
         location_url=location_url,
-        syndication=post.syndication,
+        syndication=[format_syndication_url(s) for s in post.syndication],
         tags=post.tags,
         audience=post.audience,
 
@@ -287,7 +287,7 @@ def create_dcontext(url):
 
             return DContext(
                 url=url,
-                permalink=entry.get('url'),
+                permalink=entry.get('url', url),
                 author_name=author_name,
                 author_url=entry.get('author', {}).get('url', ''),
                 author_image=author_image or url_for(
@@ -297,7 +297,7 @@ def create_dcontext(url):
                 pub_date=pub_date,
                 pub_date_iso=isotime_filter(pub_date),
                 pub_date_human=human_time(pub_date),
-                title=entry.get('name'),
+                title=entry.get('name', 'a post'),
                 deleted=False,
             )
         except:
@@ -314,7 +314,7 @@ def create_dcontext(url):
         pub_date=None,
         pub_date_iso=None,
         pub_date_human=None,
-        title=None,
+        title='a post',
         deleted=False,
     )
 
@@ -364,7 +364,8 @@ def create_dmention(post, url):
                     pub_date_human=human_time(entry.get('published')),
                     title=entry.get('name'),
                     deleted=False,
-                    syndication=entry.get('syndication', []),
+                    syndication=[format_syndication_url(s, False) for s
+                                 in entry.get('syndication', [])],
                     children=[]
                 )
 
@@ -723,8 +724,12 @@ def human_time(thedate, alternate=None):
         tz = pytz.timezone(app.config['TIMEZONE'])
         thedate = pytz.utc.localize(thedate).astimezone(tz)
 
-    return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
+    #return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
 
+    if datetime.datetime.now(TIMEZONE) - thedate > datetime.timedelta(days=1):
+        return thedate.strftime('%B %-d, %Y')
+    else:
+        return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
 
 @app.template_filter('pluralize')
 def pluralize(number, singular='', plural='s'):
@@ -849,15 +854,20 @@ def domain_from_url(url):
     return urllib.parse.urlparse(url).netloc
 
 
-@app.template_filter('format_syndication_url')
-def format_syndication_url(url):
+def format_syndication_url(url, include_rel=True):
+    fmt = '<a class="u-syndication" '
+    if include_rel:
+        fmt += 'rel="syndication" '
+    fmt += 'href="{}"><i class="fa {}"></i> {}</a>'
+
     if TWITTER_RE.match(url):
-        return """<i class="fa fa-twitter"></i> Twitter"""
+        return fmt.format(url, 'fa-twitter', 'Twitter')
     if FACEBOOK_RE.match(url):
-        return """<i class="fa fa-facebook"></i> Facebook"""
+        return fmt.format(url, 'fa-facebook', 'Facebook')
     if INSTAGRAM_RE.match(url):
-        return """<i class="fa fa-instagram"></i> Instagram"""
-    return prettify_url(url)
+        return fmt.format(url, 'fa-instagram', 'Instagram')
+
+    return fmt.format(url, 'fa-paper-plane', prettify_url(url))
 
 
 def local_mirror_resource(url):
