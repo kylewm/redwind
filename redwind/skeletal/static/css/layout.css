@@ -61,7 +61,8 @@ img.avatar { max-width: 64px; height: auto; }
 .page-arrows { margin: 10px; }
 .page-arrows .page-right { float: right; }
 .page-arrows .page-left { float: left; }
-
+.site-info { margin-top: 40px; text-align: center; color: #666; }
+.site-info a { color: #666; }
 
 code, pre {font-family: monospace; font-size: 0.8rem;
            padding: 0.5em;}
@@ -91,9 +92,6 @@ the primary sidebar */
     .sidebar h1 { margin-bottom: 0px; }
     /* hide headers */
     .sidebar h2 { display: none; }
-    /*.sidebar .social { display: none; }
-    .sidebar .site-info { display: none; }*/
-
     .sidebar .h-card .u-photo { width: 80px; height: auto; float:left;
                                 border-radius: 40px;}
     .sidebar .widget {margin-top: 0px;}
