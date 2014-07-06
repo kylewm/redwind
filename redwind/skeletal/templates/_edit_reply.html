@@ -1,0 +1,13 @@
+{% extends "_edit_post.html" %}
+
+{% block above_content %}
+<div class="in_reply_to">
+  <label>In Reply To (URLs)
+    <textarea style="width:100%" name="in_reply_to" rows="1">{{post.in_reply_to | join('\n')}}</textarea>
+  </label>
+</div>
+{% endblock above_content %}
+
+{% block additional_params %}
+<input type="hidden" id="hidden" name="hidden" value="true"/>
+{% endblock additional_params %}

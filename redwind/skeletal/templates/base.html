@@ -61,7 +61,7 @@
 
       <main class="main-content offset-by-one twelve columns">
         <div class="ten columns alpha omega">
-          {% block content %}{% endblock content %}
+        {% block content %}{% endblock content %}
         </div>
       </main> <!-- main -->
 
@@ -110,15 +110,15 @@
 
 
 
-
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/>
     <link href="{{ url_for('static', filename='css/pygments.css') }}" rel="stylesheet"/>
     <link href="{{ url_for('static', filename='leaflet/leaflet.css') }}" rel="stylesheet"/>
 
     <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
-    <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/location.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/posts.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/location.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/posts.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
 
   </body>
 </html>

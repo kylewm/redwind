@@ -663,6 +663,7 @@ def delete_by_id():
 
 @app.route('/admin/new')
 def new_post():
+    partial = request.args.get('partial', False)
     post_type = request.args.get('type', 'note')
     post = Post(post_type)
     post.content = ''
@@ -686,6 +687,12 @@ def new_post():
     content = request.args.get('content')
     if content:
         post.content = content
+
+    # partial means return the form only; because we're going to add
+    # it to an existing DOM
+    if partial:
+        return render_template('_edit_' + post_type + '.html',
+                               edit_type='new', post=post)
 
     return render_template('edit_post.html', edit_type='new', post=post,
                            advanced=request.args.get('advanced'))

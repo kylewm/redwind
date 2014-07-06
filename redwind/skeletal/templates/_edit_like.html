@@ -1,0 +1,15 @@
+{% extends "_edit_post.html" %}
+
+{% block above_content %}
+  <div class="like_of">
+    <label>Like of (URLs)
+      <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
+    </label>
+  </div>
+{% endblock above_content %}
+
+{% block content %}{% endblock content %}
+
+{% block additional_params %}
+<input type="hidden" id="hidden" name="hidden" value="true"/>
+{% endblock additional_params %}

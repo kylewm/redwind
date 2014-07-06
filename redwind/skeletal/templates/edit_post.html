@@ -6,8 +6,6 @@
   <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
-  <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Publish"/>
-
   <div class="title">
     <label><span class="heading">Title</span><input id="title" name="title" size="60" value="{{ post.title or '' }}"/></label>
   </div>
@@ -52,14 +50,18 @@
 
 
   <div>
-    <label>Tags <input id="tags" name="tags" type="text" size="30" value="{{ post.tags | join(' ') }}"/></label>
+    <label>Tags</label>
+    <input id="tags" name="tags" value="{{ post.tags | join(' ') }}"/>
   </div>
 
   <div>
     <label><input type="checkbox" id="get_coords_button"/> Location</label>
-    <input type="hidden" id="latitude" name="latitude" size="10" value="{{ post.location.latitude if post.location else ''}}"/>
-    <input type="hidden" id="longitude" name="longitude" size="10" value="{{ post.location.longitude if post.location else ''}}"/>
-    <input id="location_name" name="location_name" size="21" value="{{ post.location.name if post.location and post.location.name else ''}}"/>
+    <label>Latitude</label>
+    <input id="latitude" name="latitude" value="{{ post.location.latitude if post.location else ''}}"/>
+    <label>Longitude</label>
+    <input id="longitude" name="longitude" value="{{ post.location.longitude if post.location else ''}}"/>
+    <label>Location</label>
+    <input id="location_name" name="location_name" value="{{ post.location.name if post.location and post.location.name else ''}}"/>
   </div>
 
   <div>
@@ -83,7 +85,10 @@
   </label>
   <ul id="uploads"></ul>
 
+
+  <input type="submit" id="publish_button" value="Publish"/>
+
+
 </form>
-<script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>
 
 {% endblock content %}

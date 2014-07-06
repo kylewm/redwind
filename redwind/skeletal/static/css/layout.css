@@ -73,6 +73,12 @@ the primary sidebar */
 .main-content { float: right !important; }
 .sidebar.secondary { clear: left; }
 
+.new-post-bar {text-align: center; margin: 20px auto; font-size: 10pt;}
+.new-post-bar ul {list-style-type: inline;}
+.new-post-bar ul li {text-align: center; vertical-align: center; display: inline; padding: 1em;}
+.new-post-bar i {font-size: 24pt; display: block;}
+.new-post-bar a {color: #333; display: inline-block; width: 60px; text-decoration: none;}
+
 
 
 /* #Page Styles

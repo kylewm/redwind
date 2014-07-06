@@ -1,0 +1,24 @@
+<form id="edit_form" method="POST" action="/admin/save_{{edit_type}}" enctype="multipart/form-data">
+
+  <data id="post_path" value="{{post.path}}" />
+  <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
+  <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
+
+  {% block above_content %}{% endblock above_content %}
+
+  {% block content %}
+  <label>
+    Content
+    <textarea name="content" id="content" style="width:100%" rows="3">{{ post.content }}</textarea>
+  </label>
+  {% endblock content %}
+
+  {% block below_content %}{% endblock below_content %}
+
+  <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
+  <input type="hidden" id="send_push" name="send_push" value="true"/>
+  {% block additional_params %}{% endblock additional_params %}
+
+  <input type="submit" id="publish_button" value="Publish"/>
+
+</form>
