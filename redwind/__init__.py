@@ -25,6 +25,9 @@ app.jinja_options = ImmutableDict(
 
 #toolbar = DebugToolbarExtension(app)
 
+if app.debug:
+    app.config['SITE_URL'] = 'http://localhost'
+
 if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler

@@ -331,9 +331,6 @@ def create_dmention(post, url):
         post.permalink.replace('https://', 'http://'),
         post.permalink_without_slug.replace('https://', 'http://'),
         post.short_permalink.replace('https://', 'http://'),
-        # for localhost testing
-        post.permalink.replace(app.config['SITE_URL'], 'https://kylewm.com'),
-        post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com'),
     ] if post else []
 
     try:

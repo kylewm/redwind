@@ -5,3 +5,6 @@ class Configuration(object):
     SECRET_KEY = 'a secret key other than this one'
     PYGMENTS_STYLE = 'tango'
     THEME = 'skeletal'
+    PUBLISH = 'https://kylewm.superfeedr.com/'
+    SECURE_SITE_URL = 'https://'
+    SITE_URL = 'http://'
