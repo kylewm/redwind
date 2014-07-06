@@ -61,6 +61,19 @@
 
       <main class="main-content offset-by-one twelve columns">
         <div class="ten columns alpha omega">
+
+          <div class="flashes">
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <ul class="flashes">
+                  {% for message in messages %}
+                    <li>{{ message | safe }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+          </div>
+
         {% block content %}{% endblock content %}
         </div>
       </main> <!-- main -->

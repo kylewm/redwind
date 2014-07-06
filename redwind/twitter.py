@@ -1,10 +1,11 @@
 from . import app
 from .models import Post
 from . import util
+from . import queue
 
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response,\
-    render_template
+    render_template, flash
 
 import requests
 import re
@@ -83,6 +84,32 @@ def collect_images(post):
                 yield urljoin(app.config['SITE_URL'], src)
 
 
+def send_to_twitter(post):
+    """Share a note to twitter without user-input. Makes a best-effort
+    attempt to guess the appropriate parameters and content
+    """
+    try:
+        app.logger.debug("auto-posting to twitter {}".format(post.shortid))
+        do_send_to_twitter.delay(post.shortid)
+        return True, 'Success'
+
+    except Exception as e:
+        app.logger.exception('auto-posting to twitter')
+        return False, 'Exception while auto-posting to twitter: {}'.format(e)
+
+
+@queue.queueable
+def do_send_to_twitter(post_id):
+    app.logger.debug("auto-posting to twitter for {}".format(post_id))
+    post = Post.load_by_shortid(post_id)
+
+    in_reply_to, repost_of, like_of \
+        = twitter_client.posse_post_discovery(post)
+    preview = twitter_client.guess_tweet_content(post)
+    return twitter_client.do_tweet(
+        post_id, preview, None, in_reply_to, repost_of, like_of)
+
+
 @app.route('/admin/share_on_twitter', methods=['GET', 'POST'])
 @login_required
 def share_on_twitter():
@@ -91,41 +118,22 @@ def share_on_twitter():
 
         in_reply_to, repost_of, like_of \
             = twitter_client.posse_post_discovery(post)
-
-        if post.title:
-            preview = post.title + ' ' + post.permalink
-        else:
-            preview = format_markdown_as_tweet(post.content,
-                                               post.get_image_path())
-            if len(preview) > 140:
-                preview = preview[:115] + '… ' + post.permalink
+        preview = twitter_client.guess_tweet_content(post)
 
         return render_template('share_on_twitter.html', preview=preview,
                                post=post, in_reply_to=in_reply_to,
                                repost_of=repost_of, like_of=like_of,
                                imgs=list(collect_images(post)))
 
-    try:
-        post_id = request.form.get('post_id')
-        preview = request.form.get('preview')
-        img_url = request.form.get('img')
-        in_reply_to = request.form.get('in_reply_to')
-        repost_of = request.form.get('repost_of')
-        like_of = request.form.get('like_of')
+    post_id = request.form.get('post_id')
+    preview = request.form.get('preview')
+    img_url = request.form.get('img')
+    in_reply_to = request.form.get('in_reply_to')
+    repost_of = request.form.get('repost_of')
+    like_of = request.form.get('like_of')
 
-        with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            twitter_url = twitter_client.handle_new_or_edit(
-                post, preview, img_url, in_reply_to, repost_of, like_of)
-            post.save()
-
-            return """Shared on Twitter<br/>
-            <a href="{}">Original</a><br/>
-            <a href="{}">On Twitter</a><br/>
-            """.format(post.permalink, twitter_url)
-
-    except Exception as e:
-        app.logger.exception('posting to twitter')
-        return """Share on Twitter Failed!<br/>Exception: {}""".format(e)
+    return twitter_client.do_tweet(post_id, preview, img_url, in_reply_to,
+                                   repost_of, like_of)
 
 
 def format_markdown_as_tweet(data, img_path):
@@ -262,6 +270,38 @@ class TwitterClient:
             find_first_syndicated(post.repost_of),
             find_first_syndicated(post.like_of),
         )
+
+    def guess_tweet_content(self, post):
+        """Best guess effort to generate tweet content for a post; useful for
+        auto-filling the share form.
+        """
+        if post.title:
+            preview = post.title + ' ' + post.permalink
+        else:
+            preview = format_markdown_as_tweet(
+                post.content, post.get_image_path())
+            if len(preview) > 140:
+                preview = preview[:115] + '… ' + post.permalink
+        return preview
+
+    def do_tweet(self, post_id, preview, img_url, in_reply_to,
+                 repost_of, like_of):
+        try:
+            with Post.writeable(Post.shortid_to_path(post_id)) as post:
+                twitter_url = twitter_client.handle_new_or_edit(
+                    post, preview, img_url, in_reply_to, repost_of, like_of)
+                post.save()
+
+                flash('Shared on Twitter: <a href="{}">Original</a>, '
+                      '<a href="{}">On Twitter</a>'
+                      .format(post.permalink, twitter_url))
+
+                return redirect(post.permalink)
+
+        except Exception as e:
+            app.logger.exception('posting to twitter')
+            flash('Share on Twitter Failed!. Exception: {}'.format(e))
+            return redirect(url_for('index'))
 
     def handle_new_or_edit(self, post, preview, img, in_reply_to,
                            repost_of, like_of):

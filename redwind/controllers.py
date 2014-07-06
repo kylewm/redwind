@@ -1031,6 +1031,11 @@ def save_post(post):
             if request.form.get('send_webmentions') == 'true' and not post.draft:
                 app.logger.debug("sending webmentions")
                 wm_sender.send_webmentions(post)
+
+            if request.form.get('tweet') == 'true':
+                app.logger.debug('posting to twitter')
+                twitter.send_to_twitter(post)
+
         except:
             app.logger.exception("exception while dispatching queued tasks")
 

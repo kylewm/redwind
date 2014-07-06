@@ -15,10 +15,15 @@
 
   {% block below_content %}{% endblock below_content %}
 
-  <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
-  <input type="hidden" id="send_push" name="send_push" value="true"/>
-  {% block additional_params %}{% endblock additional_params %}
-
-  <input type="submit" id="publish_button" value="Publish"/>
+  <div class="clearfix">
+    <div class="eight columns alpha">
+      <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
+      <input type="hidden" id="send_push" name="send_push" value="true"/>
+      {% block additional_params %}&nbsp;{% endblock additional_params %}
+    </div>
+    <div class="two columns omega">
+      <input type="submit" id="publish_button" value="Publish"/>
+    </div>
+  </div>
 
 </form>
