@@ -57,11 +57,13 @@
             <li><a href="{{url_for('archive')}}">Archives</a></li>
           </ul>
         </nav>
-      </div>
+      </div> <!-- .sidebar.primary -->
 
       <main class="main-content offset-by-one twelve columns">
-        {% block content %}{% endblock content %}
-      </main>
+        <div class="ten columns alpha omega">
+          {% block content %}{% endblock content %}
+        </div>
+      </main> <!-- main -->
 
       <div class="three columns sidebar secondary">
         <div class="widget social">
@@ -79,7 +81,7 @@
           </ul>
         </div> <!-- .social -->
 
-        <div class="widget">
+        <div class="login widget">
           {% if current_user.is_anonymous() %}
             <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
               <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
@@ -89,9 +91,9 @@
           {% else %}
             {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
           {% endif %}
-        </div>
+        </div> <!-- .login -->
 
-      </div> <!-- .sidebar -->
+      </div> <!-- .sidebar.secondary -->
 
 
       <div class="sixteen columns">
