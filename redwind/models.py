@@ -465,6 +465,9 @@ class Metadata:
         if os.path.exists(self.PATH):
             self.blob = json.load(open(self.PATH, 'r'))
         else:
+            basedir = os.path.join(app.root_path, '_data')
+            if not os.path.exists(basedir):
+                os.mkdir(basedir)
             self.blob = self.regenerate()
 
     def save(self):
