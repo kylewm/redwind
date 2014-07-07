@@ -235,6 +235,7 @@ class Post:
         self.tags = []
         self.audience = []  # public
         self.mentions = []
+        self.photos = []
         self._writeable = False
 
     def read_json_blob(self, data):
@@ -251,6 +252,7 @@ class Post:
         self.hidden = data.get('hidden', False)
         self.audience = data.get('audience', [])
         self.mentions = data.get('mentions', [])
+        self.photos = data.get('photos', [])
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
 
@@ -270,6 +272,7 @@ class Post:
             'hidden': self.hidden,
             'audience': self.audience,
             'mentions': self.mentions,
+            'photos': self.photos,
         }
         return util.filter_empty_keys(data)
 

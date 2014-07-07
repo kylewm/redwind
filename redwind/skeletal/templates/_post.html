@@ -54,6 +54,15 @@
     {{post.content}}
   </div>
 
+  {% for photo in post.photos %}
+  <div class="photo-holder">
+    <a href="{{photo.url}}">
+      <img class="u-photo" src="{{photo.url}}?size=medium" />
+    </a>
+    <p>{{ photo.caption }}</p>
+  </div>
+  {% endfor %}
+
   {% if post.post_type == 'checkin' and post.location %}
     <div class="map"
          data-latitude="{{post.location.approximate_latitude}}"

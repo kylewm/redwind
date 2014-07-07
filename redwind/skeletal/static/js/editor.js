@@ -78,7 +78,7 @@ $(document).ready(function() {
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     var link = $('<a>');
-                    link.append('<img style="max-width: 75px; max-height: 75px;" src="' + e.target.result + '"/>' + file.name);
+                    link.append('<img style="max-width: 150px; max-height: 150px;" src="' + e.target.result + '"/>' + file.name);
                     $('#uploads').append($('<ul>').append(link));
                     link.click(function(){
                         redwind.editor.addImageLink(file);

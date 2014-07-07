@@ -87,7 +87,10 @@ TAG_TO_TYPE = {
     'r': 'reply',
     's': 'share',
     'l': 'like',
-    'c': 'checkin'}
+    'c': 'checkin',
+    'p': 'photo',
+    'b': 'bookmark',
+}
 
 TYPE_TO_TAG = {v: k for k, v in TAG_TO_TYPE.items()}
 
@@ -167,14 +170,15 @@ def resize_image(sourcedir, filename, side):
 
         orientation = next((k for k, v in ExifTags.TAGS.items()
                             if v == 'Orientation'), None)
-        exif = dict(im._getexif().items())
 
-        if exif[orientation] == 3:
-            im = im.transpose(Image.ROTATE_180)
-        elif exif[orientation] == 6:
-            im = im.transpose(Image.ROTATE_270)
-        elif exif[orientation] == 8:
-            im = im.transpose(Image.ROTATE_90)
+        if im._getexif():
+            exif = dict(im._getexif().items())
+            if exif[orientation] == 3:
+                im = im.transpose(Image.ROTATE_180)
+            elif exif[orientation] == 6:
+                im = im.transpose(Image.ROTATE_270)
+            elif exif[orientation] == 8:
+                im = im.transpose(Image.ROTATE_90)
 
         origw, origh = im.size
         ratio = side / max(origw, origh)

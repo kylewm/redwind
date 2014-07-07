@@ -1,6 +1,6 @@
 
 $(document).ready(function() {
-    var postTypes = [ 'note', 'checkin', 'reply', 'share', 'like'];
+    var postTypes = [ 'note', 'checkin', 'reply', 'share', 'like', 'photo', 'bookmark'];
 
     $(postTypes).each(function (i, type) {
         $('#new-' + type).click(function (event) {

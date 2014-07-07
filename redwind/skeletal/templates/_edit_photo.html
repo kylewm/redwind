@@ -1,0 +1,16 @@
+{% extends "_edit_note.html" %}
+
+{% block above_content %}
+  <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
+  <ul id="uploads"></ul>
+  <label>Caption</label><input type="text" style="width:100%" name="caption"/>
+{% endblock above_content %}
+
+{% block content %}
+{% endblock content %}
+
+{% block above_additional_params %}
+<label><input type="checkbox" id="get_coords_button"/> Location</label>
+<input type="hidden" id="latitude" name="latitude" size="10" value="{{ post.location.latitude if post.location else ''}}"/>
+<input type="hidden" id="longitude" name="longitude" size="10" value="{{ post.location.longitude if post.location else ''}}"/>
+{% endblock above_additional_params %}

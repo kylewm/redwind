@@ -53,18 +53,6 @@ INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
-def reraise_attribute_errors(func):
-    """@property and my override of getattr don't mix — they swallow up
-    AttributeErrors with no log messages, so I need this ugly hack to
-    turn them into RuntimeErrors
-    """
-    def go(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except AttributeError as e:
-            raise RuntimeError(e)
-    return go
-
 
 DPost = collections.namedtuple('DPost', [
     'post_type',
@@ -79,6 +67,7 @@ DPost = collections.namedtuple('DPost', [
     'title',
     'content',
     'content_plain',
+    'photos',
     'first_image',
     'pub_date_iso',
     'pub_date_human',
@@ -101,6 +90,10 @@ DPost = collections.namedtuple('DPost', [
     'reference_count'
 ])
 
+DPhoto = collections.namedtuple('DPhoto', [
+    'url',
+    'caption',
+])
 
 DContext = collections.namedtuple('DContext', [
     'url',
@@ -217,6 +210,7 @@ def create_dpost(post):
 
         content=content,
         content_plain=format_as_text(content),
+        photos=[create_dphoto(post, p) for p in post.photos],
         first_image=first_image,
 
         pub_date_iso=isotime_filter(post.pub_date),
@@ -242,6 +236,12 @@ def create_dpost(post):
         reply_count=len(replies),
         reference_count=len(references)
     )
+
+
+def create_dphoto(post, photo):
+    return DPhoto(
+        url=os.path.join(post.get_image_path(), photo.get('filename')),
+        caption=photo.get('caption'))
 
 
 def create_dcontext(url):
@@ -992,6 +992,21 @@ def save_post(post):
                          if url.strip()]
 
         post.tags = request.form.get('tags', '').split()
+
+        # TODO accept multiple photos and captions
+        inphoto = request.files.get('photo')
+        if inphoto and inphoto.filename:
+            app.logger.debug('receiving uploaded file %s', inphoto)
+            relpath, photo_url, fullpath \
+                = api.generate_upload_path(post, inphoto)
+            if not os.path.exists(os.path.dirname(fullpath)):
+                os.makedirs(os.path.dirname(fullpath))
+            inphoto.save(fullpath)
+            caption = request.form.get('caption')
+            post.photos = [{
+                'filename': os.path.basename(relpath),
+                'caption': caption,
+            }]
 
         file_to_url = {}
         infiles = request.files.getlist('files')
