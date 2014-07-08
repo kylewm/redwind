@@ -56,6 +56,14 @@ def convert_mf2():
     return jsonify(json)
 
 
+@app.route('/api/mf2util')
+def convert_mf2util():
+    url = request.args.get('url')
+    p = mf2py.Parser(url=url)
+    json = mf2util.interpret(p.to_dict(), url)
+    return jsonify(json)
+
+
 @app.route('/api/token', methods=['POST'])
 def token_endpoint():
     code = request.form.get('code')
