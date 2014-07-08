@@ -737,10 +737,11 @@ def human_time(thedate, alternate=None):
 
     #return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
 
-    if datetime.datetime.now(TIMEZONE) - thedate > datetime.timedelta(days=1):
-        return thedate.strftime('%B %-d, %Y')
-    else:
+    if (isinstance(thedate, datetime.datetime)
+        and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
         return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
+    else:
+        return thedate.strftime('%B %-d, %Y')
 
 @app.template_filter('pluralize')
 def pluralize(number, singular='', plural='s'):
