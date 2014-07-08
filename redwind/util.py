@@ -1,6 +1,5 @@
 from . import app
 from datetime import date
-from bs4 import BeautifulSoup
 import os
 import os.path
 import re

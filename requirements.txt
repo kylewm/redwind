@@ -16,6 +16,7 @@ html5lib==0.999
 itsdangerous==0.24
 -e git+https://github.com/kylewm/mf2py.git#egg=mf2py-master
 -e git+https://github.com/kylewm/mf2util.git#egg=mf2util-master
+lxml==3.3.5
 oauthlib==0.6.1
 pytz==2013.9
 redis==2.9.1

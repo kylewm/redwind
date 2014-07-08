@@ -69,7 +69,6 @@ DPost = collections.namedtuple('DPost', [
     'content',
     'content_plain',
     'photos',
-    'first_image',
     'pub_date_iso',
     'pub_date_human',
     'pub_day',
@@ -169,19 +168,6 @@ def create_dpost(post):
     replies = mentions_sorted_by_date(mentions, 'reply')
     references = mentions_sorted_by_date(mentions, 'reference')
 
-    # find the first image (if any) that is in an <img> tag
-    # in the rendered post
-    soup = BeautifulSoup(content)
-    first_image = None
-    for img in soup.find_all('img'):
-        app.logger.debug('checking image %s', img)
-        hcard_parent = img.find_parent(class_='h-card')
-        if not hcard_parent:
-            src = img.get('src')
-            if src:
-                first_image = urllib.parse.urljoin(app.config['SITE_URL'], src)
-                break
-
     tweet_id = None
     for url in post.syndication:
         match = TWITTER_RE.match(url)
@@ -213,7 +199,6 @@ def create_dpost(post):
         content=content,
         content_plain=format_as_text(content),
         photos=[create_dphoto(post, p) for p in post.photos],
-        first_image=first_image,
 
         pub_date_iso=isotime_filter(post.pub_date),
         pub_date_human=human_time(post.pub_date),

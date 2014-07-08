@@ -5,6 +5,7 @@ for module in ('mf2py', 'mf2util'):
         sys.path.append(module)
 
 from flask import Flask
+from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
@@ -23,7 +24,8 @@ app.jinja_options = ImmutableDict(
     extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
 )
 
-#toolbar = DebugToolbarExtension(app)
+if app.debug:
+    toolbar = DebugToolbarExtension(app)
 
 if not app.debug:
     import logging
