@@ -17,7 +17,7 @@ import os
 import random
 import requests
 import urllib
-import json
+
 
 def generate_upload_path(post, f, default_ext=None):
     filename = secure_filename(f.filename)
@@ -151,8 +151,10 @@ def micropub_endpoint():
 
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
+    photo_file = request.files.get('photo')
 
-    post = Post('reply' if in_reply_to else 'like' if like_of else 'note')
+    post = Post('photo' if photo_file else 'reply' if in_reply_to
+                else 'like' if like_of else 'note')
     post._writeable = True
 
     post.title = request.form.get('name')
@@ -192,18 +194,16 @@ def micropub_endpoint():
     if synd_url:
         post.syndication.append(synd_url)
 
-    photo_file = request.files.get('photo')
     if photo_file:
         relpath, photo_url, fullpath \
             = generate_upload_path(post, photo_file, '.jpg')
         if not os.path.exists(os.path.dirname(fullpath)):
             os.makedirs(os.path.dirname(fullpath))
         photo_file.save(fullpath)
-
-        content = '![]({})'.format(os.path.basename(photo_url))
-        if post.content:
-            content += '\n\n' + post.content
-        post.content = content
+        post.photos = [{
+            'filename': os.path.basename(relpath),
+            #'caption': No caption for now
+        }]
 
     post.save()
     post._writeable = False

@@ -1087,4 +1087,5 @@ def addressbook():
         book.save()
         return redirect(url_for('addressbook'))
 
-    return render_template('addressbook.html', entries=book.entries)
+    od = collections.OrderedDict(sorted(book.entries.items()))
+    return render_template('addressbook.html', entries=od)

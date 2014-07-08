@@ -2,13 +2,35 @@
 
 {% block content %}
 
-  <form action="/admin/addressbook" method="POST">
-    <div><label class="heading">URL:</label> <input type="text" id="url" name="url"/> <input type="button" id="fetch" value="Fetch Profile" /></div>
-    <div><label class="heading">Person:</label> <input type="text" id="person" name="person"/></div>
-    <div><label class="heading">Photo:</label> <input type="text" id="photo" name="photo"/></div>
-    <div><label class="heading">Twitter:</label> <input type="text" id="twitter" name="twitter"/></div>
-    <div><label class="heading">Facebook:</label> <input type="text" id="facebook" name="facebook"/></div>
-    <input type="Submit" value="Add">
+
+  <form action="/admin/addressbook" method="POST" class="clearfix">
+    <div class="eight columns clearfix">
+      <div class="four columns alpha">
+        <label>URL:</label> <input type="text" id="url" name="url"/>
+      </div>
+      <div class="four columns omega">
+        <input type="button" id="fetch" value="Fetch Profile" />
+      </div>
+    </div>
+
+    <div class="eight columns clearfix">
+      <div class="four columns alpha">
+        <label>Person:</label>
+        <input type="text" id="person" name="person"/>
+        <label>Photo:</label>
+        <input type="text" id="photo" name="photo"/>
+      </div>
+      <div class="four columns omega">
+        <label>Twitter:</label>
+        <input type="text" id="twitter" name="twitter"/>
+        <label>Facebook:</label>
+        <input type="text" id="facebook" name="facebook"/>
+      </div>
+    </div>
+
+    <div class="eight columns clearfix" style="text-align: center">
+      <input type="Submit" value="Add" />
+    </div>
   </form>
 
   <ul>
