@@ -1,9 +1,8 @@
 {% extends "_edit_like.html" %}
 
 {% block above_content %}
-  <div class="bookmark_of">
-    <label>Bookmark (URL)
-      <input type="text" style="width:100%" name="bookmark_of">{{post.bookmark_of}}</textarea>
-    </label>
-  </div>
+{% set url = post.bookmark_of[0] if post.bookmark_of else '' %}
+<label>Bookmark (URL)</label>
+<input type="text" style="width:100%" name="bookmark_of" value="{{url}}" />
+
 {% endblock above_content %}
