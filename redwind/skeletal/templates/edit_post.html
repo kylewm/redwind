@@ -3,92 +3,56 @@
 
 <form id="edit_form" method="POST" action="/admin/save_{{edit_type}}" enctype="multipart/form-data">
   <data id="post_path" value="{{post.path}}" />
-  <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
+  <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}" />
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
-  <div class="title">
-    <label><span class="heading">Title</span><input id="title" name="title" size="60" value="{{ post.title or '' }}"/></label>
-  </div>
-  <div class="slug">
-    <label><span class="heading">Slug</span><input id="slug" name="slug" size="60" value="{{ post.slug or ''}}"/></label>
-  </div>
+  <label>Title</label>
+  <input id="title" name="title" size="60" value="{{ post.title or '' }}"/>
 
-  <div class="in_reply_to">
-    <label><span>In Reply To (URLs)</span>
-      <textarea style="width:100%" name="in_reply_to" rows="2">{{post.in_reply_to | join('\n')}}</textarea>
-    </label>
-  </div>
+  <label>Slug</label>
+  <input id="slug" name="slug" size="60" value="{{ post.slug or ''}}"/>
 
-  <div class="repost_of">
-    <label><span>Repost (URLs)</span>
-      <textarea style="width:100%" name="repost_of" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea>
-    </label>
-  </div>
+  <label>In Reply To (URLs)</label>
+  <textarea style="width:100%" name="in_reply_to" rows="2">{{post.in_reply_to | join('\n')}}</textarea>
 
-  <div class="like_of">
-    <label><span>Like of (URLs)</span>
-      <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
-    </label>
-  </div>
+  <label>Repost (URLs)</label>
+  <textarea style="width:100%" name="repost_of" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea>
 
-  <div>
-    <label><span>Content</span></label>
-    <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
-  </div>
+  <label>Like of (URLs)</label>
+  <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
 
-    <div class="syndication">
-    <label><span><i id="syndication_expander" class="fa fa-plus-square-o"></i> Syndication (URLs)</span>
-      <textarea style="width:100%" id="syndication_textarea" name="syndication" cols="50" rows="2">{{ post.syndication | join('\n') }}</textarea>
-    </label>
-  </div>
+  <label>Bookmark of (URLs)</label>
+  <textarea style="width:100%" name="bookmark_of" cols="50" rows="2">{{post.bookmark_of | join('\n')}}</textarea>
 
-  <div class="audience">
-    <label><i id="audience_expander" class="fa fa-plus-square-o"></i> <span>Audience</span>
-      <textarea style="width:100%" id="audience_textarea" name="audience" cols="50" rows="2">{{ post.audience | join('\n') }}</textarea>
-    </label>
-  </div>
+  <label>Content</label>
+  <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
 
+  <label><i id="syndication_expander" class="fa fa-plus-square-o"></i> Syndication (URLs)</label>
+  <textarea style="width:100%" id="syndication_textarea" name="syndication" cols="50" rows="2">{{ post.syndication | join('\n') }}</textarea>
 
-  <div>
-    <label>Tags</label>
-    <input id="tags" name="tags" value="{{ post.tags | join(' ') }}"/>
-  </div>
+  <label><i id="audience_expander" class="fa fa-plus-square-o"></i> Audience</label>
+  <textarea style="width:100%" id="audience_textarea" name="audience" cols="50" rows="2">{{ post.audience | join('\n') }}</textarea>
 
-  <div>
-    <label><input type="checkbox" id="get_coords_button"/> Location</label>
-    <label>Latitude</label>
-    <input id="latitude" name="latitude" value="{{ post.location.latitude if post.location else ''}}"/>
-    <label>Longitude</label>
-    <input id="longitude" name="longitude" value="{{ post.location.longitude if post.location else ''}}"/>
-    <label>Location</label>
-    <input id="location_name" name="location_name" value="{{ post.location.name if post.location and post.location.name else ''}}"/>
-  </div>
+  <label>Tags</label>
+  <input id="tags" name="tags" value="{{ post.tags | join(' ') }}"/>
 
-  <div>
+  <label><input type="checkbox" id="get_coords_button"/> Location</label>
+  <label>Latitude</label>
+  <input id="latitude" name="latitude" value="{{ post.location.latitude if post.location else ''}}"/>
+  <label>Longitude</label>
+  <input id="longitude" name="longitude" value="{{ post.location.longitude if post.location else ''}}"/>
+  <label>Location</label>
+  <input id="location_name" name="location_name" value="{{ post.location.name if post.location and post.location.name else ''}}"/>
+
   <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if not post.date_index %}checked{% endif %} />Webmentions</label>
-  </div>
+  <label><input type="checkbox" id="send_push" name="send_push" value="true" {% if not post.date_index %}checked{% endif %} />PuSH</label>
+  <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label>
+  <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft</label>
 
-  <div>
-    <label><input type="checkbox" id="send_push" name="send_push" value="true" {% if not post.date_index %}checked{% endif %} />PuSH</label>
-  </div>
-
-  <div>
-    <label><input type="checkbox" id="hidden" name="hidden" value="true"{% if post.hidden %} checked{% endif %} />Hidden from stream</label>
-  </div>
-
-  <div>
-    <label><input type="checkbox" id="draft" name="draft" value="true"{% if post.draft %} checked{% endif %}/>Draft</label>
-  </div>
-
-  <label>
-    <input type="file" id="image_upload_button" name="files" accept="image/*" multiple></input>
-  </label>
+  <input type="file" id="image_upload_button" name="files" accept="image/*" multiple></input>
   <ul id="uploads"></ul>
 
-
   <input type="submit" id="publish_button" value="Publish"/>
-
-
 </form>
 
 {% endblock content %}

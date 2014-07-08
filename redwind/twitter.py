@@ -106,8 +106,9 @@ def do_send_to_twitter(post_id):
     in_reply_to, repost_of, like_of \
         = twitter_client.posse_post_discovery(post)
     preview = twitter_client.guess_tweet_content(post)
-    return twitter_client.do_tweet(
+    response = twitter_client.do_tweet(
         post_id, preview, None, in_reply_to, repost_of, like_of)
+    return str(response)
 
 
 @app.route('/admin/share_on_twitter', methods=['GET', 'POST'])
@@ -223,7 +224,13 @@ class TwitterClient:
                                     pub_date=pub_date,
                                     content=tweet_text,
                                     permalink=url)
+
+        fake_response = requests.Response()
+        fake_response.status_code = 200
+        fake_response.headers = {}
+
         archiver.archive_html(url, html)
+        archiver.archive_response(url, fake_response)
         return True
 
     # TODO use twitter API entities to expand links without fetch requests

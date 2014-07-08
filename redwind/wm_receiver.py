@@ -167,6 +167,7 @@ def do_process_webmention(source, target):
             "Could not find any links from source to target"
 
     archiver.archive_html(source, source_response.text)
+    archiver.archive_response(source, source_response)
 
     return target_post, source, False, None
 

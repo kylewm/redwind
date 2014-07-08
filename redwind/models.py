@@ -226,6 +226,7 @@ class Post:
         self.in_reply_to = []
         self.repost_of = []
         self.like_of = []
+        self.bookmark_of = []
         self.title = None
         self.content = None
         self.pub_date = None
@@ -245,6 +246,7 @@ class Post:
         self.in_reply_to = data.get('in_reply_to', [])
         self.repost_of = data.get('repost_of', [])
         self.like_of = data.get('like_of', [])
+        self.bookmark_of = data.get('bookmark_of', [])
         self.tags = data.get('tags', [])
         self.syndication = data.get('syndication', [])
         self.draft = data.get('draft', False)
@@ -264,6 +266,7 @@ class Post:
             'in_reply_to': self.in_reply_to,
             'repost_of': self.repost_of,
             'like_of': self.like_of,
+            'bookmark_of': self.bookmark_of,
             'location': self.location and self.location.to_json(),
             'syndication': self.syndication,
             'tags': self.tags,

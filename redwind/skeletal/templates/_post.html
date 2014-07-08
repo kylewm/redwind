@@ -47,12 +47,19 @@
     Liked <a class="u-like-of u-like" href="{{context.permalink}}">{{context.title}}</a> on {{context.permalink | domain_from_url }}
   {% endfor %}
 
+  {% for context in post.bookmark_contexts %}
+    Bookmarked {{context.title}}: <a class="u-bookmark" href="{{context.permalink}}">{{context.permalink | prettify_url }}</a>
+  {% endfor %}
+
   {% if post.title %}
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
+
+  {% if post.content %}
   <div class="e-content">
     {{post.content}}
   </div>
+  {% endif %}
 
   {% for photo in post.photos %}
     <div class="photo-holder">
@@ -85,6 +92,15 @@
             {{post.location.geo_name}}
           </span>
         </a>
+      </div>
+    {% endif %}
+
+    {% if is_single and post.tags %}
+      <div class="tags">
+        <i class="fa fa-tag"></i>
+        {% for tag in post.tags %}
+          <a href="{{url_for('posts_by_tag', tag=tag)}}">{{tag}}</a>
+        {% endfor %}
       </div>
     {% endif %}
 

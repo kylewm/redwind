@@ -64,6 +64,7 @@ DPost = collections.namedtuple('DPost', [
     'reply_contexts',
     'share_contexts',
     'like_contexts',
+    'bookmark_contexts',
     'title',
     'content',
     'content_plain',
@@ -206,6 +207,7 @@ def create_dpost(post):
         reply_contexts=[create_dcontext(url) for url in post.in_reply_to],
         share_contexts=[create_dcontext(url) for url in post.repost_of],
         like_contexts=[create_dcontext(url) for url in post.like_of],
+        bookmark_contexts=[create_dcontext(url) for url in post.bookmark_of],
         title=post.title,
 
         content=content,
@@ -268,42 +270,43 @@ def create_dcontext(url):
     if blob:
         try:
             entry = mf2util.interpret(blob, url)
-            pub_date = entry.get('published')
+            if entry:
+                pub_date = entry.get('published')
 
-            content = entry.get('content', '')
-            content_plain = format_as_text(content)
+                content = entry.get('content', '')
+                content_plain = format_as_text(content)
 
-            if len(content_plain) < 512:
-                content = bleach.clean(autolink(content), strip=True)
-            else:
-                content = (
-                    jinja2.filters.do_truncate(content_plain, 512) +
-                    ' <a class="u-url" href="{}">continued</a>'.format(url))
+                if len(content_plain) < 512:
+                    content = bleach.clean(autolink(content), strip=True)
+                else:
+                    content = (
+                        jinja2.filters.do_truncate(content_plain, 512) +
+                        ' <a class="u-url" href="{}">continued</a>'.format(url))
 
-            title = entry.get('name', 'a post')
-            if len(title) > 256:
-                title = jinja2.filters.do_truncate(title, 256)
+                title = entry.get('name', 'a post')
+                if len(title) > 256:
+                    title = jinja2.filters.do_truncate(title, 256)
 
-            author_name = bleach.clean(entry.get('author', {}).get('name', ''))
-            author_image = entry.get('author', {}).get('photo')
-            if author_image:
-                author_image = local_mirror_resource(author_image)
+                author_name = bleach.clean(entry.get('author', {}).get('name', ''))
+                author_image = entry.get('author', {}).get('photo')
+                if author_image:
+                    author_image = local_mirror_resource(author_image)
 
-            return DContext(
-                url=url,
-                permalink=entry.get('url', url),
-                author_name=author_name,
-                author_url=entry.get('author', {}).get('url', ''),
-                author_image=author_image or url_for(
-                    'static', filename=AUTHOR_PLACEHOLDER),
-                content=content,
-                repost_preview=repost_preview,
-                pub_date=pub_date,
-                pub_date_iso=isotime_filter(pub_date),
-                pub_date_human=human_time(pub_date),
-                title=title,
-                deleted=False,
-            )
+                return DContext(
+                    url=url,
+                    permalink=entry.get('url', url),
+                    author_name=author_name,
+                    author_url=entry.get('author', {}).get('url', ''),
+                    author_image=author_image or url_for(
+                        'static', filename=AUTHOR_PLACEHOLDER),
+                    content=content,
+                    repost_preview=repost_preview,
+                    pub_date=pub_date,
+                    pub_date_iso=isotime_filter(pub_date),
+                    pub_date_human=human_time(pub_date),
+                    title=title,
+                    deleted=False,
+                )
         except:
             app.logger.exception('error interpreting %s', url)
 
@@ -422,7 +425,7 @@ def index(page):
 @app.route('/articles/page/<int:page>')
 def articles(page):
     return render_posts('All Articles', ('article',), page, 10,
-                        include_hidden=False,
+                        include_hidden=True,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -430,7 +433,23 @@ def articles(page):
 @app.route('/checkins/page/<int:page>')
 def checkins(page):
     return render_posts('All Check-ins', ('checkin',), page, 10,
-                        include_hidden=False,
+                        include_hidden=True,
+                        include_drafts=current_user.is_authenticated())
+
+
+@app.route('/bookmarks', defaults={'page': 1})
+@app.route('/bookmarks/page/<int:page>')
+def bookmarks(page):
+    return render_posts('All Bookmarks', ('bookmark',), page, 10,
+                        include_hidden=True,
+                        include_drafts=current_user.is_authenticated())
+
+
+@app.route('/photos', defaults={'page': 1})
+@app.route('/photos/page/<int:page>')
+def photos(page):
+    return render_posts('All Photos', ('photo',), page, 10,
+                        include_hidden=True,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -445,8 +464,8 @@ def everything(page):
 @app.route('/tag/<tag>', defaults={'page': 1})
 @app.route('/tag/<tag>/page/<int:page>')
 def posts_by_tag(tag, page):
-    return render_posts('All posts tagged ' + tag, POST_TYPES, page, 30, tag=tag,
-                        include_hidden=True,
+    return render_posts('All posts tagged ' + tag, POST_TYPES, page, 30,
+                        tag=tag, include_hidden=True,
                         include_drafts=current_user.is_authenticated())
 
 
@@ -937,6 +956,9 @@ def save_post(post):
         slug = re.sub(r'[-]+', '-', slug)
         return slug[:256]
 
+    def multiline_string_to_list(s):
+        return [l.strip() for l in s.split('\n') if l.strip()]
+
     try:
         app.logger.debug("acquired write lock %s", post)
 
@@ -968,29 +990,22 @@ def save_post(post):
             post.slug = slugify(post.title)
 
         in_reply_to = request.form.get('in_reply_to', '')
-        post.in_reply_to = [url.strip() for url
-                            in in_reply_to.split('\n')
-                            if url.strip()]
+        post.in_reply_to = multiline_string_to_list(in_reply_to)
 
         repost_of = request.form.get('repost_of', '')
-        post.repost_of = [url.strip() for url
-                          in repost_of.split('\n')
-                          if url.strip()]
+        post.repost_of = multiline_string_to_list(repost_of)
 
         like_of = request.form.get('like_of', '')
-        post.like_of = [url.strip() for url
-                        in like_of.split('\n')
-                        if url.strip()]
+        post.like_of = multiline_string_to_list(like_of)
+
+        bookmark_of = request.form.get('bookmark_of', '')
+        post.bookmark_of = multiline_string_to_list(bookmark_of)
 
         syndication = request.form.get('syndication', '')
-        post.syndication = [url.strip() for url in
-                            syndication.split('\n')
-                            if url.strip()]
+        post.syndication = multiline_string_to_list(syndication)
 
         audience = request.form.get('audience', '')
-        post.audience = [url.strip() for url in
-                         audience.split('\n')
-                         if url.strip()]
+        post.audience = multiline_string_to_list(audience)
 
         post.tags = request.form.get('tags', '').split()
 

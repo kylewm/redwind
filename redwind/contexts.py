@@ -6,7 +6,8 @@ import itertools
 
 
 def fetch_post_contexts(post):
-    for url in itertools.chain(post.in_reply_to, post.repost_of, post.like_of):
+    for url in itertools.chain(post.in_reply_to, post.repost_of,
+                               post.like_of, post.bookmark_of):
         do_fetch_context.delay(url)
 
 

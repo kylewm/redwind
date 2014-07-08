@@ -33,12 +33,18 @@ def url_to_html_path(url):
     return os.path.join(url_to_archive_path(url), 'raw.html')
 
 
+def url_to_response_path(url):
+    return os.path.join(url_to_archive_path(url), 'response.json')
+
+
 def archive_url(url):
     response = requests.get(url)
     if response.status_code // 2 == 100:
         archive_html(url, response.text)
     else:
         app.logger.warn('failed to fetch url %s. got response %s.', url, response)
+    archive_response(url, response)
+
 
 def archive_html(url, html):
     app.logger.debug('archiving url %s', url)
@@ -51,3 +57,17 @@ def archive_html(url, html):
         fp.write(html)
     blob = Parser(doc=html, url=url).to_dict()
     json.dump(blob, open(url_to_json_path(url), 'w'), indent=True)
+
+
+def archive_response(url, response):
+    app.logger.debug('archiving response %s', response)
+    rpath = url_to_response_path(url)
+
+    if not os.path.exists(os.path.dirname(rpath)):
+        os.makedirs(os.path.dirname(rpath))
+
+    blob = {
+        'status_code': response.status_code,
+        'headers': dict(response.headers.items())
+    }
+    json.dump(blob, open(rpath, 'w'), indent=True)
