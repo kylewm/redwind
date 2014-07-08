@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <form action="/admin/addressbook" method="POST">
+    <div><label class="heading">URL:</label> <input type="text" id="url" name="url"/> <input type="button" id="fetch" value="Fetch Profile" /></div>
+    <div><label class="heading">Person:</label> <input type="text" id="person" name="person"/></div>
+    <div><label class="heading">Photo:</label> <input type="text" id="photo" name="photo"/></div>
+    <div><label class="heading">Twitter:</label> <input type="text" id="twitter" name="twitter"/></div>
+    <div><label class="heading">Facebook:</label> <input type="text" id="facebook" name="facebook"/></div>
+    <input type="Submit" value="Add">
+  </form>
+
+  <ul>
+    {% for person, entry in entries.items() %}
+
+      <li>{{ person }}: {{entry.get('url')}}
+        <ul>
+          <li>photo: <img width="64" src="{{entry.get('photo')}}"/>
+          <li>twitter: {{entry.get('twitter')}}
+          <li>facebook: {{entry.get('facebook')}}
+        </ul>
+      </li>
+
+    {% endfor %}
+  </ul>
+
+{% endblock %}
+
+{% block other_resources %}
+  <script src="{{ url_for('static', filename='js/addressbook.js') }}"></script>
+
+{% endblock other_resources %}

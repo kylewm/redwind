@@ -44,7 +44,7 @@
   {% endfor %}
 
   {% for context in post.like_contexts %}
-    Liked <a class="u-like-of" href="{{context.permalink}}">{{context.title}}</a> on {{context.permalink | domain_from_url }}
+    Liked <a class="u-like-of u-like" href="{{context.permalink}}">{{context.title}}</a> on {{context.permalink | domain_from_url }}
   {% endfor %}
 
   {% if post.title %}
@@ -87,7 +87,7 @@
     {% endif %}
 
     <div>
-      <a class="u-url" href="{{post.permalink}}"><i class="fa fa-link"></i>
+      <a class="u-url" href="{{post.permalink}}">
         <time value="{{post.pub_date_iso}}">{{post.pub_date_human}}</time>
       </a>
 
