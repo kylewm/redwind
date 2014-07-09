@@ -4,8 +4,6 @@ import os
 import os.path
 import re
 import requests
-import itertools
-import collections
 import datetime
 import urllib
 

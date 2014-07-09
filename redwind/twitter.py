@@ -7,6 +7,7 @@ from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response,\
     render_template, flash
 
+import collections
 import requests
 import re
 import json
@@ -25,6 +26,14 @@ from requests.exceptions import HTTPError
 REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
 ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
+
+
+TweetComponent = collections.namedtuple('TweetComponent', [
+    'length',
+    'can_shorten',
+    'can_drop',
+    'text',
+])
 
 
 @app.route('/admin/authorize_twitter')
@@ -137,7 +146,7 @@ def share_on_twitter():
                                    repost_of, like_of)
 
 
-def format_markdown_as_tweet(data, img_path):
+def format_markdown_as_tweet(data):
     def person_to_twitter_handle(fullname, displayname, entry, pos):
         handle = entry.get('twitter')
         if handle:
@@ -146,7 +155,7 @@ def format_markdown_as_tweet(data, img_path):
 
     from .controllers import markdown_filter, format_as_text
     return format_as_text(
-        markdown_filter(data, img_path, link_twitter_names=False,
+        markdown_filter(data, link_twitter_names=False,
                         person_processor=person_to_twitter_handle))
 
 
@@ -283,12 +292,45 @@ class TwitterClient:
         auto-filling the share form.
         """
         if post.title:
-            preview = post.title + ' ' + post.permalink
+            preview = post.title
         else:
-            preview = format_markdown_as_tweet(
-                post.content, post.get_image_path())
-            if len(preview) > 140:
-                preview = preview[:115] + '… ' + post.permalink
+            preview = format_markdown_as_tweet(post.content)
+
+        components = []
+        prev_end = 0
+        for match in re.finditer(util.LINK_REGEX, preview):
+            text = preview[prev_end:match.start()]
+            components.append(TweetComponent(
+                length=len(text), can_shorten=True, can_drop=True, text=text))
+            link = match.group(0)
+            components.append(TweetComponent(
+                length=23, can_shorten=False, can_drop=True, text=link))
+            prev_end = match.end()
+
+        text = preview[prev_end:]
+        components.append(TweetComponent(
+            length=len(text), can_shorten=True, can_drop=True, text=text))
+
+        if post.title or sum(c.length for c in components) > 140:
+            components.append(TweetComponent(
+                length=23, can_shorten=False, can_drop=False, text=post.permalink))
+
+        # iteratively shorten
+        delta = sum(c.length for c in components) - 140
+        shortened = []
+
+        for c in reversed(components):
+            if delta <= 0 or not c.can_drop:
+                shortened.append(c)
+            elif c.can_shorten and c.length >= delta + 1:
+                text = c.text[:len(c.text)-(delta+1)] + '…'
+                delta -= (c.length - len(text))
+                shortened.append(TweetComponent(
+                    length=len(text), text=text, can_shorten=False, can_drop=True))
+            elif c.can_drop:
+                delta -= c.length
+
+        preview = ''.join(reversed([s.text for s in shortened]))
         return preview
 
     def do_tweet(self, post_id, preview, img_url, in_reply_to,

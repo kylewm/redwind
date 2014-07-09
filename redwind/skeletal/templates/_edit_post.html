@@ -5,16 +5,11 @@
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
   {% block above_content %}{% endblock above_content %}
-
   {% block content %}
-    <label>
-      Content
-      <textarea name="content" id="content" style="width:100%" rows="3">{{ post.content }}</textarea>
-    </label>
+    <label>Content</label>
+    <textarea name="content" id="content" style="width:100%" rows="3">{{ post.content }}</textarea>
   {% endblock content %}
-
   {% block below_content %}{% endblock below_content %}
-
 
   <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
   <input type="hidden" id="send_push" name="send_push" value="true"/>
