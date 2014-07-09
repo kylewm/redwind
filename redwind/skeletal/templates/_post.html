@@ -106,13 +106,13 @@
 
     <div>
       <a class="u-url" href="{{post.permalink}}">
-        <time value="{{post.pub_date_iso}}">{{post.pub_date_human}}</time>
+        <time class="dt-published" datetime="{{post.pub_date_iso}}">{{post.pub_date_human}}</time>
       </a>
 
 
       {% if current_user.is_authenticated() %}
         <a class="admin-post-controls-arrow" href="#">
-           | Admin <i class="fa fa-caret-right"></i>
+           | Admin
         </a>
         <span class="admin-post-controls" style="display:none;">
           |
@@ -223,7 +223,6 @@
                   </div>
                 {% endif %}
 
-                <i class="fa fa-link"></i>
                 <time class="dt-published" datetime="{{reply.pub_date_iso }}">
 	          <a class="u-url" href="{{ reply.permalink }}">
                     {{ reply.pub_date_human}}

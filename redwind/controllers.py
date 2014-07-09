@@ -584,7 +584,10 @@ def post_by_date(post_type, year, month, day, index, slug):
     dpost = create_dpost(post)
     title = dpost.title
     if not title:
+        title = jinja2.filters.do_truncate(dpost.content_plain, 50)
+    if not title:
         title = "A {} from {}".format(dpost.post_type, dpost.pub_day)
+        
     return render_template('post.html', post=dpost, title=title)
 
 
@@ -824,7 +827,7 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
         data = process_people(data, person_processor)
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    result = util.autolink(result, twitter_names=link_twitter_names)
+    #result = util.autolink(result, twitter_names=link_twitter_names)
     result = smartypants(result)
     return result
 
