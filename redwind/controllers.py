@@ -226,9 +226,12 @@ def create_dpost(post):
 
 
 def create_dphoto(post, photo):
+    caption = photo.get('caption')
+    if caption:
+        caption = markdown_filter(caption)
     return DPhoto(
         url=os.path.join(post.get_image_path(), photo.get('filename')),
-        caption=photo.get('caption'))
+        caption=caption)
 
 
 def create_dcontext(url):
@@ -312,17 +315,17 @@ def create_dcontext(url):
 
 
 def create_dmention(post, url):
-    target_urls = [
-        post.permalink,
-        post.permalink_without_slug,
-        post.short_permalink,
-        post.permalink.replace('https://', 'http://'),
-        post.permalink_without_slug.replace('https://', 'http://'),
-        post.short_permalink.replace('https://', 'http://'),
-        # for localhost testing
-        post.permalink.replace(app.config['SITE_URL'], 'https://kylewm.com'),
-        post.permalink.replace(app.config['SITE_URL'], 'http://kylewm.com'),
-    ] if post else []
+    target_urls = []
+    if post:
+        base_target_urls = [
+            post.permalink,
+            post.permalink_without_slug,
+            post.short_permalink,
+        ] + post.previous_permalinks
+
+        for base_url in base_target_urls:
+            target_urls.append(base_url)
+            target_urls.append(base_url.replace('https://', 'http://'))
 
     try:
         blob = archiver.load_json_from_archive(url)
@@ -343,7 +346,7 @@ def create_dmention(post, url):
 
                 return DMention(
                     permalink=entry.get('url', ''),
-                    reftype=comment_type and comment_type[0],
+                    reftype=comment_type[0] if comment_type else 'reference',
                     author_name=author_name,
                     author_url=entry.get('author', {}).get('url', ''),
                     author_image=author_image or url_for(
@@ -575,6 +578,9 @@ def post_by_date(post_type, year, month, day, index, slug):
     if not check_audience(post):
         abort(401)  # not authorized TODO a nicer page
 
+    if post.redirect:
+        return redirect(post.redirect)
+
     if not slug and post.slug:
         return redirect(
             url_for('post_by_date', post_type=post_type,
@@ -587,7 +593,7 @@ def post_by_date(post_type, year, month, day, index, slug):
         title = jinja2.filters.do_truncate(dpost.content_plain, 50)
     if not title:
         title = "A {} from {}".format(dpost.post_type, dpost.pub_day)
-        
+
     return render_template('post.html', post=dpost, title=title)
 
 

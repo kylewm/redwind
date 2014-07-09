@@ -223,6 +223,8 @@ class Post:
         self.draft = False
         self.deleted = False
         self.hidden = False
+        self.redirect = None
+        self.previous_permalinks = []
         self.in_reply_to = []
         self.repost_of = []
         self.like_of = []
@@ -255,6 +257,8 @@ class Post:
         self.audience = data.get('audience', [])
         self.mentions = data.get('mentions', [])
         self.photos = data.get('photos', [])
+        self.redirect = data.get('redirect')
+        self.previous_permalinks = data.get('previous_permalinks', [])
         if 'location' in data:
             self.location = Location.from_json(data.get('location', {}))
 
@@ -276,6 +280,8 @@ class Post:
             'audience': self.audience,
             'mentions': self.mentions,
             'photos': self.photos,
+            'redirect': self.redirect,
+            'previous_permalinks': self.previous_permalinks,
         }
         return util.filter_empty_keys(data)
 
@@ -400,6 +406,7 @@ class Metadata:
             'published': util.isoformat(post.pub_date),
             'draft': post.draft,
             'deleted': post.deleted,
+            'redirect': post.redirect,
             'hidden': post.hidden,
             'path': post.path,
             'tags': post.tags,
@@ -506,6 +513,7 @@ class Metadata:
 
         posts = [post for post in self.blob['posts']
                  if not post.get('deleted')
+                 and not post.get('redirect')
                  and (not tag or tag in post.get('tags', []))
                  and (not post.get('hidden') or include_hidden)
                  and (not post.get('draft') or include_drafts)

@@ -67,7 +67,7 @@
         <img class="u-photo" src="{{photo.url}}?size=medium" />
       </a>
       {% if photo.caption %}
-        <div class="caption">{{ photo.caption }}</div>
+        <div class="caption">{{ photo.caption | safe }}</div>
       {% endif %}
     </div>
   {% endfor %}
