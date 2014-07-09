@@ -345,7 +345,7 @@ def create_dmention(post, url):
                     author_image = local_mirror_resource(author_image)
 
                 return DMention(
-                    permalink=entry.get('url', ''),
+                    permalink=entry.get('url') or url,
                     reftype=comment_type[0] if comment_type else 'reference',
                     author_name=author_name,
                     author_url=entry.get('author', {}).get('url', ''),
@@ -903,11 +903,11 @@ def local_mirror_resource(url):
         mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
         mirror_file_path = os.path.join(app.root_path, app.static_folder,
                                         mirror_url_path)
-        app.logger.debug("checking for existence of mirrored resource %s -> %s",
-                         url, mirror_file_path)
+        #app.logger.debug("checking for existence of mirrored resource %s -> %s",
+        #                 url, mirror_file_path)
         if os.path.exists(mirror_file_path):
-            app.logger.debug("%s already mirrored, returning url path %s",
-                             mirror_file_path, mirror_url_path)
+            #app.logger.debug("%s already mirrored, returning url path %s",
+             #                mirror_file_path, mirror_url_path)
             return url_for('static', filename=mirror_url_path)
 
         if util.download_resource(url, mirror_file_path):

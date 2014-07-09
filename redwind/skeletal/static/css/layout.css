@@ -78,7 +78,7 @@ the primary sidebar */
 .new-post-bar ul li {text-align: center; vertical-align: center; display: inline; padding: 1em;}
 .new-post-bar i {font-size: 24pt; display: block;}
 .new-post-bar a {color: #333; display: inline-block; width: 60px; text-decoration: none;}
-
+.mention-counts { float: right; }
 
 
 /* #Page Styles
