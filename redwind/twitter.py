@@ -79,18 +79,25 @@ def authorize_twitter2():
 
 
 def collect_images(post):
-    """find the first image (if any) that is in an <img> tag
+    """collect the images (if any) that are in an <img> tag
     in the rendered post"""
-    from .controllers import markdown_filter
-    html = markdown_filter(post.content, img_path=post.get_image_path(),
-                           link_twitter_names=False,
-                           person_processor=None)
-    soup = BeautifulSoup(html)
-    for img in soup.find_all('img'):
-        if not img.find_parent(class_='h-card'):
-            src = img.get('src')
-            if src:
-                yield urljoin(app.config['SITE_URL'], src)
+
+    if post.photos:
+        from .controllers import create_dphoto
+        for photo in post.photos:
+            yield create_dphoto(post, photo).url
+
+    else:
+        from .controllers import markdown_filter
+        html = markdown_filter(post.content, img_path=post.get_image_path(),
+                               link_twitter_names=False,
+                               person_processor=None)
+        soup = BeautifulSoup(html)
+        for img in soup.find_all('img'):
+            if not img.find_parent(class_='h-card'):
+                src = img.get('src')
+                if src:
+                    yield urljoin(app.config['SITE_URL'], src)
 
 
 def send_to_twitter(post):
@@ -124,16 +131,26 @@ def do_send_to_twitter(post_id):
 @login_required
 def share_on_twitter():
     if request.method == 'GET':
-        post = Post.load_by_shortid(request.args.get('id'))
+        shortid = request.args.get('id')
+        if not shortid:
+            abort(404)
+            
+        post = Post.load_by_shortid(shortid)
+        if not post:
+            abort(404)
 
+        app.logger.debug('sharing on twitter. post=%s', post)
+        
         in_reply_to, repost_of, like_of \
             = twitter_client.posse_post_discovery(post)
         preview = twitter_client.guess_tweet_content(post)
 
+        imgs = list(collect_images(post))
+        app.logger.debug('twitter post has images: %s', imgs)
+        
         return render_template('share_on_twitter.html', preview=preview,
                                post=post, in_reply_to=in_reply_to,
-                               repost_of=repost_of, like_of=like_of,
-                               imgs=list(collect_images(post)))
+                               repost_of=repost_of, like_of=like_of, imgs=imgs)
 
     post_id = request.form.get('post_id')
     preview = request.form.get('preview')
@@ -224,8 +241,7 @@ class TwitterClient:
             if media.get('type') == 'photo':
                 media_url = media.get('media_url')
                 if media_url:
-                    tweet_text += '<div><img src="{}"/></div>'.format(
-                        local_mirror_resource(media_url))
+                    tweet_text += '<div><img src="{}"/></div>'.format(media_url)
 
         html = hentry_template.fill(author_name=author_name,
                                     author_url=author_url,

@@ -68,7 +68,7 @@ def urls_match(url1, url2):
 
 
 TWITTER_USERNAME_REGEX = r'(?<!\w)@([a-zA-Z0-9_]+)'
-LINK_REGEX = r'\b(?<!=[\'"])https?://([a-zA-Z0-9/\.\-_:%?@$#&=+]+)'
+LINK_REGEX = r'\b(?<!=[\'"])https?://([a-zA-Z0-9/\.\-_:;%?@$#&=+]+)'
 
 
 def autolink(plain, twitter_names=True):

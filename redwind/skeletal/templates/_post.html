@@ -43,8 +43,27 @@
     </div>
   {% endfor %}
 
+
   {% for context in post.like_contexts %}
-    Liked <a class="u-like-of u-like" href="{{context.permalink}}">{{context.title}}</a> on {{context.permalink | domain_from_url }}
+    <div class="p-like p-like-of h-cite">
+      Liked
+      <a class="u-url" href="{{context.permalink}}">
+        {{ context.title }}
+      </a>
+      {% if context.author_name %}
+        by <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
+      {% endif %}
+      from {{context.permalink | domain_from_url}}
+
+      {% if context.content %}
+        <blockquote class="clearfix">
+          <div class="" style="float:left; padding-bottom: 5px; padding-right: 5px;">
+            <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" />
+          </div>
+          <div class="">{{context.content | safe}}</div>
+        </blockquote>
+      {% endif %}
+    </div>
   {% endfor %}
 
   {% for context in post.bookmark_contexts %}
