@@ -1,11 +1,11 @@
-(function() {
-
-    var short_url_length = 22;
-    var short_url_length_https = 23;
-    var media_url_length = 23;
+var redwind = redwind || {};
+redwind.twitter = {
+    shortUrlLength: 22,
+    shortUrlLengthHttps: 23,
+    mediaUrlLength: 23,
 
     /* splits a text string into text and urls */
-    function classifyText(text) {
+    classifyText: function classifyText(text) {
         var result = [];
 
         var match;
@@ -26,12 +26,12 @@
         }
 
         return result;
-    }
+    },
 
-    function estimateLength(classified) {
+    estimateLength: function estimateLength(classified) {
         return classified.map(function(item){
             if (item.type == 'url') {
-                var urlLength = item.value.startsWith('https') ? short_url_length_https : short_url_length;
+                var urlLength = item.value.startsWith('https') ? shortUrlLengthHttps : shortUrlLength;
                 if (item.hasOwnProperty('prefix')) {
                     urlLength += item.prefix.length;
                 }
@@ -42,9 +42,9 @@
             }
             return item.value.length;
         }).reduce(function(a, b){ return a + b; }, 0);
-    }
+    },
 
-    function shorten(classified, target) {
+    shorten: function shorten(classified, target) {
         for (;;) {
             var length = estimateLength(classified);
             if (length <= target) {
@@ -80,9 +80,9 @@
                 }
             }
         }
-    }
+    },
 
-    function classifiedToString(classified) {
+    classifiedToString: function classifiedToString(classified) {
         return classified.map(function(item) {
             var result = '';
             if (item != null) {
@@ -98,9 +98,9 @@
             }
             return result;
         }).join('');
-    }
+    },
 
-    function generateTweetPreview() {
+    generateTweetPreview: function generateTweetPreview() {
 
         var addShortPermalink = function(classified) {
             classified.push({
@@ -152,21 +152,19 @@
         var shortened = classifiedToString(classified);
         $('#preview').val(shortened);
         fillCharCount();
-    }
+    },
 
-    function fillCharCount() {
+    fillCharCount: function fillCharCount() {
         var text = $('#preview').val();
         var classified = classifyText(text);
         var length = estimateLength(classified);
         $("#char_count").text(length);
     }
+};
 
-    /* register events */
-    $(document).ready(function() {
-
-        $('#preview').on('input propertychange', fillCharCount);
-        $('#permalink, #permashortlink, #permashortcite').on('click', function() { this.select(); });
-        fillCharCount();
-    });
-
-})();
+/* register events */
+$(document).ready(function() {
+    $('#preview').on('input propertychange', redwind.twitter.fillCharCount);
+    $('#permalink, #permashortlink, #permashortcite').on('click', function() { this.select(); });
+    redwind.twitter.fillCharCount();
+});

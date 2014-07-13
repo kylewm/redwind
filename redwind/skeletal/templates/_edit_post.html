@@ -13,9 +13,8 @@
 
   <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
   <input type="hidden" id="send_push" name="send_push" value="true"/>
-  {% block additional_params %}&nbsp;{% endblock additional_params %}
+  {% block additional_params %}{% endblock additional_params %}
 
   <input type="submit" id="publish_button" value="Publish"/>
 
 </form>
-<script type="text/javascript" src="{{url_for('static', filename='js/editor.js')}}"></script>

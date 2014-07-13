@@ -5,7 +5,7 @@ from . import queue
 
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response,\
-    render_template, flash
+    render_template, flash, abort
 
 import collections
 import requests
@@ -27,6 +27,9 @@ REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
 ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
 
+URL_CHAR_LENGTH = 23
+MEDIA_CHAR_LENGTH = 23
+TWEET_CHAR_LENGTH = 140
 
 TweetComponent = collections.namedtuple('TweetComponent', [
     'length',
@@ -121,9 +124,9 @@ def do_send_to_twitter(post_id):
 
     in_reply_to, repost_of, like_of \
         = twitter_client.posse_post_discovery(post)
-    preview = twitter_client.guess_tweet_content(post)
+    preview, img_url = twitter_client.guess_tweet_content(post)
     response = twitter_client.do_tweet(
-        post_id, preview, None, in_reply_to, repost_of, like_of)
+        post_id, preview, img_url, in_reply_to, repost_of, like_of)
     return str(response)
 
 
@@ -134,20 +137,20 @@ def share_on_twitter():
         shortid = request.args.get('id')
         if not shortid:
             abort(404)
-            
+
         post = Post.load_by_shortid(shortid)
         if not post:
             abort(404)
 
         app.logger.debug('sharing on twitter. post=%s', post)
-        
+
         in_reply_to, repost_of, like_of \
             = twitter_client.posse_post_discovery(post)
-        preview = twitter_client.guess_tweet_content(post)
+        preview, _ = twitter_client.guess_tweet_content(post)
 
         imgs = list(collect_images(post))
         app.logger.debug('twitter post has images: %s', imgs)
-        
+
         return render_template('share_on_twitter.html', preview=preview,
                                post=post, in_reply_to=in_reply_to,
                                repost_of=repost_of, like_of=like_of, imgs=imgs)
@@ -320,19 +323,34 @@ class TwitterClient:
                 length=len(text), can_shorten=True, can_drop=True, text=text))
             link = match.group(0)
             components.append(TweetComponent(
-                length=23, can_shorten=False, can_drop=True, text=link))
+                length=URL_CHAR_LENGTH, can_shorten=False,
+                can_drop=True, text=link))
             prev_end = match.end()
 
         text = preview[prev_end:]
         components.append(TweetComponent(
             length=len(text), can_shorten=True, can_drop=True, text=text))
 
-        if post.title or sum(c.length for c in components) > 140:
+        target_length = TWEET_CHAR_LENGTH
+
+        img_url = None
+        if post.photos:
+            from .controllers import create_dphoto
+            dphoto = create_dphoto(post, post.photos[0])
+            img_url = dphoto.url
+            target_length -= MEDIA_CHAR_LENGTH
+            if dphoto.caption:
+                components.append(TweetComponent(
+                    length=len(dphoto.caption, can_shorten=True,
+                               can_drop=True, text=dphoto.caption)))
+
+        if post.title or sum(c.length for c in components) > target_length:
             components.append(TweetComponent(
-                length=23, can_shorten=False, can_drop=False, text=post.permalink))
+                length=URL_CHAR_LENGTH, can_shorten=False,
+                can_drop=False, text=post.permalink))
 
         # iteratively shorten
-        delta = sum(c.length for c in components) - 140
+        delta = sum(c.length for c in components) - target_length
         shortened = []
 
         for c in reversed(components):
@@ -347,7 +365,7 @@ class TwitterClient:
                 delta -= c.length
 
         preview = ''.join(reversed([s.text for s in shortened]))
-        return preview
+        return preview, img_url
 
     def do_tweet(self, post_id, preview, img_url, in_reply_to,
                  repost_of, like_of):
