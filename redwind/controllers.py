@@ -159,7 +159,8 @@ def create_dpost(post):
                                for synd in parent.syndication)),
                       None)
         if parent:
-            parent.children.append(mention)
+            parent.children.append(
+                format_syndication_url(mention.permalink, False))
         else:
             mentions.append(mention)
 
@@ -315,6 +316,8 @@ def create_dcontext(url):
 
 
 def create_dmention(post, url):
+    prod_url = app.config.get('PROD_URL')
+    site_url = app.config.get('SITE_URL')
     target_urls = []
     if post:
         base_target_urls = [
@@ -325,8 +328,14 @@ def create_dmention(post, url):
 
         for base_url in base_target_urls:
             target_urls.append(base_url)
-            target_urls.append(base_url.replace('https://', 'http://'))
+            target_urls.append(base_url.replace('https://', 'http://')
+                               if base_url.startswith('https://')
+                               else base_url.replace('http://', 'https://'))
+            # use localhost url for testing if it's different from prod
+            if prod_url != site_url:
+                target_urls.append(base_url.replace(site_url, prod_url))
 
+    app.logger.debug('checking against urls: %s', target_urls)
     try:
         blob = archiver.load_json_from_archive(url)
         if blob:
@@ -359,8 +368,7 @@ def create_dmention(post, url):
                     pub_date_human=human_time(entry.get('published')),
                     title=entry.get('name'),
                     deleted=False,
-                    syndication=[format_syndication_url(s, False) for s
-                                 in entry.get('syndication', [])],
+                    syndication=entry.get('syndication', []),
                     children=[]
                 )
 

@@ -251,6 +251,11 @@
                 </div>
 
                 <div class="post-metadata">
+                  <time class="dt-published" datetime="{{reply.pub_date_iso }}">
+	            <a class="u-url" href="{{ reply.permalink }}">
+                      {{ reply.pub_date_human}}
+                    </a>
+	          </time>
                   {% if reply.children %}
                     <div class="syndication">
                       Also on
@@ -260,11 +265,6 @@
                     </div>
                   {% endif %}
 
-                  <time class="dt-published" datetime="{{reply.pub_date_iso }}">
-	            <a class="u-url" href="{{ reply.permalink }}">
-                      {{ reply.pub_date_human}}
-                    </a>
-	          </time>
                 </div>
               </div>
             </div>

@@ -12,6 +12,8 @@ def getdata():
         run("git push origin master")
 
     with lcd("./redwind/_data"):
+        local("git checkout -- .")
+        local("git clean -df")
         local("git pull origin master")
 
 
