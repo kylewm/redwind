@@ -40,9 +40,7 @@
     <span class="syndication-links">
       on
       {% for syndication in post.syndication %}
-        <a rel="syndication" class="u-syndication" href="{{ syndication }}">
-          {{ syndication | format_syndication_url | safe }}
-        </a>
+          {{ syndication | safe }}
       {% endfor %}
     </span>
   {% endif %}
