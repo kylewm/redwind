@@ -1,10 +1,28 @@
 
 class Configuration(object):
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://groomsman:password@localhost/groomsman'
     DEBUG = True
+    # Some secret key used by Flask-Login
     SECRET_KEY = 'a secret key other than this one'
+    # Color theme for pygments syntax coloring (handled by the
+    # codehilite plugin for Markdown)
     PYGMENTS_STYLE = 'tango'
+    # PuSH hub to notify for new posts or mentions
+    PUSH_HUB = 'https://kylewm.superfeedr.com/'
+    # Site's base URL, for generating external references
+    SITE_URL = 'http://example.com'
+    # if SITE_URL is localhost, it can be useful to set PROD_URL to
+    # the production URL (only used for interpreting comments)
+    PROD_URL = 'http://example.com'
+
+    SHORT_SITE_URL = 'http://sho.rt'
+    SHORT_SITE_CITE = 'sho.rt'
+    REDIS_QUEUE_KEY = 'a-unique-key-for-redis'
+    TIMEZONE = 'America/Los_Angeles'
+
+    TWITTER_CONSUMER_KEY = "..."
+    TWITTER_CONSUMER_SECRET = "..."
+
+    FACEBOOK_APP_ID = "..."
+    FACEBOOK_APP_SECRET = "..."
+
     THEME = 'skeletal'
-    PUBLISH = 'https://kylewm.superfeedr.com/'
-    SECURE_SITE_URL = 'https://'
-    SITE_URL = 'http://'
