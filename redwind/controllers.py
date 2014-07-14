@@ -332,7 +332,7 @@ def create_dmention(post, url):
                                if base_url.startswith('https://')
                                else base_url.replace('http://', 'https://'))
             # use localhost url for testing if it's different from prod
-            if prod_url != site_url:
+            if prod_url and prod_url != site_url:
                 target_urls.append(base_url.replace(site_url, prod_url))
 
     app.logger.debug('checking against urls: %s', target_urls)
