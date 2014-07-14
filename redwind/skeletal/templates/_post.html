@@ -75,7 +75,7 @@
   {% endif %}
 
   {% if post.content %}
-    <div class="e-content">
+    <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
       {{post.content}}
     </div>
   {% endif %}
