@@ -802,6 +802,10 @@ def person_to_microcard(fullname, displayname, entry, pos):
         photo_mirror = local_mirror_resource(photo)
         return '<a class="microcard h-card" href="{}">'\
             '<img src="{}" />{}</a>'.format(url, photo_mirror, displayname)
+    elif url:
+        return '<a class="microcard h-card" href="{}">{}</a>'.format(
+            url, displayname)
+        
     return displayname
 
 

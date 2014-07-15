@@ -170,12 +170,13 @@ def resize_image(sourcedir, filename, side):
 
         if im._getexif():
             exif = dict(im._getexif().items())
-            if exif[orientation] == 3:
-                im = im.transpose(Image.ROTATE_180)
-            elif exif[orientation] == 6:
-                im = im.transpose(Image.ROTATE_270)
-            elif exif[orientation] == 8:
-                im = im.transpose(Image.ROTATE_90)
+            if orientation in exif:
+                if exif[orientation] == 3:
+                    im = im.transpose(Image.ROTATE_180)
+                elif exif[orientation] == 6:
+                    im = im.transpose(Image.ROTATE_270)
+                elif exif[orientation] == 8:
+                    im = im.transpose(Image.ROTATE_90)
 
         origw, origh = im.size
         ratio = side / max(origw, origh)
