@@ -489,6 +489,9 @@ class Metadata:
                                "not opened with 'writeable' flag")
         json.dump(self.blob, open(self.PATH, 'w'), indent=True)
 
+    def get_post_blobs(self):
+        return self.blob['posts']
+
     def get_recent_mentions(self):
         return self.blob['mentions']
 

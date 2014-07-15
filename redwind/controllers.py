@@ -681,6 +681,36 @@ def delete_by_id():
     app.logger.debug("redirecting to {}".format(redirect_url))
     return redirect(redirect_url)
 
+def get_top_tags(n=10):
+    """
+    Determine top-n tags based on a combination of frequency and receny.
+    ref: https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Frecency_algorithm
+    """
+    rank = collections.defaultdict(int)
+    now = datetime.datetime.utcnow()
+    mdata = Metadata()
+    for post in mdata.get_post_blobs():
+        published = util.isoparse(post.get('published'))
+        weight = 0
+        if published:
+            delta = now - published
+            if delta < datetime.timedelta(days=4):
+                weight = 1.0
+            elif delta < datetime.timedelta(days=14):
+                weight = 0.7
+            elif delta < datetime.timedelta(days=31):
+                weight = 0.5
+            elif delta < datetime.timedelta(days=90):
+                weight = 0.3
+            elif delta < datetime.timedelta(days=730):
+                weight = 0.1
+        for tag in post.get('tags', []):
+            rank[tag] += weight
+
+    ordered = sorted(list(rank.items()), key=operator.itemgetter(1),
+                     reverse=True)
+    return [key for key, _ in ordered[:n]]
+
 
 @app.route('/admin/new')
 def new_post():
@@ -713,7 +743,8 @@ def new_post():
     # it to an existing DOM
     if partial:
         return render_template('_edit_' + post_type + '.html',
-                               edit_type='new', post=post)
+                               edit_type='new', post=post,
+                               top_tags=get_top_tags())
 
     return render_template('edit_post.html', edit_type='new', post=post,
                            advanced=request.args.get('advanced'))
@@ -1013,7 +1044,8 @@ def save_post(post):
         audience = request.form.get('audience', '')
         post.audience = multiline_string_to_list(audience)
 
-        post.tags = request.form.get('tags', '').split()
+        tags = request.form.get('tags', '').split(',')
+        post.tags = list(filter(None, map(util.normalize_tag, tags)))
 
         # TODO accept multiple photos and captions
         inphoto = request.files.get('photo')

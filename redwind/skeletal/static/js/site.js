@@ -25,10 +25,22 @@ redwind.posts  = {
     postTypes: [ 'note', 'checkin', 'reply', 'share', 'like', 'photo', 'bookmark'],
 
     showPartialEditor: function (type) {
+        var self = this;
         $.get('/admin/new?partial=1&type=' + type, '',
               function(result) {
                   $('#composition-area').empty().append(result);
+                  self.handlePartialEditorEvents();
               });
+    },
+
+    handlePartialEditorEvents: function() {
+        $("#edit_form a.top_tag").click(function(event) {
+            event.preventDefault();
+            var tagValue = $(this).html();
+            $("#edit_form #tags").val(function(i, val) {
+                return val + (val ? ',' : '') + tagValue;
+            });
+        });
     },
 
     showPostControls: function(arrow) {
@@ -83,7 +95,7 @@ $(document).ready(function() {
     //$('#syndication_textarea').css('display','none');
     //$('#audience_textarea').css('display', 'none');
 
-    $('#syndication_expander').click(function(){
+    $('#edit_form #syndication_expander').click(function(){
         var textarea = $('#syndication_textarea');
         var closed = textarea.css('display') == 'none';
         if (closed) {
@@ -95,7 +107,7 @@ $(document).ready(function() {
         $(this).toggleClass('fa-minus-square-o', closed);
     });
 
-    $('#audience_expander').click(function(){
+    $('#edit_form #audience_expander').click(function(){
         var textarea = $('#audience_textarea');
         var closed = textarea.css('display') == 'none';
         if (closed) {
@@ -120,7 +132,7 @@ $(document).ready(function() {
         }
     });
 
-    $('#image_upload_button').change(function() {
+    $('#edit_form #image_upload_button').change(function() {
         $('#uploads').empty();
         for (var ii = 0 ; ii < this.files.length ; ii++) {
             (function(file) {
@@ -137,4 +149,5 @@ $(document).ready(function() {
             })(this.files[ii]);
         }
     });
+
 });

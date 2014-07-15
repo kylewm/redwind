@@ -80,6 +80,14 @@ the primary sidebar */
 .new-post-bar a {color: #333; display: inline-block; width: 60px; text-decoration: none;}
 .mention-counts { float: right; }
 
+#edit_form a.top_tag {border: 1px solid #aaa;
+                      background-color: #eee;
+                      padding: 3px;
+                      display: inline-block;
+                      text-decoration: none;}
+
+#edit_form a.top_tag:hover {background-color: #ddf;}
+
 
 /* #Page Styles
 ================================================== */
