@@ -29,6 +29,8 @@
 */
 
 body > .container {margin-top: 40px; margin-bottom: 40px;}
+/* don't allow blockquotes to break the maximum width */
+blockquote { overflow: auto; }
 
 .microcard img { height: 1em; width: auto; }
 article img { max-width: 100%; max-height: 512px; }
@@ -80,12 +82,11 @@ the primary sidebar */
 .new-post-bar a {color: #333; display: inline-block; width: 60px; text-decoration: none;}
 .mention-counts { float: right; }
 
-#edit_form a.top_tag {border: 1px solid #aaa;
-                      background-color: #eee;
-                      padding: 3px;
-                      display: inline-block;
-                      text-decoration: none;}
 
+#edit_form textarea, #edit_form input[type="text"] {width: 100%;}
+#edit_form .top_tags {margin: 0px 0px 20px;}
+#edit_form a.top_tag {border: 1px solid #aaa; background-color: #eee;
+                      padding: 3px; margin: 0px 0px 5px; display: inline-block; text-decoration: none;}
 #edit_form a.top_tag:hover {background-color: #ddf;}
 
 

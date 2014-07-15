@@ -7,42 +7,42 @@
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
   <label>Title</label>
-  <input id="title" name="title" size="60" value="{{ post.title or '' }}"/>
+  <input type="text" id="title" name="title" size="60" value="{{ post.title or '' }}"/>
 
   <label>Slug</label>
-  <input id="slug" name="slug" size="60" value="{{ post.slug or ''}}"/>
+  <input type="text" id="slug" name="slug" size="60" value="{{ post.slug or ''}}"/>
 
   <label>In Reply To (URLs)</label>
-  <textarea style="width:100%" name="in_reply_to" rows="2">{{post.in_reply_to | join('\n')}}</textarea>
+  <textarea name="in_reply_to" rows="2">{{post.in_reply_to | join('\n')}}</textarea>
 
   <label>Repost (URLs)</label>
-  <textarea style="width:100%" name="repost_of" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea>
+  <textarea name="repost_of" cols="50" rows="2">{{post.repost_of | join('\n')}}</textarea>
 
   <label>Like of (URLs)</label>
-  <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
+  <textarea name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
 
   <label>Bookmark of (URLs)</label>
-  <textarea style="width:100%" name="bookmark_of" cols="50" rows="2">{{post.bookmark_of | join('\n')}}</textarea>
+  <textarea name="bookmark_of" cols="50" rows="2">{{post.bookmark_of | join('\n')}}</textarea>
 
   <label>Content</label>
-  <textarea name="content" id="content" style="width:100%" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
+  <textarea name="content" id="content" rows="{{ 30 if post.post_type == 'article' else 5 }}">{{ post.content }}</textarea>
 
   <label><i id="syndication_expander" class="fa fa-plus-square-o"></i> Syndication (URLs)</label>
-  <textarea style="width:100%" id="syndication_textarea" name="syndication" cols="50" rows="2">{{ post.syndication | join('\n') }}</textarea>
+  <textarea id="syndication_textarea" name="syndication" cols="50" rows="2">{{ post.syndication | join('\n') }}</textarea>
 
   <label><i id="audience_expander" class="fa fa-plus-square-o"></i> Audience</label>
-  <textarea style="width:100%" id="audience_textarea" name="audience" cols="50" rows="2">{{ post.audience | join('\n') }}</textarea>
+  <textarea id="audience_textarea" name="audience" cols="50" rows="2">{{ post.audience | join('\n') }}</textarea>
 
   <label>Tags</label>
-  <input id="tags" name="tags" value="{{ post.tags | join(' ') }}"/>
+  <input type="text" id="tags" name="tags" value="{{ post.tags | join(', ') }}"/>
 
   <label><input type="checkbox" id="get_coords_button"/> Location</label>
   <label>Latitude</label>
-  <input id="latitude" name="latitude" value="{{ post.location.latitude if post.location else ''}}"/>
+  <input type="text" id="latitude" name="latitude" value="{{ post.location.latitude if post.location else ''}}"/>
   <label>Longitude</label>
-  <input id="longitude" name="longitude" value="{{ post.location.longitude if post.location else ''}}"/>
+  <input type="text" id="longitude" name="longitude" value="{{ post.location.longitude if post.location else ''}}"/>
   <label>Location</label>
-  <input id="location_name" name="location_name" value="{{ post.location.name if post.location and post.location.name else ''}}"/>
+  <input type="text" id="location_name" name="location_name" value="{{ post.location.name if post.location and post.location.name else ''}}"/>
 
   <label><input type="checkbox" id="send_webmentions" name="send_webmentions" value="true" {% if not post.date_index %}checked{% endif %} />Webmentions</label>
   <label><input type="checkbox" id="send_push" name="send_push" value="true" {% if not post.date_index %}checked{% endif %} />PuSH</label>

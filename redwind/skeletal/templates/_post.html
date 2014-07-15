@@ -118,7 +118,7 @@
       <div class="tags">
         <i class="fa fa-tag"></i>
         {% for tag in post.tags %}
-          <a href="{{url_for('posts_by_tag', tag=tag)}}">{{tag}}</a>
+          <a href="{{url_for('posts_by_tag', tag=tag)}}">{{tag}}</a>{% if not loop.last %},{% endif %}
         {% endfor %}
       </div>
     {% endif %}

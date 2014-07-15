@@ -744,7 +744,7 @@ def new_post():
     if partial:
         return render_template('_edit_' + post_type + '.html',
                                edit_type='new', post=post,
-                               top_tags=get_top_tags())
+                               top_tags=get_top_tags(20))
 
     return render_template('edit_post.html', edit_type='new', post=post,
                            advanced=request.args.get('advanced'))
