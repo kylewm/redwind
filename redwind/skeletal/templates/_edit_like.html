@@ -1,8 +1,7 @@
 {% extends "_edit_note.html" %}
 
 {% block above_content %}
-  <label>Like of (URLs)</label>
-  <textarea style="width:100%" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
+  <textarea style="width:100%" name="like_of" cols="50" rows="2" placeholder="Like of (URLs)">{{post.like_of | join('\n')}}</textarea>
 {% endblock above_content %}
 
 {% block content %}{% endblock content %}

@@ -5,6 +5,7 @@ import os.path
 import re
 import requests
 import datetime
+import unicodedata
 import urllib
 
 
@@ -25,6 +26,13 @@ def isoformat(date):
             date = date.replace(tzinfo=None)
         date = date.replace(microsecond=0)
         return date.isoformat('T')
+
+
+def normalize_tag(tag):
+    # lowercase and remove spaces, dashes, and underscores
+    tag = unicodedata.normalize('NFKD', tag).lower()
+    tag = re.sub(r'[ _\-]', '', tag)
+    return tag
 
 
 def filter_empty_keys(data):

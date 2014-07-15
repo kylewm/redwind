@@ -6,10 +6,14 @@
 
   {% block above_content %}{% endblock above_content %}
   {% block content %}
-    <label>Content</label>
-    <textarea name="content" id="content" style="width:100%" rows="3">{{ post.content }}</textarea>
+    <textarea name="content" id="content" style="width:100%" rows="3" placeholder="Content">{{ post.content }}</textarea>
   {% endblock content %}
   {% block below_content %}{% endblock below_content %}
+
+    <input type="text" name="tags" id="tags" style="width:100%" placeholder="cats, python" />
+    {% for tag in top_tags %}
+      <a href="#" class="top_tag">{{tag}}</a>
+    {% endfor %}
 
   <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
   <input type="hidden" id="send_push" name="send_push" value="true"/>

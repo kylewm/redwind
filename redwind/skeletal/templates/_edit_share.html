@@ -1,11 +1,5 @@
 {% extends "_edit_note.html" %}
 
 {% block above_content %}
-
-  <div class="repost_of">
-    <label>Repost (URLs)
-      <textarea style="width:100%" name="repost_of" cols="50" rows="1">{{post.repost_of | join('\n')}}</textarea>
-    </label>
-  </div>
-
+<textarea style="width:100%" name="repost_of" cols="50" rows="1" placeholder="Repost (URLs)">{{post.repost_of | join('\n')}}</textarea>
 {% endblock above_content %}
