@@ -92,6 +92,7 @@ DPost = collections.namedtuple('DPost', [
 
 DPhoto = collections.namedtuple('DPhoto', [
     'url',
+    'thumbnail',
     'caption',
 ])
 
@@ -230,9 +231,14 @@ def create_dphoto(post, photo):
     caption = photo.get('caption')
     if caption:
         caption = markdown_filter(caption)
-    return DPhoto(
-        url=os.path.join(post.get_image_path(), photo.get('filename')),
-        caption=caption)
+
+    url=os.path.join(post.get_image_path(), photo.get('filename'))
+    thumbnail=url
+
+    if photo.get('resizeable', True):
+        thumbnail += '?size=medium'
+    
+    return DPhoto(url=url, thumbnail=thumbnail, caption=caption)
 
 
 def create_dcontext(url):

@@ -176,7 +176,7 @@ def resize_image(sourcedir, filename, side):
         orientation = next((k for k, v in ExifTags.TAGS.items()
                             if v == 'Orientation'), None)
 
-        if im._getexif():
+        if hasattr(im, '_getexif') and im._getexif():
             exif = dict(im._getexif().items())
             if orientation in exif:
                 if exif[orientation] == 3:
