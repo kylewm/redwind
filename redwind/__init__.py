@@ -26,8 +26,6 @@ app.jinja_options = ImmutableDict(
 
 if app.debug:
     toolbar = DebugToolbarExtension(app)
-
-if app.debug:
     app.config['SITE_URL'] = 'http://localhost'
 
 if not app.debug:
@@ -36,10 +34,22 @@ if not app.debug:
     app.logger.setLevel(logging.DEBUG)
 
     file_handler = RotatingFileHandler('app.log', maxBytes=1048576,
-                                       backupCount=5)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+                                       backupCount=20)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
 
+    if 'ADMIN_EMAILS' in app.config:
+        from logging.handlers import SMTPHandler
+        mail_handler = SMTPHandler('127.0.0.1',
+                                   'server-error@kylewm.com',
+                                   app.config['ADMIN_EMAILS'],
+                                   'Red Wind Error')
+        mail_handler.setLevel(logging.ERROR)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        mail_handler.set_formatter(formatter)
+        app.logger.addHandler(mail_handler)
 
 from . import controllers

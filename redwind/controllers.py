@@ -232,12 +232,12 @@ def create_dphoto(post, photo):
     if caption:
         caption = markdown_filter(caption)
 
-    url=os.path.join(post.get_image_path(), photo.get('filename'))
-    thumbnail=url
+    url = os.path.join(post.get_image_path(), photo.get('filename'))
+    thumbnail = url
 
     if photo.get('resizeable', True):
         thumbnail += '?size=medium'
-    
+
     return DPhoto(url=url, thumbnail=thumbnail, caption=caption)
 
 
@@ -634,6 +634,12 @@ def shortlink(tag):
 #     return redirect(url_for('index'))
 
 
+@app.route('/fakeerror')
+def fakeerror():
+    app.logger.error('this is what an error looks like')
+    abort(404)
+
+
 @app.route("/indieauth")
 def indieauth():
     token = request.args.get('token')
@@ -842,7 +848,7 @@ def person_to_microcard(fullname, displayname, entry, pos):
     elif url:
         return '<a class="microcard h-card" href="{}">{}</a>'.format(
             url, displayname)
-        
+
     return displayname
 
 
