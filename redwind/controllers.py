@@ -410,8 +410,8 @@ def render_posts(title, post_types, page, per_page, tag=None,
 
     dposts = [create_dpost(post) for post in posts if check_audience(post)]
     return render_template('posts.html', posts=dposts, title=title,
-                           prev_page=page-1,
-                           next_page=page+1)
+                           prev_page=page-1, next_page=page+1,
+                           body_class='h-feed', article_class='h-entry')
 
 
 @app.route('/', defaults={'page': 1})
@@ -608,7 +608,8 @@ def post_by_date(post_type, year, month, day, index, slug):
     if not title:
         title = "A {} from {}".format(dpost.post_type, dpost.pub_day)
 
-    return render_template('post.html', post=dpost, title=title)
+    return render_template('post.html', post=dpost, title=title, 
+                           body_class='h-entry', article_class=None)
 
 
 @app.route('/short/<string(minlength=5,maxlength=6):tag>')
@@ -632,12 +633,6 @@ def shortlink(tag):
 #     user = auth.load_user(domain)
 #     login_user(user, remember=True)
 #     return redirect(url_for('index'))
-
-
-@app.route('/fakeerror')
-def fakeerror():
-    app.logger.error('this is what an error looks like')
-    abort(404)
 
 
 @app.route("/indieauth")

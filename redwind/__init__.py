@@ -40,16 +40,10 @@ if not app.debug:
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
 
-    if 'ADMIN_EMAILS' in app.config:
-        from logging.handlers import SMTPHandler
-        mail_handler = SMTPHandler('127.0.0.1',
-                                   'server-error@kylewm.com',
-                                   app.config['ADMIN_EMAILS'],
-                                   'Red Wind Error')
-        mail_handler.setLevel(logging.ERROR)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        mail_handler.set_formatter(formatter)
-        app.logger.addHandler(mail_handler)
+    error_handler = RotatingFileHandler('app.error.log', maxBytes=1048576,
+                                             backupCount=20)
+    error_handler.setLevel(logging.ERROR)
+    error_handler.setFormatter(formatter)
+    app.logger.addHandler(error_handler)
 
 from . import controllers

@@ -20,28 +20,21 @@
     </div>
   {% endif %}
 
+  {% for post in posts %}
+    {% include "_post.html" %}
+  {% endfor %}
 
-  <div class="h-feed">
-    {% for post in posts %}
-      {% include "_post.html" %}
-    {% endfor %}
-
-    <div class="page-arrows clearfix">
-      {% if prev_page %}
-        <div class="page-left">
-          <a href="{{ url_for_other_page( prev_page ) }}">&larr; Newer</a>
-        </div>
-      {% endif %}
-      {% if next_page %}
-        <div class="page-right">
-          <a href="{{ url_for_other_page( next_page ) }}">Older &rarr;</a>
-        </div>
-      {% endif %}
-
-    </div>
-
-
+  <div class="page-arrows clearfix">
+    {% if prev_page %}
+      <div class="page-left">
+        <a href="{{ url_for_other_page( prev_page ) }}">&larr; Newer</a>
+      </div>
+    {% endif %}
+    {% if next_page %}
+      <div class="page-right">
+        <a href="{{ url_for_other_page( next_page ) }}">Older &rarr;</a>
+      </div>
+    {% endif %}
   </div>
-
 
 {% endblock content %}
