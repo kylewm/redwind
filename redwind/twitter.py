@@ -124,7 +124,7 @@ def do_send_to_twitter(post_id):
 
     in_reply_to, repost_of, like_of \
         = twitter_client.posse_post_discovery(post)
-    preview, img_url = twitter_client.guess_tweet_content(post)
+    preview, img_url = twitter_client.guess_tweet_content(post, in_reply_to)
     response = twitter_client.do_tweet(
         post_id, preview, img_url, in_reply_to, repost_of, like_of)
     return str(response)
@@ -142,11 +142,15 @@ def share_on_twitter():
         if not post:
             abort(404)
 
-        app.logger.debug('sharing on twitter. post=%s', post)
+        app.logger.debug('sharing on twitter. post: %s', post)
 
         in_reply_to, repost_of, like_of \
             = twitter_client.posse_post_discovery(post)
-        preview, _ = twitter_client.guess_tweet_content(post)
+
+        app.logger.debug('discovered in-reply-to: %s, repost-of: %s, like-of: %s',
+                         in_reply_to, repost_of, like_of)
+
+        preview, _ = twitter_client.guess_tweet_content(post, in_reply_to)
 
         imgs = list(collect_images(post))
         app.logger.debug('twitter post has images: %s', imgs)
@@ -181,7 +185,7 @@ def format_markdown_as_tweet(data):
 
 class TwitterClient:
     PERMALINK_RE = re.compile(
-        "https?://(?:www\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)")
+        "https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)")
 
     def get_auth(self):
         return OAuth1(
@@ -306,7 +310,7 @@ class TwitterClient:
             find_first_syndicated(post.like_of),
         )
 
-    def guess_tweet_content(self, post):
+    def guess_tweet_content(self, post, in_reply_to):
         """Best guess effort to generate tweet content for a post; useful for
         auto-filling the share form.
         """
@@ -314,6 +318,14 @@ class TwitterClient:
             preview = post.title
         else:
             preview = format_markdown_as_tweet(post.content)
+
+        # add an in-reply-to if one isn't there already
+        if in_reply_to:
+            reply_match = self.PERMALINK_RE.match(in_reply_to)
+            if reply_match:
+                reply_name = '@' + reply_match.group(1)
+                if not preview.startswith(reply_name):
+                    preview = reply_name + ' ' + preview
 
         components = []
         prev_end = 0
