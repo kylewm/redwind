@@ -1,5 +1,25 @@
 
-<article{%if article_class%} class="{{article_class}}"{%endif%}>
+<article class="{%if article_class%}{{article_class}} {%endif%} {{post.post_type}}">
+
+  <div class="post-metadata">
+      <a class="u-url" href="{{post.permalink}}">
+        <time class="dt-published" datetime="{{post.pub_date_iso}}">{{post.pub_date_human}}</time>
+      </a>
+
+      {% if current_user.is_authenticated() %}
+        <a class="admin-post-controls-arrow" href="#"> | Admin </a>
+        <span class="admin-post-controls" style="display:none;">
+          | <a href="{{ url_for('edit_by_id', id=post.shortid) }}"><i class="fa fa-edit"></i> Edit </a>
+          |
+          <a href="{{ url_for('share_on_twitter', id=post.shortid) }}"><i class="fa fa-twitter"></i> Twitter </a>
+          |
+          <a href="{{ url_for('share_on_facebook', id=post.shortid) }}"><i class="fa fa-facebook"></i> Facebook </a>
+          |
+          <a href="{{ url_for('delete_by_id', id=post.shortid) }}" onclick="return window.confirm('Delete {{post.post_type}}?')">
+            <i class="fa fa-trash-o"></i> Delete </a>
+        </span>
+      {% endif %}
+  </div>
 
   {% for context in post.reply_contexts %}
     <div class="p-in-reply-to h-cite">
@@ -75,22 +95,20 @@
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
 
-  {% if post.content %}
-    <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
-      {{post.content}}
-    </div>
-  {% endif %}
+  <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
+    {{post.content}}
 
-  {% for photo in post.photos %}
-    <div class="photo-holder">
-      <a href="{{photo.url}}">
-        <img class="u-photo" src="{{photo.thumbnail}}" />
-      </a>
-      {% if photo.caption %}
-        <div class="caption">{{ photo.caption | safe }}</div>
-      {% endif %}
-    </div>
-  {% endfor %}
+    {% for photo in post.photos %}
+      <div class="photo-holder">
+        <a href="{{photo.url}}">
+          <img class="u-photo" src="{{photo.thumbnail}}" />
+        </a>
+        {% if photo.caption %}
+          <div class="caption">{{ photo.caption | safe }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
 
   {% if post.post_type == 'checkin' and post.location %}
     <div class="map"
@@ -115,15 +133,6 @@
       </div>
     {% endif %}
 
-    {% if is_single and post.tags %}
-      <div class="tags">
-        <i class="fa fa-tag"></i>
-        {% for tag in post.tags %}
-          <a class="p-category" href="{{url_for('posts_by_tag', tag=tag)}}">{{tag}}</a>{% if not loop.last %},{% endif %}
-        {% endfor %}
-      </div>
-    {% endif %}
-
     {% if not is_single %}
       <div class="mention-counts">
         {% if post.reply_count %}
@@ -140,29 +149,18 @@
         {% endif %}
       </div>
     {% endif %}
-
-    <div>
-      <a class="u-url" href="{{post.permalink}}">
-        <time class="dt-published" datetime="{{post.pub_date_iso}}">{{post.pub_date_human}}</time>
-      </a>
-
-      {% if current_user.is_authenticated() %}
-        <a class="admin-post-controls-arrow" href="#"> | Admin </a>
-        <span class="admin-post-controls" style="display:none;">
-          | <a href="{{ url_for('edit_by_id', id=post.shortid) }}"><i class="fa fa-edit"></i> Edit </a>
-          |
-          <a href="{{ url_for('share_on_twitter', id=post.shortid) }}"><i class="fa fa-twitter"></i> Twitter </a>
-          |
-          <a href="{{ url_for('share_on_facebook', id=post.shortid) }}"><i class="fa fa-facebook"></i> Facebook </a>
-          |
-          <a href="{{ url_for('delete_by_id', id=post.shortid) }}" onclick="return window.confirm('Delete {{post.post_type}}?')">
-            <i class="fa fa-trash-o"></i> Delete </a>
-        </span>
-      {% endif %}
-    </div>
+      
+    {% if is_single and post.tags %}
+      <div class="tags">
+        Tags
+        {% for tag in post.tags %}
+          <a class="p-category" href="{{url_for('posts_by_tag', tag=tag)}}">{{tag}}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
 
     {% if is_single %}
-      <div>
+      <div class="syndication-links">
         {% if post.syndication %}
           Also on
           {% for s in post.syndication %}

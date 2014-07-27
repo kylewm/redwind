@@ -147,8 +147,15 @@ def create_dpost(post):
         filtered.sort(key=get_pub_date)
         return filtered
 
-    content = Markup(markdown_filter(
-        post.content, img_path=post.get_image_path()))
+    if post.content:
+        content = Markup(markdown_filter(
+                post.content, img_path=post.get_image_path()))
+    elif post.post_type == 'like':
+        content = 'liked this'
+    elif post.post_type == 'share':
+        content = 'shared this'
+    else:
+        content = ''
 
     # arrange posse'd mentions into a hierarchy based on rel-syndication
     mentions = []
@@ -341,7 +348,6 @@ def create_dmention(post, url):
             if prod_url and prod_url != site_url:
                 target_urls.append(base_url.replace(site_url, prod_url))
 
-    app.logger.debug('checking against urls: %s', target_urls)
     try:
         blob = archiver.load_json_from_archive(url)
         if blob:

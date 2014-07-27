@@ -43,15 +43,19 @@ article img { max-width: 100%; max-height: 512px; }
 .sidebar h1,h2,h3,h4,h5,h6 {
     font-family: "HelveticaNeue","Helvetica Neue",Helvetica,Arial,sans-serif;}
 .sidebar ul li a, .sidebar ul li a:visited, .sidebar ul li a:active {
-    font-size: 14px; color: #555; text-decoration: none; font-weight: bold;}
+    font-size: 0.9rem; color: #555; text-decoration: none; font-weight: bold;}
 .sidebar nav { text-align: right; }
 .sidebar .social { text-align: right; }
 .sidebar .widget { margin-top: 20px; }
+
+.note > .e-content, .reply > .e-content, 
+.photo > .e-content, .share > .e-content {font-size: 1.5em; 
+                                          line-height: 1.4em; }
 .post-metadata { color: #aaa; }
 .post-metadata a { color: #999; text-decoration: none; }
 .post-metadata a:hover { color: #999; text-decoration: underline; }
 .p-comment + .p-comment { margin-top: 1rem; }
-article + article { margin-top: 50px; }
+article + article { margin-top: 90px; }
 .e-content p:last-child { margin-bottom: 0; }
 img.avatar { max-width: 64px; height: auto; }
 .map { height: 240px; max-width: 640px; width: 100%; }
@@ -80,7 +84,7 @@ the primary sidebar */
 .new-post-bar ul li {text-align: center; vertical-align: center; display: inline; padding: 1em;}
 .new-post-bar i {font-size: 24pt; display: block;}
 .new-post-bar a {color: #333; display: inline-block; width: 60px; text-decoration: none;}
-.mention-counts { float: right; }
+/*.mention-counts { float: right; }*/
 
 
 #edit_form textarea, #edit_form input[type="text"] {width: 100%;}
@@ -88,6 +92,11 @@ the primary sidebar */
 #edit_form a.top_tag {border: 1px solid #aaa; background-color: #eee;
                       padding: 3px; margin: 0px 0px 5px; display: inline-block; text-decoration: none;}
 #edit_form a.top_tag:hover {background-color: #ddf;}
+
+article a.p-category {background-color: #eee; padding: 0px 5px;
+                      display: inline-block; text-decoration: none;}
+
+article .tags, article .syndication-links {margin: 10px 0px;}
 
 
 /* #Page Styles

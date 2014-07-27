@@ -29,9 +29,11 @@ redwind.twitter = {
     },
 
     estimateLength: function estimateLength(classified) {
+        var self = this;
         return classified.map(function(item){
             if (item.type == 'url') {
-                var urlLength = item.value.startsWith('https') ? shortUrlLengthHttps : shortUrlLength;
+                var urlLength = item.value.startsWith('https') ?
+                    self.shortUrlLengthHttps : self.shortUrlLength;
                 if (item.hasOwnProperty('prefix')) {
                     urlLength += item.prefix.length;
                 }
@@ -132,39 +134,39 @@ redwind.twitter = {
             useShortPermalink = true;
         }
 
-        var classified = classifyText(fullText);
+        var classified = this.classifyText(fullText);
 
         if (useShortPermalink) {
-            addShortPermalink(classified);
+            this.addShortPermalink(classified);
         } else {
-            addPermalink(classified);
+            this.addPermalink(classified);
         }
 
-        if (estimateLength(classified) > target) {
+        if (this.estimateLength(classified) > target) {
             if (useShortPermalink) {
                 // replace the shortlink with a full one
                 classified.pop();
-                addPermalink(classified);
+                this.addPermalink(classified);
             }
-            shorten(classified, target);
+            this.shorten(classified, target);
         }
 
-        var shortened = classifiedToString(classified);
+        var shortened = this.classifiedToString(classified);
         $('#preview').val(shortened);
-        fillCharCount();
+        this.fillCharCount();
     },
 
     fillCharCount: function fillCharCount() {
         var text = $('#preview').val();
-        var classified = classifyText(text);
-        var length = estimateLength(classified);
+        var classified = this.classifyText(text);
+        var length = this.estimateLength(classified);
         $("#char_count").text(length);
     }
 };
 
 /* register events */
 $(document).ready(function() {
-    $('#preview').on('input propertychange', redwind.twitter.fillCharCount);
+    $('#preview').on('input propertychange', redwind.twitter.fillCharCount.bind(redwind.twitter));
     $('#permalink, #permashortlink, #permashortcite').on('click', function() { this.select(); });
     redwind.twitter.fillCharCount();
 });
