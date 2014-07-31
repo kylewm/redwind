@@ -6,6 +6,7 @@ from flask import request, redirect, url_for, render_template
 
 import requests
 import json
+import urllib
 
 
 @app.route('/admin/authorize_facebook')
@@ -47,10 +48,11 @@ def share_on_facebook():
 
         preview = post.title + '\n\n' if post.title else ''
         preview += format_markdown_as_facebook(post.content)
+        imgs = [urllib.parse.urljoin(app.config['SITE_URL'], img)
+                for img in collect_images(post)]
 
         return render_template('share_on_facebook.html', post=post,
-                               preview=preview,
-                               imgs=list(collect_images(post)))
+                               preview=preview, imgs=imgs)
 
     try:
         post_id = request.form.get('post_id')
@@ -107,16 +109,14 @@ def handle_new_or_edit(post, preview, img_url, post_type):
     post_args = {
         'access_token': current_user.facebook_access_token,
         'message': preview.strip(),
-        'actions': json.dumps({
-            'name': 'See Original',
-            'link': post.permalink,
-        }),
+        'actions': json.dumps({'name': 'See Original', 'link': post.permalink}),
         #'privacy': json.dumps({'value': 'SELF'}),
         'privacy': json.dumps({'value': 'EVERYONE'}),
         #'article': post.permalink,
     }
 
-    post_args['name'] = post.title
+    if post.title:
+        post_args['name'] = post.title
 
     is_photo = False
 
