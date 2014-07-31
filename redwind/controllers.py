@@ -149,7 +149,7 @@ def create_dpost(post):
 
     if post.content:
         content = Markup(markdown_filter(
-                post.content, img_path=post.get_image_path()))
+            post.content, img_path=post.get_image_path()))
     elif post.post_type == 'like':
         content = 'liked this'
     elif post.post_type == 'share':
@@ -614,7 +614,7 @@ def post_by_date(post_type, year, month, day, index, slug):
     if not title:
         title = "A {} from {}".format(dpost.post_type, dpost.pub_day)
 
-    return render_template('post.html', post=dpost, title=title, 
+    return render_template('post.html', post=dpost, title=title,
                            body_class='h-entry', article_class=None)
 
 
@@ -664,19 +664,19 @@ def indieauth():
     return redirect(url_for('index'))
 
 
-@app.route("/admin/logout")
+@app.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
 
-@app.route('/admin/settings')
+@app.route('/settings')
 @login_required
 def settings():
     return render_template("settings.html", user=current_user)
 
 
-@app.route('/admin/delete')
+@app.route('/delete')
 @login_required
 def delete_by_id():
     shortid = request.args.get('id')
@@ -725,45 +725,55 @@ def get_top_tags(n=10):
     return [key for key, _ in ordered[:n]]
 
 
-@app.route('/admin/new')
-def new_post():
+@app.route('/new/<type>')
+@app.route('/new', defaults={'type': 'note'})
+def new_post(type):
     partial = request.args.get('partial', False)
-    post_type = request.args.get('type', 'note')
-    post = Post(post_type)
+    post = Post(type)
+    post.pub_date = datetime.datetime.utcnow()
     post.content = ''
 
-    if post_type == 'reply':
-        in_reply_to = request.args.get('in_reply_to')
+    if type == 'reply':
+        in_reply_to = request.args.get('url')
         if in_reply_to:
+            contexts.do_fetch_context(in_reply_to)
             post.in_reply_to = [in_reply_to]
 
-    if post_type == 'share':
-        repost_of = request.args.get('repost_of')
+    if type == 'share':
+        repost_of = request.args.get('url')
         if repost_of:
+            contexts.do_fetch_context(repost_of)
             post.repost_of = [repost_of]
 
-    if post_type == 'like':
-        post.hidden = True
-        like_of = request.args.get('like_of')
+    if type == 'like':
+        like_of = request.args.get('url')
         if like_of:
+            contexts.do_fetch_context(like_of)
             post.like_of = [like_of]
+
+    if type == 'bookmark':
+        bookmark_of = request.args.get('url')
+        if bookmark_of:
+            contexts.do_fetch_context(bookmark_of)
+            post.bookmark_of = [bookmark_of]
 
     content = request.args.get('content')
     if content:
         post.content = content
 
-    # partial means return the form only; because we're going to add
-    # it to an existing DOM
-    if partial:
-        return render_template('_edit_' + post_type + '.html',
-                               edit_type='new', post=post,
+    if type:
+        # partial means return the form only; because we're going to add
+        # it to an existing DOM
+        template = ('_' if partial else '') + 'edit_' + type + '.html'
+        return render_template(template, edit_type='new', post=post,
+                               dpost=create_dpost(post),
                                top_tags=get_top_tags(20))
 
     return render_template('edit_post.html', edit_type='new', post=post,
                            advanced=request.args.get('advanced'))
 
 
-@app.route('/admin/edit')
+@app.route('/edit')
 def edit_by_id():
     shortid = request.args.get('id')
     post = Post.load_by_shortid(shortid)
@@ -774,7 +784,7 @@ def edit_by_id():
                            advanced=request.args.get('advanced'))
 
 
-@app.route('/admin/uploads')
+@app.route('/uploads')
 def uploads_popup():
     return render_template('uploads_popup.html')
 
@@ -977,7 +987,7 @@ def local_mirror_resource(url):
     return url
 
 
-@app.route('/admin/save_edit', methods=['POST'])
+@app.route('/save_edit', methods=['POST'])
 @login_required
 def save_edit():
     shortid = request.form.get('post_id')
@@ -986,7 +996,7 @@ def save_edit():
         return save_post(post)
 
 
-@app.route('/admin/save_new', methods=['POST'])
+@app.route('/save_new', methods=['POST'])
 @login_required
 def save_new():
     post_type = request.form.get('post_type', 'note')
@@ -1130,7 +1140,7 @@ def save_post(post):
         return redirect(url_for('index'))
 
 
-@app.route('/admin/addressbook', methods=['GET', 'POST'])
+@app.route('/addressbook', methods=['GET', 'POST'])
 def addressbook():
     book = AddressBook()
 

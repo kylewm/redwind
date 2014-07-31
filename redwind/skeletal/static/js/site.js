@@ -26,7 +26,7 @@ redwind.posts  = {
 
     showPartialEditor: function (type) {
         var self = this;
-        $.get('/admin/new?partial=1&type=' + type, '',
+        $.get('/new/' + type + '?partial=1', '',
               function(result) {
                   $('#composition-area').empty().append(result);
                   self.handlePartialEditorEvents();

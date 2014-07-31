@@ -16,7 +16,7 @@ def do_fetch_context(url):
     try:
         app.logger.debug("fetching url %s", url)
         fetch_external_post(url)
-    except Exception as e:
+    except Exception:
         app.logger.exception("failure fetching contexts")
 
 

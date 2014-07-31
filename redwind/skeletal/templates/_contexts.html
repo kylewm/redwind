@@ -1,0 +1,69 @@
+  {% for context in post.reply_contexts %}
+    <div class="p-in-reply-to h-cite">
+      In reply to
+      {% if context.author_name %}
+        <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a> in
+      {% endif %}
+      <a class="u-url" href="{{context.permalink}}">
+        {{ context.title }}
+      </a>
+      on {{context.permalink | domain_from_url}}
+      {% if context.content %}
+        <blockquote class="clearfix">
+          <div class="" style="float:left; padding-bottom: 5px; padding-right: 5px;">
+            <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" />
+          </div>
+          <div class="">{{context.content | safe}}</div>
+        </blockquote>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% for context in post.share_contexts %}
+    <div class="p-repost-of h-cite">
+      Shared
+      <a class="u-url" href="{{context.permalink}}">
+        {{ context.title }}
+      </a>
+      {% if context.author_name %}
+        by <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
+      {% endif %}
+      from {{context.permalink | domain_from_url}}
+
+      {% if context.content %}
+        <blockquote class="clearfix">
+          <div class="" style="float:left; padding-bottom: 5px; padding-right: 5px;">
+            <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" />
+          </div>
+          <div class="">{{context.content | safe}}</div>
+        </blockquote>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+
+  {% for context in post.like_contexts %}
+    <div class="p-like p-like-of h-cite">
+      Liked
+      <a class="u-url" href="{{context.permalink}}">
+        {{ context.title }}
+      </a>
+      {% if context.author_name %}
+        by <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
+      {% endif %}
+      from {{context.permalink | domain_from_url}}
+
+      {% if context.content %}
+        <blockquote class="clearfix">
+          <div class="" style="float:left; padding-bottom: 5px; padding-right: 5px;">
+            <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" />
+          </div>
+          <div class="">{{context.content | safe}}</div>
+        </blockquote>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% for context in post.bookmark_contexts %}
+    Bookmarked {{context.title}}: <a class="u-bookmark" href="{{context.permalink}}">{{context.permalink | prettify_url }}</a>
+  {% endfor %}

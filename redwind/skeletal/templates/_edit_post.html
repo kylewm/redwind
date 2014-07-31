@@ -1,4 +1,8 @@
-<form id="edit_form" method="POST" action="/admin/save_{{edit_type}}" enctype="multipart/form-data">
+{% with post = dpost %}
+  {% include "_contexts.html" %}
+{% endwith %}
+
+<form id="edit_form" method="POST" action="/save_{{edit_type}}" enctype="multipart/form-data">
 
   <data id="post_path" value="{{post.path}}" />
   <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
@@ -22,7 +26,7 @@
 
   <div class="clearfix">
     <input style="float: left;" type="submit" id="publish_button" value="Publish"/>
-    
+
     <div style="float: left;">
       {% block additional_params %}{% endblock additional_params %}
     </div>
