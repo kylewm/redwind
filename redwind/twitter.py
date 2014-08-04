@@ -39,12 +39,12 @@ TweetComponent = collections.namedtuple('TweetComponent', [
 ])
 
 
-@app.route('/admin/authorize_twitter')
+@app.route('/authorize_twitter')
 @login_required
 def authorize_twitter():
     """Get an access token from Twitter and redirect to the
        authentication page"""
-    callback_url = url_for('authorize_twitter2', _external=True)
+    callback_url = url_for('twitter_callback', _external=True)
     try:
         oauth = OAuth1Session(
             client_key=app.config['TWITTER_CONSUMER_KEY'],
@@ -58,8 +58,8 @@ def authorize_twitter():
         return make_response(str(e))
 
 
-@app.route('/admin/authorize_twitter2')
-def authorize_twitter2():
+@app.route('/twitter_callback')
+def twitter_callback():
     """Receive the request token from Twitter and convert it to an
        access token"""
     try:
@@ -130,7 +130,7 @@ def do_send_to_twitter(post_id):
     return str(response)
 
 
-@app.route('/admin/share_on_twitter', methods=['GET', 'POST'])
+@app.route('/share_on_twitter', methods=['GET', 'POST'])
 @login_required
 def share_on_twitter():
     if request.method == 'GET':

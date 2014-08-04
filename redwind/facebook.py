@@ -9,12 +9,12 @@ import json
 import urllib
 
 
-@app.route('/admin/authorize_facebook')
+@app.route('/authorize_facebook')
 @login_required
 def authorize_facebook():
     import urllib.parse
     import urllib.request
-    redirect_uri = app.config.get('SITE_URL') + '/admin/authorize_facebook'
+    redirect_uri = app.config.get('SITE_URL') + '/authorize_facebook'
     params = {'client_id': app.config.get('FACEBOOK_APP_ID'),
               'redirect_uri': redirect_uri,
               'scope': 'publish_stream'}
@@ -38,7 +38,7 @@ def authorize_facebook():
                         + urllib.parse.urlencode(params))
 
 
-@app.route('/admin/share_on_facebook', methods=['GET', 'POST'])
+@app.route('/share_on_facebook', methods=['GET', 'POST'])
 @login_required
 def share_on_facebook():
     from .twitter import collect_images
@@ -51,18 +51,30 @@ def share_on_facebook():
         imgs = [urllib.parse.urljoin(app.config['SITE_URL'], img)
                 for img in collect_images(post)]
 
+        resp = requests.get(
+            'https://graph.facebook.com/v2.0/me/albums',
+            params={'access_token': current_user.facebook_access_token})
+        resp.raise_for_status()
+        albums = resp.json().get('data', [])
+
         return render_template('share_on_facebook.html', post=post,
-                               preview=preview, imgs=imgs)
+                               preview=preview, imgs=imgs, albums=albums)
 
     try:
         post_id = request.form.get('post_id')
         preview = request.form.get('preview')
         img_url = request.form.get('img')
         post_type = request.form.get('post_type')
+        album_id = request.form.get('album')
+
+        if album_id == 'new':
+            album_id = create_album(
+                request.form.get('new_album_name'),
+                request.form.get('new_album_message'))
 
         with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            facebook_url = handle_new_or_edit(post, preview,
-                                              img_url, post_type)
+            facebook_url = handle_new_or_edit(post, preview, img_url,
+                                              post_type, album_id)
             post.save()
 
             return """Shared on Facebook<br/>
@@ -99,7 +111,22 @@ class PersonTagger:
         return displayname
 
 
-def handle_new_or_edit(post, preview, img_url, post_type):
+def create_album(name, msg):
+    app.logger.debug('creating new facebook album %s', name)
+    resp = requests.post(
+        'https://graph.facebook.com/v2.0/me/albums', data={
+            'access_token': current_user.facebook_access_token,
+            'name': name,
+            'message': msg,
+            'privacy': json.dumps({'value': 'EVERYONE'}),
+        })
+    resp.raise_for_status()
+    app.logger.debug('new facebook album response: %s, %s', resp, resp.text)
+    return resp.json()['id']
+
+
+def handle_new_or_edit(post, preview, img_url, post_type,
+                       album_id):
     from .controllers import process_people
     app.logger.debug('publishing to facebook')
 
@@ -125,7 +152,7 @@ def handle_new_or_edit(post, preview, img_url, post_type):
         post_args['link'] = share_link
     elif img_url:
         if post_type == 'photo':
-            is_photo = True # special case for posting photos
+            is_photo = True  # special case for posting photos
             post_args['url'] = img_url
         else:
             # link back to the original post, and use the image
@@ -134,12 +161,14 @@ def handle_new_or_edit(post, preview, img_url, post_type):
             post_args['picture'] = img_url
 
     if is_photo:
-        app.logger.debug('Sending photo %s', post_args)
-        response = requests.post('https://graph.facebook.com/me/photos',
-                                 data=post_args)
+        app.logger.debug('Sending photo %s to album %s', post_args, album_id)
+        response = requests.post(
+            'https://graph.facebook.com/v2.0/{}/photos'.format(
+                album_id if album_id else 'me'),
+            data=post_args)
     else:
         app.logger.debug('Sending post %s', post_args)
-        response = requests.post('https://graph.facebook.com/me/feed',
+        response = requests.post('https://graph.facebook.com/v2.0/me/feed',
                                  data=post_args)
     response.raise_for_status()
     app.logger.debug("Got response from facebook %s", response)

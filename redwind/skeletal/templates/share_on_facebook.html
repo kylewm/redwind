@@ -1,31 +1,58 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-<form id="share_on_facebook" method="POST">
+  <form id="share_on_facebook" method="POST">
     <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid }}"/>
+    <input type="submit" id="publish_button" value="Share on Facebook"/>
 
-    <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Share on Facebook"/>
+    {% if imgs %}
+      <label>Add to Album</label>
+      <select name="album" id="album">
+        <option value="">None</option>
+        <option value="new">Create...</option>
+        {% for album in albums %}
+          <option value="{{ album['id'] }}">{{ album['name'] }}</option>
+        {% endfor %}
+      </select>
 
-<textarea  name="preview" id="preview" style="height: 75px; width:100%; background-color: #eeeeff">{{preview}}</textarea><br/>
+      <div id="new_album_container">
+        <label>New Album Name</label>
+        <input type="text" name="new_album_name"/>
+        <label>New Album Message</label>
+        <textarea name="new_album_message"></textarea>
+      </div>
+    {% endif %}
 
-{% if imgs %}
-  <div>
-  <label><input type="radio" name="img" value="">No Photo</label><br/>
-  {% for img in imgs %}
-    <label><input type="radio" name="img" value="{{img}}"{% if loop.first %} checked{% endif %}>
-        <img src="{{img}}" style="width:64px; vertical-align: middle"/>
-    </label><br/>
-  {% endfor %}
-  </div>
+    <label>Text</label>
+    <textarea  name="preview" id="preview" style="height: 75px; width:100%">{{preview}}</textarea>
 
-  <div style="margin-top: 20px">
-    <label><input type="radio" name="post_type" value="photo" checked><abbr title="create a facebook photo post">As Photo</abbr></label><br/>
-    <label><input type="radio" name="post_type" value="post"><abbr title="share a link to the original with this preview image">As Preview</abbr></label><br/>
-  </div>
+    {% if imgs %}
 
-{% endif %}
+      <div class="clearfix">
+        <div style="float: left">
+          <label><input type="radio" name="img" value="">No Photo</label><br/>
+          {% for img in imgs %}
+            <label><input type="radio" name="img" value="{{img}}"{% if loop.first %} checked{% endif %}>
+                <img src="{{img}}" style="width:64px; vertical-align: middle"/>
+            </label><br/>
+          {% endfor %}
+        </div>
 
-</form>
+        <div style="float: left">
+          <label><input type="radio" name="post_type" value="photo" checked><abbr title="create a facebook photo post">As Photo</abbr></label><br/>
+          <label><input type="radio" name="post_type" value="post"><abbr title="share a link to the original with this preview image">As Preview</abbr></label><br/>
+    </div>
 
+      </div>
+    {% endif %}
+  </form>
 {% endblock content %}
+{% block other_resources %}
+  <script>
+    $("#new_album_container").css({display: "none"});
+    $("select#album").change(function () {
+      var isNew = this.value == "new";
+      $("#new_album_container").css({display: isNew ? "block" : "none"});
+    });
+  </script>
+{% endblock other_resources %}
