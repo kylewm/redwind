@@ -2,3 +2,8 @@
 {% block content %}
 {% include "_edit_checkin.html" %}
 {% endblock %}
+{% block other_resources %}
+<script>
+    $(document).ready(function() {redwind.editor.setupCheckinMap();});
+</script>
+{% endblock %}

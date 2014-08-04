@@ -187,9 +187,10 @@ def create_dpost(post):
     reply_url = tweet_id and 'https://twitter.com/intent/tweet?in_reply_to={}'.format(tweet_id)
     retweet_url = tweet_id and 'https://twitter.com/intent/retweet?tweet_id={}'.format(tweet_id)
     favorite_url = tweet_id and 'https://twitter.com/intent/favorite?tweet_id={}'.format(tweet_id)
-    location_url = post.location and 'http://www.openstreetmap.org/#map=11/{}/{}'.format(
-        post.location.approximate_latitude,
-        post.location.approximate_longitude)
+    location_url = None
+    if post.location:
+        location_url = 'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'.format(
+                post.location.latitude, post.location.longitude)
 
     return DPost(
         post_type=post.post_type,

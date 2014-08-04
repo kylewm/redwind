@@ -126,11 +126,11 @@ class Location:
 
     @property
     def approximate_latitude(self):
-        return self.latitude and '{:.2f}'.format(self.latitude)
+        return self.latitude and '{:.3f}'.format(self.latitude)
 
     @property
     def approximate_longitude(self):
-        return self.longitude and '{:.2f}'.format(self.longitude)
+        return self.longitude and '{:.3f}'.format(self.longitude)
 
     @property
     def geo_name(self):

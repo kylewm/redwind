@@ -44,20 +44,20 @@
 
   {% if post.post_type == 'checkin' and post.location %}
     <div class="map"
-         data-latitude="{{post.location.approximate_latitude}}"
-         data-longitude="{{post.location.approximate_longitude}}"
+         data-latitude="{{post.location.latitude}}"
+         data-longitude="{{post.location.longitude}}"
          data-location="{{post.location.name}}">
     </div>
   {% endif %}
 
   <div class="post-metadata">
 
-    {% if is_single and post.location %}
+    {% if post.location %}
       <div class="location">
         <i class="fa fa-map-marker"></i>
-        <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.approximate_latitude}},{{post.location.approximate_longitude}}">
-          <data class="p-latitude" value="{{post.location.approximate_latitude}}"></data>
-          <data class="p-longitude" value="{{post.location.approximate_longitude}}"></data>
+        <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.latitude}},{{post.location.longitude}}">
+          <data class="p-latitude" value="{{post.location.latitude}}"></data>
+          <data class="p-longitude" value="{{post.location.longitude}}"></data>
           <span class="p-name">
             {{post.location.geo_name}}
           </span>

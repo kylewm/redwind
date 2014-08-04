@@ -38,7 +38,8 @@ def do_reverse_geocode(postid):
                             
             post.location.street_address = adr.get('road')
             post.location.extended_address = adr.get('suburb')
-            post.location.locality = adr.get('hamlet') or adr.get('village') or adr.get('town') or adr.get('city')
+            post.location.locality = (adr.get('hamlet') or adr.get('village') or adr.get('town')
+                                      or adr.get('city') or adr.get('locality'))
             post.location.region = region(adr)
             post.location.country_name = adr.get('country')
             post.location.postal_code = adr.get('postcode')

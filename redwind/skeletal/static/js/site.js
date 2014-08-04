@@ -2,18 +2,22 @@ var redwind = redwind || {};
 
 redwind.location = {
     setupOpenStreetMap: function(element, lat, lon, loc) {
-        var OpenStreetMap_Mapnik = L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	    attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-        });
+        // var OpenStreetMap_Mapnik = L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	//     attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+        // });
 
-        //var OpenStreetMap_BlackAndWhite = L.tileLayer('//{s}.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png', {
-	//  attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-        //});
+        // var OpenStreetMap_BlackAndWhite = L.tileLayer('//{s}.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png', {
+	//   attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+        // });
+
+        var Esri_WorldStreetMap = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+        });
 
         var map = L.map(element, {
             center: [lat, lon],
-            zoom: 11,
-            layers: [OpenStreetMap_Mapnik]
+            zoom: 16,
+            layers: [Esri_WorldStreetMap]
         });
 
         L.marker([lat, lon], {'title': loc}).addTo(map);
@@ -89,7 +93,9 @@ $(document).ready(function() {
         var lat = $(element).data('latitude');
         var lon = $(element).data('longitude');
         var loc = $(element).data('location');
-        redwind.location.setupOpenStreetMap(element, lat, lon, loc);
+        if (lat && lon) {
+            redwind.location.setupOpenStreetMap(element, lat, lon, loc);
+        }
     });
 
     //$('#syndication_textarea').css('display','none');

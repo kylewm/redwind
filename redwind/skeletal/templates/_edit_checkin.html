@@ -8,11 +8,11 @@
 <div class="map" id="checkin-map">
 </div>
 
-
 <script>
+  if (typeof($) !== 'undefined') {
     $(document).ready(function() {redwind.editor.setupCheckinMap();});
+  }
 </script>
-
 
 {% endblock below_content %}
 
