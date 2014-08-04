@@ -51,11 +51,15 @@ def share_on_facebook():
         imgs = [urllib.parse.urljoin(app.config['SITE_URL'], img)
                 for img in collect_images(post)]
 
-        resp = requests.get(
-            'https://graph.facebook.com/v2.0/me/albums',
-            params={'access_token': current_user.facebook_access_token})
-        resp.raise_for_status()
-        albums = resp.json().get('data', [])
+        albums = []
+        if imgs:
+            app.logger.debug('fetching user albums')
+            resp = requests.get(
+                'https://graph.facebook.com/v2.0/me/albums',
+                params={'access_token': current_user.facebook_access_token})
+            resp.raise_for_status()
+            app.logger.debug('user albums response %s: %s', resp, resp.text)
+            albums = resp.json().get('data', [])
 
         return render_template('share_on_facebook.html', post=post,
                                preview=preview, imgs=imgs, albums=albums)
