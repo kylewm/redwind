@@ -17,7 +17,7 @@ def authorize_facebook():
     redirect_uri = app.config.get('SITE_URL') + '/authorize_facebook'
     params = {'client_id': app.config.get('FACEBOOK_APP_ID'),
               'redirect_uri': redirect_uri,
-              'scope': 'publish_stream'}
+              'scope': 'publish_stream,user_photos'}
 
     code = request.args.get('code')
     if code:
