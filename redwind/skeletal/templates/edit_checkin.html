@@ -1,9 +1,23 @@
-{% extends "base.html" %}
-{% block content %}
-{% include "_edit_checkin.html" %}
-{% endblock %}
+{% extends "edit_post.html" %}
+
+{% block below_content %}
+
+<input type="hidden" id="latitude" name="latitude" size="10" value="{{ post.location.latitude if post.location else ''}}"/>
+<input type="hidden" id="longitude" name="longitude" size="10" value="{{ post.location.longitude if post.location else ''}}"/>
+
+<div class="map" id="checkin-map">
+</div>
+
+{% endblock below_content %}
+
+{% block additional_params %}
+<input type="hidden" id="hidden" name="hidden" value="true"/>
+{% endblock additional_params %}
+
 {% block other_resources %}
 <script>
+  if (typeof($) !== 'undefined') {
     $(document).ready(function() {redwind.editor.setupCheckinMap();});
+  }
 </script>
-{% endblock %}
+{% endblock other_resources %}

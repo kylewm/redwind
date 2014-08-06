@@ -28,15 +28,6 @@ redwind.posts  = {
 
     postTypes: [ 'note', 'checkin', 'reply', 'share', 'like', 'photo', 'bookmark'],
 
-    showPartialEditor: function (type) {
-        var self = this;
-        $.get('/new/' + type + '?partial=1', '',
-              function(result) {
-                  $('#composition-area').empty().append(result);
-                  redwind.editor.handleEvents();
-              });
-    },
-
     showPostControls: function(arrow) {
         var post = arrow.closest('article');
         var controls = post.find('.admin-post-controls');
@@ -78,13 +69,6 @@ redwind.editor = {
 /* register events */
 $(document).ready(function() {
     redwind.editor.handleEvents();
-
-    $(redwind.posts.postTypes).each(function (i, type) {
-        $('#new-' + type).click(function(event) {
-            event.preventDefault();
-            redwind.posts.showPartialEditor(type);
-        });
-    });
 
     $('.admin-post-controls-arrow').click(function (event) {
         event.preventDefault();

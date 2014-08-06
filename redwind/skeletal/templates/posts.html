@@ -2,24 +2,6 @@
 
 {% block content %}
 
-  {% if current_user.is_authenticated() %}
-
-    <div class="new-post-bar">
-      <ul>
-        <li><a href="{{ url_for('new_post', type='article') }}" id="new-article"><i class="fa fa-file-text-o"></i> Article</a></li>
-        <li><a href="{{ url_for('new_post', type='note') }}" id="new-note"><i class="fa fa-file-o"></i> Note</a></li>
-        <li><a href="{{ url_for('new_post', type='photo') }}" id="new-photo"><i class="fa fa-camera"></i> Photo</a></li>
-        <li><a href="{{ url_for('new_post', type='reply') }}" id="new-reply"><i class="fa fa-comment-o"></i> Reply</a></li>
-        <li><a href="{{ url_for('new_post', type='share') }}" id="new-share"><i class="fa fa-retweet"></i> Share</a></li>
-        <li><a href="{{ url_for('new_post', type='like') }}" id="new-like"><i class="fa fa-thumbs-o-up"></i> Like</a></li>
-        <li><a href="{{ url_for('new_post', type='bookmark') }}" id="new-bookmark"><i class="fa fa-bookmark"></i> Bookmark</a></li>
-        <li><a href="{{ url_for('new_post', type='checkin') }}" id="new-checkin"><i class="fa fa-check"></i> Check-in</a></li>
-      </ul>
-    </div>
-    <div id="composition-area">
-    </div>
-  {% endif %}
-
   {% for post in posts %}
     {% include "_post.html" %}
   {% endfor %}

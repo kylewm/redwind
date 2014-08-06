@@ -1,8 +1,0 @@
-{% extends "_edit_post.html" %}
-
-{% block additional_params %}
-{% block above_additional_params %}{% endblock above_additional_params %}
-
-<label><input type="checkbox" name="tweet" value="true" {% if edit_type == 'new' %}checked{% endif %} /> <i class="fa fa-twitter"></i> Tweet</label>
-{% block below_additional_params %}{% endblock below_additional_params %}
-{% endblock additional_params %}

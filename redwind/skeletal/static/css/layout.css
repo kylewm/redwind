@@ -56,8 +56,8 @@ article img { max-width: 100%; max-height: 512px; }
 .sidebar .social { text-align: right; }
 .sidebar .widget { margin-top: 20px; }
 
-/*.note > .e-content, .reply > .e-content, 
-.photo > .e-content, .share > .e-content {font-size: 1.5em; 
+/*.note > .e-content, .reply > .e-content,
+.photo > .e-content, .share > .e-content {font-size: 1.5em;
                                           line-height: 1.4em; }*/
 .post-metadata { color: #aaa; }
 .post-metadata a { color: #999; text-decoration: none; }
@@ -87,7 +87,7 @@ the primary sidebar */
 .new-post-bar ul {list-style-type: inline;}
 .new-post-bar ul li {text-align: center; vertical-align: center; display: inline; padding: 1em;}
 .new-post-bar i {font-size: 24pt; display: block;}
-.new-post-bar a {color: #333; display: inline-block; width: 60px; text-decoration: none;}
+.new-post-bar a {color: #333; display: inline-block; width: 40px; text-decoration: none;}
 /*.mention-counts { float: right; }*/
 
 

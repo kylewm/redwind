@@ -729,7 +729,6 @@ def get_top_tags(n=10):
 @app.route('/new/<type>')
 @app.route('/new', defaults={'type': 'note'})
 def new_post(type):
-    partial = request.args.get('partial', False)
     post = Post(type)
     post.pub_date = datetime.datetime.utcnow()
     post.content = ''
@@ -763,11 +762,8 @@ def new_post(type):
         post.content = content
 
     if type:
-        # partial means return the form only; because we're going to add
-        # it to an existing DOM
-        template = ('_' if partial else '') + 'edit_' + type + '.html'
-        return render_template(template, edit_type='new', post=post,
-                               dpost=create_dpost(post),
+        return render_template('edit_' + type + '.html', edit_type='new',
+                               post=post, dpost=create_dpost(post),
                                top_tags=get_top_tags(20))
 
     return render_template('edit_post.html', edit_type='new', post=post)
@@ -782,8 +778,8 @@ def edit_by_id():
     type = 'post'
     if not request.args.get('advanced') and post.post_type:
         type = post.post_type
-    return render_template('edit_' + type + '.html', edit_type='edit', post=post,
-                           dpost=create_dpost(post),
+    return render_template('edit_' + type + '.html', edit_type='edit',
+                           post=post, dpost=create_dpost(post),
                            top_tags=get_top_tags(20))
 
 

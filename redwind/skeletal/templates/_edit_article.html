@@ -1,9 +1,0 @@
-{% extends "_edit_post.html" %}
-{% block content %}
-<label>Title</label>
-<input type="text" name="title" value="{{ post.title or '' }}"/>
-<label>Stub</label>
-<input type="text" name="stub" value="{{ post.stub or '' }}"/>
-<label>Content</label>
-<textarea name="content" id="content" rows="30" placeholder="Content">{{ post.content }}</textarea>
-{% endblock content %}
