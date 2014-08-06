@@ -770,19 +770,21 @@ def new_post(type):
                                dpost=create_dpost(post),
                                top_tags=get_top_tags(20))
 
-    return render_template('edit_post.html', edit_type='new', post=post,
-                           advanced=request.args.get('advanced'))
+    return render_template('edit_post.html', edit_type='new', post=post)
 
 
 @app.route('/edit')
 def edit_by_id():
     shortid = request.args.get('id')
     post = Post.load_by_shortid(shortid)
-
     if not post:
         abort(404)
-    return render_template('edit_post.html', edit_type='edit', post=post,
-                           advanced=request.args.get('advanced'))
+    type = 'post'
+    if not request.args.get('advanced') and post.post_type:
+        type = post.post_type
+    return render_template('edit_' + type + '.html', edit_type='edit', post=post,
+                           dpost=create_dpost(post),
+                           top_tags=get_top_tags(20))
 
 
 @app.route('/uploads')

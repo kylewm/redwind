@@ -33,18 +33,8 @@ redwind.posts  = {
         $.get('/new/' + type + '?partial=1', '',
               function(result) {
                   $('#composition-area').empty().append(result);
-                  self.handlePartialEditorEvents();
+                  redwind.editor.handleEvents();
               });
-    },
-
-    handlePartialEditorEvents: function() {
-        $("#edit_form a.top_tag").click(function(event) {
-            event.preventDefault();
-            var tagValue = $(this).html();
-            $("#edit_form #tags").val(function(i, val) {
-                return val + (val ? ',' : '') + tagValue;
-            });
-        });
     },
 
     showPostControls: function(arrow) {
@@ -56,6 +46,16 @@ redwind.posts  = {
 }
 
 redwind.editor = {
+
+    handleEvents: function() {
+        $("#edit_form a.top_tag").click(function(event) {
+            event.preventDefault();
+            var tagValue = $(this).html();
+            $("#edit_form #tags").val(function(i, val) {
+                return val + (val ? ',' : '') + tagValue;
+            });
+        });
+    },
 
     setupCheckinMap: function(element) {
         navigator.geolocation.getCurrentPosition(function(position) {
@@ -77,6 +77,8 @@ redwind.editor = {
 
 /* register events */
 $(document).ready(function() {
+    redwind.editor.handleEvents();
+
     $(redwind.posts.postTypes).each(function (i, type) {
         $('#new-' + type).click(function(event) {
             event.preventDefault();
