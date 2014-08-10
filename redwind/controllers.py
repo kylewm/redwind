@@ -1048,23 +1048,29 @@ def save_post(post):
         elif post.title and not post.slug:
             post.slug = slugify(post.title)
 
-        in_reply_to = request.form.get('in_reply_to', '')
-        post.in_reply_to = multiline_string_to_list(in_reply_to)
+        in_reply_to = request.form.get('in_reply_to')
+        if in_reply_to is not None:
+            post.in_reply_to = multiline_string_to_list(in_reply_to)
 
-        repost_of = request.form.get('repost_of', '')
-        post.repost_of = multiline_string_to_list(repost_of)
+        repost_of = request.form.get('repost_of')
+        if repost_of is not None:
+            post.repost_of = multiline_string_to_list(repost_of)
 
-        like_of = request.form.get('like_of', '')
-        post.like_of = multiline_string_to_list(like_of)
+        like_of = request.form.get('like_of')
+        if like_of is not None:
+            post.like_of = multiline_string_to_list(like_of)
 
-        bookmark_of = request.form.get('bookmark_of', '')
-        post.bookmark_of = multiline_string_to_list(bookmark_of)
+        bookmark_of = request.form.get('bookmark_of')
+        if bookmark_of is not None:
+            post.bookmark_of = multiline_string_to_list(bookmark_of)
 
-        syndication = request.form.get('syndication', '')
-        post.syndication = multiline_string_to_list(syndication)
+        syndication = request.form.get('syndication')
+        if syndication is not None:
+            post.syndication = multiline_string_to_list(syndication)
 
-        audience = request.form.get('audience', '')
-        post.audience = multiline_string_to_list(audience)
+        audience = request.form.get('audience')
+        if audience is not None:
+            post.audience = multiline_string_to_list(audience)
 
         tags = request.form.get('tags', '').split(',')
         post.tags = list(filter(None, map(util.normalize_tag, tags)))

@@ -314,6 +314,9 @@ class TwitterClient:
         """Best guess effort to generate tweet content for a post; useful for
         auto-filling the share form.
         """
+        from .controllers import create_dpost
+
+        dpost = create_dpost(post)
         if post.title:
             preview = post.title
         else:
@@ -326,6 +329,10 @@ class TwitterClient:
                 reply_name = '@' + reply_match.group(1)
                 if not preview.startswith(reply_name):
                     preview = reply_name + ' ' + preview
+
+        # add location url if it's a checkin
+        if post.post_type == 'checkin' and post.location:
+            preview = preview + ' ' + dpost.location_url
 
         components = []
         prev_end = 0
@@ -346,9 +353,8 @@ class TwitterClient:
         target_length = TWEET_CHAR_LENGTH
 
         img_url = None
-        if post.photos:
-            from .controllers import create_dphoto
-            dphoto = create_dphoto(post, post.photos[0])
+        if dpost.photos:
+            dphoto = dpost.photos[0]
             img_url = dphoto.url
             target_length -= MEDIA_CHAR_LENGTH
             if dphoto.caption:

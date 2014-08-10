@@ -3,6 +3,7 @@ import os
 import urllib
 import json
 import requests
+import requests.utils
 from mf2py.parser import Parser
 
 
@@ -40,6 +41,11 @@ def url_to_response_path(url):
 def archive_url(url):
     response = requests.get(url)
     if response.status_code // 2 == 100:
+        if 'charset' not in response.headers.get('content-type', ''):
+            encodings = requests.utils.get_encodings_from_content(response.text)
+            if encodings:
+                response.encoding = encodings[0]
+
         archive_html(url, response.text)
     else:
         app.logger.warn('failed to fetch url %s. got response %s.', url, response)
