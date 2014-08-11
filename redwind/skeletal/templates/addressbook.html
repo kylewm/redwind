@@ -2,54 +2,37 @@
 
 {% block content %}
 
+<form action="/addressbook" id="addressbook_form" method="POST">
 
-  <form action="/admin/addressbook" method="POST" class="clearfix">
-    <div class="eight columns clearfix">
-      <div class="four columns alpha">
-        <label>URL:</label> <input type="text" id="url" name="url"/>
-      </div>
-      <div class="four columns omega">
-        <input type="button" id="fetch" value="Fetch Profile" />
-      </div>
-    </div>
+  <label>URL:</label> <input type="text" id="url" name="url"/>
+  <input type="button" id="fetch" value="Fetch Profile" />
 
-    <div class="eight columns clearfix">
-      <div class="four columns alpha">
-        <label>Person:</label>
-        <input type="text" id="person" name="person"/>
-        <label>Photo:</label>
-        <input type="text" id="photo" name="photo"/>
-      </div>
-      <div class="four columns omega">
-        <label>Twitter:</label>
-        <input type="text" id="twitter" name="twitter"/>
-        <label>Facebook:</label>
-        <input type="text" id="facebook" name="facebook"/>
-      </div>
-    </div>
+  <label>Person:</label>
+  <input type="text" id="person" name="person"/>
+  <label>Photo:</label>
+  <input type="text" id="photo" name="photo"/>
 
-    <div class="eight columns clearfix" style="text-align: center">
-      <input type="Submit" value="Add" />
-    </div>
-  </form>
+  <label>Twitter:</label>
+  <input type="text" id="twitter" name="twitter"/>
+  <label>Facebook:</label>
+  <input type="text" id="facebook" name="facebook"/>
 
-  <ul>
-    {% for person, entry in entries.items() %}
+  <input type="Submit" value="Add" />
 
-      <li>{{ person }}: {{entry.get('url')}}
-        <ul>
-          <li>photo: <img width="64" src="{{entry.get('photo')}}"/>
-          <li>twitter: {{entry.get('twitter')}}
-          <li>facebook: {{entry.get('facebook')}}
-        </ul>
-      </li>
+</form>
 
-    {% endfor %}
-  </ul>
+<ul>
+  {% for person, entry in entries.items() %}
+
+  <li>{{ person }}: {{entry.get('url')}}
+    <ul>
+      <li>photo: <img width="64" src="{{entry.get('photo')}}"/>
+      <li>twitter: {{entry.get('twitter')}}
+      <li>facebook: {{entry.get('facebook')}}
+    </ul>
+  </li>
+
+  {% endfor %}
+</ul>
 
 {% endblock %}
-
-{% block other_resources %}
-  <script src="{{ url_for('static', filename='js/addressbook.js') }}"></script>
-
-{% endblock other_resources %}

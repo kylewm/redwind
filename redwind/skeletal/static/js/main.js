@@ -27,6 +27,35 @@ var Util = {
             });
         }
     },
+
+    getJSON: function(url, successCb, failureCb) {
+
+        var request = new XMLHttpRequest();
+        request.open('GET', url, true);
+
+        request.onload = function(evt) {
+            if (request.status >= 200 && request.status < 400){
+                // Success!
+                data = JSON.parse(request.responseText);
+                successCb.call(null, data);
+            } else {
+                // We reached our target server, but it returned an error
+                if (failureCb) {
+                    failureCb.call(null, evt, request.status, request.statusText);
+                }
+            }
+        };
+
+        request.onerror = function(evt) {
+            // There was a connection error of some sort
+            if (failureCb) {
+                failureCb.call(null, evt);
+            }
+        };
+
+        request.send();
+    },
+
 };
 
 var Location = {
@@ -174,7 +203,7 @@ var Editor = {
         var lonField = document.getElementById('longitude');
 
         if (latField && lonField && checkinMap) {
-            map.textContent = 'loading...';
+            checkinMap.textContent = 'loading...';
             require(['leaflet'], function() {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     var lat = position.coords.latitude;
@@ -195,8 +224,43 @@ var Editor = {
     },
 };
 
+var AddressBook = {
+
+    init: function() {
+        var self = this;
+        Util.forEach(document.querySelectorAll('#addressbook_form #fetch'), function(ii, fetchButton) {
+            fetchButton.addEventListener('click', self.fetchProfile);
+        });
+    },
+
+    fetchProfile: function() {
+        var url = document.getElementById('url');
+        Util.getJSON('/api/fetch_profile?url=' + encodeURIComponent(url.value), function(data) {
+            var name = data['name'];
+            var photo = data['photo'];
+            var twitter = data['twitter'];
+            var facebook = data['facebook'];
+
+            if (name) {
+                document.getElementById('person').value = name;
+            }
+            if (photo) {
+                document.getElementById('photo').value = photo;
+            }
+            if (twitter) {
+                document.getElementById('twitter').value = twitter;
+            }
+            if (facebook) {
+                document.getElementById('facebook').value = facebook;
+            }
+        });
+    },
+
+};
+
 (function(){
     Location.init();
     Posts.init()
     Editor.init();
+    AddressBook.init()
 }());
