@@ -41,7 +41,7 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 
     error_handler = RotatingFileHandler('app.error.log', maxBytes=1048576,
-                                             backupCount=20)
+                                        backupCount=20)
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(formatter)
     app.logger.addHandler(error_handler)
