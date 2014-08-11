@@ -13,11 +13,3 @@
 {% block additional_params %}
 <input type="hidden" id="hidden" name="hidden" value="true"/>
 {% endblock additional_params %}
-
-{% block other_resources %}
-<script>
-  if (typeof($) !== 'undefined') {
-    $(document).ready(function() {redwind.editor.setupCheckinMap();});
-  }
-</script>
-{% endblock other_resources %}
