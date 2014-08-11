@@ -1153,13 +1153,13 @@ def addressbook():
         if not current_user.is_authenticated():
             return app.login_manager.unauthorized()
 
-        person = request.form.get('person').strip()
+        name = request.form.get('name').strip()
         url = request.form.get('url').strip()
         photo = request.form.get('photo').strip()
         twitter_name = request.form.get('twitter').strip()
         facebook_id = request.form.get('facebook').strip()
 
-        book.entries[person] = {
+        book.entries[name] = {
             'url': url,
             'photo': photo,
             'twitter': twitter_name,
