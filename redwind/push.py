@@ -20,12 +20,13 @@ def handle_new_mentions():
 
 @queue.queueable
 def publish(url):
-    publish_url = app.config['PUSH_HUB']
-    app.logger.debug("sending PuSH notification to %s", url)
-    data = {'hub.mode': 'publish', 'hub.url': url}
-    response = requests.post(publish_url, data)
-    if response.status_code == 204:
-        app.logger.info('successfully sent PuSH notification')
-    else:
-        app.logger.warn('unexpected response from PuSH hub %s',
-                        response)
+    publish_url = app.config.get('PUSH_HUB')
+    if publish_url:
+        app.logger.debug("sending PuSH notification to %s", url)
+        data = {'hub.mode': 'publish', 'hub.url': url}
+        response = requests.post(publish_url, data)
+        if response.status_code == 204:
+            app.logger.info('successfully sent PuSH notification')
+        else:
+            app.logger.warn('unexpected response from PuSH hub %s',
+                            response)
