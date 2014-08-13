@@ -10,10 +10,13 @@ from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
 
-app = Flask(
-    __name__,
-    template_folder=os.path.join(Configuration.THEME, 'templates'),
-    static_folder=os.path.join(Configuration.THEME, 'static'))
+# half-hearted "theme" support was more trouble than it's worth. maybe
+#revisit later on.
+#app = Flask( __name__,
+#template_folder=os.path.join(Configuration.THEME, 'templates'),
+#static_folder=os.path.join(Configuration.THEME, 'static'))
+
+app = Flask(__name__)
 
 app.config.from_object(Configuration)
 redis = Redis()
