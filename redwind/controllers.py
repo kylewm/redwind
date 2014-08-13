@@ -80,6 +80,7 @@ DPost = collections.namedtuple('DPost', [
     'reply_url',
     'retweet_url',
     'favorite_url',
+    'mentions',
     'likes',
     'reposts',
     'replies',
@@ -131,7 +132,6 @@ DMention = collections.namedtuple('DMention', [
 
 
 def create_dpost(post):
-
     def get_pub_date(mention):
         result = mention.pub_date
         if not result:
@@ -139,13 +139,6 @@ def create_dpost(post):
         elif result and hasattr(result, 'tzinfo') and not result.tzinfo:
             result = pytz.utc.localize(result)
         return result
-
-    def mentions_sorted_by_date(mentions, mtype):
-        filtered = [m for m in mentions
-                    if not m.deleted
-                    and (not mtype or m.reftype == mtype)]
-        filtered.sort(key=get_pub_date)
-        return filtered
 
     if post.content:
         content = Markup(markdown_filter(
@@ -159,23 +152,23 @@ def create_dpost(post):
 
     # arrange posse'd mentions into a hierarchy based on rel-syndication
     mentions = []
-    all_mentions = [create_dmention(post, m) for m in post.mentions]
+    all_mentions = list(filter(
+        None, (create_dmention(post, m) for m in post.mentions)))
     for mention in all_mentions:
-        parent = next((parent for parent in all_mentions
-                       if mention != parent
+        parent = next((parent for parent in all_mentions if mention != parent
                        and any(util.urls_match(mention.permalink, synd)
-                               for synd in parent.syndication)),
-                      None)
+                               for synd in parent.syndication)), None)
         if parent:
             parent.children.append(
                 format_syndication_url(mention.permalink, False))
         else:
             mentions.append(mention)
 
-    likes = mentions_sorted_by_date(mentions, 'like')
-    reposts = mentions_sorted_by_date(mentions, 'repost')
-    replies = mentions_sorted_by_date(mentions, 'reply')
-    references = mentions_sorted_by_date(mentions, 'reference')
+    mentions.sort(key=get_pub_date)
+    likes = [m for m in mentions if m.reftype == 'like']
+    reposts = [m for m in mentions if m.reftype == 'repost']
+    replies = [m for m in mentions if m.reftype == 'reply']
+    references = [m for m in mentions if m.reftype == 'reference']
 
     tweet_id = None
     for url in post.syndication:
@@ -190,7 +183,7 @@ def create_dpost(post):
     location_url = None
     if post.location:
         location_url = 'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'.format(
-                post.location.latitude, post.location.longitude)
+            post.location.latitude, post.location.longitude)
 
     return DPost(
         post_type=post.post_type,
@@ -224,6 +217,7 @@ def create_dpost(post):
         retweet_url=retweet_url,
         favorite_url=favorite_url,
 
+        mentions=mentions,
         likes=likes,
         reposts=reposts,
         replies=replies,

@@ -2,7 +2,6 @@ import json
 import os
 from flask.ext.login import login_user
 from . import app
-from . import auth
 from . import models
 from . import queue
 from . import redis
@@ -19,8 +18,8 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 
 
-def queue_daemon(app, rv_ttl=500):
-    while 1:
+def queue_daemon(app, rv_ttl=86400):
+    while True:
         msg = redis.blpop(app.config['REDIS_QUEUE_KEY'])
         blob = json.loads(msg[1].decode(encoding='UTF-8'))
         func_name = blob['func']

@@ -129,7 +129,7 @@
               <i class="fa fa-star-o"></i>
               {% for like in post.likes %}
                 <a href="{{ like.permalink }}">
-                  <img class="avatar" src="{{like.author_image}}" alt="{{like.author_name}}" />
+                  <img class="avatar" src="{{like.author_image}}" title="{{like.author_name}}" alt="{{like.author_name}}" />
                 </a>
               {% endfor %}
             </div>
@@ -141,7 +141,7 @@
               <i class="fa fa-retweet"></i>
               {% for repost in post.reposts %}
                 <a href="{{ repost.permalink }}">
-                  <img class="avatar" src="{{repost.author_image}}", alt="{{repost.author_name}}" />
+                  <img class="avatar" src="{{repost.author_image}}" title="{{repost.author_name}}" alt="{{repost.author_name}}" />
                 </a>
               {% endfor %}
             </div>
@@ -196,11 +196,11 @@
                     </div>
                   {% endif %}
 
-                </div>
-              </div>
-            </div>
+                </div> <!-- .post-metadata -->
+              </div> <!-- .nine columns -->
+            </div> <!-- .p-comment -->
           {% endfor %}
-        </div>
+        </div> <!-- .replies -->
       {% endif %}
 
       {% if post.references %}

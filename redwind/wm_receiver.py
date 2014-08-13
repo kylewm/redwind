@@ -2,7 +2,7 @@ from . import push
 from . import app
 from . import queue
 from . import archiver
-from .models import Post, Metadata, acquire_lock
+from .models import Post, Metadata
 
 from flask import request, make_response, render_template, url_for, jsonify
 from werkzeug.exceptions import NotFound
@@ -10,8 +10,6 @@ from werkzeug.exceptions import NotFound
 import urllib.parse
 import urllib.request
 import requests
-import json
-import os
 
 from bs4 import BeautifulSoup
 
@@ -43,8 +41,8 @@ def receive_webmention():
 
     status_url = url_for('webmention_status', key=key, _external=True)
     return make_response(
-        'Webmention queued for processing. Check status: {}'.format(status_url),
-        202)
+        'webmention queued for processing. <a href="{}">check status</a>.'
+        .format(status_url), 202)
 
 
 @app.route('/webmention/status/<key>')

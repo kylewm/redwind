@@ -1,11 +1,11 @@
 import sys
-import os
+
 for module in ('mf2py', 'mf2util'):
     if module not in sys.path:
         sys.path.append(module)
 
 from flask import Flask
-from flask_debugtoolbar import DebugToolbarExtension
+#from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
@@ -28,8 +28,8 @@ app.jinja_options = ImmutableDict(
 )
 
 if app.debug:
-    toolbar = DebugToolbarExtension(app)
-    app.config['SITE_URL'] = 'http://localhost'
+    #toolbar = DebugToolbarExtension(app)
+    app.config['SITE_URL'] = 'http://localhost:5000'
 
 if not app.debug:
     import logging
