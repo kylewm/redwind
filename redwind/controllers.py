@@ -360,6 +360,14 @@ def create_dmention(post, url):
                 content_plain = format_as_text(content)
                 content_words = jinja2.filters.do_wordcount(content_plain)
 
+                published = entry.get('published')
+                if not published:
+                    resp = archiver.load_response(url)
+                    published = resp and util.isoparse(resp.get('received'))
+
+                if not published:
+                    published = post.pub_date
+
                 author_name = bleach.clean(
                     entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
@@ -376,9 +384,9 @@ def create_dmention(post, url):
                     content=content,
                     content_plain=content_plain,
                     content_words=content_words,
-                    pub_date=entry.get('published'),
-                    pub_date_iso=isotime_filter(entry.get('published')),
-                    pub_date_human=human_time(entry.get('published')),
+                    pub_date=published,
+                    pub_date_iso=isotime_filter(published),
+                    pub_date_human=human_time(published),
                     title=entry.get('name'),
                     deleted=False,
                     syndication=entry.get('syndication', []),

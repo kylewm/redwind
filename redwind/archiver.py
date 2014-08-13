@@ -1,21 +1,14 @@
 from . import app
-import os
-import urllib
+from . import util
+
+import datetime
 import json
+import mf2py
+import os
 import requests
 import requests.utils
-from mf2py.parser import Parser
+import urllib
 
-
-def load_json_from_archive(url):
-    path = os.path.join(url_to_archive_path(url), 'parsed.json')
-    #app.logger.debug("checking archive for %s => %s", url, path)
-
-    if os.path.exists(path):
-        #app.logger.debug("path exists, loading %s", path)
-        return json.load(open(path, 'r'))
-    app.logger.debug("archive path does not exist %s", path)
-    return None
 
 
 def url_to_archive_path(url):
@@ -41,6 +34,8 @@ def url_to_response_path(url):
 def archive_url(url):
     response = requests.get(url)
     if response.status_code // 2 == 100:
+        # requests ignores <meta charset> when a Content-Type header
+        # is provided, even if the header does not define a charset
         if 'charset' not in response.headers.get('content-type', ''):
             encodings = requests.utils.get_encodings_from_content(response.text)
             if encodings:
@@ -61,8 +56,19 @@ def archive_html(url, html):
 
     with open(hpath, 'w') as fp:
         fp.write(html)
-    blob = Parser(doc=html, url=url).to_dict()
+    blob = mf2py.Parser(doc=html, url=url).to_dict()
     json.dump(blob, open(url_to_json_path(url), 'w'), indent=True)
+
+
+def load_json_from_archive(url):
+    path = os.path.join(url_to_archive_path(url), 'parsed.json')
+    #app.logger.debug("checking archive for %s => %s", url, path)
+
+    if os.path.exists(path):
+        #app.logger.debug("path exists, loading %s", path)
+        return json.load(open(path, 'r'))
+    app.logger.debug("archive path does not exist %s", path)
+    return None
 
 
 def archive_response(url, response):
@@ -74,6 +80,14 @@ def archive_response(url, response):
 
     blob = {
         'status_code': response.status_code,
+        'received': util.isoformat(datetime.datetime.utcnow()),
         'headers': dict(response.headers.items())
     }
     json.dump(blob, open(rpath, 'w'), indent=True)
+
+
+def load_response(url):
+    path = url_to_response_path(url)
+    if os.path.exists(path):
+        return json.load(open(path, 'r'))
+    return None
