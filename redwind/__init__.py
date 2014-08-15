@@ -6,6 +6,7 @@ for module in ('mf2py', 'mf2util'):
 
 from flask import Flask
 #from flask_debugtoolbar import DebugToolbarExtension
+from flask.ext.assets import Environment, Bundle
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
@@ -20,6 +21,12 @@ app = Flask(__name__)
 
 app.config.from_object(Configuration)
 redis = Redis()
+
+assets = Environment(app)
+assets.register(
+    'css_all', Bundle('css/base.css', 'css/skeleton.css',
+                      'css/layout.css',
+                      filters='cssmin', output='css/site.css'))
 
 app.jinja_options = ImmutableDict(
     trim_blocks=True,

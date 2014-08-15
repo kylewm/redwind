@@ -44,7 +44,7 @@ h6 { font-size: 14px; line-height: 15px; }
 
 
 ul {list-style-type: disc; margin-left: 1em;}
-.microcard img { height: 1em; width: auto; }
+.microcard img { height: 1.2em; width: auto; }
 article img { max-width: 100%; max-height: 512px; }
 .sidebar .h-card {text-align: center;}
 .sidebar .h-card .u-photo {height: 114px; width: auto; border-radius: 57px;}
@@ -70,11 +70,8 @@ article img { max-width: 100%; max-height: 512px; }
 .p-comment + .p-comment { margin-top: 1rem; }
 article + article { margin-top: 90px; }
 .e-content p:last-child { margin-bottom: 0; }
-img.avatar { max-width: 64px; height: auto; }
+img.avatar { height: 1.2em; width: auto; vertical-align: middle; }
 .map { height: 240px; max-width: 640px; width: 100%; }
-.likes-and-reposts .avatar { max-width: 32px; height: auto;
-                             vertical-align: middle; }
-.replies .avatar { max-width: 48px; height: auto; }
 .mentions { margin-top: 4rem; }
 .replies { margin-top: 1rem; }
 .page-arrows { margin: 10px; }

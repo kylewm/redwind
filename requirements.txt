@@ -1,4 +1,5 @@
 Flask==0.10.1
+Flask-Assets==0.10
 Flask-DebugToolbar==0.9.0
 Flask-Login==0.2.7
 Jinja2==2.7.1

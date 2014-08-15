@@ -1011,11 +1011,16 @@ def save_new():
 
 
 def save_post(post):
-    def slugify(s):
+    def slugify(s, limit=256):
         slug = unicodedata.normalize('NFKD', s).lower()
         slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
         slug = re.sub(r'[-]+', '-', slug)
-        return slug[:256]
+        # trim to first - after the limit
+        if len(slug) > limit:
+            idx = slug.find('-', limit)
+            if idx >= 0:
+                slug = slug[:idx]
+        return slug
 
     def multiline_string_to_list(s):
         return [l.strip() for l in s.split('\n') if l.strip()]
@@ -1046,9 +1051,12 @@ def save_post(post):
 
         slug = request.form.get('slug')
         if slug:
-            post.slug = slug
-        elif post.title and not post.slug:
-            post.slug = slugify(post.title)
+            post.slug = slugify(slug)
+        elif not post.slug:
+            if post.title:
+                post.slug = slugify(post.title)
+            elif post.content:
+                post.slug = slugify(post.content, 32)
 
         in_reply_to = request.form.get('in_reply_to')
         if in_reply_to is not None:

@@ -29,7 +29,9 @@
     <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/users/kyle76.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/users/kyle114.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/kyle152.jpg') }}"/>
-    <link rel="stylesheet" href="{{url_for('static', filename='css/unified.min.css')}}" />
+    {% assets 'css_all' %}
+    <link rel="stylesheet" href="{{ ASSET_URL }}"/>
+    {% endassets %}
 
   </head>
   <body class="container{%if body_class%} {{body_class}}{% endif %}">
