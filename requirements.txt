@@ -26,3 +26,4 @@ requests-oauthlib==0.4.0
 six==1.6.1
 smartypants==1.8.3
 uWSGI==2.0.4
+cssmin==0.2.0
