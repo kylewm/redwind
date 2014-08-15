@@ -3,7 +3,7 @@
     <a name="mentions"></a>
 
     {% for reply in post.mentions %}
-      <div class="p-comment h-cite row">
+      <div class="p-comment h-cite {{reply.reftype}}">
         <img class="u-photo avatar" src="{{reply.author_image}}", alt="{{reply.author_name}}" />
 
         <span class="p-author h-card">
@@ -53,11 +53,13 @@
         {% endif %}
 
         <div class="post-metadata">
+          {% if reply.reftype == 'reply' %}
           <time class="dt-published" datetime="{{reply.pub_date_iso }}">
 	    <a class="u-url" href="{{ reply.permalink }}">
               {{ reply.pub_date_human}}
             </a>
           </time>
+          {% endif %}
           on <a class="u-url" href="{{reply.permalink}}">{{reply.permalink | domain_from_url }}</a>
           {% if reply.children %}
             {% for child in reply.children %}
@@ -67,6 +69,7 @@
 
 
         </div> <!-- .post-metadata -->
+
       </div> <!-- .p-comment -->
     {% endfor %}
   </div>

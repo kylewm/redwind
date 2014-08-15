@@ -68,16 +68,16 @@
     {% if not is_single %}
       <div class="mention-counts">
         {% if post.reply_count %}
-          <a href="{{ post.permalink }}#replies"><i class="fa fa-comment-o"></i> {{ post.reply_count }} Repl{{ post.reply_count | pluralize('y', 'ies')}}</a>
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ post.reply_count }}</a>
         {% endif %}
         {% if post.like_count %}
-          <a href="{{ post.permalink }}#likes"><i class="fa fa-star-o"></i> {{ post.like_count }} Like{{ post.like_count | pluralize }}</a>
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-star-o"></i> {{ post.like_count }}</a>
         {% endif %}
         {% if post.repost_count %}
-          <a href="{{ post.permalink }}#reposts"><i class="fa fa-retweet"></i> {{ post.repost_count }} Repost{{ post.repost_count | pluralize }}</a>
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-retweet"></i> {{ post.repost_count }}</a>
         {% endif %}
         {% if post.reference_count %}
-          <a href="{{ post.permalink }}#references"><i class="fa fa-ellipsis-h"></i> {{ post.reference_count }} Reference{{ post.reference_count | pluralize }}</a>
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-ellipsis-h"></i> {{ post.reference_count }}</a>
         {% endif %}
       </div>
     {% endif %}
