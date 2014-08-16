@@ -25,7 +25,7 @@ redis = Redis()
 assets = Environment(app)
 assets.register(
     'css_all', Bundle('css/base.css', 'css/skeleton.css',
-                      'css/layout.css',
+                      'css/layout.css', 'css/pygments.css',
                       filters='cssmin', output='css/site.css'))
 
 app.jinja_options = ImmutableDict(
