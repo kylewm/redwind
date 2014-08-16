@@ -4,9 +4,9 @@
 
     {% for reply in post.mentions %}
       <div class="p-comment h-cite {{reply.reftype}}">
-        <img class="u-photo avatar" src="{{reply.author_image}}", alt="{{reply.author_name}}" />
 
-        <span class="p-author h-card">
+        <span class="p-author h-card microcard">
+        <img class="u-photo" src="{{reply.author_image}}", alt="{{reply.author_name}}" />
 	  {% if reply.author_name and reply.author_url %}
             <a class="p-name u-url" href="{{ reply.author_url }}">
               {{ reply.author_name }}
