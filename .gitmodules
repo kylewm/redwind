@@ -1,0 +1,3 @@
+[submodule "mf2util"]
+	path = mf2util
+	url = git@github.com:kylewm/mf2util.git

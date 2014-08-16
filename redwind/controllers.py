@@ -6,6 +6,7 @@ from . import contexts
 from . import facebook
 from . import locations
 from . import push
+from . import reader
 from . import twitter
 from . import util
 from . import wm_sender
@@ -17,9 +18,7 @@ from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
-from contextlib import contextmanager
 import urllib.parse
-from werkzeug.routing import BaseConverter
 import jinja2.filters
 
 import bleach
@@ -289,7 +288,7 @@ def create_dcontext(url):
                 author_name = bleach.clean(entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
-                    author_image = local_mirror_resource(author_image)
+                    author_image, _ = local_mirror_resource(author_image)
 
                 return DContext(
                     url=url,
@@ -368,7 +367,7 @@ def create_dmention(post, url):
                     entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
-                    author_image = local_mirror_resource(author_image)
+                    author_image, _ = local_mirror_resource(author_image)
 
                 return DMention(
                     permalink=entry.get('url') or url,
@@ -563,6 +562,14 @@ def check_audience(post):
     return current_user.get_id() in post.audience
 
 
+def resize_associated_image(post, sourcepath, side):
+    targetdir = os.path.join(app.root_path, '_resized', post.path,
+                             'files', str(side))
+    targetpath = os.path.join(targetdir, os.path.basename(sourcepath))
+    util.resize_image(sourcepath, targetpath, side)
+    return targetpath
+
+
 @app.route('/{}/{}/files/<filename>'.format(POST_TYPE_RULE, DATE_RULE))
 def post_associated_file(post_type, year, month, day, index, filename):
     post = Post.load_by_date(post_type, year, month, day, index)
@@ -575,18 +582,20 @@ def post_associated_file(post_type, year, month, day, index, filename):
     if not check_audience(post):
         abort(401)  # not authorized TODO a nicer page
 
-    resourcedir = os.path.join(app.root_path, '_data', post.path, 'files')
+    sourcepath = os.path.join(app.root_path, '_data', post.path,
+                              'files', filename)
 
     size = request.args.get('size')
     if size == 'small':
-        resourcedir, filename = util.resize_image(resourcedir, filename, 300)
+        sourcepath = resize_associated_image(post, sourcepath, 300)
     elif size == 'medium':
-        resourcedir, filename = util.resize_image(resourcedir, filename, 800)
+        sourcepath = resize_associated_image(post, sourcepath, 800)
     elif size == 'large':
-        resourcedir, filename = util.resize_image(resourcedir, filename, 1024)
+        sourcepath = resize_associated_image(post, sourcepath, 1024)
 
-    _, ext = os.path.splitext(filename)
-    return send_from_directory(resourcedir, filename,
+    _, ext = os.path.splitext(sourcepath)
+    return send_from_directory(os.path.dirname(sourcepath),
+                               os.path.basename(sourcepath),
                                mimetype='text/plain' if ext == '.md' else None)
 
 
@@ -856,9 +865,18 @@ def person_to_microcard(fullname, displayname, entry, pos):
     url = entry.get('url')
     photo = entry.get('photo')
     if url and photo:
-        photo_mirror = local_mirror_resource(photo)
-        return '<a class="microcard h-card" href="{}">'\
-            '<img src="{}" />{}</a>'.format(url, photo_mirror, displayname)
+        photo_url, photo_path = local_mirror_resource(photo)
+        side = 20
+        resize_path = os.path.join(os.path.dirname(photo_path),
+                                   'resized-' + str(side),
+                                   os.path.basename(photo_path))
+        util.resize_image(
+            os.path.join(app.root_path, app.static_folder, photo_path),
+            os.path.join(app.root_path, app.static_folder, resize_path),
+            side)
+        photo_url = url_for('static', filename=resize_path)
+        return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
+            url, photo_url, displayname)
     elif url:
         return '<a class="microcard h-card" href="{}">{}</a>'.format(
             url, displayname)
@@ -966,28 +984,17 @@ def format_syndication_url(url, include_rel=True):
 
 def local_mirror_resource(url):
     site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
-
     o = urllib.parse.urlparse(url)
     if o.netloc and o.netloc != site_netloc:
-        mirror_url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
-        mirror_file_path = os.path.join(app.root_path, app.static_folder,
-                                        mirror_url_path)
-        #app.logger.debug("checking for existence of mirrored resource %s -> %s",
-        #                 url, mirror_file_path)
-        if os.path.exists(mirror_file_path):
-            #app.logger.debug("%s already mirrored, returning url path %s",
-             #                mirror_file_path, mirror_url_path)
-            return url_for('static', filename=mirror_url_path)
-
-        if util.download_resource(url, mirror_file_path):
-            app.logger.debug("%s did not exist, successfully mirrored to %s.",
-                             mirror_file_path, mirror_url_path)
-            return url_for('static', filename=mirror_url_path)
+        url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
+        file_path = os.path.join(app.root_path, app.static_folder, url_path)
+        if (os.path.exists(file_path)
+                or util.download_resource(url, file_path)):
+            return url_for('static', filename=url_path), url_path
         else:
             app.logger.warn("failed to download %s to %s for some reason", url,
-                            mirror_file_path)
-
-    return url
+                            file_path)
+    return url, None
 
 
 @app.route('/save_edit', methods=['POST'])

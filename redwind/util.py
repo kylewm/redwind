@@ -159,20 +159,13 @@ def base60_decode(s):
     return n
 
 
-def resize_image(sourcedir, filename, side):
+def resize_image(source, target, side):
     from PIL import Image, ExifTags
+    if not os.path.exists(target):
+        if not os.path.exists(os.path.dirname(target)):
+            os.makedirs(os.path.dirname(target))
 
-    targetdir = os.path.join(app.root_path, '_resized',
-                             os.path.relpath(sourcedir, app.root_path),
-                             str(side))
-    targetpath = os.path.join(targetdir, filename)
-
-    if not os.path.exists(targetpath):
-        if not os.path.exists(targetdir):
-            os.makedirs(targetdir)
-
-        im = Image.open(os.path.join(sourcedir, filename))
-
+        im = Image.open(source)
         orientation = next((k for k, v in ExifTags.TAGS.items()
                             if v == 'Orientation'), None)
 
@@ -190,6 +183,4 @@ def resize_image(sourcedir, filename, side):
         ratio = side / max(origw, origh)
         im = im.resize((int(origw * ratio), int(origh * ratio)),
                        Image.ANTIALIAS)
-        im.save(targetpath)
-
-    return targetdir, filename
+        im.save(target)
