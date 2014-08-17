@@ -34,12 +34,14 @@ def retrieve_feed(url):
 
 @app.route('/reader')
 def reader_handler():
+    from . import controllers
+
     def get_pub_date(entry):
         result = entry.get('published') or entry.get('start')
         if not result:
             result = datetime.datetime(1982, 11, 24, tzinfo=pytz.utc)
 
-        if isinstance(result, datetime.date):
+        if isinstance(result, datetime.date) and not isinstance(result, datetime.datetime):
             result = datetime.datetime.combine(result, datetime.time())
 
         if result and hasattr(result, 'tzinfo') and not result.tzinfo:
@@ -51,8 +53,10 @@ def reader_handler():
     for feed in feeds:
         json = archiver.load_json_from_archive(feed)
         if json:
-            all_entries.extend(
-                mf2util.interpret_feed(json, feed)['feed'])
+            for entry in mf2util.interpret_feed(json, feed)['feed']:
+                entry['human-time'] = controllers.human_time(
+                    entry.get('published') or entry.get('start'))
+                all_entries.append(entry)
 
     all_entries.sort(key=get_pub_date, reverse=True)
 

@@ -1,145 +1,103 @@
-<!DOCTYPE html>
-<html lang="en" class="no-js">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
+{% extends "skeleton.html" %}
+{% block body %}
 
-    <meta name="description" content=""/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <div class="three columns sidebar primary">
+    <div class="p-author h-card">
+      <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle114.jpg')}}"/>
+      <a class="u-url" href="/"><h1 class="p-name">Kyle Mahan</h1></a>
+    </div> <!-- .h-card -->
 
-    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('updates_atom') }}" title="Kyle Mahan: Updates" />
-    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom') }}" title="Kyle Mahan: Articles" />
-    <link rel="all alternate" type="application/atom+xml" href="{{ url_for('all_atom') }}" title="Kyle Mahan: All" />
-    <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
+    <nav class="widget">
+      <h2>Navigation</h2>
+      <ul>
+        <li><a href="{{url_for('index')}}">Stream</a></li>
+        <li><a href="{{url_for('articles')}}">Articles</a></li>
+        <li><a href="{{url_for('photos')}}">Photos</a></li>
+        <li><a href="{{url_for('bookmarks')}}">Bookmarks</a></li>
+        <li><a href="{{url_for('checkins')}}">Check-ins</a></li>
+        <li><a rel="feed" href="{{url_for('everything')}}">Everything</a></li>
+        <li><a href="{{url_for('archive')}}">Archives</a></li>
+      </ul>
+    </nav>
+  </div> <!-- .sidebar.primary -->
 
-    <link rel="webmention" href="{{ url_for('receive_webmention') }}"/>
-    <link rel="pingback" href="https://webmention.io/webmention?forward={{ url_for('receive_webmention', _external=True) }}" />
+  <main class="main-content offset-by-one twelve columns">
+    <div class="ten columns alpha omega">
 
-    <link rel="openid.delegate" href="https://kylewm.com/" />
-    <link rel="openid.server" href="https://indieauth.com/openid" />
+      {% if current_user.is_authenticated() %}
+        <div class="new-post-bar">
+          <ul>
+            <li><a href="{{ url_for('new_post', type='article') }}" id="new-article"><i class="fa fa-file-text-o"></i> Article</a></li>
+            <li><a href="{{ url_for('new_post', type='note') }}" id="new-note"><i class="fa fa-file-o"></i> Note</a></li>
+            <li><a href="{{ url_for('new_post', type='photo') }}" id="new-photo"><i class="fa fa-camera"></i> Photo</a></li>
+            <li><a href="{{ url_for('new_post', type='reply') }}" id="new-reply"><i class="fa fa-comment-o"></i> Reply</a></li>
+            <li><a href="{{ url_for('new_post', type='share') }}" id="new-share"><i class="fa fa-retweet"></i> Share</a></li>
+            <li><a href="{{ url_for('new_post', type='like') }}" id="new-like"><i class="fa fa-thumbs-o-up"></i> Like</a></li>
+            <li><a href="{{ url_for('new_post', type='bookmark') }}" id="new-bookmark"><i class="fa fa-bookmark"></i> Bookmark</a></li>
+            <li><a href="{{ url_for('new_post', type='checkin') }}" id="new-checkin"><i class="fa fa-check"></i> Check-in</a></li>
+          </ul>
+        </div>
+        <div id="composition-area">
+        </div>
+      {% endif %}
 
-    <link rel="authorization_endpoint" href="https://indieauth.com/auth" />
-    <link rel="token_endpoint" href="https://kylewm.com/api/token" />
-    <link rel="micropub" href="https://kylewm.com/api/micropub" />
 
-    <link rel="shortcut icon" href="{{ url_for('static', filename='img/users/kyle.jpg') }}"/>
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/users/kyle.jpg') }}"/>
-    <link rel="apple-touch-icon" sizes="60x60" href="{{ url_for('static', filename='img/users/kyle60.jpg') }}"/>
-    <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/users/kyle76.jpg') }}"/>
-    <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/users/kyle114.jpg') }}"/>
-    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/kyle152.jpg') }}"/>
-    {% assets 'css_all' %}
-    <link rel="stylesheet" href="{{ ASSET_URL }}"/>
-    {% endassets %}
-
-  </head>
-  <body class="container{%if body_class%} {{body_class}}{% endif %}">
-    <div class="three columns sidebar primary">
-      <div class="p-author h-card">
-        <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle114.jpg')}}"/>
-        <a class="u-url" href="/"><h1 class="p-name">Kyle Mahan</h1></a>
-      </div> <!-- .h-card -->
-
-      <nav class="widget">
-        <h2>Navigation</h2>
-        <ul>
-          <li><a href="{{url_for('index')}}">Stream</a></li>
-          <li><a href="{{url_for('articles')}}">Articles</a></li>
-          <li><a href="{{url_for('photos')}}">Photos</a></li>
-          <li><a href="{{url_for('bookmarks')}}">Bookmarks</a></li>
-          <li><a href="{{url_for('checkins')}}">Check-ins</a></li>
-          <li><a rel="feed" href="{{url_for('everything')}}">Everything</a></li>
-          <li><a href="{{url_for('archive')}}">Archives</a></li>
-        </ul>
-      </nav>
-    </div> <!-- .sidebar.primary -->
-
-    <main class="main-content offset-by-one twelve columns">
-      <div class="ten columns alpha omega">
-
-        {% if current_user.is_authenticated() %}
-
-          <div class="new-post-bar">
-            <ul>
-              <li><a href="{{ url_for('new_post', type='article') }}" id="new-article"><i class="fa fa-file-text-o"></i> Article</a></li>
-              <li><a href="{{ url_for('new_post', type='note') }}" id="new-note"><i class="fa fa-file-o"></i> Note</a></li>
-              <li><a href="{{ url_for('new_post', type='photo') }}" id="new-photo"><i class="fa fa-camera"></i> Photo</a></li>
-              <li><a href="{{ url_for('new_post', type='reply') }}" id="new-reply"><i class="fa fa-comment-o"></i> Reply</a></li>
-              <li><a href="{{ url_for('new_post', type='share') }}" id="new-share"><i class="fa fa-retweet"></i> Share</a></li>
-              <li><a href="{{ url_for('new_post', type='like') }}" id="new-like"><i class="fa fa-thumbs-o-up"></i> Like</a></li>
-              <li><a href="{{ url_for('new_post', type='bookmark') }}" id="new-bookmark"><i class="fa fa-bookmark"></i> Bookmark</a></li>
-              <li><a href="{{ url_for('new_post', type='checkin') }}" id="new-checkin"><i class="fa fa-check"></i> Check-in</a></li>
+      <div class="flashes">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flashes">
+              {% for message in messages %}
+                <li>{{ message | safe }}</li>
+              {% endfor %}
             </ul>
-          </div>
-          <div id="composition-area">
-          </div>
-        {% endif %}
+          {% endif %}
+        {% endwith %}
+      </div> <!-- .flashes -->
+
+      {% block content %}{% endblock content %}
+    </div> <!-- .ten.columns -->
+  </main>
+
+  <div class="three columns sidebar secondary">
+    <div class="widget social">
+      <h2>Elsewhere</h2>
+      <ul>
+        <li><a rel="me" href="gtalk:kyle.mahan@gmail.com">GChat</a></li>
+        <li><a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a></li>
+        <li><a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> (<a class="u-key" rel="key publickey pgpkey" type="application/pgp-keys" href="{{url_for('static', filename='kyle-mahan-public-key.asc')}}">Key</a><a rel="pgp-fingerprint" href="https://twitter.com/kyle_wm/status/454668100873379842"></a>)</li>
+        <li><a rel="me" href="https://github.com/kylewm">GitHub</a></li>
+        <li><a rel="me" href="https://twitter.com/kyle_wm">Twitter</a></li>
+        <li><a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a></li>
+        <li><a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a></li>
+        <li><a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a></li>
+        <li><a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a></li>
+      </ul>
+    </div> <!-- .social -->
+
+    <div class="login widget">
+      {% if current_user.is_anonymous() %}
+        <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
+          <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+          <button id="sign_in_button" type="submit">Sign In</button>
+          <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
+        </form>
+      {% else %}
+        {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
+      {% endif %}
+    </div> <!-- .login -->
+
+  </div> <!-- .sidebar.secondary -->
 
 
-        <div class="flashes">
-          {% with messages = get_flashed_messages() %}
-            {% if messages %}
-              <ul class="flashes">
-                {% for message in messages %}
-                  <li>{{ message | safe }}</li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          {% endwith %}
-        </div>
-
-        {% block content %}{% endblock content %}
+  <div class="sixteen columns">
+    <div class="site-info">
+      <div>
+        This site is powered by <a href="http://git.kylewm.com/?p=redwind.git;a=summary">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
       </div>
-    </main> <!-- main -->
-
-    <div class="three columns sidebar secondary">
-      <div class="widget social">
-        <h2>Elsewhere</h2>
-        <ul>
-          <li><a rel="me" href="gtalk:kyle.mahan@gmail.com">GChat</a></li>
-          <li><a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a></li>
-          <li><a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> (<a class="u-key" rel="key publickey pgpkey" type="application/pgp-keys" href="{{url_for('static', filename='kyle-mahan-public-key.asc')}}">Key</a><a rel="pgp-fingerprint" href="https://twitter.com/kyle_wm/status/454668100873379842"></a>)</li>
-          <li><a rel="me" href="https://github.com/kylewm">GitHub</a></li>
-          <li><a rel="me" href="https://twitter.com/kyle_wm">Twitter</a></li>
-          <li><a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a></li>
-          <li><a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a></li>
-          <li><a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a></li>
-          <li><a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a></li>
-        </ul>
-      </div> <!-- .social -->
-
-      <div class="login widget">
-        {% if current_user.is_anonymous() %}
-          <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
-            <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
-            <button id="sign_in_button" type="submit">Sign In</button>
-            <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
-          </form>
-        {% else %}
-          {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
-        {% endif %}
-      </div> <!-- .login -->
-
-    </div> <!-- .sidebar.secondary -->
-
-
-    <div class="sixteen columns">
-      <div class="site-info">
-        <div>
-          This site is powered by <a href="http://git.kylewm.com/?p=redwind.git;a=summary">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
-        </div>
-        <div>
-          <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="{{ url_for('static', filename='img/cc-by.png') }}" /></a>
-        </div>
+      <div>
+        <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="{{ url_for('static', filename='img/cc-by.png') }}" /></a>
       </div>
     </div>
+  </div>
 
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/>
-    <link href="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" rel="stylesheet"/>
-    <script data-main="/static/js/main" src="/static/js/require.min.js"></script>
-
-    {% block other_resources %}{% endblock other_resources %}
-
-  </body>
-</html>
+{% endblock body %}
