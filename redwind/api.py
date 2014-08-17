@@ -3,11 +3,8 @@ from . import auth
 from . import util
 from .models import Post, Location, Metadata
 
-from collections import deque
-from flask import request, url_for, jsonify, abort, make_response
-from flask.ext.login import login_required
+from flask import request, jsonify, abort, make_response
 from werkzeug import secure_filename
-from bs4 import BeautifulSoup
 
 import datetime
 import jwt

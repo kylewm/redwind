@@ -10,7 +10,6 @@ import requests.utils
 import urllib
 
 
-
 def url_to_archive_path(url):
     parsed = urllib.parse.urlparse(url)
     path = os.path.join(parsed.scheme,

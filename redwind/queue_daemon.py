@@ -27,11 +27,13 @@ def queue_daemon(app, rv_ttl=86400):
         args = blob['args']
         kwargs = blob['kwargs']
 
-        app.logger.info('executing function %s with args %s, kwargs %s', func_name, args, kwargs)
         func = queue.function_name_map.get(func_name)
+        app.logger.info('executing function %s (%s) with args %s, kwargs %s',
+                        func_name, func, args, kwargs)
         try:
             with app.test_request_context():
-                user = models.User.load(os.path.join(app.root_path, '_data/user.json'))
+                user = models.User.load(os.path.join(app.root_path,
+                                                     '_data/user.json'))
                 login_user(user)
                 rv = func(*args, **kwargs)
         except Exception as e:

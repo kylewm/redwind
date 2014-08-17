@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  {% for entry in feed %}
+
+    <article class="h-entry" style="overflow: auto;">
+      {% if 'author' in entry %}
+        <div class="p-author h-card">
+          {% if 'photo' in entry['author'] %}
+            <img class="avatar" src="{{entry['author']['photo']}}" />
+          {% endif %}
+          {% if 'name' in entry['author'] and 'url' in entry['author'] %}
+            <a class="p-name u-url" href="{{ entry['author']['url'] }}">
+              {{ entry['author']['name'] }}
+            </a>
+          {% elif 'name' in entry['author'] %}
+            <span class="p-name">{{ entry['author']['name']}}</span>
+          {% elif 'url' in entry['author'] %}
+            <a class="u-url" href="{{entry['author']['url']}}">
+              {{ entry['author']['url'] | prettify_url }}
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if 'url' in entry %}
+        <div class="post-metadata">
+          <a href="{{entry['url']}}">{{ entry['published-str'] }}</a>
+        </div>
+      {% endif %}
+
+      {% if 'name' in entry %}
+        <h1 class="p-name">{{ entry['name'] }}</h1>
+      {% endif %}
+
+      {% if 'content' in entry %}
+        <div class="e-content clearfix">
+          {{ entry['content'] | safe }}
+        </div>
+      {% endif %}
+
+      {% if 'url' in entry %}
+        <a href="{{ url_for('new_post', type='reply', url=entry['url'])}}">Reply</a>
+        <a href="{{ url_for('new_post', type='like', url=entry['url'])}}">Like</a>
+        <a href="{{ url_for('new_post', type='share', url=entry['url'])}}">Share</a>
+      {% endif %}
+
+    </article>
+  {% endfor %}
+
+{% endblock %}
