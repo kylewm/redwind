@@ -290,9 +290,13 @@ def create_dcontext(url):
                 if author_image:
                     author_image, _ = local_mirror_resource(author_image)
 
+                permalink = entry.get('url')
+                if not permalink or not isinstance(permalink, str):
+                    permalink = url
+                    
                 return DContext(
                     url=url,
-                    permalink=entry.get('url', url),
+                    permalink=permalink,
                     author_name=author_name,
                     author_url=entry.get('author', {}).get('url', ''),
                     author_image=author_image or url_for(
@@ -870,6 +874,11 @@ def person_to_microcard(fullname, displayname, entry, pos):
         resize_path = os.path.join(os.path.dirname(photo_path),
                                    'resized-' + str(side),
                                    os.path.basename(photo_path))
+        if not (resize_path.lower().endswith('.gif')
+                or resize_path.lower().endswith('.jpg') 
+                or resize_path.lower().endswith('.png')):
+            resize_path += '.jpg'
+
         util.resize_image(
             os.path.join(app.root_path, app.static_folder, photo_path),
             os.path.join(app.root_path, app.static_folder, resize_path),

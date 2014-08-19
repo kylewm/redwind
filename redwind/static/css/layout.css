@@ -72,8 +72,7 @@ article + article { margin-top: 90px; }
 .e-content p:last-child { margin-bottom: 0; }
 img.avatar { height: 64px; margin-top: 5px; width: auto; }
 .map { height: 240px; max-width: 640px; width: 100%; }
-.mentions { margin-top: 4rem; }
-.replies { margin-top: 1rem; }
+.mentions { margin: 3rem 0; }
 .page-arrows { margin: 10px; }
 .page-arrows .page-right { float: right; }
 .page-arrows .page-left { float: left; }

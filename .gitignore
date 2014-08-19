@@ -15,3 +15,4 @@ _data.backup/
 _mirror
 _archive
 redwind/skeletal/static/teamrobot-js
+.webassets-cache

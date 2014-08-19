@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block base_content %}
+  <div class="three columns sidebar primary">
+    <div class="p-author h-card">
+      <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle114.jpg')}}"/>
+      <a class="u-url" href="/"><h1 class="p-name">Kyle Mahan</h1></a>
+    </div> <!-- .h-card -->
+
+    <nav class="widget">
+      <h2>Navigation</h2>
+      <ul>
+        <li><a href="{{url_for('index')}}">Stream</a></li>
+        <li><a href="{{url_for('articles')}}">Articles</a></li>
+        <li><a href="{{url_for('photos')}}">Photos</a></li>
+        <li><a href="{{url_for('bookmarks')}}">Bookmarks</a></li>
+        <li><a href="{{url_for('checkins')}}">Check-ins</a></li>
+        <li><a rel="feed" href="{{url_for('everything')}}">Everything</a></li>
+        <li><a href="{{url_for('archive')}}">Archives</a></li>
+      </ul>
+    </nav>
+  </div> <!-- .sidebar.primary -->
+
+  <main class="main-content offset-by-one twelve columns">
+    <div class="ten columns alpha omega">
+
+      {% if current_user.is_authenticated() %}
+
+        <div class="new-post-bar">
+          <ul>
+            <li><a href="{{ url_for('new_post', type='article') }}" id="new-article"><i class="fa fa-file-text-o"></i> Article</a></li>
+            <li><a href="{{ url_for('new_post', type='note') }}" id="new-note"><i class="fa fa-file-o"></i> Note</a></li>
+            <li><a href="{{ url_for('new_post', type='photo') }}" id="new-photo"><i class="fa fa-camera"></i> Photo</a></li>
+            <li><a href="{{ url_for('new_post', type='reply') }}" id="new-reply"><i class="fa fa-comment-o"></i> Reply</a></li>
+            <li><a href="{{ url_for('new_post', type='share') }}" id="new-share"><i class="fa fa-retweet"></i> Share</a></li>
+            <li><a href="{{ url_for('new_post', type='like') }}" id="new-like"><i class="fa fa-thumbs-o-up"></i> Like</a></li>
+            <li><a href="{{ url_for('new_post', type='bookmark') }}" id="new-bookmark"><i class="fa fa-bookmark"></i> Bookmark</a></li>
+            <li><a href="{{ url_for('new_post', type='checkin') }}" id="new-checkin"><i class="fa fa-check"></i> Check-in</a></li>
+          </ul>
+        </div>
+        <div id="composition-area">
+        </div>
+      {% endif %}
+
+
+      <div class="flashes">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flashes">
+              {% for message in messages %}
+                <li>{{ message | safe }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      {% block content %}{% endblock content %}
+    </div>
+  </main> <!-- main -->
+
+  <div class="three columns sidebar secondary">
+    <div class="widget social">
+      <h2>Elsewhere</h2>
+      <ul>
+        <li><a rel="me" href="gtalk:kyle.mahan@gmail.com">GChat</a></li>
+        <li><a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a></li>
+        <li><a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> (<a class="u-key" rel="key publickey pgpkey" type="application/pgp-keys" href="{{url_for('static', filename='kyle-mahan-public-key.asc')}}">Key</a><a rel="pgp-fingerprint" href="https://twitter.com/kyle_wm/status/454668100873379842"></a>)</li>
+        <li><a rel="me" href="https://github.com/kylewm">GitHub</a></li>
+        <li><a rel="me" href="https://twitter.com/kyle_wm">Twitter</a></li>
+        <li><a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a></li>
+        <li><a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a></li>
+        <li><a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a></li>
+        <li><a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a></li>
+      </ul>
+    </div> <!-- .social -->
+
+    <div class="login widget">
+      {% if current_user.is_anonymous() %}
+        <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
+          <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+          <button id="sign_in_button" type="submit">Sign In</button>
+          <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
+        </form>
+      {% else %}
+        {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
+      {% endif %}
+    </div> <!-- .login -->
+
+  </div> <!-- .sidebar.secondary -->
+
+{% endblock base_content %}
