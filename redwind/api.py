@@ -219,7 +219,8 @@ def micropub_endpoint():
         mdata.add_or_update_post(post)
         mdata.save()
 
-    controllers.post_process(send_push=True, send_wms=True, send_tweet=False)    
+    controllers.post_process(send_push=True, send_wms=True,
+                             send_tweet=False)
     return make_response('', 201, {'Location': post.permalink})
 
 

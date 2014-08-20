@@ -40,10 +40,8 @@ def reader_handler():
         result = entry.get('published') or entry.get('start')
         if not result:
             result = datetime.datetime(1982, 11, 24, tzinfo=pytz.utc)
-
         if isinstance(result, datetime.date) and not isinstance(result, datetime.datetime):
             result = datetime.datetime.combine(result, datetime.time())
-
         if result and hasattr(result, 'tzinfo') and not result.tzinfo:
             result = pytz.utc.localize(result)
         return result
@@ -59,5 +57,4 @@ def reader_handler():
                 all_entries.append(entry)
 
     all_entries.sort(key=get_pub_date, reverse=True)
-
     return render_template('reader.html', feed=all_entries)

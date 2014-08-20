@@ -293,7 +293,7 @@ def create_dcontext(url):
                 permalink = entry.get('url')
                 if not permalink or not isinstance(permalink, str):
                     permalink = url
-                    
+
                 return DContext(
                     url=url,
                     permalink=permalink,
@@ -875,7 +875,7 @@ def person_to_microcard(fullname, displayname, entry, pos):
                                    'resized-' + str(side),
                                    os.path.basename(photo_path))
         if not (resize_path.lower().endswith('.gif')
-                or resize_path.lower().endswith('.jpg') 
+                or resize_path.lower().endswith('.jpg')
                 or resize_path.lower().endswith('.png')):
             resize_path += '.jpg'
 
@@ -1142,7 +1142,7 @@ def save_post(post):
         app.logger.debug("saved post %s %s", post.shortid, post.permalink)
         redirect_url = post.permalink
 
-        postprocess(post, 
+        postprocess(post,
                     send_push=request.form.get('send_push') == 'true',
                     send_wms=request.form.get('send_webmentions') == 'true',
                     send_tweet=request.form.get('tweet') == 'true')
@@ -1154,7 +1154,9 @@ def save_post(post):
 
         return redirect(url_for('index'))
 
-def postprocess(post, send_push=True, send_wms=True, tweet=False):
+
+def postprocess(post, send_push=True, send_wms=True,
+                send_tweet=False):
     try:
         app.logger.debug("fetching contexts")
         contexts.fetch_post_contexts(post)
