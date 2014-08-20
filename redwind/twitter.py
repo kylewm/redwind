@@ -210,8 +210,6 @@ class TwitterClient:
                 return embed_response.json().get('html')
 
     def fetch_external_post(self, url):
-        from .controllers import local_mirror_resource
-
         match = self.PERMALINK_RE.match(url)
         if not match:
             app.logger.debug('url is not a twitter permalink %s', url)
@@ -243,6 +241,10 @@ class TwitterClient:
             author_url = 'https://twitter.com/{}'.format(screen_name)
         author_image = status_data['user']['profile_image_url']
         tweet_text = self.expand_links(status_data['text'])
+
+        suffix = '_normal.jpeg'
+        if author_image and author_image.endswith(suffix):
+            author_image = author_image[:-len(suffix)] + '.jpeg'
 
         for media in status_data.get('entities', {}).get('media', []):
             if media.get('type') == 'photo':
