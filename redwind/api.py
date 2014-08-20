@@ -124,6 +124,8 @@ def token_endpoint():
 
 @app.route('/api/micropub', methods=['POST'])
 def micropub_endpoint():
+    import controllers
+
     app.logger.info(
         "received micropub request %s, args=%s, form=%s, headers=%s",
         request, request.args, request.form, request.headers)
@@ -217,6 +219,7 @@ def micropub_endpoint():
         mdata.add_or_update_post(post)
         mdata.save()
 
+    controllers.post_process(send_push=True, send_wms=True, send_tweet=False)    
     return make_response('', 201, {'Location': post.permalink})
 
 

@@ -1142,28 +1142,10 @@ def save_post(post):
         app.logger.debug("saved post %s %s", post.shortid, post.permalink)
         redirect_url = post.permalink
 
-        try:
-            app.logger.debug("fetching contexts")
-            contexts.fetch_post_contexts(post)
-
-            app.logger.debug("fetching location info")
-            locations.reverse_geocode(post)
-
-            if request.form.get('send_push') == 'true' and not post.draft:
-                app.logger.debug("sending push notification")
-                push.send_notifications(post)
-
-            if request.form.get('send_webmentions') == 'true' and not post.draft:
-                app.logger.debug("sending webmentions")
-                wm_sender.send_webmentions(post)
-
-            if request.form.get('tweet') == 'true':
-                app.logger.debug('posting to twitter')
-                twitter.send_to_twitter(post)
-
-        except:
-            app.logger.exception("exception while dispatching queued tasks")
-
+        postprocess(post, 
+                    send_push=request.form.get('send_push') == 'true',
+                    send_wms=request.form.get('send_webmentions') == 'true',
+                    send_tweet=request.form.get('tweet') == 'true')
         return redirect(redirect_url)
 
     except Exception as e:
@@ -1171,6 +1153,30 @@ def save_post(post):
         flash('failed to save post {}'.format(e))
 
         return redirect(url_for('index'))
+
+def postprocess(post, send_push=True, send_wms=True, tweet=False):
+    try:
+        app.logger.debug("fetching contexts")
+        contexts.fetch_post_contexts(post)
+
+        app.logger.debug("fetching location info")
+        locations.reverse_geocode(post)
+
+        if not post.draft:
+            if send_push:
+                app.logger.debug("sending push notification")
+                push.send_notifications(post)
+
+            if send_wms:
+                app.logger.debug("sending webmentions")
+                wm_sender.send_webmentions(post)
+
+            if send_tweet:
+                app.logger.debug('posting to twitter')
+                twitter.send_to_twitter(post)
+
+    except:
+        app.logger.exception("exception while dispatching queued tasks")
 
 
 @app.route('/addressbook', methods=['GET', 'POST'])
