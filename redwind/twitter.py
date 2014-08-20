@@ -242,9 +242,8 @@ class TwitterClient:
         author_image = status_data['user']['profile_image_url']
         tweet_text = self.expand_links(status_data['text'])
 
-        suffix = '_normal.jpeg'
-        if author_image and author_image.endswith(suffix):
-            author_image = author_image[:-len(suffix)] + '.jpeg'
+        # remove `_normal` from author image to get full-size photo
+        author_image = re.sub('_normal\.(\w+)$', '.\g<1>', author_image)
 
         for media in status_data.get('entities', {}).get('media', []):
             if media.get('type') == 'photo':
