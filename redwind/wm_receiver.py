@@ -40,9 +40,9 @@ def receive_webmention():
         key = key[len(prefix):]
 
     status_url = url_for('webmention_status', key=key, _external=True)
+
     return make_response(
-        'webmention queued for processing. <a href="{}">check status</a>.'
-        .format(status_url), 202)
+        render_template('wm_received.html', status_url=status_url), 202)
 
 
 @app.route('/webmention/status/<key>')
@@ -51,11 +51,14 @@ def webmention_status(key):
     delayed = queue.DelayedResult(key)
     rv = delayed.return_value
     if not rv:
-        return jsonify({
-            'status': 202,
+        rv = {
+            'response_code': 202,
+            'status': 'queued',
             'reason': 'Mention has not been processed or status has expired'
-        })
-    return jsonify(rv)
+        }
+    return make_response(
+        render_template('wm_status.html', **rv),
+        rv.get('response_code', 400))
 
 
 @queue.queueable
@@ -72,7 +75,8 @@ def process_webmention(source, target, callback):
             result = {
                 'source': source,
                 'target': target,
-                'status': 400,
+                'response_code': 400,
+                'status': 'error',
                 'reason': error
             }
             call_callback(result)
@@ -95,7 +99,8 @@ def process_webmention(source, target, callback):
         result = {
             'source': source,
             'target': target,
-            'status': 200,
+            'response_code': 200,
+            'status': 'success',
             'reason': 'Deleted' if delete else 'Created'
         }
         call_callback(result)
@@ -106,7 +111,8 @@ def process_webmention(source, target, callback):
         result = {
             'source': source,
             'target': target,
-            'status': 400,
+            'response_code': 400,
+            'status': 'error',
             'reason': "exception while processing webmention {}".format(e)
         }
         call_callback(result)
