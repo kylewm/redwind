@@ -38,17 +38,12 @@ if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
     app.logger.setLevel(logging.DEBUG)
-    file_handler = RotatingFileHandler('app.log', maxBytes=1048576,
+    file_handler = RotatingFileHandler('logs/app.log', maxBytes=1048576,
                                        backupCount=20)
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
-    error_handler = RotatingFileHandler('app.error.log', maxBytes=1048576,
-                                        backupCount=20)
-    error_handler.setLevel(logging.ERROR)
-    error_handler.setFormatter(formatter)
-    app.logger.addHandler(error_handler)
 
 
 for handler in ['controllers']:

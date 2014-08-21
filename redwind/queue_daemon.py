@@ -11,7 +11,7 @@ if not app.debug:
     from logging.handlers import RotatingFileHandler
     app.logger.setLevel(logging.DEBUG)
 
-    file_handler = RotatingFileHandler('queue.log', maxBytes=1048576,
+    file_handler = RotatingFileHandler('logs/queue.log', maxBytes=1048576,
                                        backupCount=5)
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
