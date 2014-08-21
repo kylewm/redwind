@@ -1,11 +1,11 @@
 from .. import app
 from .. import archiver
 from .. import controllers
-from .. import hentry_template
 from .. import hooks
 from .. import queue
 from .. import util
 from ..models import Post
+from . import hentry_template
 
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response,\
