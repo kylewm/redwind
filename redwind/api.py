@@ -1,6 +1,7 @@
 from . import app
 from . import auth
 from . import util
+from . import hooks
 from .models import Post, Location, Metadata
 
 from flask import request, jsonify, abort, make_response
@@ -219,8 +220,7 @@ def micropub_endpoint():
         mdata.add_or_update_post(post)
         mdata.save()
 
-    controllers.postprocess(post, send_push=True, send_wms=True,
-                            send_tweet=False)
+    hooks.fire('post-saved', post, {})
     return make_response('', 201, {'Location': post.permalink})
 
 
