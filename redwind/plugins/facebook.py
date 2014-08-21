@@ -1,4 +1,5 @@
 from .. import app
+from .. import controllers
 from ..models import Post
 
 from flask.ext.login import login_required, current_user
@@ -135,11 +136,10 @@ def create_album(name, msg):
 
 def handle_new_or_edit(post, preview, img_url, post_type,
                        album_id):
-    from .controllers import process_people
     app.logger.debug('publishing to facebook')
 
     tagger = PersonTagger()
-    preview = process_people(preview, tagger)
+    preview = controllers.process_people(preview, tagger)
 
     post_args = {
         'access_token': current_user.facebook_access_token,
@@ -211,7 +211,6 @@ def handle_new_or_edit(post, preview, img_url, post_type,
 
 
 def format_markdown_as_facebook(data):
-    from .controllers import markdown_filter, format_as_text
-    return format_as_text(
-        markdown_filter(data, link_twitter_names=False,
-                        person_processor=None))
+    return controllers.format_as_text(
+        controllers.markdown_filter(data, link_twitter_names=False,
+                                    person_processor=None))
