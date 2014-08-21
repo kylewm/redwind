@@ -1,10 +1,9 @@
-from . import push
-from . import app
-from . import queue
-from . import archiver
-from .models import Post, Metadata
+from .. import app
+from .. import queue
+from .. import archiver
+from ..models import Post, Metadata
 
-from flask import request, make_response, render_template, url_for, jsonify
+from flask import request, make_response, render_template, url_for
 from werkzeug.exceptions import NotFound
 
 import urllib.parse
@@ -12,6 +11,10 @@ import urllib.request
 import requests
 
 from bs4 import BeautifulSoup
+
+
+def register():
+    pass
 
 
 @app.route('/webmention', methods=['GET', 'POST'])
@@ -67,8 +70,7 @@ def process_webmention(source, target, callback):
         if callback:
             requests.post(callback, data=result)
     try:
-        target_post, mention_url, delete, error \
-            = do_process_webmention(source, target)
+        target_post, mention_url, delete, error = do_process_webmention(source, target)
 
         if error or not target_post or not mention_url:
             app.logger.warn("Failed to process webmention: %s", error)
@@ -93,8 +95,6 @@ def process_webmention(source, target, callback):
         with Metadata.writeable() as mdata:
             mdata.insert_recent_mention(target_post, mention_url)
             mdata.save()
-
-        push.handle_new_mentions()
 
         result = {
             'source': source,
@@ -134,10 +134,14 @@ def do_process_webmention(source, target):
         if not target_post:
             app.logger.warn(
                 "Webmention could not find target post: %s. Giving up", target)
-            return None, None, None, False, \
-                "Webmention could not find target post: {}".format(target)
+            return (None, None, False,
+                    "Webmention could not find target post: {}".format(target))
+        target_urls = (target, target_post.permalink,
+                       target_post.short_permalink)
 
-        target_urls = (target, target_post.permalink, target_post.short_permalink)
+    if source in target_urls:
+        return (None, None, False,
+                '{} and {} refer to the same post'.format(source, target))
 
     # confirm that source actually refers to the post
     source_response = requests.get(source)

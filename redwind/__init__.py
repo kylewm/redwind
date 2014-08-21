@@ -1,4 +1,5 @@
 import sys
+import importlib
 
 for module in ('mf2py', 'mf2util'):
     if module not in sys.path:
@@ -11,11 +12,6 @@ from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
 
-# half-hearted "theme" support was more trouble than it's worth. maybe
-#revisit later on.
-#app = Flask( __name__,
-#template_folder=os.path.join(Configuration.THEME, 'templates'),
-#static_folder=os.path.join(Configuration.THEME, 'static'))
 
 app = Flask(__name__)
 
@@ -42,18 +38,28 @@ if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
     app.logger.setLevel(logging.DEBUG)
-
     file_handler = RotatingFileHandler('app.log', maxBytes=1048576,
                                        backupCount=20)
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
-
     error_handler = RotatingFileHandler('app.error.log', maxBytes=1048576,
                                         backupCount=20)
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(formatter)
     app.logger.addHandler(error_handler)
 
-from . import controllers
+
+for handler in ['controllers']:
+    importlib.import_module('redwind.' + handler)
+
+
+for plugin in ['facebook', 'locations', 'push', 'reader', 'twitter',
+               'wm_receiver', 'wm_sender']:
+    app.logger.info('loading plugin module %s', plugin)
+    module = importlib.import_module('redwind.plugins.' + plugin)
+    try:
+        module.register()
+    except:
+        app.logger.warn('no register method for plugin module %s', plugin)

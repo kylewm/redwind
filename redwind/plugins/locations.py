@@ -1,12 +1,14 @@
 import requests
 import json
-from . import queue
-from . import app
-from . import models
+from .. import app
+from .. import hooks
+from .. import models
+from .. import queue
 
 
-def reverse_geocode(post):
-    do_reverse_geocode.delay(post.shortid)
+def register():
+    hooks.register('post-saved', lambda post:
+                   do_reverse_geocode.delay(post.shortid))
 
 
 @queue.queueable
@@ -35,7 +37,7 @@ def do_reverse_geocode(postid):
 
             # hat-tip https://gist.github.com/barnabywalters/8318401
             adr = data.get('address', {})
-                            
+
             post.location.street_address = adr.get('road')
             post.location.extended_address = adr.get('suburb')
             post.location.locality = (adr.get('hamlet') or adr.get('village') or adr.get('town')
@@ -44,5 +46,5 @@ def do_reverse_geocode(postid):
             post.location.country_name = adr.get('country')
             post.location.postal_code = adr.get('postcode')
             post.location.country_code = adr.get('country_code')
-            
+
             post.save()

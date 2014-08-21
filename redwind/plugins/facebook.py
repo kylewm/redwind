@@ -1,5 +1,5 @@
-from . import app
-from .models import Post
+from .. import app
+from ..models import Post
 
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, render_template
@@ -7,6 +7,10 @@ from flask import request, redirect, url_for, render_template
 import requests
 import json
 import urllib
+
+
+def register():
+    pass
 
 
 @app.route('/authorize_facebook')
@@ -140,7 +144,8 @@ def handle_new_or_edit(post, preview, img_url, post_type,
     post_args = {
         'access_token': current_user.facebook_access_token,
         'message': preview.strip(),
-        'actions': json.dumps({'name': 'See Original', 'link': post.permalink}),
+        'actions': json.dumps({'name': 'See Original',
+                               'link': post.permalink}),
         #'privacy': json.dumps({'value': 'SELF'}),
         'privacy': json.dumps({'value': 'EVERYONE'}),
         #'article': post.permalink,

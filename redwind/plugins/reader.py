@@ -1,12 +1,18 @@
-from . import app
-from . import queue
-from . import archiver
+from .. import app
+from .. import queue
+from .. import archiver
+from .. import controllers
+
 from flask import render_template
 import datetime
 import json
 import mf2util
 import os
 import pytz
+
+
+def register():
+    pass
 
 
 def load_subscriptions():
@@ -34,8 +40,6 @@ def retrieve_feed(url):
 
 @app.route('/reader')
 def reader_handler():
-    from . import controllers
-
     def get_pub_date(entry):
         result = entry.get('published') or entry.get('start')
         if not result:

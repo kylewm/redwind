@@ -1,12 +1,18 @@
-from . import app
-from . import queue
-from .models import Post
+from .. import app
+from .. import controllers
+from .. import queue
+from .. import hooks
+from ..models import Post
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from urllib.request import urlopen, Request
 
 import re
 import requests
+
+
+def register():
+    hooks.register('post-saved', send_webmentions)
 
 
 def send_webmentions(post):
@@ -36,15 +42,13 @@ class MentionClient:
         return post.permalink
 
     def get_target_urls(self, post):
-        from .controllers import create_dpost
-
         target_urls = []
         # send mentions to 'in_reply_to' as well as all linked urls
         target_urls += post.in_reply_to
         target_urls += post.repost_of
         target_urls += post.like_of
 
-        dpost = create_dpost(post)
+        dpost = controllers.create_dpost(post)
         app.logger.debug("search post content {}".format(dpost.content))
 
         soup = BeautifulSoup(dpost.content)

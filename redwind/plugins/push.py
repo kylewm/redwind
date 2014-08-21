@@ -1,7 +1,11 @@
-from . import app
-from . import queue
-#from .spool import spoolable
+from .. import app
+from .. import hooks
+from .. import queue
 import requests
+
+
+def register():
+    hooks.register('post-saved', send_notifications)
 
 
 def send_notifications(post):
@@ -11,11 +15,6 @@ def send_notifications(post):
     if post.post_type == 'article':
         publish.delay(site_url + '/articles.atom')
     publish.delay(site_url + '/all.atom')
-
-
-def handle_new_mentions():
-    site_url = app.config['SITE_URL']
-    publish.delay(site_url + '/mention.atom')
 
 
 @queue.queueable

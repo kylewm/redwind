@@ -1,16 +1,11 @@
-from . import app
 from . import api
+from . import app
 from . import archiver
 from . import auth
-from . import contexts
-from . import facebook
-from . import locations
-from . import push
-from . import reader
-from . import twitter
+from . import hooks
+from . import queue
 from . import util
-from . import wm_sender
-from . import wm_receiver
+
 from .models import Post, Location, Metadata, AddressBook, POST_TYPES
 
 from bs4 import BeautifulSoup
@@ -24,6 +19,7 @@ import jinja2.filters
 import bleach
 import collections
 import datetime
+import itertools
 import mf2util
 import operator
 import os
@@ -39,16 +35,21 @@ bleach.ALLOWED_ATTRIBUTES.update({
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
-POST_TYPE_RULE = '<any(' + ','.join(POST_TYPES) + '):post_type>'
-DATE_RULE = '<int:year>/<int(fixed_digits=2):month>/'\
-            '<int(fixed_digits=2):day>/<index>'
-
-TWITTER_PROFILE_RE = re.compile(r'https?://(?:www\.)?twitter\.com/(\w+)')
-TWITTER_RE = twitter.TwitterClient.PERMALINK_RE
-FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)')
-FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
-YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
-INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
+POST_TYPE_RULE = '<any({}):post_type>'.format(','.join(POST_TYPES))
+DATE_RULE = (
+    '<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<index>')
+TWITTER_PROFILE_RE = re.compile(
+    r'https?://(?:www\.)?twitter\.com/(\w+)')
+TWITTER_RE = re.compile(
+    r'https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)')
+FACEBOOK_PROFILE_RE = re.compile(
+    r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)')
+FACEBOOK_RE = re.compile(
+    r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
+YOUTUBE_RE = re.compile(
+    r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
+INSTAGRAM_RE = re.compile(
+    r'https?://instagram\.com/p/(\w+)')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
@@ -177,13 +178,20 @@ def create_dpost(post):
             tweet_id = match.group(2)
             break
 
-    reply_url = tweet_id and 'https://twitter.com/intent/tweet?in_reply_to={}'.format(tweet_id)
-    retweet_url = tweet_id and 'https://twitter.com/intent/retweet?tweet_id={}'.format(tweet_id)
-    favorite_url = tweet_id and 'https://twitter.com/intent/favorite?tweet_id={}'.format(tweet_id)
+    reply_url = (
+        tweet_id
+        and 'https://twitter.com/intent/tweet?in_reply_to={}'.format(tweet_id))
+    retweet_url = (
+        tweet_id
+        and 'https://twitter.com/intent/retweet?tweet_id={}'.format(tweet_id))
+    favorite_url = (
+        tweet_id
+        and 'https://twitter.com/intent/favorite?tweet_id={}'.format(tweet_id))
     location_url = None
     if post.location:
-        location_url = 'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'.format(
-            post.location.latitude, post.location.longitude)
+        location_url = (
+            'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'
+            .format(post.location.latitude, post.location.longitude))
 
     return DPost(
         post_type=post.post_type,
@@ -279,13 +287,15 @@ def create_dcontext(url):
                 else:
                     content = (
                         jinja2.filters.do_truncate(content_plain, 512) +
-                        ' <a class="u-url" href="{}">continued</a>'.format(url))
+                        ' <a class="u-url" href="{}">continued</a>'
+                        .format(url))
 
                 title = entry.get('name', 'a post')
                 if len(title) > 256:
                     title = jinja2.filters.do_truncate(title, 256)
 
-                author_name = bleach.clean(entry.get('author', {}).get('name', ''))
+                author_name = bleach.clean(
+                    entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
                     author_image, _ = local_mirror_resource(author_image)
@@ -355,7 +365,7 @@ def create_dmention(post, url):
             if entry:
                 comment_type = entry.get('comment_type')
 
-                content = entry.get('content', '')
+                content = bleach.clean(entry.get('content', ''))
                 content_plain = format_as_text(content)
                 content_words = jinja2.filters.do_wordcount(content_plain)
 
@@ -490,10 +500,10 @@ def render_posts_atom(title, feed_id, post_types, count):
     posts = mdata.load_posts(reverse=True, post_types=post_types,
                              page=1, per_page=10)
     dposts = [create_dpost(post) for post in posts if check_audience(post)]
-    return make_response(render_template('posts.atom', title=title,
-                                         feed_id=feed_id,
-                                         posts=dposts), 200,
-                         {'Content-Type': 'application/atom+xml; charset=utf-8'})
+    return make_response(
+        render_template('posts.atom', title=title, feed_id=feed_id,
+                        posts=dposts),
+        200, {'Content-Type': 'application/atom+xml; charset=utf-8'})
 
 
 @app.route("/all.atom")
@@ -712,6 +722,7 @@ def delete_by_id():
     app.logger.debug("redirecting to {}".format(redirect_url))
     return redirect(redirect_url)
 
+
 def get_top_tags(n=10):
     """
     Determine top-n tags based on a combination of frequency and receny.
@@ -753,37 +764,32 @@ def new_post(type):
     if type == 'reply':
         in_reply_to = request.args.get('url')
         if in_reply_to:
-            contexts.do_fetch_context(in_reply_to)
+
             post.in_reply_to = [in_reply_to]
 
     if type == 'share':
         repost_of = request.args.get('url')
         if repost_of:
-            contexts.do_fetch_context(repost_of)
             post.repost_of = [repost_of]
 
     if type == 'like':
         like_of = request.args.get('url')
         if like_of:
-            contexts.do_fetch_context(like_of)
             post.like_of = [like_of]
 
     if type == 'bookmark':
         bookmark_of = request.args.get('url')
         if bookmark_of:
-            contexts.do_fetch_context(bookmark_of)
             post.bookmark_of = [bookmark_of]
 
     content = request.args.get('content')
     if content:
         post.content = content
 
-    if type:
-        return render_template('edit_' + type + '.html', edit_type='new',
-                               post=post, dpost=create_dpost(post),
-                               top_tags=get_top_tags(20))
-
-    return render_template('edit_post.html', edit_type='new', post=post)
+    fetch_contexts(post, sync=True)
+    return render_template('edit_' + type + '.html', edit_type='new',
+                           post=post, dpost=create_dpost(post),
+                           top_tags=get_top_tags(20))
 
 
 @app.route('/edit')
@@ -829,10 +835,11 @@ def human_time(thedate, alternate=None):
     #return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
 
     if (isinstance(thedate, datetime.datetime)
-        and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
+            and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
         return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
     else:
         return thedate.strftime('%B %-d, %Y')
+
 
 @app.template_filter('pluralize')
 def pluralize(number, singular='', plural='s'):
@@ -1142,10 +1149,11 @@ def save_post(post):
         app.logger.debug("saved post %s %s", post.shortid, post.permalink)
         redirect_url = post.permalink
 
-        postprocess(post,
-                    send_push=request.form.get('send_push') == 'true',
-                    send_wms=request.form.get('send_webmentions') == 'true',
-                    send_tweet=request.form.get('tweet') == 'true')
+        fetch_contexts(post, sync=False)
+        hooks.fire('post-saved', post)
+        if request.form.get('tweet') == 'true':
+            hooks.fire('tweet', post)
+
         return redirect(redirect_url)
 
     except Exception as e:
@@ -1155,30 +1163,24 @@ def save_post(post):
         return redirect(url_for('index'))
 
 
-def postprocess(post, send_push=True, send_wms=True,
-                send_tweet=False):
+def fetch_contexts(post, sync):
+    for url in itertools.chain(post.in_reply_to, post.repost_of,
+                               post.like_of, post.bookmark_of):
+        if sync:
+            do_fetch_context(url)
+        else:
+            do_fetch_context.delay(url)
+
+
+@queue.queueable
+def do_fetch_context(url):
     try:
-        app.logger.debug("fetching contexts")
-        contexts.fetch_post_contexts(post)
-
-        app.logger.debug("fetching location info")
-        locations.reverse_geocode(post)
-
-        if not post.draft:
-            if send_push:
-                app.logger.debug("sending push notification")
-                push.send_notifications(post)
-
-            if send_wms:
-                app.logger.debug("sending webmentions")
-                wm_sender.send_webmentions(post)
-
-            if send_tweet:
-                app.logger.debug('posting to twitter')
-                twitter.send_to_twitter(post)
-
-    except:
-        app.logger.exception("exception while dispatching queued tasks")
+        app.logger.debug("fetching url %s", url)
+        if any(hooks.fire('fetch-context', url)):
+            return
+        archiver.archive_url(url)
+    except Exception:
+        app.logger.exception("failure fetching contexts")
 
 
 @app.route('/addressbook', methods=['GET', 'POST'])
