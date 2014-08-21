@@ -8,7 +8,7 @@ def register():
     hooks.register('post-saved', send_notifications)
 
 
-def send_notifications(post):
+def send_notifications(post, args):
     site_url = app.config['SITE_URL']
     if post.post_type in ('article', 'note', 'share'):
         publish.delay(site_url + '/updates.atom')

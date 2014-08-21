@@ -45,7 +45,7 @@ PERMALINK_RE = controllers.TWITTER_RE
 
 def register():
     hooks.register('fetch-context', fetch_external_post)
-    hooks.register('tweet', send_to_twitter)
+    hooks.register('post-saved', send_to_twitter)
 
 
 @app.route('/authorize_twitter')
@@ -110,18 +110,19 @@ def collect_images(post):
                     yield urljoin(app.config['SITE_URL'], src)
 
 
-def send_to_twitter(post):
+def send_to_twitter(post, args):
     """Share a note to twitter without user-input. Makes a best-effort
     attempt to guess the appropriate parameters and content
     """
-    try:
-        app.logger.debug("auto-posting to twitter {}".format(post.shortid))
-        do_send_to_twitter.delay(post.shortid)
-        return True, 'Success'
+    if args.get('tweet') == 'true':
+        try:
+            app.logger.debug("auto-posting to twitter {}".format(post.shortid))
+            do_send_to_twitter.delay(post.shortid)
+            return True, 'Success'
 
-    except Exception as e:
-        app.logger.exception('auto-posting to twitter')
-        return False, 'Exception while auto-posting to twitter: {}'.format(e)
+        except Exception as e:
+            app.logger.exception('auto-posting to twitter')
+            return False, 'Exception while auto-posting to twitter: {}'.format(e)
 
 
 @queue.queueable

@@ -7,7 +7,7 @@ from .. import queue
 
 
 def register():
-    hooks.register('post-saved', lambda post:
+    hooks.register('post-saved', lambda post, args:
                    do_reverse_geocode.delay(post.shortid))
 
 

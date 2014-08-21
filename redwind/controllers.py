@@ -1150,9 +1150,7 @@ def save_post(post):
         redirect_url = post.permalink
 
         fetch_contexts(post, sync=False)
-        hooks.fire('post-saved', post)
-        if request.form.get('tweet') == 'true':
-            hooks.fire('tweet', post)
+        hooks.fire('post-saved', post, request.form)
 
         return redirect(redirect_url)
 
