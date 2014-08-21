@@ -1,11 +1,11 @@
 requirejs.config({
     baseUrl: 'static/js',
     paths: {
-        "leaflet": "//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet"
+        "leaflet": "//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet",
     }
 });
 
-define(['require'], function(require) {
+define(function(require) {
 
     // DOM convenience functions, also from Barnaby Walters
     var first = function (selector, context) { return (context || document).querySelector(selector); };
@@ -36,7 +36,7 @@ define(['require'], function(require) {
 
         setupAllMaps: function() {
             var self = this;
-            enhanceEach('.map', ['leaflet'], function(map) {
+            enhanceEach('.map', ['leaflet', 'leaflet-css'], function(map) {
                 var lat = map.dataset.latitude;
                 var lon = map.dataset.longitude;
                 var loc = map.dataset.location;
