@@ -1,5 +1,6 @@
 from . import app
 from datetime import date
+import bs4
 import os
 import os.path
 import re
@@ -7,6 +8,7 @@ import requests
 import datetime
 import unicodedata
 import urllib
+
 
 
 def isoparse(s):
@@ -75,15 +77,59 @@ def urls_match(url1, url2):
     return p1.netloc == p2.netloc and p1.path == p2.path
 
 
-TWITTER_USERNAME_REGEX = r'(?<!\w)@([a-zA-Z0-9_]+)'
-LINK_REGEX = r'\b(?<!=[\'"])https?://([a-zA-Z0-9/\.\-_:;%?@$#&=+]+)'
+LINK_REGEX = r'\bhttps?://([a-zA-Z0-9/\.\-_:;%?@$#&=+]+)'
+TWITTER_USERNAME_REGEX = r'(?i)(?<!\w)@([a-z0-9_]+)'
+NEW_LINK_REGEX = (
+    # optional schema
+    r'(?i)\b([a-z]{3,9}://)?'
+    # hostname and port
+    '([a-z0-9.\-]+[.][a-z]{2,4}(?::\d{2,6})?'
+    # path
+    '(?:/[a-z0-9\-_.;:$?&%#@()/]*[a-z0-9\-_$?#/])?)'
+)
 
 
 def autolink(plain, twitter_names=True):
-    plain = re.sub(LINK_REGEX, '<a href="\g<0>">\g<1></a>', plain)
+
+    def bs4_sub(regex, repl):
+        print('all', soup.find_all(text=True))
+
+        for txt in soup.find_all(text=True):
+            print('checking', txt)
+            if any(p.name in blacklist for p in txt.parents):
+                continue
+            nodes = []
+            start = 0
+            for m in re.finditer(regex, txt):
+                nodes.append(txt[start:m.start()])
+                nodes.append(repl(m))
+                start = m.end()
+            if not nodes:
+                continue
+            nodes.append(txt[start:])
+            parent = txt.parent
+            ii = parent.contents.index(txt)
+            txt.extract()
+            for offset, node in enumerate(nodes):
+                parent.insert(ii+offset, node)
+
+    def link_repl(m):
+        a = soup.new_tag('a', href=(m.group(1) or 'http://') + m.group(2))
+        a.string = m.group(2)
+        return a
+
+    def twitter_repl(m):
+        a = soup.new_tag('a', href='https://twitter.com/' + m.group(1))
+        a.string = m.group(0)
+        return a
+
+    blacklist = ('a', 'script', 'pre', 'code', 'embed', 'object',
+                 'audio', 'video')
+    soup = bs4.BeautifulSoup(plain)
+    bs4_sub(NEW_LINK_REGEX, link_repl)
     if twitter_names:
-        plain = re.sub(TWITTER_USERNAME_REGEX, '<a href="https://twitter.com/\g<1>">\g<0></a>', plain)
-    return plain
+        bs4_sub(TWITTER_USERNAME_REGEX, twitter_repl)
+    return str(soup)
 
 
 TAG_TO_TYPE = {
