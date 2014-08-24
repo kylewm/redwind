@@ -213,6 +213,14 @@ def micropub_endpoint():
             #'caption': No caption for now
         }]
 
+    slug = request.form.get('slug')
+    if slug:
+        post.slug = util.slugify(slug)
+    elif post.title:
+        post.slug = util.slugify(post.title)
+    elif post.content:
+        post.slug = util.slugify(post.content, 32)
+        
     post.save()
     post._writeable = False
 

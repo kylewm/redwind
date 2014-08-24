@@ -4,5 +4,9 @@
 {% block above_additional_params %}{% endblock above_additional_params %}
 
 <label><input type="checkbox" name="tweet" value="true" {% if edit_type == 'new' %}checked{% endif %} /> <i class="fa fa-twitter"></i> Tweet</label>
+
+<label><input type="checkbox" id="hidden" name="hidden" value="true" {% if post.hidden %}checked{% endif %} /> Hidden</label>
+
+
 {% block below_additional_params %}{% endblock below_additional_params %}
 {% endblock additional_params %}

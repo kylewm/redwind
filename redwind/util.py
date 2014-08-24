@@ -46,25 +46,15 @@ def filter_empty_keys(data):
 
 def download_resource(url, path):
     app.logger.debug("downloading {} to {}".format(url, path))
+    response = requests.get(urllib.parse.urljoin(app.config['SITE_URL'], url),
+                            stream=True, timeout=10)
+    response.raise_for_status()
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
 
-    try:
-        response = requests.get(urllib.parse.urljoin(app.config['SITE_URL'], url),
-                                stream=True)
-
-        if response.status_code // 2 == 100:
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-
-            with open(path, 'wb') as f:
-                for chunk in response.iter_content(512):
-                    f.write(chunk)
-
-            return True
-        else:
-            app.logger.warn("Failed to download resource %s. Got response %s",
-                            url, str(response))
-    except:
-        app.logger.exception('downloading resource')
+    with open(path, 'wb') as f:
+        for chunk in response.iter_content(512):
+            f.write(chunk)
 
 
 def urls_match(url1, url2):
@@ -184,3 +174,19 @@ def resize_image(source, target, side):
         im = im.resize((int(origw * ratio), int(origh * ratio)),
                        Image.ANTIALIAS)
         im.save(target)
+
+
+def slugify(s, limit=256):
+    slug = unicodedata.normalize('NFKD', s).lower()
+    slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
+    slug = re.sub(r'[-]+', '-', slug)
+    # trim to first - after the limit
+    if len(slug) > limit:
+        idx = slug.find('-', limit)
+        if idx >= 0:
+            slug = slug[:idx]
+    return slug
+
+
+def multiline_string_to_list(s):
+    return [l.strip() for l in s.split('\n') if l.strip()]

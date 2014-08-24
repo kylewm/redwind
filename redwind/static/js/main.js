@@ -1,5 +1,5 @@
 requirejs.config({
-    baseUrl: 'static/js',
+    baseUrl: '/static/js',
     paths: {
         "leaflet": "//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet",
     }

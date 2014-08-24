@@ -365,7 +365,7 @@ def create_dmention(post, url):
             if entry:
                 comment_type = entry.get('comment_type')
 
-                content = bleach.clean(entry.get('content', ''))
+                content = bleach.clean(entry.get('content', ''), strip=True)
                 content_plain = format_as_text(content)
                 content_words = jinja2.filters.do_wordcount(content_plain)
 
@@ -425,7 +425,7 @@ def create_dmention(post, url):
 
 
 def render_posts(title, post_types, page, per_page, tag=None,
-                 include_hidden=False, include_drafts=False):
+                 include_hidden=False, include_drafts=False): 
     mdata = Metadata()
     posts = mdata.load_posts(reverse=True, post_types=post_types, tag=tag,
                              include_hidden=include_hidden,
@@ -475,6 +475,14 @@ def bookmarks(page):
 @app.route('/photos/page/<int:page>')
 def photos(page):
     return render_posts('All Photos', ('photo',), page, 10,
+                        include_hidden=True,
+                        include_drafts=current_user.is_authenticated())
+
+
+@app.route('/likes', defaults={'page': 1})
+@app.route('/likes/page/<int:page>')
+def likes(page):
+    return render_posts('All Likes', ('like',), page, 30,
                         include_hidden=True,
                         include_drafts=current_user.is_authenticated())
 
@@ -1004,12 +1012,20 @@ def local_mirror_resource(url):
     if o.netloc and o.netloc != site_netloc:
         url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
         file_path = os.path.join(app.root_path, app.static_folder, url_path)
-        if (os.path.exists(file_path)
-                or util.download_resource(url, file_path)):
+
+        if os.path.exists(file_path):
             return url_for('static', filename=url_path), url_path
-        else:
-            app.logger.warn("failed to download %s to %s for some reason", url,
-                            file_path)
+
+        if not os.path.exists(file_path + '.error'):
+            try:
+                util.download_resource(url, file_path)
+            except BaseException as e:
+                app.logger.exception("failed to download %s to %s for some reason", url, file_path)
+                if not os.path.exists(os.path.dirname(file_path)):
+                    os.makedirs(os.path.dirname(file_path))
+                with open(file_path + '.error', 'w') as f:
+                    f.write(str(e))
+                
     return url, None
 
 
@@ -1036,20 +1052,6 @@ def save_new():
 
 
 def save_post(post):
-    def slugify(s, limit=256):
-        slug = unicodedata.normalize('NFKD', s).lower()
-        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
-        slug = re.sub(r'[-]+', '-', slug)
-        # trim to first - after the limit
-        if len(slug) > limit:
-            idx = slug.find('-', limit)
-            if idx >= 0:
-                slug = slug[:idx]
-        return slug
-
-    def multiline_string_to_list(s):
-        return [l.strip() for l in s.split('\n') if l.strip()]
-
     try:
         app.logger.debug("acquired write lock %s", post)
 
@@ -1076,36 +1078,36 @@ def save_post(post):
 
         slug = request.form.get('slug')
         if slug:
-            post.slug = slugify(slug)
+            post.slug = util.slugify(slug)
         elif not post.slug:
             if post.title:
-                post.slug = slugify(post.title)
+                post.slug = util.slugify(post.title)
             elif post.content:
-                post.slug = slugify(post.content, 32)
+                post.slug = util.slugify(post.content, 32)
 
         in_reply_to = request.form.get('in_reply_to')
         if in_reply_to is not None:
-            post.in_reply_to = multiline_string_to_list(in_reply_to)
+            post.in_reply_to = util.multiline_string_to_list(in_reply_to)
 
         repost_of = request.form.get('repost_of')
         if repost_of is not None:
-            post.repost_of = multiline_string_to_list(repost_of)
+            post.repost_of = util.multiline_string_to_list(repost_of)
 
         like_of = request.form.get('like_of')
         if like_of is not None:
-            post.like_of = multiline_string_to_list(like_of)
+            post.like_of = util.multiline_string_to_list(like_of)
 
         bookmark_of = request.form.get('bookmark_of')
         if bookmark_of is not None:
-            post.bookmark_of = multiline_string_to_list(bookmark_of)
+            post.bookmark_of = util.multiline_string_to_list(bookmark_of)
 
         syndication = request.form.get('syndication')
         if syndication is not None:
-            post.syndication = multiline_string_to_list(syndication)
+            post.syndication = util.multiline_string_to_list(syndication)
 
         audience = request.form.get('audience')
         if audience is not None:
-            post.audience = multiline_string_to_list(audience)
+            post.audience = util.multiline_string_to_list(audience)
 
         tags = request.form.get('tags', '').split(',')
         post.tags = list(filter(None, map(util.normalize_tag, tags)))
