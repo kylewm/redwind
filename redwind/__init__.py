@@ -12,7 +12,6 @@ from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
 
-
 app = Flask(__name__)
 
 app.config.from_object(Configuration)
@@ -29,6 +28,11 @@ app.jinja_options = ImmutableDict(
     lstrip_blocks=True,
     extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
 )
+
+if app.config.get('PROFILE'):
+    from werkzeug.contrib.profiler import ProfilerMiddleware
+    f = open('logs/profiler.log', 'w')
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, f, restrictions=[30])
 
 if app.debug:
     #toolbar = DebugToolbarExtension(app)

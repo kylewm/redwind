@@ -442,7 +442,7 @@ def render_posts(title, post_types, page, per_page, tag=None,
 @app.route('/page/<int:page>')
 def index(page):
     # leave out hidden posts
-    return render_posts(None, POST_TYPES, page, 30,
+    return render_posts(None, POST_TYPES, page, 15,
                         include_hidden=False,
                         include_drafts=current_user.is_authenticated())
 
@@ -516,18 +516,18 @@ def render_posts_atom(title, feed_id, post_types, count):
 
 @app.route("/all.atom")
 def all_atom():
-    return render_posts_atom('All', 'all.atom', None, 30)
+    return render_posts_atom('All', 'all.atom', None, 5)
 
 
 @app.route("/updates.atom")
 def updates_atom():
     return render_posts_atom('Updates', 'updates.atom',
-                             ('article', 'note', 'share'), 30)
+                             ('article', 'note', 'share'), 5)
 
 
 @app.route("/articles.atom")
 def articles_atom():
-    return render_posts_atom('Articles', 'articles.atom', ('article',), 10)
+    return render_posts_atom('Articles', 'articles.atom', ('article',), 5)
 
 
 @app.route("/mentions.atom")
@@ -944,7 +944,7 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
         data = process_people(data, person_processor)
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    #result = util.autolink(result, twitter_names=link_twitter_names)
+    result = util.autolink(result, twitter_names=link_twitter_names)
     result = smartypants(result)
     return result
 
