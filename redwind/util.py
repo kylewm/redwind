@@ -82,10 +82,7 @@ NEW_LINK_REGEX = (
 def autolink(plain, twitter_names=True):
 
     def bs4_sub(regex, repl):
-        print('all', soup.find_all(text=True))
-
         for txt in soup.find_all(text=True):
-            print('checking', txt)
             if any(p.name in blacklist for p in txt.parents):
                 continue
             nodes = []
@@ -119,7 +116,7 @@ def autolink(plain, twitter_names=True):
     bs4_sub(NEW_LINK_REGEX, link_repl)
     if twitter_names:
         bs4_sub(TWITTER_USERNAME_REGEX, twitter_repl)
-    return str(soup)
+    return str(soup.body.next)
 
 
 TAG_TO_TYPE = {

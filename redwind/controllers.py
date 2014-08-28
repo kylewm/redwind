@@ -885,20 +885,21 @@ def person_to_microcard(fullname, displayname, entry, pos):
     photo = entry.get('photo')
     if url and photo:
         photo_url, photo_path = local_mirror_resource(photo)
-        side = 20
-        resize_path = os.path.join(os.path.dirname(photo_path),
-                                   'resized-' + str(side),
-                                   os.path.basename(photo_path))
-        if not (resize_path.lower().endswith('.gif')
-                or resize_path.lower().endswith('.jpg')
-                or resize_path.lower().endswith('.png')):
-            resize_path += '.jpg'
+        if photo_path:
+            side = 20
+            resize_path = os.path.join(os.path.dirname(photo_path),
+                                       'resized-' + str(side),
+                                       os.path.basename(photo_path))
+            if not (resize_path.lower().endswith('.gif')
+                    or resize_path.lower().endswith('.jpg')
+                    or resize_path.lower().endswith('.png')):
+                resize_path += '.jpg'
 
-        util.resize_image(
-            os.path.join(app.root_path, app.static_folder, photo_path),
-            os.path.join(app.root_path, app.static_folder, resize_path),
-            side)
-        photo_url = url_for('static', filename=resize_path)
+            util.resize_image(
+                os.path.join(app.root_path, app.static_folder, photo_path),
+                os.path.join(app.root_path, app.static_folder, resize_path),
+                side)
+            photo_url = url_for('static', filename=resize_path)
         return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
             url, photo_url, displayname)
     elif url:
@@ -944,7 +945,7 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
         data = process_people(data, person_processor)
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    result = util.autolink(result, twitter_names=link_twitter_names)
+    #result = util.autolink(result, twitter_names=link_twitter_names)
     result = smartypants(result)
     return result
 
