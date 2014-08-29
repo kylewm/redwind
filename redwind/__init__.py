@@ -12,7 +12,7 @@ from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
 
-app = Flask(__name__)
+app = Flask('redwind')
 
 app.config.from_object(Configuration)
 redis = Redis()

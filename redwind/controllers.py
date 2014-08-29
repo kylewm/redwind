@@ -1004,7 +1004,7 @@ def format_syndication_url(url, include_rel=True):
     if INSTAGRAM_RE.match(url):
         return fmt.format(url, 'fa-instagram', 'Instagram')
 
-    return fmt.format(url, 'fa-paper-plane', prettify_url(url))
+    return fmt.format(url, 'fa-paper-plane', domain_from_url(url))
 
 
 def local_mirror_resource(url):
