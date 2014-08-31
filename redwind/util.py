@@ -116,7 +116,7 @@ def autolink(plain, twitter_names=True):
     bs4_sub(NEW_LINK_REGEX, link_repl)
     if twitter_names:
         bs4_sub(TWITTER_USERNAME_REGEX, twitter_repl)
-    return str(soup.body.next)
+    return ''.join(str(t) for t in soup.body.contents) if soup.body else ''
 
 
 TAG_TO_TYPE = {

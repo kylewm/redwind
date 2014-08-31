@@ -283,7 +283,7 @@ def create_dcontext(url):
                 content_plain = format_as_text(content)
 
                 if len(content_plain) < 512:
-                    content = bleach.clean(autolink(content), strip=True)
+                    content = bleach.clean(content, strip=True)
                 else:
                     content = (
                         jinja2.filters.do_truncate(content_plain, 512) +
@@ -425,7 +425,7 @@ def create_dmention(post, url):
 
 
 def render_posts(title, post_types, page, per_page, tag=None,
-                 include_hidden=False, include_drafts=False): 
+                 include_hidden=False, include_drafts=False):
     mdata = Metadata()
     posts = mdata.load_posts(reverse=True, post_types=post_types, tag=tag,
                              include_hidden=include_hidden,
@@ -945,7 +945,7 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
         data = process_people(data, person_processor)
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    #result = util.autolink(result, twitter_names=link_twitter_names)
+    result = util.autolink(result, twitter_names=link_twitter_names)
     result = smartypants(result)
     return result
 
@@ -965,11 +965,6 @@ def format_as_text(html, remove_imgs=True):
                                          or i.get('alt')
                                          or 'image'))
     return soup.get_text().strip()
-
-
-@app.template_filter('autolink')
-def autolink(plain, twitter_names=True):
-    return util.autolink(plain, twitter_names)
 
 
 @app.template_filter('prettify_url')
@@ -1026,7 +1021,7 @@ def local_mirror_resource(url):
                     os.makedirs(os.path.dirname(file_path))
                 with open(file_path + '.error', 'w') as f:
                     f.write(str(e))
-                
+
     return url, None
 
 
