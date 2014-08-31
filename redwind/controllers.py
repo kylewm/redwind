@@ -283,7 +283,7 @@ def create_dcontext(url):
                 content_plain = format_as_text(content)
 
                 if len(content_plain) < 512:
-                    content = bleach.clean(autolink(content), strip=True)
+                    content = bleach.clean(content, strip=True)
                 else:
                     content = (
                         jinja2.filters.do_truncate(content_plain, 512) +
@@ -965,11 +965,6 @@ def format_as_text(html, remove_imgs=True):
                                          or i.get('alt')
                                          or 'image'))
     return soup.get_text().strip()
-
-
-@app.template_filter('autolink')
-def autolink(plain, twitter_names=True):
-    return util.autolink(plain, twitter_names)
 
 
 @app.template_filter('prettify_url')
