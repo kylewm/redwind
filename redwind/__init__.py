@@ -12,6 +12,10 @@ from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
 
+import logging
+from logging.handlers import RotatingFileHandler
+
+
 app = Flask('redwind')
 
 app.config.from_object(Configuration)
@@ -29,6 +33,7 @@ app.jinja_options = ImmutableDict(
     extensions=['jinja2.ext.autoescape', 'jinja2.ext.with_', 'jinja2.ext.i18n']
 )
 
+
 if app.config.get('PROFILE'):
     from werkzeug.contrib.profiler import ProfilerMiddleware
     f = open('logs/profiler.log', 'w')
@@ -38,21 +43,34 @@ if app.debug:
     #toolbar = DebugToolbarExtension(app)
     app.config['SITE_URL'] = 'http://localhost:5000'
 
-if not app.debug:
-    import logging
-    from logging.handlers import RotatingFileHandler
-    app.logger.setLevel(logging.DEBUG)
-    file_handler = RotatingFileHandler('logs/app.log', maxBytes=1048576,
-                                       backupCount=20)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    app.logger.addHandler(file_handler)
 
+class LoggingMiddleware:
+    """Sets up logging when the WSGI application is initialized. This
+    allows us to set up the logger when redwind is invoked as an
+    application but not when it is imported as a library (e.g. by the
+    queue_daemon)
+    """
+    def __init__(self, logger, wsgi_app):
+        self.logger = logger
+        self.wrapped = wsgi_app
+
+    def wsgi_app(self, *args, **kwargs):
+        self.logger.setLevel(logging.DEBUG)
+        file_handler = RotatingFileHandler('logs/app.log', maxBytes=1048576,
+                                           backupCount=5)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+
+        return self.wrapped(*args, **kwargs)
+
+
+if not app.debug:
+    app.wsgi_app = LoggingMiddleware(app.wsgi_app, app.logger)
 
 for handler in ['controllers']:
     importlib.import_module('redwind.' + handler)
-
 
 for plugin in ['facebook', 'locations', 'push', 'reader', 'twitter',
                'wm_receiver', 'wm_sender']:

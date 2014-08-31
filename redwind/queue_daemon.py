@@ -1,7 +1,7 @@
 import json
 import os
 from flask.ext.login import login_user
-import redwind
+
 from . import app
 from . import models
 from . import queue
