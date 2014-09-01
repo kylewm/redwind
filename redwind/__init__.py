@@ -43,31 +43,14 @@ if app.debug:
     #toolbar = DebugToolbarExtension(app)
     app.config['SITE_URL'] = 'http://localhost:5000'
 
-
-class LoggingMiddleware:
-    """Sets up logging when the WSGI application is initialized. This
-    allows us to set up the logger when redwind is invoked as an
-    application but not when it is imported as a library (e.g. by the
-    queue_daemon)
-    """
-    def __init__(self, logger, wsgi_app):
-        self.logger = logger
-        self.wrapped = wsgi_app
-
-    def wsgi_app(self, *args, **kwargs):
-        self.logger.setLevel(logging.DEBUG)
-        file_handler = RotatingFileHandler('logs/app.log', maxBytes=1048576,
-                                           backupCount=5)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
-
-        return self.wrapped(*args, **kwargs)
-
-
 if not app.debug:
-    app.wsgi_app = LoggingMiddleware(app.wsgi_app, app.logger)
+    app.logger.setLevel(logging.DEBUG)
+    file_handler = RotatingFileHandler('logs/app.log', maxBytes=1048576,
+                                       backupCount=5)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    app.logger.addHandler(file_handler)
 
 for handler in ['controllers']:
     importlib.import_module('redwind.' + handler)
