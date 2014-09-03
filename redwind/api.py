@@ -228,6 +228,7 @@ def micropub_endpoint():
         mdata.add_or_update_post(post)
         mdata.save()
 
+    controllers.fetch_contexts(sync=False)
     hooks.fire('post-saved', post, {})
     return make_response('', 201, {'Location': post.permalink})
 
