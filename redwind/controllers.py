@@ -298,7 +298,7 @@ def create_dcontext(url):
                     entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
-                    author_image, _ = local_mirror_resource(author_image)
+                    author_image = mirror_image(author_image, 64)
 
                 permalink = entry.get('url')
                 if not permalink or not isinstance(permalink, str):
@@ -381,7 +381,7 @@ def create_dmention(post, url):
                     entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
-                    author_image, _ = local_mirror_resource(author_image)
+                    author_image = mirror_image(author_image, 64)
 
                 return DMention(
                     permalink=entry.get('url') or url,
@@ -884,22 +884,7 @@ def person_to_microcard(fullname, displayname, entry, pos):
     url = entry.get('url')
     photo = entry.get('photo')
     if url and photo:
-        photo_url, photo_path = local_mirror_resource(photo)
-        if photo_path:
-            side = 20
-            resize_path = os.path.join(os.path.dirname(photo_path),
-                                       'resized-' + str(side),
-                                       os.path.basename(photo_path))
-            if not (resize_path.lower().endswith('.gif')
-                    or resize_path.lower().endswith('.jpg')
-                    or resize_path.lower().endswith('.png')):
-                resize_path += '.jpg'
-
-            util.resize_image(
-                os.path.join(app.root_path, app.static_folder, photo_path),
-                os.path.join(app.root_path, app.static_folder, resize_path),
-                side)
-            photo_url = url_for('static', filename=resize_path)
+        photo_url = mirror_image(photo, 20)
         return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
             url, photo_url, displayname)
     elif url:
@@ -1002,27 +987,52 @@ def format_syndication_url(url, include_rel=True):
     return fmt.format(url, 'fa-paper-plane', domain_from_url(url))
 
 
-def local_mirror_resource(url):
+def mirror_image(src, side=None):
+    """Downloads a remote resource schema://domain/path to
+    static/_mirror/domain/path and optionally resizes it to
+    static/_mirro/domain/dirname(path)/resized-64/basename(path)
+    """
     site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
-    o = urllib.parse.urlparse(url)
-    if o.netloc and o.netloc != site_netloc:
-        url_path = os.path.join("_mirror", o.netloc, o.path.strip('/'))
-        file_path = os.path.join(app.root_path, app.static_folder, url_path)
+    o = urllib.parse.urlparse(src)
+    if not o.netloc or o.netloc == site_netloc:
+        return src
 
-        if os.path.exists(file_path):
-            return url_for('static', filename=url_path), url_path
+    relpath = os.path.join("_mirror", o.netloc, o.path.strip('/'))
+    abspath = os.path.join(app.root_path, app.static_folder, relpath)
 
-        if not os.path.exists(file_path + '.error'):
-            try:
-                util.download_resource(url, file_path)
-            except BaseException as e:
-                app.logger.exception("failed to download %s to %s for some reason", url, file_path)
-                if not os.path.exists(os.path.dirname(file_path)):
-                    os.makedirs(os.path.dirname(file_path))
-                with open(file_path + '.error', 'w') as f:
-                    f.write(str(e))
+    if os.path.exists(abspath):
+        pass
+    elif os.path.exists(abspath + '.error'):
+        return src
+    else:
+        try:
+            util.download_resource(src, abspath)
+        except BaseException as e:
+            app.logger.exception(
+                "failed to download %s to %s for some reason", src, abspath)
+            if not os.path.exists(os.path.dirname(abspath)):
+                os.makedirs(os.path.dirname(abspath))
+            with open(abspath + '.error', 'w') as f:
+                f.write(str(e))
+            return src
 
-    return url, None
+    if not side:
+        return url_for('static', filename=relpath)
+
+    rz_relpath = os.path.join(
+        os.path.dirname(relpath), 'resized-' + str(side),
+        os.path.basename(relpath))
+
+    if not any(rz_relpath.lower().endswith(ext)
+               for ext in ['.gif', '.jpg', '.png']):
+        rz_relpath += '.jpg'
+
+    rz_abspath = os.path.join(app.root_path, app.static_folder, rz_relpath)
+
+    if not os.path.exists(rz_abspath):
+        util.resize_image(abspath, rz_abspath, side)
+
+    return url_for('static', filename=rz_relpath)
 
 
 @app.route('/save_edit', methods=['POST'])
