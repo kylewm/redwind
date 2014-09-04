@@ -2,6 +2,7 @@ from . import app
 from . import util
 from . import archiver
 
+import collections
 import mf2util
 import os
 import os.path
@@ -399,6 +400,9 @@ class AddressBook:
 class Metadata:
     PATH = os.path.join(app.root_path, '_data', 'metadata.json')
 
+    LoadPostsResult = collections.namedtuple('LoadPostResults', [
+        'posts', 'is_first_page', 'is_last_page'])
+
     @staticmethod
     def post_to_blob(post):
         return {
@@ -532,10 +536,15 @@ class Metadata:
 
         start = per_page * (page-1)
         end = start + per_page
+        is_first_page = start <= 0
+        is_last_page = end >= len(posts)
 
         app.logger.debug('return posts %d through %d', start, end)
 
-        return [Post.load(post['path']) for post in posts[start:end]]
+        return Metadata.LoadPostsResult(
+            posts=[Post.load(post['path']) for post in posts[start:end]],
+            is_first_page=is_first_page,
+            is_last_page=is_last_page)
 
     def add_or_update_post(self, post):
         post_path = post.path

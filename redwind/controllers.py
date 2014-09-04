@@ -427,14 +427,19 @@ def create_dmention(post, url):
 def render_posts(title, post_types, page, per_page, tag=None,
                  include_hidden=False, include_drafts=False):
     mdata = Metadata()
-    posts = mdata.load_posts(reverse=True, post_types=post_types, tag=tag,
-                             include_hidden=include_hidden,
-                             include_drafts=include_drafts,
-                             page=page, per_page=per_page)
+    posts, is_first, is_last = mdata.load_posts(
+        reverse=True, post_types=post_types, tag=tag,
+        include_hidden=include_hidden,
+        include_drafts=include_drafts,
+        page=page, per_page=per_page)
+
+    if not posts:
+        abort(404)
 
     dposts = [create_dpost(post) for post in posts if check_audience(post)]
     return render_template('posts.html', posts=dposts, title=title,
-                           prev_page=page-1, next_page=page+1,
+                           prev_page=None if is_first else page-1,
+                           next_page=None if is_last else page+1,
                            body_class='h-feed', article_class='h-entry')
 
 
@@ -505,8 +510,8 @@ def posts_by_tag(tag, page):
 
 def render_posts_atom(title, feed_id, post_types, count):
     mdata = Metadata()
-    posts = mdata.load_posts(reverse=True, post_types=post_types,
-                             page=1, per_page=10)
+    posts, _, _ = mdata.load_posts(reverse=True, post_types=post_types,
+                                   page=1, per_page=10)
     dposts = [create_dpost(post) for post in posts if check_audience(post)]
     return make_response(
         render_template('posts.atom', title=title, feed_id=feed_id,
