@@ -214,8 +214,10 @@ def resize_image(source, target, side):
 
         origw, origh = im.size
         ratio = side / max(origw, origh)
-        im = im.resize((int(origw * ratio), int(origh * ratio)),
-                       Image.ANTIALIAS)
+        # scale down, not up
+        if ratio < 1:
+            im = im.resize((int(origw * ratio), int(origh * ratio)),
+                           Image.ANTIALIAS)
         im.save(target)
 
 
