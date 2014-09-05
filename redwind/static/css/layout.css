@@ -35,13 +35,12 @@ blockquote { overflow: auto; }
 code, pre {font-family: monospace; padding: 0.5em;}
 pre {overflow-x: auto; white-space:pre;}
 
-h1 { font-size: 32px; line-height: 36px; margin-bottom: 10px;}
-h2 { font-size: 28px; line-height: 31px; margin-bottom: 8px; }
-h3 { font-size: 21px; line-height: 25px; margin-bottom: 6px; }
-h4 { font-size: 18px; line-height: 20px; margin-bottom: 4px; }
-h5 { font-size: 16px; line-height: 18px; }
-h6 { font-size: 14px; line-height: 15px; }
-
+h1{font-size:24px; line-height:28px; margin-bottom:10px}
+h2{font-size:22px; line-height:24px; margin-bottom:8px}
+h3{font-size:18px; line-height:21px; margin-bottom:6px}
+h4{font-size:16px; line-height:18px; margin-bottom:4px}
+h5{font-size:15px; line-height:17px}
+h6{font-size:14px; line-height:15px}
 
 ul {list-style-type: disc; margin-left: 1em;}
 .microcard img { height: 1.2em; width: auto; vertical-align: middle; }
