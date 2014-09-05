@@ -108,6 +108,7 @@ define(function(require) {
                     handle.addEventListener('click', function(event) {
                         self.expandArea(handle, textarea);
                     });
+                    self.expandArea(handle, textarea);
                 }
             };
 

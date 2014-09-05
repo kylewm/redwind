@@ -9,6 +9,6 @@ def register(hook, action):
 
 
 def fire(hook, *args, **kwargs):
-    app.logger.debug('firing hook %s -> %s', hook)
+    app.logger.debug('firing hook %s', hook)
     return [action(*args, **kwargs)
             for action in actions.get(hook, [])]

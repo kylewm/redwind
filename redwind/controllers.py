@@ -590,10 +590,11 @@ def check_audience(post):
 
 
 def resize_associated_image(post, sourcepath, side):
-    targetdir = os.path.join(app.root_path, '_resized', post.path,
-                             'files', str(side))
+    targetdir = os.path.join('_resized', post.path, 'files', str(side))
     targetpath = os.path.join(targetdir, os.path.basename(sourcepath))
-    util.resize_image(sourcepath, targetpath, side)
+    util.resize_image(
+        os.path.join(app.root_path, sourcepath), 
+        os.path.join(app.root_path, targetpath), side)
     return targetpath
 
 
@@ -609,8 +610,7 @@ def post_associated_file(post_type, year, month, day, index, filename):
     if not check_audience(post):
         abort(401)  # not authorized TODO a nicer page
 
-    sourcepath = os.path.join(app.root_path, '_data', post.path,
-                              'files', filename)
+    sourcepath = os.path.join('_data', post.path, 'files', filename)
 
     size = request.args.get('size')
     if size == 'small':
@@ -620,10 +620,15 @@ def post_associated_file(post_type, year, month, day, index, filename):
     elif size == 'large':
         sourcepath = resize_associated_image(post, sourcepath, 1024)
 
-    _, ext = os.path.splitext(sourcepath)
-    return send_from_directory(os.path.dirname(sourcepath),
-                               os.path.basename(sourcepath),
-                               mimetype='text/plain' if ext == '.md' else None)
+    #_, ext = os.path.splitext(sourcepath)
+    #return send_from_directory(os.path.dirname(sourcepath),
+    #                           os.path.basename(sourcepath),
+    #                           mimetype='text/plain' if ext == '.md' else None)
+
+    resp = make_response('')
+    resp.headers['X-Accel-Redirect'] = '/internal' + sourcepath
+    del resp.headers['Content-Type']
+    return resp
 
 
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})

@@ -228,9 +228,9 @@ def micropub_endpoint():
         mdata.add_or_update_post(post)
         mdata.save()
 
-    controllers.fetch_contexts(sync=False)
+    controllers.fetch_contexts(post, sync=False)
     hooks.fire('post-saved', post, {})
-    return make_response('', 201, {'Location': post.permalink})
+    return make_response('Created: ' + post.permalink, 201, {'Location': post.permalink})
 
 
 @app.route('/api/fetch_profile')

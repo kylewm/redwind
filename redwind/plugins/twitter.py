@@ -377,7 +377,8 @@ def guess_tweet_content(post, in_reply_to):
             can_drop=False, text=post.permalink))
 
     # iteratively shorten
-    delta = sum(c.length for c in components) - target_length
+    nspaces = len(components) - 1
+    delta = sum(c.length for c in components) + nspaces - target_length
     shortened = []
 
     for c in reversed(components):
@@ -391,7 +392,7 @@ def guess_tweet_content(post, in_reply_to):
         elif c.can_drop:
             delta -= c.length
 
-    preview = ''.join(reversed([s.text for s in shortened]))
+    preview = ' '.join(reversed([s.text for s in shortened]))
     return preview, img_url
 
 

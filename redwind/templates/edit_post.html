@@ -25,6 +25,9 @@
     {% endfor %}
   </div>
 
+  <label><i class="fa fa-plus-square-o" id="syndication_expander"></i>Syndication</label>
+  <textarea id="syndication_textarea" name="syndication">{{ post.syndication | join('\n') }}</textarea>
+
   <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
   <input type="hidden" id="send_push" name="send_push" value="true"/>
 
