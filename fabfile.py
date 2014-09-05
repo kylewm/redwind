@@ -11,7 +11,17 @@ def getdata():
         run("git diff-index --quiet HEAD || git commit -m \"Commit by fabric\"")
         run("git push origin master")
 
+    with cd("~/redwind/redwind/_archive"):
+        run("git add -A")
+        run("git diff-index --quiet HEAD || git commit -m \"Commit by fabric\"")
+        run("git push origin master")
+
     with lcd("./redwind/_data"):
+        local("git checkout -- .")
+        local("git clean -df")
+        local("git pull origin master")
+
+    with lcd("./redwind/_archive"):
         local("git checkout -- .")
         local("git clean -df")
         local("git pull origin master")

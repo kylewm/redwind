@@ -26,7 +26,6 @@ import os
 import pytz
 import re
 import requests
-import unicodedata
 
 bleach.ALLOWED_TAGS += ['img', 'p', 'br']
 bleach.ALLOWED_ATTRIBUTES.update({
@@ -36,20 +35,16 @@ bleach.ALLOWED_ATTRIBUTES.update({
 TIMEZONE = pytz.timezone('US/Pacific')
 
 POST_TYPE_RULE = '<any({}):post_type>'.format(','.join(POST_TYPES))
-DATE_RULE = (
-    '<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<index>')
-TWITTER_PROFILE_RE = re.compile(
-    r'https?://(?:www\.)?twitter\.com/(\w+)')
-TWITTER_RE = re.compile(
-    r'https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)')
-FACEBOOK_PROFILE_RE = re.compile(
-    r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)')
-FACEBOOK_RE = re.compile(
-    r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
-YOUTUBE_RE = re.compile(
-    r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
-INSTAGRAM_RE = re.compile(
-    r'https?://instagram\.com/p/(\w+)')
+DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<index>')
+TWITTER_PROFILE_RE = re.compile(r'https?://(?:www\.)?twitter\.com/(\w+)')
+TWITTER_RE = re.compile(r'https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)')
+FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)')
+FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
+YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
+INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
+
+PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
+RELATIVE_PATH_RE = re.compile('(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
@@ -593,7 +588,7 @@ def resize_associated_image(post, sourcepath, side):
     targetdir = os.path.join('_resized', post.path, 'files', str(side))
     targetpath = os.path.join(targetdir, os.path.basename(sourcepath))
     util.resize_image(
-        os.path.join(app.root_path, sourcepath), 
+        os.path.join(app.root_path, sourcepath),
         os.path.join(app.root_path, targetpath), side)
     return targetpath
 
@@ -620,10 +615,11 @@ def post_associated_file(post_type, year, month, day, index, filename):
     elif size == 'large':
         sourcepath = resize_associated_image(post, sourcepath, 1024)
 
-    #_, ext = os.path.splitext(sourcepath)
-    #return send_from_directory(os.path.dirname(sourcepath),
-    #                           os.path.basename(sourcepath),
-    #                           mimetype='text/plain' if ext == '.md' else None)
+    if app.debug:
+        _, ext = os.path.splitext(sourcepath)
+        return send_from_directory(
+            os.path.join(app.root_path, os.path.dirname(sourcepath)),
+            os.path.basename(sourcepath), mimetype=None)
 
     resp = make_response('')
     resp.headers['X-Accel-Redirect'] = '/internal' + sourcepath
@@ -906,11 +902,9 @@ def person_to_microcard(fullname, displayname, entry, pos):
 
 def process_people(data, person_processor):
     book = None
-
-    regex = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
     start = 0
     while True:
-        m = regex.search(data, start)
+        m = PEOPLE_RE.search(data, start)
         if not m:
             break
         if not book:
@@ -932,9 +926,7 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
 
     if img_path:
         # replace relative paths to images with absolute
-        data = re.sub(
-            '(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)',
-            '![\g<1>](' + img_path + '/\g<2>)', data)
+        data = RELATIVE_PATH_RE.sub('![\g<1>](' + img_path + '/\g<2>)', data)
 
     if person_processor:
         data = process_people(data, person_processor)
@@ -943,7 +935,6 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
     result = util.autolink(result, twitter_names=link_twitter_names)
     result = smartypants(result)
     return result
-
 
 def format_as_text(html, remove_imgs=True):
     soup = BeautifulSoup(html)
