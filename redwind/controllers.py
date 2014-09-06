@@ -58,7 +58,6 @@ DPost = collections.namedtuple('DPost', [
     'bookmark_contexts',
     'title',
     'content',
-    'content_plain',
     'photos',
     'pub_date_iso',
     'pub_date_human',
@@ -198,7 +197,6 @@ def create_dpost(post):
         title=post.title,
 
         content=content,
-        content_plain=util.format_as_text(content),
         photos=[create_dphoto(post, p) for p in post.photos],
 
         pub_date_iso=isotime_filter(post.pub_date),
@@ -270,7 +268,7 @@ def create_dcontext(url):
                 content_plain = util.format_as_text(content)
 
                 if len(content_plain) < 512:
-                    content = bleach.clean(content, strip=True)
+                    pass
                 else:
                     content = (
                         jinja2.filters.do_truncate(content_plain, 512) +
@@ -281,8 +279,7 @@ def create_dcontext(url):
                 if len(title) > 256:
                     title = jinja2.filters.do_truncate(title, 256)
 
-                author_name = bleach.clean(
-                    entry.get('author', {}).get('name', ''))
+                author_name = entry.get('author', {}).get('name', '')
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
                     author_image = util.mirror_image(author_image, 64)
@@ -352,7 +349,7 @@ def create_dmention(post, url):
             if entry:
                 comment_type = entry.get('comment_type')
 
-                content = bleach.clean(entry.get('content', ''), strip=True)
+                content = entry.get('content', '')
                 content_plain = util.format_as_text(content)
                 content_words = jinja2.filters.do_wordcount(content_plain)
 
@@ -364,8 +361,7 @@ def create_dmention(post, url):
                 if not published:
                     published = post.pub_date
 
-                author_name = bleach.clean(
-                    entry.get('author', {}).get('name', ''))
+                author_name = entry.get('author', {}).get('name', '')
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
                     author_image = util.mirror_image(author_image, 64)
@@ -644,7 +640,8 @@ def post_by_date(post_type, year, month, day, index, slug):
     dpost = create_dpost(post)
     title = dpost.title
     if not title:
-        title = jinja2.filters.do_truncate(dpost.content_plain, 50)
+        title = jinja2.filters.do_truncate(
+            util.format_as_text(dpost.content), 50)
     if not title:
         title = "A {} from {}".format(dpost.post_type, dpost.pub_day)
 
