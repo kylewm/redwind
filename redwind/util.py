@@ -1,5 +1,8 @@
 from . import app
 from datetime import date
+from markdown import markdown
+from smartypants import smartypants
+from flask import url_for
 import bs4
 import os
 import os.path
@@ -9,6 +12,9 @@ import datetime
 import unicodedata
 import urllib
 
+
+PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
+RELATIVE_PATH_RE = re.compile('(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)')
 
 
 def isoparse(s):
@@ -235,3 +241,123 @@ def slugify(s, limit=256):
 
 def multiline_string_to_list(s):
     return [l.strip() for l in s.split('\n') if l.strip()]
+
+
+def mirror_image(src, side=None):
+    """Downloads a remote resource schema://domain/path to
+    static/_mirror/domain/path and optionally resizes it to
+    static/_mirro/domain/dirname(path)/resized-64/basename(path)
+    """
+    site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
+    o = urllib.parse.urlparse(src)
+    if not o.netloc or o.netloc == site_netloc:
+        return src
+
+    relpath = os.path.join("_mirror", o.netloc, o.path.strip('/'))
+    abspath = os.path.join(app.root_path, app.static_folder, relpath)
+
+    if os.path.exists(abspath):
+        pass
+    elif os.path.exists(abspath + '.error'):
+        return src
+    else:
+        try:
+            download_resource(src, abspath)
+        except BaseException as e:
+            app.logger.exception(
+                "failed to download %s to %s for some reason", src, abspath)
+            if not os.path.exists(os.path.dirname(abspath)):
+                os.makedirs(os.path.dirname(abspath))
+            with open(abspath + '.error', 'w') as f:
+                f.write(str(e))
+            return src
+
+    if not side:
+        return url_for('static', relpath)
+
+    rz_relpath = os.path.join(
+        os.path.dirname(relpath), 'resized-' + str(side),
+        os.path.basename(relpath))
+
+    if not any(rz_relpath.lower().endswith(ext)
+               for ext in ['.gif', '.jpg', '.png']):
+        rz_relpath += '.jpg'
+
+    rz_abspath = os.path.join(app.root_path, app.static_folder, rz_relpath)
+
+    if not os.path.exists(rz_abspath):
+        resize_image(abspath, rz_abspath, side)
+
+    return url_for('static', filename=rz_relpath)
+
+
+def person_to_microcard(fullname, displayname, entry, pos):
+    url = entry.get('url')
+    photo = entry.get('photo')
+    if url and photo:
+        photo_url = mirror_image(photo, 20)
+        return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
+            url, photo_url, displayname)
+    elif url:
+        return '<a class="microcard h-card" href="{}">{}</a>'.format(
+            url, displayname)
+
+    return displayname
+
+
+def markdown_filter(data, img_path=None, link_twitter_names=True,
+                    person_processor=person_to_microcard):
+    if img_path:
+        # replace relative paths to images with absolute
+        data = RELATIVE_PATH_RE.sub('![\g<1>](' + img_path + '/\g<2>)', data)
+
+    if person_processor:
+        data = process_people(data, person_processor)
+
+    result = markdown(data, extensions=['codehilite', 'fenced_code'])
+    result = autolink(result, twitter_names=link_twitter_names)
+    result = smartypants(result)
+    return result
+
+
+def process_people(data, person_processor):
+    from .models import AddressBook
+    book = None
+    start = 0
+    while True:
+        m = PEOPLE_RE.search(data, start)
+        if not m:
+            break
+        if not book:
+            book = AddressBook()
+        fullname = m.group(1)
+        displayname = m.group(2) or fullname
+        replacement = person_processor(fullname, displayname,
+                                       book.entries.get(fullname, {}),
+                                       m.start())
+        data = data[:m.start()] + replacement + data[m.end():]
+        start = m.start() + len(replacement)
+    return data
+
+
+def format_as_text(html, remove_imgs=True):
+    soup = bs4.BeautifulSoup(html)
+    # replace links with the URL
+    for a in soup.find_all('a'):
+        a.replace_with(a.get('href') or 'link')
+    # and images with their alt text
+    for i in soup.find_all('img'):
+        if remove_imgs:
+            i.hidden = True
+        else:
+            i.replace_with('[{}]'.format(
+                i.get('title') or i.get('alt') or 'image'))
+    return soup.get_text().strip()
+
+
+def is_cached_current(original, cached):
+    """Compare a file and the processed, cached version to see if the cached
+    version is up to date.
+    """
+    return (os.path.exists(cached)
+            and os.stat(cached).st_mtime >= os.stat(original).st_mtime)

@@ -37,7 +37,8 @@ app.jinja_options = ImmutableDict(
 if app.config.get('PROFILE'):
     from werkzeug.contrib.profiler import ProfilerMiddleware
     f = open('logs/profiler.log', 'w')
-    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, f, restrictions=[30])
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, f, restrictions=[60],
+                                      sort_by=('cumtime', 'tottime', 'ncalls'))
 
 if app.debug:
     #toolbar = DebugToolbarExtension(app)

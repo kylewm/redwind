@@ -147,19 +147,6 @@ class Location:
 
 class Post:
     @staticmethod
-    def parse_json_frontmatter(fp):
-        """parse a multipart file that starts with a json blob"""
-        json_lines = []
-        for line in fp:
-            json_lines.append(line)
-            if line.rstrip() == '}':
-                break
-
-        head = json.loads(''.join(json_lines))
-        body = '\n'.join(line.strip('\r\n') for line in fp.readlines())
-        return head, body
-
-    @staticmethod
     def _get_fs_path(path):
         """get the filesystem path from a relative path
         e.g., note/2014/04/29/1 -> root/_data/note/2014/04/29/1
@@ -180,20 +167,21 @@ class Post:
         # app.logger.debug("loading from path %s", path)
         post_type = path.split('/', 1)[0]
         date_index, _ = os.path.splitext(os.path.basename(path))
-        path = cls._get_fs_path(path)
-        if not path.endswith('.md'):
-            path += '.md'
+        data_path = os.path.join(cls._get_fs_path(path), 'data.json')
+        content_path = os.path.join(cls._get_fs_path(path), 'content.md')
 
-        if not os.path.exists(path):
+        if not os.path.exists(data_path):
             app.logger.warn("No post found at %s", path)
             return None
 
-        with open(path, 'r') as fp:
-            head, body = Post.parse_json_frontmatter(fp)
-
         post = cls(post_type, date_index)
-        post.read_json_blob(head)
-        post.content = body
+        with open(data_path) as fp:
+            post.read_json_blob(json.load(fp))
+
+        if os.path.exists(content_path):
+            with open(content_path) as fp:
+                post.content = fp.read()
+
         return post
 
     @classmethod
@@ -292,7 +280,7 @@ class Post:
             idx = 1
             while True:
                 self.date_index = util.base60_encode(idx)
-                if not os.path.exists(self._get_fs_path(self.path) + '.md'):
+                if not os.path.exists(self._get_fs_path(self.path)):
                     break
                 idx += 1
 
@@ -302,14 +290,17 @@ class Post:
                                "with the 'writeable' flag")
 
         self.reserve_date_index()
-        filename = self._get_fs_path(self.path) + '.md'
-        parentdir = os.path.dirname(filename)
+        parentdir = self._get_fs_path(self.path)
+        json_filename = os.path.join(parentdir, 'data.json')
+        content_filename = os.path.join(parentdir, 'content.md')
+
         if not os.path.exists(parentdir):
             os.makedirs(parentdir)
 
-        with open(filename, 'w') as f:
+        with open(json_filename, 'w') as f:
             json.dump(self.to_json_blob(), f, indent=True)
-            f.write('\n')
+
+        with open(content_filename, 'w') as f:
             if self.content:
                 f.write(self.content)
 
@@ -364,6 +355,24 @@ class Post:
                                   tag, util.base60_encode(ordinal),
                                   self.date_index)
         return cite
+
+    @property
+    def content_html(self):
+        content_md = os.path.join(self._get_fs_path(self.path), 'content.md')
+        if self.content and os.path.exists(content_md):
+            content_html = os.path.join(self._get_fs_path(self.path),
+                                        'content.html')
+
+            if util.is_cached_current(content_md, content_html):
+                with open(content_html, 'r') as f:
+                    html = f.read()
+            else:
+                html = util.markdown_filter(
+                    self.content, img_path=self.get_image_path())
+                with open(content_html, 'w') as f:
+                    f.write(html)
+
+            return html
 
     def __repr__(self):
         if self.title:
@@ -425,11 +434,9 @@ class Metadata:
         for post_type in POST_TYPES:
             for root, dirs, files in os.walk(os.path.join(basedir, post_type)):
                 for filen in files:
-                    if filen.endswith('.mentions.json'):
+                    if filen != 'data.json':
                         continue
-                    index, ext = os.path.splitext(filen)
-                    postpath = os.path.join(
-                        os.path.relpath(root, basedir), index)
+                    postpath = os.path.relpath(root, basedir)
                     post = Post.load(postpath)
                     if not post:
                         continue

@@ -8,7 +8,6 @@ from . import util
 
 from .models import Post, Location, Metadata, AddressBook, POST_TYPES
 
-from bs4 import BeautifulSoup
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
@@ -42,9 +41,6 @@ FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9.
 FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
 YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
 INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
-
-PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
-RELATIVE_PATH_RE = re.compile('(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
@@ -137,8 +133,7 @@ def create_dpost(post):
         return result
 
     if post.content:
-        content = Markup(markdown_filter(
-            post.content, img_path=post.get_image_path()))
+        content = Markup(post.content_html)
     elif post.post_type == 'like':
         content = 'liked this'
     elif post.post_type == 'share':
@@ -203,7 +198,7 @@ def create_dpost(post):
         title=post.title,
 
         content=content,
-        content_plain=format_as_text(content),
+        content_plain=util.format_as_text(content),
         photos=[create_dphoto(post, p) for p in post.photos],
 
         pub_date_iso=isotime_filter(post.pub_date),
@@ -235,9 +230,6 @@ def create_dpost(post):
 
 def create_dphoto(post, photo):
     caption = photo.get('caption')
-    if caption:
-        caption = markdown_filter(caption)
-
     url = os.path.join(post.get_image_path(), photo.get('filename'))
     thumbnail = url
 
@@ -275,7 +267,7 @@ def create_dcontext(url):
                 pub_date = entry.get('published')
 
                 content = entry.get('content', '')
-                content_plain = format_as_text(content)
+                content_plain = util.format_as_text(content)
 
                 if len(content_plain) < 512:
                     content = bleach.clean(content, strip=True)
@@ -293,7 +285,7 @@ def create_dcontext(url):
                     entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
-                    author_image = mirror_image(author_image, 64)
+                    author_image = util.mirror_image(author_image, 64)
 
                 permalink = entry.get('url')
                 if not permalink or not isinstance(permalink, str):
@@ -361,7 +353,7 @@ def create_dmention(post, url):
                 comment_type = entry.get('comment_type')
 
                 content = bleach.clean(entry.get('content', ''), strip=True)
-                content_plain = format_as_text(content)
+                content_plain = util.format_as_text(content)
                 content_words = jinja2.filters.do_wordcount(content_plain)
 
                 published = entry.get('published')
@@ -376,7 +368,7 @@ def create_dmention(post, url):
                     entry.get('author', {}).get('name', ''))
                 author_image = entry.get('author', {}).get('photo')
                 if author_image:
-                    author_image = mirror_image(author_image, 64)
+                    author_image = util.mirror_image(author_image, 64)
 
                 return DMention(
                     permalink=entry.get('url') or url,
@@ -886,73 +878,6 @@ def atom_sanitize(content):
     return Markup.escape(str(content))
 
 
-def person_to_microcard(fullname, displayname, entry, pos):
-    url = entry.get('url')
-    photo = entry.get('photo')
-    if url and photo:
-        photo_url = mirror_image(photo, 20)
-        return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
-            url, photo_url, displayname)
-    elif url:
-        return '<a class="microcard h-card" href="{}">{}</a>'.format(
-            url, displayname)
-
-    return displayname
-
-
-def process_people(data, person_processor):
-    book = None
-    start = 0
-    while True:
-        m = PEOPLE_RE.search(data, start)
-        if not m:
-            break
-        if not book:
-            book = AddressBook()
-        fullname = m.group(1)
-        displayname = m.group(2) or fullname
-        replacement = person_processor(fullname, displayname,
-                                       book.entries.get(fullname, {}),
-                                       m.start())
-        data = data[:m.start()] + replacement + data[m.end():]
-        start = m.start() + len(replacement)
-    return data
-
-
-def markdown_filter(data, img_path=None, link_twitter_names=True,
-                    person_processor=person_to_microcard):
-    from markdown import markdown
-    from smartypants import smartypants
-
-    if img_path:
-        # replace relative paths to images with absolute
-        data = RELATIVE_PATH_RE.sub('![\g<1>](' + img_path + '/\g<2>)', data)
-
-    if person_processor:
-        data = process_people(data, person_processor)
-
-    result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    result = util.autolink(result, twitter_names=link_twitter_names)
-    result = smartypants(result)
-    return result
-
-def format_as_text(html, remove_imgs=True):
-    soup = BeautifulSoup(html)
-
-    # replace links with the URL
-    for a in soup.find_all('a'):
-        a.replace_with(a.get('href') or 'link')
-    # and images with their alt text
-    for i in soup.find_all('img'):
-        if remove_imgs:
-            i.hidden = True
-        else:
-            i.replace_with('[{}]'.format(i.get('title')
-                                         or i.get('alt')
-                                         or 'image'))
-    return soup.get_text().strip()
-
-
 @app.template_filter('prettify_url')
 def prettify_url(url):
     if not url:
@@ -986,54 +911,6 @@ def format_syndication_url(url, include_rel=True):
         return fmt.format(url, 'fa-instagram', 'Instagram')
 
     return fmt.format(url, 'fa-paper-plane', domain_from_url(url))
-
-
-def mirror_image(src, side=None):
-    """Downloads a remote resource schema://domain/path to
-    static/_mirror/domain/path and optionally resizes it to
-    static/_mirro/domain/dirname(path)/resized-64/basename(path)
-    """
-    site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
-    o = urllib.parse.urlparse(src)
-    if not o.netloc or o.netloc == site_netloc:
-        return src
-
-    relpath = os.path.join("_mirror", o.netloc, o.path.strip('/'))
-    abspath = os.path.join(app.root_path, app.static_folder, relpath)
-
-    if os.path.exists(abspath):
-        pass
-    elif os.path.exists(abspath + '.error'):
-        return src
-    else:
-        try:
-            util.download_resource(src, abspath)
-        except BaseException as e:
-            app.logger.exception(
-                "failed to download %s to %s for some reason", src, abspath)
-            if not os.path.exists(os.path.dirname(abspath)):
-                os.makedirs(os.path.dirname(abspath))
-            with open(abspath + '.error', 'w') as f:
-                f.write(str(e))
-            return src
-
-    if not side:
-        return url_for('static', filename=relpath)
-
-    rz_relpath = os.path.join(
-        os.path.dirname(relpath), 'resized-' + str(side),
-        os.path.basename(relpath))
-
-    if not any(rz_relpath.lower().endswith(ext)
-               for ext in ['.gif', '.jpg', '.png']):
-        rz_relpath += '.jpg'
-
-    rz_abspath = os.path.join(app.root_path, app.static_folder, rz_relpath)
-
-    if not os.path.exists(rz_abspath):
-        util.resize_image(abspath, rz_abspath, side)
-
-    return url_for('static', filename=rz_relpath)
 
 
 @app.route('/save_edit', methods=['POST'])
