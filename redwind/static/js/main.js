@@ -103,6 +103,15 @@ define(function(require) {
 
             });
 
+            var coordsBtn = first('#get_coords_button')
+            if (coordsBtn) {
+                coordsBtn.addEventListener('change', function(event) {
+                    if (coordsBtn.checked) {
+                        self.getCoords();
+                    }
+                });
+            }
+
             var attachExpandListener = function(handle, textarea) {
                 if (handle && textarea) {
                     handle.addEventListener('click', function(event) {
@@ -165,6 +174,15 @@ define(function(require) {
 
             handle.classList.toggle('fa-plus-square-o', !closed);
             handle.classList.toggle('fa-minus-square-o', closed);
+        },
+
+        getCoords: function(element) {
+            var latField = first('#latitude');
+            var lonField = first('#longitude');
+            navigator.geolocation.getCurrentPosition(function(position) {
+                latField.value = position.coords.latitude;
+                lonField.value = position.coords.longitude;
+            });
         },
 
         setupCheckinMap: function(element) {

@@ -1,12 +1,17 @@
 {% extends "edit_post.html" %}
 
 {% block additional_params %}
-{% block above_additional_params %}{% endblock above_additional_params %}
+{% block location_check %}
+<label><input type="checkbox" id="get_coords_button"/> Location
+<input id="latitude" name="latitude" size="10" value="{{ post.location.latitude if post.location else ''}}"/>
+<input id="longitude" name="longitude" size="10" value="{{ post.location.longitude if post.location else ''}}"/>
+</label>
+{% endblock location_check %}
 
 <label><input type="checkbox" name="tweet" value="true" {% if edit_type == 'new' %}checked{% endif %} /> <i class="fa fa-twitter"></i> Tweet</label>
 
-<label><input type="checkbox" id="hidden" name="hidden" value="true" {% if post.hidden %}checked{% endif %} /> Hidden</label>
+{% block hidden_check %}
+<input type="hidden" id="hidden" name="hidden" value="false" />
+{% endblock hidden_check %}
 
-
-{% block below_additional_params %}{% endblock below_additional_params %}
 {% endblock additional_params %}

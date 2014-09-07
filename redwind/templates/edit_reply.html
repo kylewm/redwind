@@ -5,5 +5,6 @@
 <textarea style="width:100%" name="in_reply_to" rows="1">{{post.in_reply_to | join('\n')}}</textarea>
 {% endblock above_content %}
 
-{% block below_additional_params %}
-{% endblock below_additional_params %}
+{% block hidden_check %}
+<label><input type="checkbox" id="hidden" name="hidden" value="true" {% if post.hidden %}checked{% endif %} /> Hidden</label>
+{% endblock hidden_check %}

@@ -70,6 +70,7 @@ def create_mention(post_path, url):
 
 
 def create_context(post_path, url):
+    context = None
     blob = archiver.load_json_from_archive(url)
     if blob:
         entry = mf2util.interpret(blob, url)
@@ -102,9 +103,10 @@ def create_context(post_path, url):
         context = Context(post_path)
         context.url = context.permalink = url
         html = archiver.load_html_from_archive(url)
-        soup = bs4.BeautifulSoup(html)
-        if soup.title:
-            context.title = soup.title.string
+        if html:
+            soup = bs4.BeautifulSoup(html)
+            if soup.title:
+                context.title = soup.title.string
 
     context.save()
     return context
