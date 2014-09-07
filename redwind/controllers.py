@@ -511,15 +511,8 @@ def atom_sanitize(content):
 
 
 @app.template_filter('prettify_url')
-def prettify_url(url):
-    if not url:
-        return url
-    split = url.split('//', 1)
-    if len(split) == 2:
-        schema, path = split
-    else:
-        path = url
-    return path.strip('/')
+def prettify_url(*args, **kwargs):
+    return util.prettify_url(*args, **kwargs)
 
 
 @app.template_filter('domain_from_url')

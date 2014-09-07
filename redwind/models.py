@@ -425,21 +425,30 @@ class Post:
             self._contexts = {c.url: c for c in cs}
         return self._contexts
 
+    def _url_to_context(self, url):
+        context = self.contexts.get(url)
+        if context:
+            return context
+        else:
+            context = Context(self.path)
+            context.url = context.permalink = url
+            return context
+
     @property
     def reply_contexts(self):
-        return (self.contexts.get(url) for url in self.in_reply_to)
+        return (self._url_to_context(url) for url in self.in_reply_to)
 
     @property
     def repost_contexts(self):
-        return (self.contexts.get(url) for url in self.repost_of)
+        return (self._url_to_context(url) for url in self.repost_of)
 
     @property
     def like_contexts(self):
-        return (self.contexts.get(url) for url in self.like_of)
+        return (self._url_to_context(url) for url in self.like_of)
 
     @property
     def bookmark_contexts(self):
-        return (self.contexts.get(url) for url in self.bookmark_of)
+        return (self._url_to_context(url) for url in self.bookmark_of)
 
     @property
     def likes(self):
@@ -540,6 +549,10 @@ class ForeignPost:
             self.post_path,
             self.get_folder_name(),
             self.index)
+
+    @property
+    def title_or_url(self):
+        return self.title or util.prettify_url(self.permalink)
 
     def reserve_index(self):
         if not self.index:

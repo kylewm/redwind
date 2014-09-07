@@ -7,7 +7,7 @@
       </a> in
     {% endif %}
     <a class="u-url" href="{{context.permalink}}">
-      {{ context.title }}
+      {{ context.title_or_url }}
     </a>
     on {{context.permalink | domain_from_url}}
     {% if context.content %}
@@ -22,7 +22,7 @@
   <div class="p-repost-of h-cite">
     Shared
     <a class="u-url" href="{{context.permalink}}">
-      {{ context.title }}
+      {{ context.title_or_url }}
     </a>
     {% if context.author_name %}
       by <a class="p-author h-card" href="{{context.author_url}}"> {{context.author_name}}
@@ -44,7 +44,7 @@
     <div>
       Liked
       <a class="u-like u-likeof" href="{{context.permalink}}">
-        {{ context.title }}
+        {{ context.title_or_url }}
       </a>
       by {{context.author_name}} on {{context.permalink|domain_from_url}}
     </div>
@@ -52,7 +52,7 @@
     <div class="p-like p-like-of h-cite">
       Liked
       <a class="u-url" href="{{context.permalink}}">
-        {{ context.title }}
+        {{ context.title_or_url }}
       </a>
       {% if context.author_name %}
         by <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}
@@ -70,5 +70,5 @@
 {% endfor %}
 
 {% for context in post.bookmark_contexts %}
-  Bookmarked {{context.title}}: <a class="u-bookmark" href="{{context.permalink}}">{{context.permalink | prettify_url }}</a>
+  Bookmarked {{context.title_or_url}}: <a class="u-bookmark" href="{{context.permalink}}">{{context.permalink | prettify_url }}</a>
 {% endfor %}

@@ -377,3 +377,16 @@ def is_cached_current(original, cached):
     """
     return (os.path.exists(cached)
             and os.stat(cached).st_mtime >= os.stat(original).st_mtime)
+
+
+def prettify_url(url):
+    """Return a URL without its schema
+    """
+    if not url:
+        return url
+    split = url.split('//', 1)
+    if len(split) == 2:
+        schema, path = split
+    else:
+        path = url
+    return path.strip('/')
