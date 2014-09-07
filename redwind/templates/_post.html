@@ -3,7 +3,7 @@
 
   <div class="post-metadata">
       <a class="u-url" href="{{post.permalink}}">
-        <time class="dt-published" datetime="{{post.pub_date_iso}}">{{post.pub_date_human}}</time>
+        <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
       </a>
 
       {% if current_user.is_authenticated() %}
@@ -28,7 +28,7 @@
   {% endif %}
 
   <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
-    {{post.content}}
+    {{post.content_html | safe}}
 
     {% for photo in post.photos %}
       <div class="photo-holder">
@@ -67,17 +67,17 @@
 
     {% if not is_single %}
       <div class="mention-counts">
-        {% if post.reply_count %}
-          <a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ post.reply_count }}</a>
+        {% if post.replies %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ post.replies | count }}</a>
         {% endif %}
-        {% if post.like_count %}
-          <a href="{{ post.permalink }}#mentions"><i class="fa fa-star-o"></i> {{ post.like_count }}</a>
+        {% if post.likes %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-star-o"></i> {{ post.likes | count }}</a>
         {% endif %}
-        {% if post.repost_count %}
-          <a href="{{ post.permalink }}#mentions"><i class="fa fa-retweet"></i> {{ post.repost_count }}</a>
+        {% if post.reposts %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-retweet"></i> {{ post.reposts | count }}</a>
         {% endif %}
-        {% if post.reference_count %}
-          <a href="{{ post.permalink }}#mentions"><i class="fa fa-ellipsis-h"></i> {{ post.reference_count }}</a>
+        {% if post.references %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-ellipsis-h"></i> {{ post.references | count }}</a>
         {% endif %}
       </div>
     {% endif %}
@@ -96,7 +96,7 @@
         {% if post.syndication %}
           Also on
           {% for s in post.syndication %}
-            {{ s | safe }}
+            {{ s | format_syndication_url }}
           {% endfor %}
           {% if post.reply_url or post.retweet_url or post.favorite_url %} | {% endif %}
         {% endif %}

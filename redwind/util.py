@@ -13,6 +13,13 @@ import unicodedata
 import urllib
 
 
+TWITTER_PROFILE_RE = re.compile(r'https?://(?:www\.)?twitter\.com/(\w+)')
+TWITTER_RE = re.compile(r'https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)')
+FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)')
+FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
+YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
+INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
+
 PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
 RELATIVE_PATH_RE = re.compile('(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)')
 
@@ -29,11 +36,20 @@ def isoparse_with_tz(s):
 
 def isoformat(date):
     if date:
+        if (isinstance(date, datetime.date)
+            and not isinstance(date, datetime.datetime)):
+            return date.isoformat()
         if date.tzinfo:
             date = date.astimezone(datetime.timezone.utc)
             date = date.replace(tzinfo=None)
         date = date.replace(microsecond=0)
         return date.isoformat('T')
+
+
+def isoformat_with_tz(date):
+    if hasattr(date, 'tzinfo') and not date.tzinfo:
+        date = date.replace(tzinfo=datetime.timezone.utc)
+    return date.isoformat(sep='T')
 
 
 def normalize_tag(tag):

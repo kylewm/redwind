@@ -180,9 +180,9 @@ def micropub_endpoint():
         if pub.tzinfo:
             pub = pub.astimezone(datetime.timezone.utc)
             pub = pub.replace(tzinfo=None)
-        post.pub_date = pub
+        post.published = pub
     else:
-        post.pub_date = datetime.datetime.utcnow()
+        post.published = datetime.datetime.utcnow()
 
     post.reserve_date_index()
 
@@ -220,7 +220,7 @@ def micropub_endpoint():
         post.slug = util.slugify(post.title)
     elif post.content:
         post.slug = util.slugify(post.content, 32)
-        
+
     post.save()
     post._writeable = False
 

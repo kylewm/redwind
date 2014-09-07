@@ -34,7 +34,6 @@ def do_send_webmentions(post_id):
     return handle_new_or_edit(post)
 
 
-
 def get_source_url(post):
     return post.permalink
 
@@ -46,10 +45,9 @@ def get_target_urls(post):
     target_urls += post.repost_of
     target_urls += post.like_of
 
-    dpost = controllers.create_dpost(post)
-    app.logger.debug("search post content {}".format(dpost.content))
+    app.logger.debug("search post content {}".format(post.content_html))
 
-    soup = BeautifulSoup(dpost.content)
+    soup = BeautifulSoup(post.content_html)
     for link in soup.find_all('a'):
         link_target = link.get('href')
         if link_target:

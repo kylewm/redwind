@@ -1,7 +1,8 @@
 from .. import app
 from .. import queue
 from .. import archiver
-from ..models import Post, Metadata
+from .. import util
+from ..models import Post, Metadata, Mention
 
 from flask import request, make_response, render_template, url_for
 from werkzeug.exceptions import NotFound
@@ -9,6 +10,7 @@ from werkzeug.exceptions import NotFound
 import urllib.parse
 import urllib.request
 import requests
+import mf2util
 
 from bs4 import BeautifulSoup
 
@@ -70,7 +72,8 @@ def process_webmention(source, target, callback):
         if callback:
             requests.post(callback, data=result)
     try:
-        target_post, mention_url, delete, error = do_process_webmention(source, target)
+        target_post, mention_url, delete, error = do_process_webmention(
+            source, target)
 
         if error or not target_post or not mention_url:
             app.logger.warn("Failed to process webmention: %s", error)
@@ -86,9 +89,9 @@ def process_webmention(source, target, callback):
 
         with Post.writeable(target_post.path) as writeable_post:
             if delete:
-                writeable_post.mentions.remove(mention_url)
-            elif mention_url not in writeable_post.mentions:
-                writeable_post.mentions.append(mention_url)
+                writeable_post.mention_urls.remove(mention_url)
+            elif mention_url not in writeable_post.mention_urls:
+                writeable_post.mention_urls.append(mention_url)
             writeable_post.save()
             app.logger.debug("saved mentions to %s", writeable_post.path)
 
@@ -176,6 +179,7 @@ def do_process_webmention(source, target):
 
     archiver.archive_html(source, source_response.text)
     archiver.archive_response(source, source_response)
+    create_mention(target_post, source)
 
     return target_post, source, False, None
 
@@ -246,3 +250,62 @@ def find_target_post(target_url):
             "Webmention target points to unknown post: {}".format(args)),
 
     return post
+
+
+def create_mention(post, url):
+    prod_url = app.config.get('PROD_URL')
+    site_url = app.config.get('SITE_URL')
+    target_urls = []
+    if post:
+        base_target_urls = [
+            post.permalink,
+            post.permalink_without_slug,
+            post.short_permalink,
+        ] + post.previous_permalinks
+
+        for base_url in base_target_urls:
+            target_urls.append(base_url)
+            target_urls.append(base_url.replace('https://', 'http://')
+                               if base_url.startswith('https://')
+                               else base_url.replace('http://', 'https://'))
+            # use localhost url for testing if it's different from prod
+            if prod_url and prod_url != site_url:
+                target_urls.append(base_url.replace(site_url, prod_url))
+
+    blob = archiver.load_json_from_archive(url)
+    if not blob:
+        return
+    entry = mf2util.interpret_comment(blob, url, target_urls)
+    if not entry:
+        return
+    comment_type = entry.get('comment_type')
+
+    content = entry.get('content', '')
+    content_plain = util.format_as_text(content)
+
+    published = entry.get('published')
+    if not published:
+        resp = archiver.load_response(url)
+        published = resp and util.isoparse(resp.get('received'))
+
+    if not published:
+        published = post.published
+
+    # update an existing mention
+    mention = next((m for m in post.mentions if m.url == url), None)
+    # or create a new one
+    if not mention:
+        mention = Mention(post.path)
+    mention.url = url
+    mention.permalink = entry.get('url') or url
+    mention.reftype = comment_type[0] if comment_type else 'reference'
+    mention.author_name = entry.get('author', {}).get('name', '')
+    mention.author_url = entry.get('author', {}).get('url', '')
+    mention.author_image = entry.get('author', {}).get('photo')
+    mention.content = content
+    mention.content_plain = content_plain
+    mention.published = published
+    mention.title = entry.get('name')
+    mention.syndication = entry.get('syndication', [])
+    mention.save()
+    return mention

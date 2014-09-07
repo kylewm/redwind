@@ -1,10 +1,9 @@
 from .. import app
 from .. import archiver
-from .. import controllers
 from .. import hooks
 from .. import queue
 from .. import util
-from ..models import Post
+from ..models import Post, Context
 from . import hentry_template
 
 from flask.ext.login import login_required, current_user
@@ -40,11 +39,11 @@ TweetComponent = collections.namedtuple('TweetComponent', [
     'text',
 ])
 
-PERMALINK_RE = controllers.TWITTER_RE
+PERMALINK_RE = util.TWITTER_RE
 
 
 def register():
-    hooks.register('fetch-context', fetch_external_post)
+    hooks.register('create-context', create_context)
     hooks.register('post-saved', send_to_twitter)
 
 
@@ -96,10 +95,10 @@ def collect_images(post):
 
     if post.photos:
         for photo in post.photos:
-            yield controllers.create_dphoto(post, photo).url
+            yield photo.url
 
     else:
-        html = controllers.markdown_filter(
+        html = util.markdown_filter(
             post.content, img_path=post.get_image_path(),
             link_twitter_names=False, person_processor=None)
         soup = BeautifulSoup(html)
@@ -185,9 +184,9 @@ def format_markdown_as_tweet(data):
             return '@' + handle
         return displayname
 
-    return controllers.format_as_text(
-        controllers.markdown_filter(data, link_twitter_names=False,
-                                    person_processor=person_to_twitter_handle))
+    return util.format_as_text(
+        util.markdown_filter(data, link_twitter_names=False,
+                             person_processor=person_to_twitter_handle))
 
 
 def get_auth():
@@ -214,11 +213,11 @@ def repost_preview(url):
             return embed_response.json().get('html')
 
 
-def fetch_external_post(url):
+def create_context(post_path, url):
     match = PERMALINK_RE.match(url)
     if not match:
         app.logger.debug('url is not a twitter permalink %s', url)
-        return False
+        return
 
     app.logger.debug('url is a twitter permalink')
     tweet_id = match.group(2)
@@ -229,7 +228,7 @@ def fetch_external_post(url):
     if status_response.status_code // 2 != 100:
         app.logger.warn("failed to fetch tweet %s %s", status_response,
                         status_response.content)
-        return True
+        return
 
     status_data = status_response.json()
     app.logger.debug('received response from twitter: %s', status_data)
@@ -257,20 +256,15 @@ def fetch_external_post(url):
             if media_url:
                 tweet_text += '<div><img src="{}"/></div>'.format(media_url)
 
-    html = hentry_template.fill(author_name=author_name,
-                                author_url=author_url,
-                                author_image=author_image,
-                                pub_date=pub_date,
-                                content=tweet_text,
-                                permalink=url)
-
-    fake_response = requests.Response()
-    fake_response.status_code = 200
-    fake_response.headers = {}
-
-    archiver.archive_html(url, html)
-    archiver.archive_response(url, fake_response)
-    return True
+    context = Context(post_path)
+    context.url = context.permalink = url
+    context.author_name = author_name
+    context.author_image = author_image
+    context.author_url = author_url
+    context.published = pub_date
+    context.title = 'a tweet'
+    context.content = tweet_text
+    return context
 
 
 # TODO use twitter API entities to expand links without fetch requests
@@ -325,7 +319,6 @@ def guess_tweet_content(post, in_reply_to):
     """Best guess effort to generate tweet content for a post; useful for
     auto-filling the share form.
     """
-    dpost = controllers.create_dpost(post)
     if post.title:
         preview = post.title
     else:
@@ -341,7 +334,7 @@ def guess_tweet_content(post, in_reply_to):
 
     # add location url if it's a checkin
     if post.post_type == 'checkin' and post.location:
-        preview = preview + ' ' + dpost.location_url
+        preview = preview + ' ' + post.location_url
 
     components = []
     prev_end = 0
@@ -362,14 +355,14 @@ def guess_tweet_content(post, in_reply_to):
     target_length = TWEET_CHAR_LENGTH
 
     img_url = None
-    if dpost.photos:
-        dphoto = dpost.photos[0]
-        img_url = dphoto.url
+    if post.photos:
+        photo = post.photos[0]
+        img_url = photo.url
         target_length -= MEDIA_CHAR_LENGTH
-        if dphoto.caption:
+        if photo.caption:
             components.append(TweetComponent(
-                length=len(dphoto.caption, can_shorten=True,
-                           can_drop=True, text=dphoto.caption)))
+                length=len(photo.caption, can_shorten=True,
+                           can_drop=True, text=photo.caption)))
 
     if post.title or sum(c.length for c in components) > target_length:
         components.append(TweetComponent(

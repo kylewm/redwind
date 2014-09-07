@@ -1,12 +1,12 @@
 from . import api
 from . import app
-from . import archiver
 from . import auth
 from . import hooks
-from . import queue
 from . import util
+from . import contexts
 
-from .models import Post, Location, Metadata, AddressBook, POST_TYPES
+from .models import Post, Location, Metadata, AddressBook, Mention,\
+    Context, POST_TYPES
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
@@ -19,12 +19,11 @@ import bleach
 import collections
 import datetime
 import itertools
-import mf2util
 import operator
 import os
 import pytz
-import re
 import requests
+
 
 bleach.ALLOWED_TAGS += ['img', 'p', 'br']
 bleach.ALLOWED_ATTRIBUTES.update({
@@ -35,376 +34,8 @@ TIMEZONE = pytz.timezone('US/Pacific')
 
 POST_TYPE_RULE = '<any({}):post_type>'.format(','.join(POST_TYPES))
 DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<index>')
-TWITTER_PROFILE_RE = re.compile(r'https?://(?:www\.)?twitter\.com/(\w+)')
-TWITTER_RE = re.compile(r'https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/status(?:es)?/(\w+)')
-FACEBOOK_PROFILE_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)')
-FACEBOOK_RE = re.compile(r'https?://(?:www\.)?facebook\.com/([a-zA-Z0-9._-]+)/\w+/(\w+)')
-YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
-INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
-
-
-DPost = collections.namedtuple('DPost', [
-    'post_type',
-    'draft',
-    'permalink',
-    'short_permalink',
-    'short_cite',
-    'shortid',
-    'reply_contexts',
-    'share_contexts',
-    'like_contexts',
-    'bookmark_contexts',
-    'title',
-    'content',
-    'photos',
-    'pub_date_iso',
-    'pub_date_human',
-    'pub_day',
-    'location',
-    'location_url',
-    'syndication',
-    'tags',
-    'audience',
-    'reply_url',
-    'retweet_url',
-    'favorite_url',
-    'mentions',
-    'likes',
-    'reposts',
-    'replies',
-    'references',
-    'mention_count',
-    'like_count',
-    'repost_count',
-    'reply_count',
-    'reference_count'
-])
-
-DPhoto = collections.namedtuple('DPhoto', [
-    'url',
-    'thumbnail',
-    'caption',
-])
-
-DContext = collections.namedtuple('DContext', [
-    'url',
-    'permalink',
-    'author_name',
-    'author_url',
-    'author_image',
-    'content',
-    'repost_preview',
-    'pub_date',
-    'pub_date_iso',
-    'pub_date_human',
-    'title',
-    'deleted',
-])
-
-DMention = collections.namedtuple('DMention', [
-    'permalink',
-    'reftype',
-    'author_name',
-    'author_url',
-    'author_image',
-    'content',
-    'content_plain',
-    'content_words',
-    'pub_date',
-    'pub_date_iso',
-    'pub_date_human',
-    'title',
-    'deleted',
-    'syndication',
-    'children',
-])
-
-
-def create_dpost(post):
-    def get_pub_date(mention):
-        result = mention.pub_date
-        if not result:
-            result = datetime.datetime(1982, 11, 24, tzinfo=pytz.utc)
-        elif result and hasattr(result, 'tzinfo') and not result.tzinfo:
-            result = pytz.utc.localize(result)
-        return result
-
-    if post.content:
-        content = Markup(post.content_html)
-    elif post.post_type == 'like':
-        content = 'liked this'
-    elif post.post_type == 'share':
-        content = 'shared this'
-    else:
-        content = ''
-
-    # arrange posse'd mentions into a hierarchy based on rel-syndication
-    mentions = []
-    all_mentions = list(filter(
-        None, (create_dmention(post, m) for m in post.mentions)))
-    for mention in all_mentions:
-        parent = next((parent for parent in all_mentions if mention != parent
-                       and any(util.urls_match(mention.permalink, synd)
-                               for synd in parent.syndication)), None)
-        if parent:
-            parent.children.append(
-                format_syndication_url(mention.permalink, False))
-        else:
-            mentions.append(mention)
-
-    mentions.sort(key=get_pub_date)
-    likes = [m for m in mentions if m.reftype == 'like']
-    reposts = [m for m in mentions if m.reftype == 'repost']
-    replies = [m for m in mentions if m.reftype == 'reply']
-    references = [m for m in mentions if m.reftype == 'reference']
-
-    tweet_id = None
-    for url in post.syndication:
-        match = TWITTER_RE.match(url)
-        if match:
-            tweet_id = match.group(2)
-            break
-
-    reply_url = (
-        tweet_id
-        and 'https://twitter.com/intent/tweet?in_reply_to={}'.format(tweet_id))
-    retweet_url = (
-        tweet_id
-        and 'https://twitter.com/intent/retweet?tweet_id={}'.format(tweet_id))
-    favorite_url = (
-        tweet_id
-        and 'https://twitter.com/intent/favorite?tweet_id={}'.format(tweet_id))
-    location_url = None
-    if post.location:
-        location_url = (
-            'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'
-            .format(post.location.latitude, post.location.longitude))
-
-    return DPost(
-        post_type=post.post_type,
-        draft=post.draft,
-        permalink=post.permalink,
-        short_permalink=post.short_permalink,
-        short_cite=post.short_cite,
-        shortid=post.shortid,
-
-        reply_contexts=[create_dcontext(url) for url in post.in_reply_to],
-        share_contexts=[create_dcontext(url) for url in post.repost_of],
-        like_contexts=[create_dcontext(url) for url in post.like_of],
-        bookmark_contexts=[create_dcontext(url) for url in post.bookmark_of],
-        title=post.title,
-
-        content=content,
-        photos=[create_dphoto(post, p) for p in post.photos],
-
-        pub_date_iso=isotime_filter(post.pub_date),
-        pub_date_human=human_time(post.pub_date),
-        pub_day=post.pub_date and post.pub_date.strftime('%Y-%m-%d'),
-
-        location=post.location,
-        location_url=location_url,
-        syndication=[format_syndication_url(s) for s in post.syndication],
-        tags=post.tags,
-        audience=post.audience,
-
-        reply_url=reply_url,
-        retweet_url=retweet_url,
-        favorite_url=favorite_url,
-
-        mentions=mentions,
-        likes=likes,
-        reposts=reposts,
-        replies=replies,
-        references=references,
-        mention_count=len(mentions),
-        like_count=len(likes),
-        repost_count=len(reposts),
-        reply_count=len(replies),
-        reference_count=len(references)
-    )
-
-
-def create_dphoto(post, photo):
-    caption = photo.get('caption')
-    url = os.path.join(post.get_image_path(), photo.get('filename'))
-    thumbnail = url
-
-    if photo.get('resizeable', True):
-        thumbnail += '?size=medium'
-
-    return DPhoto(url=url, thumbnail=thumbnail, caption=caption)
-
-
-def create_dcontext(url):
-    repost_preview = None
-    # youtube embeds
-    m = YOUTUBE_RE.match(url)
-    if m:
-        repost_preview = (
-            """<iframe width="560" height="315" """
-            """src="//www.youtube.com/embed/{}" frameborder="0" """
-            """allowfullscreen></iframe>"""
-            .format(m.group(1)))
-
-    # instagram embeds
-    m = INSTAGRAM_RE.match(url)
-    if m:
-        repost_preview = (
-            """<iframe src="//instagram.com/p/{}/embed/" """
-            """width="400" height="500" frameborder="0" scrolling="no" """
-            """allowtransparency="true"></iframe>"""
-            .format(m.group(1)))
-
-    blob = archiver.load_json_from_archive(url)
-    if blob:
-        try:
-            entry = mf2util.interpret(blob, url)
-            if entry:
-                pub_date = entry.get('published')
-
-                content = entry.get('content', '')
-                content_plain = util.format_as_text(content)
-
-                if len(content_plain) < 512:
-                    pass
-                else:
-                    content = (
-                        jinja2.filters.do_truncate(content_plain, 512) +
-                        ' <a class="u-url" href="{}">continued</a>'
-                        .format(url))
-
-                title = entry.get('name', 'a post')
-                if len(title) > 256:
-                    title = jinja2.filters.do_truncate(title, 256)
-
-                author_name = entry.get('author', {}).get('name', '')
-                author_image = entry.get('author', {}).get('photo')
-                if author_image:
-                    author_image = util.mirror_image(author_image, 64)
-
-                permalink = entry.get('url')
-                if not permalink or not isinstance(permalink, str):
-                    permalink = url
-
-                return DContext(
-                    url=url,
-                    permalink=permalink,
-                    author_name=author_name,
-                    author_url=entry.get('author', {}).get('url', ''),
-                    author_image=author_image or url_for(
-                        'static', filename=AUTHOR_PLACEHOLDER),
-                    content=content,
-                    repost_preview=repost_preview,
-                    pub_date=pub_date,
-                    pub_date_iso=isotime_filter(pub_date),
-                    pub_date_human=human_time(pub_date),
-                    title=title,
-                    deleted=False,
-                )
-        except:
-            app.logger.exception('error interpreting %s', url)
-
-    return DContext(
-        url=url,
-        permalink=url,
-        author_name=None,
-        author_url=None,
-        author_image=None,
-        content=None,
-        repost_preview=repost_preview,
-        pub_date=None,
-        pub_date_iso=None,
-        pub_date_human=None,
-        title='a post',
-        deleted=False,
-    )
-
-
-def create_dmention(post, url):
-    prod_url = app.config.get('PROD_URL')
-    site_url = app.config.get('SITE_URL')
-    target_urls = []
-    if post:
-        base_target_urls = [
-            post.permalink,
-            post.permalink_without_slug,
-            post.short_permalink,
-        ] + post.previous_permalinks
-
-        for base_url in base_target_urls:
-            target_urls.append(base_url)
-            target_urls.append(base_url.replace('https://', 'http://')
-                               if base_url.startswith('https://')
-                               else base_url.replace('http://', 'https://'))
-            # use localhost url for testing if it's different from prod
-            if prod_url and prod_url != site_url:
-                target_urls.append(base_url.replace(site_url, prod_url))
-
-    try:
-        blob = archiver.load_json_from_archive(url)
-        if blob:
-            entry = mf2util.interpret_comment(blob, url, target_urls)
-            if entry:
-                comment_type = entry.get('comment_type')
-
-                content = entry.get('content', '')
-                content_plain = util.format_as_text(content)
-                content_words = jinja2.filters.do_wordcount(content_plain)
-
-                published = entry.get('published')
-                if not published:
-                    resp = archiver.load_response(url)
-                    published = resp and util.isoparse(resp.get('received'))
-
-                if not published:
-                    published = post.pub_date
-
-                author_name = entry.get('author', {}).get('name', '')
-                author_image = entry.get('author', {}).get('photo')
-                if author_image:
-                    author_image = util.mirror_image(author_image, 64)
-
-                return DMention(
-                    permalink=entry.get('url') or url,
-                    reftype=comment_type[0] if comment_type else 'reference',
-                    author_name=author_name,
-                    author_url=entry.get('author', {}).get('url', ''),
-                    author_image=author_image or url_for(
-                        'static', filename=AUTHOR_PLACEHOLDER),
-                    content=content,
-                    content_plain=content_plain,
-                    content_words=content_words,
-                    pub_date=published,
-                    pub_date_iso=isotime_filter(published),
-                    pub_date_human=human_time(published),
-                    title=entry.get('name'),
-                    deleted=False,
-                    syndication=entry.get('syndication', []),
-                    children=[]
-                )
-
-    except:
-        app.logger.exception('error interpreting {}', url)
-
-    return DMention(
-        permalink=url,
-        reftype='reference',
-        author_name=None,
-        author_url=None,
-        author_image=None,
-        content=None,
-        content_plain=None,
-        content_words=0,
-        pub_date=None,
-        pub_date_iso=None,
-        pub_date_human=None,
-        title=None,
-        deleted=False,
-        syndication=[],
-        children=[]
-    )
 
 
 def render_posts(title, post_types, page, per_page, tag=None,
@@ -419,8 +50,8 @@ def render_posts(title, post_types, page, per_page, tag=None,
     if not posts:
         abort(404)
 
-    dposts = [create_dpost(post) for post in posts if check_audience(post)]
-    return render_template('posts.html', posts=dposts, title=title,
+    posts = [post for post in posts if check_audience(post)]
+    return render_template('posts.html', posts=posts, title=title,
                            prev_page=None if is_first else page-1,
                            next_page=None if is_last else page+1,
                            body_class='h-feed', article_class='h-entry')
@@ -495,10 +126,10 @@ def render_posts_atom(title, feed_id, post_types, count):
     mdata = Metadata()
     posts, _, _ = mdata.load_posts(reverse=True, post_types=post_types,
                                    page=1, per_page=10)
-    dposts = [create_dpost(post) for post in posts if check_audience(post)]
+    posts = [post for post in posts if check_audience(post)]
     return make_response(
         render_template('posts.atom', title=title, feed_id=feed_id,
-                        posts=dposts),
+                        posts=posts),
         200, {'Content-Type': 'application/atom+xml; charset=utf-8'})
 
 
@@ -518,21 +149,21 @@ def articles_atom():
     return render_posts_atom('Articles', 'articles.atom', ('article',), 5)
 
 
-@app.route("/mentions.atom")
-def mentions_atom():
-    mdata = Metadata()
-    mentions = mdata.get_recent_mentions()
-    proxies = []
-    for mention in mentions:
-        post_path = mention.get('post')
-        post = Post.load(post_path) if post_path else None
-        mention_url = mention.get('mention')
-        proxies.append(create_dmention(post, mention_url))
-    return make_response(render_template('mentions.atom',
-                                         title='kylewm.com: Mentions',
-                                         feed_id='mentions.atom',
-                                         mentions=proxies), 200,
-                         {'Content-Type': 'application/atom+xml'})
+# @app.route("/mentions.atom")
+# def mentions_atom():
+#     mdata = Metadata()
+#     mentions = mdata.get_recent_mentions()
+#     proxies = []
+#     for mention in mentions:
+#         post_path = mention.get('post')
+#         post = Post.load(post_path) if post_path else None
+#         mention_url = mention.get('mention')
+#         proxies.append(create_dmention(post, mention_url))
+#     return make_response(render_template('mentions.atom',
+#                                          title='kylewm.com: Mentions',
+#                                          feed_id='mentions.atom',
+#                                          mentions=proxies), 200,
+#                          {'Content-Type': 'application/atom+xml'})
 
 
 @app.route('/archive', defaults={'year': None, 'month': None})
@@ -542,7 +173,7 @@ def archive(year, month):
     # and the list of all years/month
     posts = []
     if year and month:
-        posts = [create_dpost(post) for post
+        posts = [post for post
                  in Metadata().load_by_month(year, month)
                  if check_audience(post)]
 
@@ -637,30 +268,29 @@ def post_by_date(post_type, year, month, day, index, slug):
                     year=year, month=month, day=day, index=index,
                     slug=post.slug))
 
-    dpost = create_dpost(post)
-    title = dpost.title
+    title = post.title
     if not title:
         title = jinja2.filters.do_truncate(
-            util.format_as_text(dpost.content), 50)
+            util.format_as_text(post.content), 50)
     if not title:
-        title = "A {} from {}".format(dpost.post_type, dpost.pub_day)
+        title = "A {} from {}".format(post.post_type, post.published)
 
-    return render_template('post.html', post=dpost, title=title,
+    return render_template('post.html', post=post, title=title,
                            body_class='h-entry', article_class=None)
 
 
 @app.route('/short/<string(minlength=5,maxlength=6):tag>')
 def shortlink(tag):
     post_type = util.parse_type(tag)
-    pub_date = util.parse_date(tag)
+    published = util.parse_date(tag)
     index = util.parse_index(tag)
 
-    if not post_type or not pub_date or not index:
+    if not post_type or not published or not index:
         abort(404)
 
     return redirect(url_for('post_by_date', post_type=post_type,
-                            year=pub_date.year, month=pub_date.month,
-                            day=pub_date.day, index=index))
+                            year=published.year, month=published.month,
+                            day=published.day, index=index))
 
 
 # for testing -- allows arbitrary logins as any user
@@ -761,13 +391,12 @@ def get_top_tags(n=10):
 @app.route('/new', defaults={'type': 'note'})
 def new_post(type):
     post = Post(type)
-    post.pub_date = datetime.datetime.utcnow()
-    post.content = ''
+    post.published = datetime.datetime.utcnow()
+    post._content = ''
 
     if type == 'reply':
         in_reply_to = request.args.get('url')
         if in_reply_to:
-
             post.in_reply_to = [in_reply_to]
 
     if type == 'share':
@@ -785,14 +414,19 @@ def new_post(type):
         if bookmark_of:
             post.bookmark_of = [bookmark_of]
 
+    context_urls = itertools.chain(post.in_reply_to, post.repost_of,
+                                   post.like_of, post.bookmark_of)
+    post._contexts = {
+        url: contexts.create_context(post.path, url)
+        for url in context_urls
+    }
+
     content = request.args.get('content')
     if content:
-        post.content = content
+        post._content = content
 
-    fetch_contexts(post, sync=True)
     return render_template('edit_' + type + '.html', edit_type='new',
-                           post=post, dpost=create_dpost(post),
-                           top_tags=get_top_tags(20))
+                           post=post, top_tags=get_top_tags(20))
 
 
 @app.route('/edit')
@@ -805,8 +439,7 @@ def edit_by_id():
     if not request.args.get('advanced') and post.post_type:
         type = post.post_type
     return render_template('edit_' + type + '.html', edit_type='edit',
-                           post=post, dpost=create_dpost(post),
-                           top_tags=get_top_tags(20))
+                           post=post, top_tags=get_top_tags(20))
 
 
 @app.route('/uploads')
@@ -814,6 +447,7 @@ def uploads_popup():
     return render_template('uploads_popup.html')
 
 
+@app.template_filter('isotime')
 def isotime_filter(thedate):
     if not thedate:
         thedate = datetime.date(1982, 11, 24)
@@ -827,6 +461,7 @@ def isotime_filter(thedate):
     return thedate.isoformat()
 
 
+@app.template_filter('human_time')
 def human_time(thedate, alternate=None):
     if not thedate:
         return alternate
@@ -894,20 +529,21 @@ def domain_from_url(url):
     return urllib.parse.urlparse(url).netloc
 
 
+@app.template_filter('format_syndication_url')
 def format_syndication_url(url, include_rel=True):
     fmt = '<a class="u-syndication" '
     if include_rel:
         fmt += 'rel="syndication" '
     fmt += 'href="{}"><i class="fa {}"></i> {}</a>'
 
-    if TWITTER_RE.match(url):
-        return fmt.format(url, 'fa-twitter', 'Twitter')
-    if FACEBOOK_RE.match(url):
-        return fmt.format(url, 'fa-facebook', 'Facebook')
-    if INSTAGRAM_RE.match(url):
-        return fmt.format(url, 'fa-instagram', 'Instagram')
+    if util.TWITTER_RE.match(url):
+        return Markup(fmt.format(url, 'fa-twitter', 'Twitter'))
+    if util.FACEBOOK_RE.match(url):
+        return Markup(fmt.format(url, 'fa-facebook', 'Facebook'))
+    if util.INSTAGRAM_RE.match(url):
+        return Markup(fmt.format(url, 'fa-instagram', 'Instagram'))
 
-    return fmt.format(url, 'fa-paper-plane', domain_from_url(url))
+    return Markup(fmt.format(url, 'fa-paper-plane', domain_from_url(url)))
 
 
 @app.route('/save_edit', methods=['POST'])
@@ -939,7 +575,7 @@ def save_post(post):
         # populate the Post object and save it to the database,
         # redirect to the view
         post.title = request.form.get('title', '')
-        post.content = request.form.get('content')
+        post._content = request.form.get('content')
 
         post.draft = request.form.get('draft', 'false') == 'true'
         post.hidden = request.form.get('hidden', 'false') == 'true'
@@ -953,8 +589,8 @@ def save_post(post):
         else:
             post.location = None
 
-        if not post.pub_date:
-            post.pub_date = datetime.datetime.utcnow()
+        if not post.published:
+            post.published = datetime.datetime.utcnow()
         post.reserve_date_index()
 
         slug = request.form.get('slug')
@@ -1032,7 +668,7 @@ def save_post(post):
         app.logger.debug("saved post %s %s", post.shortid, post.permalink)
         redirect_url = post.permalink
 
-        fetch_contexts(post, sync=False)
+        contexts.fetch_contexts(post)
         hooks.fire('post-saved', post, request.form)
 
         return redirect(redirect_url)
@@ -1042,26 +678,6 @@ def save_post(post):
         flash('failed to save post {}'.format(e))
 
         return redirect(url_for('index'))
-
-
-def fetch_contexts(post, sync):
-    for url in itertools.chain(post.in_reply_to, post.repost_of,
-                               post.like_of, post.bookmark_of):
-        if sync:
-            do_fetch_context(url)
-        else:
-            do_fetch_context.delay(url)
-
-
-@queue.queueable
-def do_fetch_context(url):
-    try:
-        app.logger.debug("fetching url %s", url)
-        if any(hooks.fire('fetch-context', url)):
-            return
-        archiver.archive_url(url)
-    except Exception:
-        app.logger.exception("failure fetching contexts")
 
 
 @app.route('/addressbook', methods=['GET', 'POST'])

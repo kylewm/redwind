@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-{% with post = dpost %}
-  {% include "_contexts.html" %}
-{% endwith %}
+{% include "_contexts.html" %}
 
 <form id="edit_form" method="POST" action="/save_{{edit_type}}" enctype="multipart/form-data">
 

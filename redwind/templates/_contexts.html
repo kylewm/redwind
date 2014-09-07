@@ -18,7 +18,7 @@
   </div>
 {% endfor %}
 
-{% for context in post.share_contexts %}
+{% for context in post.repost_contexts %}
   <div class="p-repost-of h-cite">
     Shared
     <a class="u-url" href="{{context.permalink}}">
@@ -59,7 +59,7 @@
         <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" /></a>
       {% endif %}
       from {{context.permalink | domain_from_url}}
-    
+
       {% if context.content %}
         <blockquote>
           <div class="">{{context.content | safe}}</div>
