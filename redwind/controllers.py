@@ -546,6 +546,11 @@ def format_syndication_url(url, include_rel=True):
     return Markup(fmt.format(url, 'fa-paper-plane', domain_from_url(url)))
 
 
+@app.template_filter('mirror_image')
+def mirror_image(src, side=None):
+    return util.mirror_image(src, side)
+
+
 @app.route('/save_edit', methods=['POST'])
 @login_required
 def save_edit():

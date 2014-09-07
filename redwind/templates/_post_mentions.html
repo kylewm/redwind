@@ -6,7 +6,7 @@
       <div class="p-comment h-cite {{reply.reftype}}">
 
         <span class="p-author h-card microcard">
-        <img class="u-photo" src="{{reply.author_image}}", alt="{{reply.author_name}}" />
+        <img class="u-photo" src="{{reply.author_image | mirror_image(20) }}", alt="{{reply.author_name}}" />
 	  {% if reply.author_name and reply.author_url %}
             <a class="p-name u-url" href="{{ reply.author_url }}">
               {{ reply.author_name }}

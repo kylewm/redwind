@@ -3,7 +3,7 @@
     In reply to
     {% if context.author_name %}
       <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}
-        <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" />
+        <img class="avatar" src="{{context.author_image | mirror_image(64)}}" alt="{{context.author_name}}" />
       </a> in
     {% endif %}
     <a class="u-url" href="{{context.permalink}}">
@@ -26,7 +26,7 @@
     </a>
     {% if context.author_name %}
       by <a class="p-author h-card" href="{{context.author_url}}"> {{context.author_name}}
-      <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" />
+      <img class="avatar" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
     </a>
   {% endif %}
   from {{context.permalink | domain_from_url}}
@@ -56,7 +56,7 @@
       </a>
       {% if context.author_name %}
         by <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}
-        <img class="avatar" src="{{context.author_image}}" alt="{{context.author_name}}" /></a>
+        <img class="avatar" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" /></a>
       {% endif %}
       from {{context.permalink | domain_from_url}}
 
