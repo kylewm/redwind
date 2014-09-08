@@ -295,7 +295,7 @@ class Post:
             'hidden': self.hidden,
             'audience': self.audience,
             'mentions': self.mention_urls,
-            'photos': [p.to_json_blob for p in self.photos],
+            'photos': [p.to_json() for p in self.photos],
             'redirect': self.redirect,
             'previous_permalinks': self.previous_permalinks,
         })

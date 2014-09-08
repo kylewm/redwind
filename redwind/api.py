@@ -2,7 +2,8 @@ from . import app
 from . import auth
 from . import util
 from . import hooks
-from .models import Post, Location, Metadata
+from . import contexts
+from .models import Post, Location, Metadata, Photo
 
 from flask import request, jsonify, abort, make_response
 from werkzeug import secure_filename
@@ -166,7 +167,7 @@ def micropub_endpoint():
     post._writeable = True
 
     post.title = request.form.get('name')
-    post.content = request.form.get('content')
+    post._content = request.form.get('content')
 
     if in_reply_to:
         post.in_reply_to.append(in_reply_to)
@@ -208,10 +209,8 @@ def micropub_endpoint():
         if not os.path.exists(os.path.dirname(fullpath)):
             os.makedirs(os.path.dirname(fullpath))
         photo_file.save(fullpath)
-        post.photos = [{
-            'filename': os.path.basename(relpath),
-            #'caption': No caption for now
-        }]
+        # no caption for now
+        post.photos = [Photo(post, filename=os.path.basename(relpath))]
 
     slug = request.form.get('slug')
     if slug:
@@ -228,7 +227,7 @@ def micropub_endpoint():
         mdata.add_or_update_post(post)
         mdata.save()
 
-    controllers.fetch_contexts(post, sync=False)
+    contexts.fetch_contexts(post)
     hooks.fire('post-saved', post, {})
     return make_response('Created: ' + post.permalink, 201, {'Location': post.permalink})
 

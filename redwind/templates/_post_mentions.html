@@ -4,9 +4,20 @@
 
     {% for reply in post.mentions %}
       <div class="p-comment h-cite {{reply.reftype}}">
-
+        {% if reply.reftype == 'reply' %}
+          <i class="fa fa-comment-o"></i>
+        {% elif reply.reftype == 'like' %}
+          <i class="fa fa-star-o"></i>
+        {% elif reply.reftype == 'repost' %}
+          <i class="fa fa-retweet"></i>
+        {% elif reply.reftype == 'reference' %}
+          <i class="fa fa-ellipsis-h"></i>
+        {% endif %}
+        
         <span class="p-author h-card microcard">
-        <img class="u-photo" src="{{reply.author_image | mirror_image(20) }}", alt="{{reply.author_name}}" />
+          {% if reply.author_image %}
+            <img class="u-photo" src="{{reply.author_image | mirror_image(20) }}" alt="{{reply.author_name}}" />
+          {% endif %}
 	  {% if reply.author_name and reply.author_url %}
             <a class="p-name u-url" href="{{ reply.author_url }}">
               {{ reply.author_name }}
