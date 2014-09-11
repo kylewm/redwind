@@ -474,9 +474,9 @@ define(function(require) {
                 var newLink = first('a', action);
                 if (!newLink) {
                     newLink = document.createElement('a');
-                    newLink.textContent = d;
                     action.appendChild(newLink);
                 }
+                newLink.textContent = 'indie-' + d;
                 newLink.href = (indieConfig[d]).replace('{url}', w);
             }
         });
