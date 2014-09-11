@@ -1,52 +1,56 @@
-requirejs.config({
-    baseUrl: '/static/js',
-    paths: {
-        "leaflet": "//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet",
-    }
-});
+(function(){
 
-define(function(require) {
+    var leafletJs = '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js';
+    var leafletCss = '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css';
 
-    // DOM convenience functions, also from Barnaby Walters
-    var first = function (selector, context) { return (context || document).querySelector(selector); };
-    var all = function (selector, context) { return (context || document).querySelectorAll(selector); };
-    var each = function (els, callback) { return Array.prototype.forEach.call(els, callback); };
-    var map = function (els, callback) { return Array.prototype.map.call(els, callback); };
+    // DOM convenience functions, from Barnaby Walters (waterpigs.co.uk)
+    var first = function(selector, context) { return (context || document).querySelector(selector); };
+    var all = function(selector, context) { return (context || document).querySelectorAll(selector); };
+    var each = function(els, callback) { return Array.prototype.forEach.call(els, callback); };
+    var map = function(els, callback) { return Array.prototype.map.call(els, callback); };
 
-    // Credit http://waterpigs.co.uk/notes/4WZHhH/
-    var enhanceEach = function (selector, dependencies, callback) {
-        var elements = all(selector);
-        if (elements.length > 0) {
-            require(dependencies, function () {
-                var args = Array.prototype.slice.call(arguments);
-                each(elements, function (element) {
-                    var innerArgs = args.slice();
-                    innerArgs.unshift(element);
-                    callback.apply(callback, innerArgs);
-                });
-            });
-        }
+    var loadJsFile = function(url, cb) {
+        var scriptTag = document.createElement('script');
+        scriptTag.type = 'text/javascript';
+        scriptTag.src = url;
+        scriptTag.onload = cb;
+        first('head').appendChild(scriptTag);
     };
 
-    var Location = {
+    var loadCssFile = function(url, cb) {
+        var linkTag = document.createElement('link');
+        linkTag.rel = 'stylesheet';
+        linkTag.type = 'text/css'
+        linkTag.href = url;
+        linkTag.onload = cb;
+        first('head').appendChild(linkTag);
+    };
 
-        init: function() {
-            this.setupAllMaps();
-        },
+    var loadLeaflet = function(cb) {
+        var complete = {};
+        loadJsFile(leafletJs, function() {complete.js = true; if (complete.css) { cb(); }});
+        loadCssFile(leafletCss, function() {complete.css = true; if (complete.js) { cb(); }});
+    };
 
-        setupAllMaps: function() {
-            var self = this;
-            enhanceEach('.map', ['leaflet', 'leaflet-css'], function(map) {
-                var lat = map.dataset.latitude;
-                var lon = map.dataset.longitude;
-                var loc = map.dataset.location;
-                if (lat && lon) {
-                    self.setupMap(map, lat, lon, loc);
-                }
-            });
-        },
+    var Location = (function() {
 
-        setupMap: function(element, lat, lon, loc) {
+        var setupAllMaps = function() {
+            var maps = all('.map');
+            if (maps.length > 0) {
+                loadLeaflet(function() {
+                    each(maps,  function(map) {
+                        var lat = map.dataset.latitude;
+                        var lon = map.dataset.longitude;
+                        var loc = map.dataset.location;
+                        if (lat && lon) {
+                            setupMap(map, lat, lon, loc);
+                        }
+                    });
+                });
+            }
+        };
+
+        var setupMap = function(element, lat, lon, loc) {
             var tileset = L.tileLayer(
                 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
                     attribution: 'Tiles &copy; Esri'
@@ -59,87 +63,37 @@ define(function(require) {
             });
 
             L.marker([lat, lon], {'title': loc}).addTo(map);
-        },
-    };
+        };
 
-    var Posts = {
+        setupAllMaps();
+        return {setupMap: setupMap};
+    }());
 
-        postTypes: [ 'note', 'checkin', 'reply', 'share', 'like', 'photo', 'bookmark'],
-
-        init: function() {
-            var self = this;
-
-            each(all('article'), function(article) {
-                var controls = first('.admin-post-controls', article),
-                arrow = first('.admin-post-controls-arrow', article);
-
-                if (arrow && controls) {
-                    arrow.addEventListener('click', function (event) {
-                        event.preventDefault();
-                        self.showPostControls(arrow, controls);
-                    });
-                }
-            });
-        },
-
-        showPostControls: function(arrow, controls) {
+    var Posts = (function(){
+        var showPostControls = function(arrow, controls) {
             controls.style['display'] = 'inline';
             arrow.style['display'] = 'none';
-        },
-    };
+        };
 
-    var Editor = {
+        each(all('article'), function(article) {
+            var controls = first('.admin-post-controls', article),
+            arrow = first('.admin-post-controls-arrow', article);
 
-        init: function() {
-            this.setupCheckinMap()
-
-            var self = this;
-            each(all('#edit_form a.top_tag'), function(tagBtn) {
-                tagBtn.addEventListener('click', function(event) {
+            if (arrow && controls) {
+                arrow.addEventListener('click', function (event) {
                     event.preventDefault();
-                    var tagField = first('#edit_form #tags');
-                    tagField.value = (tagField.value ? tagField.value + ',' : '') + tagBtn.textContent;
-                });
-
-            });
-
-            var coordsBtn = first('#get_coords_button')
-            if (coordsBtn) {
-                coordsBtn.addEventListener('change', function(event) {
-                    if (coordsBtn.checked) {
-                        self.getCoords();
-                    }
+                    showPostControls(arrow, controls);
                 });
             }
+        });
 
-            var attachExpandListener = function(handle, textarea) {
-                if (handle && textarea) {
-                    handle.addEventListener('click', function(event) {
-                        self.expandArea(handle, textarea);
-                    });
-                    self.expandArea(handle, textarea);
-                }
-            };
+        return {};
+    }());
 
-            attachExpandListener(
-                first('#edit_form #syndication_expander'),
-                first('#edit_form #syndication_textarea'));
+    var Editor = (function(){
 
-            attachExpandListener(
-                first('#edit_form #audience_expander'),
-                first('#edit_form #audience_textarea'));
-
-            var uploadBtn = first('#edit_form #image_upload_button');
-            if (uploadBtn) {
-                uploadBtn.addEventListener('change', function() {
-                    self.handleUploadButton(this);
-                });
-            }
-        },
-
-        handleUploadButton: function(button) {
+        var handleUploadButton = function(button) {
             var uploadsList = first('#uploads');
-            var self = this;
 
             while (uploadsList.firstChild) {
                 uploadsList.removeChild(uploadsList.firstChild);
@@ -161,38 +115,38 @@ define(function(require) {
                     uploadsList.appendChild(li);
 
                     link.addEventListener('click', function() {
-                        self.addImageLink(file);
+                        addImageLink(file);
                     });
                 };
                 reader.readAsDataURL(file);
             });
-        },
+        };
 
-        expandArea: function(handle, textarea) {
+        var expandArea = function(handle, textarea) {
             var closed = textarea.style.display == 'none';
             textarea.style.display = closed ? 'inherit' : 'none';
 
             handle.classList.toggle('fa-plus-square-o', !closed);
             handle.classList.toggle('fa-minus-square-o', closed);
-        },
+        };
 
-        getCoords: function(element) {
+        var getCoords = function(element) {
             var latField = first('#latitude');
             var lonField = first('#longitude');
             navigator.geolocation.getCurrentPosition(function(position) {
                 latField.value = position.coords.latitude;
                 lonField.value = position.coords.longitude;
             });
-        },
+        };
 
-        setupCheckinMap: function(element) {
+        var setupCheckinMap = function(element) {
             var checkinMap = first('#checkin-map');
             var latField = first('#latitude');
             var lonField = first('#longitude');
 
             if (latField && lonField && checkinMap) {
                 checkinMap.textContent = 'loading...';
-                require(['leaflet'], function() {
+                loadLeaflet(function() {
                     navigator.geolocation.getCurrentPosition(function(position) {
                         var lat = position.coords.latitude;
                         var lon = position.coords.longitude;
@@ -200,28 +154,67 @@ define(function(require) {
                         lonField.value = lon;
                         Location.setupMap(checkinMap, lat, lon, 'new location');
                     });
-                })
+                });
             }
-        },
+        };
 
-        addImageLink: function(file) {
+        var addImageLink = function(file) {
             var filename = file.name.replace(' ', '_');
             var contentField = first('#content');
             contentField.value =
                 contentField.value  + '\n![' + filename + '](' + filename + ')';
-        },
-    };
+        };
 
-    var AddressBook = {
+            setupCheckinMap()
 
-        init: function() {
-            var self = this;
-            each(all('#addressbook_form #fetch'), function(fetchButton) {
-                fetchButton.addEventListener('click', self.fetchProfile);
+            each(all('#edit_form a.top_tag'), function(tagBtn) {
+                tagBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var tagField = first('#edit_form #tags');
+                    tagField.value = (tagField.value ? tagField.value + ',' : '') + tagBtn.textContent;
+                });
+
             });
-        },
 
-        fetchProfile: function() {
+            var coordsBtn = first('#get_coords_button')
+            if (coordsBtn) {
+                coordsBtn.addEventListener('change', function(event) {
+                    if (coordsBtn.checked) {
+                        getCoords();
+                    }
+                });
+            }
+
+            var attachExpandListener = function(handle, textarea) {
+                if (handle && textarea) {
+                    handle.addEventListener('click', function(event) {
+                        expandArea(handle, textarea);
+                    });
+                    expandArea(handle, textarea);
+                }
+            };
+
+            attachExpandListener(
+                first('#edit_form #syndication_expander'),
+                first('#edit_form #syndication_textarea'));
+
+            attachExpandListener(
+                first('#edit_form #audience_expander'),
+                first('#edit_form #audience_textarea'));
+
+            var uploadBtn = first('#edit_form #image_upload_button');
+            if (uploadBtn) {
+                uploadBtn.addEventListener('change', function() {
+                    handleUploadButton(this);
+                });
+            }
+
+
+        return {};
+    }());
+
+    var AddressBook = (function(){
+        var fetchProfile = function() {
             var url = first('#url');
             require(['http'], function(http) {
                 var xhr = http.open('GET', '/api/fetch_profile?url=' + encodeURIComponent(url.value));
@@ -234,28 +227,22 @@ define(function(require) {
                     });
                 });
             });
-        },
+        };
 
-    };
+        each(all('#addressbook_form #fetch'), function(fetchButton) {
+            fetchButton.addEventListener('click', fetchProfile);
+        });
 
-    var Twitter = {
-        shortUrlLength: 22,
-        shortUrlLengthHttps: 23,
-        mediaUrlLength: 23,
+        return {};
+    }());
 
-        init: function() {
-            var previewField = first('#preview');
-            if (previewField) {
-                previewField.addEventListener('input', this.fillCharCount.bind(this));
-            }
-            each(all('#permalink, #permashortlink, #permashortcite'), function(el) {
-                el.addEventListener('click', function() { this.select(); });
-            });
-            this.fillCharCount();
-        },
+    var Twitter = (function() {
+        var shortUrlLength = 22;
+        var shortUrlLengthHttps = 23;
+        var mediaUrlLength = 23;
 
         /* splits a text string into text and urls */
-        classifyText: function classifyText(text) {
+        var classifyText = function classifyText(text) {
             var result = [];
 
             var match;
@@ -276,14 +263,13 @@ define(function(require) {
             }
 
             return result;
-        },
+        };
 
-        estimateLength: function estimateLength(classified) {
-            var self = this;
+        var estimateLength = function(classified) {
             return classified.map(function(item){
                 if (item.type == 'url') {
                     var urlLength = item.value.startsWith('https') ?
-                        self.shortUrlLengthHttps : self.shortUrlLength;
+                        shortUrlLengthHttps : shortUrlLength;
                     if (item.hasOwnProperty('prefix')) {
                         urlLength += item.prefix.length;
                     }
@@ -294,9 +280,9 @@ define(function(require) {
                 }
                 return item.value.length;
             }).reduce(function(a, b){ return a + b; }, 0);
-        },
+        };
 
-        shorten: function shorten(classified, target) {
+        var shorten = function shorten(classified, target) {
             for (;;) {
                 var length = estimateLength(classified);
                 if (length <= target) {
@@ -332,9 +318,9 @@ define(function(require) {
                     }
                 }
             }
-        },
+        };
 
-        classifiedToString: function classifiedToString(classified) {
+        var classifiedToString = function classifiedToString(classified) {
             return classified.map(function(item) {
                 var result = '';
                 if (item != null) {
@@ -350,9 +336,9 @@ define(function(require) {
                 }
                 return result;
             }).join('');
-        },
+        };
 
-        generateTweetPreview: function generateTweetPreview() {
+        var generateTweetPreview = function generateTweetPreview() {
 
             var addShortPermalink = function(classified) {
                 classified.push({
@@ -384,37 +370,48 @@ define(function(require) {
                 useShortPermalink = true;
             }
 
-            var classified = this.classifyText(fullText);
+            var classified = classifyText(fullText);
 
             if (useShortPermalink) {
-                this.addShortPermalink(classified);
+                addShortPermalink(classified);
             } else {
-                this.addPermalink(classified);
+                addPermalink(classified);
             }
 
-            if (this.estimateLength(classified) > target) {
+            if (estimateLength(classified) > target) {
                 if (useShortPermalink) {
                     // replace the shortlink with a full one
                     classified.pop();
-                    this.addPermalink(classified);
+                    addPermalink(classified);
                 }
-                this.shorten(classified, target);
+                shorten(classified, target);
             }
 
-            var shortened = this.classifiedToString(classified);
+            var shortened = classifiedToString(classified);
             first('#preview').value = shortened;
-            this.fillCharCount();
-        },
+            fillCharCount();
+        };
 
-        fillCharCount: function fillCharCount() {
+        var fillCharCount = function fillCharCount() {
             var preview = first('#preview');
             if (preview) {
-                var classified = this.classifyText(preview.value);
-                var length = this.estimateLength(classified);
+                var classified = classifyText(preview.value);
+                var length = estimateLength(classified);
                 first('#char_count').textContent = length;
             }
+        };
+
+        var previewField = first('#preview');
+        if (previewField) {
+            previewField.addEventListener('input', fillCharCount);
         }
-    };
+        each(all('#permalink, #permashortlink, #permashortcite'), function(el) {
+            el.addEventListener('click', function() { select(); });
+        });
+        fillCharCount();
+
+        return {}
+    }());
 
     // Lazy-create and return an indie-config load promise
     // The promise will be resolved with a config once the indie-config has been loaded
@@ -482,11 +479,4 @@ define(function(require) {
         });
     });*/
 
-
-    Location.init();
-    Posts.init()
-    Editor.init();
-    AddressBook.init()
-    Twitter.init();
-
-});
+}());
