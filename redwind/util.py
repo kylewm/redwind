@@ -21,7 +21,7 @@ YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
 INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 
 PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
-RELATIVE_PATH_RE = re.compile('(?<!\\\)!\[([^\]]*)\]\(([^/)]+)\)')
+RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
 
 
 def isoparse(s):
@@ -325,7 +325,7 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
                     person_processor=person_to_microcard):
     if img_path:
         # replace relative paths to images with absolute
-        data = RELATIVE_PATH_RE.sub('![\g<1>](' + img_path + '/\g<2>)', data)
+        data = RELATIVE_PATH_RE.sub('[\g<1>](' + img_path + '/\g<2>)', data)
 
     if person_processor:
         data = process_people(data, person_processor)

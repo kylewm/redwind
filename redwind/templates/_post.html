@@ -82,7 +82,7 @@
       </div>
     {% endif %}
 
-    {% if is_single and post.tags %}
+    {% if post.tags %}
       <div class="tags">
         Tags
         {% for tag in post.tags %}
@@ -91,29 +91,26 @@
       </div>
     {% endif %}
 
-    {% if is_single %}
       <div class="syndication-links">
         {% if post.syndication %}
           Also on
           {% for s in post.syndication %}
             {{ s | format_syndication_url }}
-          {% endfor %}
-          {% if post.reply_url or post.retweet_url or post.favorite_url %} | {% endif %}
+          {% endfor %} |
         {% endif %}
 
         <span class="webactions">
-          <action do="reply" with="{{post.permalink}}">
+          <indie-action do="reply" with="{{post.permalink}}">
             {% if post.reply_url %}<a href="{{post.reply_url}}">Reply</a>{% endif %}
-          </action>
-          <action do="repost" with="{{post.permalink}}">
+          </indie-action>
+          <indie-action do="repost" with="{{post.permalink}}">
             {% if post.retweet_url %}<a href="{{post.retweet_url}}">Retweet</a>{% endif %}
-          </action>
-          <action do="favorite" with="{{post.permalink}}">
+          </indie-action>
+          <indie-action do="favorite" with="{{post.permalink}}">
             {% if post.favorite_url %}<a href="{{post.favorite_url}}">Favorite</a>{% endif %}
-          </action>
+          </indie-action>
         </span>
       </div>
-    {% endif %}
 
   </div> <!-- .post-metadata -->
   {% include "_post_mentions.html" %}

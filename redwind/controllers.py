@@ -6,7 +6,7 @@ from . import util
 from . import contexts
 
 from .models import Post, Location, Metadata, AddressBook, Mention,\
-    Context, POST_TYPES
+    Context, Photo, POST_TYPES
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
@@ -637,10 +637,9 @@ def save_post(post):
                 os.makedirs(os.path.dirname(fullpath))
             inphoto.save(fullpath)
             caption = request.form.get('caption')
-            post.photos = [{
-                'filename': os.path.basename(relpath),
-                'caption': caption,
-            }]
+            post.photos = [Photo(post, 
+                                 filename=os.path.basename(relpath),
+                                 caption=caption)]
 
         file_to_url = {}
         infiles = request.files.getlist('files')

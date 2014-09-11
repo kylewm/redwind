@@ -463,7 +463,7 @@ class Post:
         return [m for m in self.mentions if m.reftype == 'reply']
 
     @property
-    def reference(self):
+    def references(self):
         return [m for m in self.mentions if m.reftype == 'reference']
 
     @property
