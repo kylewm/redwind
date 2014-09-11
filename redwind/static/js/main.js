@@ -416,6 +416,73 @@ define(function(require) {
         }
     };
 
+    // Lazy-create and return an indie-config load promise
+    // The promise will be resolved with a config once the indie-config has been loaded
+    var loadIndieConfig = function () {
+
+        // Create the Promise to return
+        var loadPromise = new Promise(function (resolve) {
+
+            // Parse the incoming messages
+            var parseIndieConfig = function (message) {
+
+                // Check if the message comes from the indieConfigFrame we added (or from some other frame)
+                if (message.source !== indieConfigFrame.contentWindow) {
+                    return;
+                }
+
+                var indieConfig;
+
+                // Try to parse the config, it can be malformed
+                try {
+                    indieConfig = JSON.parse(message.data);
+                } catch (e) {}
+
+                // We're done – remove the frame and event listener
+                window.removeEventListener('message', parseIndieConfig);
+                indieConfigFrame.parentNode.removeChild(indieConfigFrame);
+                indieConfigFrame = undefined;
+
+                // And resolve the promise with the loaded indie-config
+                resolve(indieConfig);
+            };
+
+            // Listen for messages from the added iframe and parse those messages
+            window.addEventListener('message', parseIndieConfig);
+
+            // Create a hidden iframe pointing to something using the web+action: protocol
+            var indieConfigFrame = document.createElement('iframe');
+            indieConfigFrame.src = 'web+action:load';
+            document.getElementsByTagName('body')[0].appendChild(indieConfigFrame);
+            indieConfigFrame.style.display = 'none';
+        });
+
+        // Ensure that subsequent invocations return the same promise
+        loadIndieConfig = function () {
+            return loadPromise;
+        };
+
+        return loadPromise;
+    };
+
+    loadIndieConfig().then(function(indieConfig) {
+        each(all('indie-action,action'), function (action) {
+            var d = action.getAttribute('do');
+            var w = action.getAttribute('with');
+            if (d && w && indieConfig[d]) {
+
+                var newLink = first('a', action);
+                if (!newLink) {
+                    newLink = document.createElement('a');
+                    newLink.textContent = d;
+                    action.appendChild(newLink);
+                }
+                newLink.href = (indieConfig[d]).replace('{url}', w);
+            }
+        });
+    });
+
+
     Location.init();
     Posts.init()
     Editor.init();
