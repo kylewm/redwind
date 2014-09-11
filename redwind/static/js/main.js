@@ -418,7 +418,7 @@ define(function(require) {
 
     // Lazy-create and return an indie-config load promise
     // The promise will be resolved with a config once the indie-config has been loaded
-    var loadIndieConfig = function () {
+    /*var loadIndieConfig = function () {
 
         // Create the Promise to return
         var loadPromise = new Promise(function (resolve) {
@@ -480,7 +480,7 @@ define(function(require) {
                 newLink.href = (indieConfig[d]).replace('{url}', w);
             }
         });
-    });
+    });*/
 
 
     Location.init();
