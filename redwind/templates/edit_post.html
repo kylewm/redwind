@@ -8,7 +8,11 @@
   <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
+  <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
+  <ul id="uploads"></ul>
+  
   {% block above_content %}{% endblock above_content %}
+  
   {% block content_fields %}
     <label>Content</label>
     <textarea name="content" id="content" rows="3">{{ post.content }}</textarea>

@@ -60,12 +60,27 @@ article img { max-width: 100%; max-height: 512px; }
 .sidebar .social { text-align: right; }
 .sidebar .widget { margin-top: 20px; }
 
-/*.note > .e-content, .reply > .e-content,
-.photo > .e-content, .share > .e-content {font-size: 1.5em;
-                                          line-height: 1.4em; }*/
-.post-metadata { color: #aaa; }
-.post-metadata a { color: #999; text-decoration: none; }
-.post-metadata a:hover { color: #999; text-decoration: underline; }
+/*.note > .e-content, .reply > .e-content, .photo > .e-content {
+   font-size: 1.5em; line-height: 1.4em;
+}
+*/
+
+
+.post-metadata, .mention-metadata { 
+    color: #aaa; 
+}
+.post-metadata a, .mention-metadata a { 
+    color: #999; 
+    text-decoration: none; 
+}
+.post-metadata a:hover, .mention-metadata a:hover { 
+    color: #999;
+    text-decoration: underline; 
+}
+.post-metadata { 
+    margin-top: 0.5rem; 
+}
+
 .p-comment + .p-comment { margin-top: 1rem; }
 article + article { margin-top: 90px; }
 .e-content p:last-child { margin-bottom: 0; }

@@ -311,7 +311,7 @@ def person_to_microcard(fullname, displayname, entry, pos):
     url = entry.get('url')
     photo = entry.get('photo')
     if url and photo:
-        photo_url = mirror_image(photo, 20)
+        photo_url = mirror_image(photo, 26)
         return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
             url, photo_url, displayname)
     elif url:

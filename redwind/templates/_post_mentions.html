@@ -63,7 +63,7 @@
 
         {% endif %}
 
-        <div class="post-metadata">
+        <div class="mention-metadata">
           {% if reply.reftype == 'reply' %}
           <time class="dt-published" datetime="{{reply.pub_date_iso }}">
 	    <a class="u-url" href="{{ reply.permalink }}">
@@ -79,7 +79,7 @@
           {% endif %}
 
 
-        </div> <!-- .post-metadata -->
+        </div> <!-- .mention-metadata -->
 
       </div> <!-- .p-comment -->
     {% endfor %}

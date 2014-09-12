@@ -21,13 +21,17 @@
       {% endif %}
   </div>
 
-  {% include "_contexts.html" %}
+  {% include "_reply_contexts.html" %}
+  {% include "_like_contexts.html" %}
+  {% include "_bookmark_contexts.html" %}
 
   {% if post.title %}
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
 
   <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
+    {% include "_repost_contexts.html" %}
+
     {{post.content_html | safe}}
 
     {% for photo in post.photos %}
