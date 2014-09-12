@@ -1,4 +1,5 @@
 from . import app
+from . import db
 from . import util
 from . import archiver
 
@@ -49,7 +50,56 @@ def acquire_lock(path, retries):
         os.remove(lockfile)
 
 
-class User:
+class JsonType(db.TypeDecorator):
+    """Represents an immutable structure as a json-encoded string.
+    http://docs.sqlalchemy.org/en/rel_0_9/core/types.html#marshal-json-strings
+    """
+    impl = db.Text
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = json.dumps(value)
+
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = json.loads(value)
+        return value
+
+
+posts_to_mentions = db.Table(
+    'posts_to_mentions', db.Model.metadata,
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
+    db.Column('mention_id', db.Integer, db.ForeignKey('mention.id')))
+
+posts_to_reply_contexts = db.Table(
+    'posts_to_reply_contexts', db.Model.metadata,
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+
+posts_to_repost_contexts = db.Table(
+    'posts_to_repost_contexts', db.Model.metadata,
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+
+posts_to_like_contexts = db.Table(
+    'posts_to_like_contexts', db.Model.metadata,
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+
+posts_to_bookmark_contexts = db.Table(
+    'posts_to_bookmark_contexts', db.Model.metadata,
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    domain = db.Column(db.String(120), unique=True)
+    twitter_oauth_token = db.Column(db.String(512))
+    twitter_oauth_token_secret = db.Column(db.String(512))
+    facebook_access_token = db.Column(db.String(512))
 
     @classmethod
     def load(cls, path):
@@ -107,7 +157,13 @@ class User:
         return '<User:{}>'.format(self.domain)
 
 
-class Photo:
+class Photo(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(256))
+    caption = db.Column(db.Text)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
     @classmethod
     def from_json(cls, post, data):
         return cls(post, **data)
@@ -121,11 +177,34 @@ class Photo:
     def __init__(self, post, **kwargs):
         self.filename = kwargs.get('filename')
         self.caption = kwargs.get('caption')
-        self.url = os.path.join(post.get_image_path(), self.filename)
-        self.thumbnail = self.url + '?size=medium'
+        self.post = post
+
+    @property
+    def url(self):
+        return os.path.join(self.post.get_image_path(), self.filename)
+
+    @property
+    def thumbnail(self):
+        return self.url + '?size=medium'
 
 
-class Location:
+class Location(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    name = db.Column(db.String(256))
+    street_address = db.Column(db.String(256))
+    extended_address = db.Column(db.String(256))
+    locality = db.Column(db.String(128))
+    region = db.Column(db.String(128))
+    country_name = db.Column(db.String(128))
+    postal_code = db.Column(db.String(32))
+    country_code = db.Column(db.String(8))
+
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+
+
     @classmethod
     def from_json(cls, data):
         return cls(**data)
@@ -176,7 +255,49 @@ class Location:
             return "Unknown Location"
 
 
-class Post:
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    _path = db.Column('path', db.String(256))
+    post_type = db.Column(db.String(64))
+    date_index = db.Column(db.String(4))
+    draft = db.Column(db.Boolean)
+    deleted = db.Column(db.Boolean)
+    hidden = db.Column(db.Boolean)
+    redirect = db.Column(db.String(256))
+
+    in_reply_to = db.Column(JsonType)
+    repost_of = db.Column(JsonType)
+    like_of = db.Column(JsonType)
+    bookmark_of = db.Column(JsonType)
+
+    reply_contexts = db.relationship(
+        'Context', secondary=posts_to_reply_contexts)
+    like_contexts = db.relationship(
+        'Context', secondary=posts_to_like_contexts)
+    repost_contexts = db.relationship(
+        'Context', secondary=posts_to_repost_contexts)
+    bookmark_contexts = db.relationship(
+        'Context', secondary=posts_to_bookmark_contexts)
+
+    title = db.Column(db.String(256))
+    published = db.Column(db.DateTime)
+    slug = db.Column(db.String(256))
+
+    syndication = db.Column(JsonType)
+
+    location = db.relationship('Location', uselist=False, backref='post')
+    photos = db.relationship('Photo', backref='post')
+
+    # TODO create Tag table
+    tags = db.Column(JsonType)
+    audience = db.Column(JsonType)
+
+    mentions = db.relationship(
+        'Mention', secondary=posts_to_mentions, backref='posts')
+
+    content = db.Column(db.Text)
+    content_html = db.Column(db.Text)
+
     @classmethod
     @contextmanager
     def writeable(cls, path):
@@ -384,8 +505,7 @@ class Post:
                                   self.date_index)
         return cite
 
-    @property
-    def content(self):
+    def get_content(self):
         if self._content is None:
             self._content = ''
             content_path = os.path.join(get_fs_path(self.path), 'content.md')
@@ -394,8 +514,7 @@ class Post:
                     self._content = fp.read()
         return self._content
 
-    @property
-    def content_html(self):
+    def get_content_html(self):
         if self._content_html is None:
             self._content_html = ''
             md_path = os.path.join(get_fs_path(self.path), 'content.md')
@@ -411,22 +530,20 @@ class Post:
                         f.write(self._content_html)
         return self._content_html
 
-    @property
-    def mentions(self):
+    def get_mentions(self):
         if self._mentions is None:
             self._mentions = Mention.load_all(self.path)
             self._mentions.sort(key=attrgetter('published'))
         return self._mentions
 
-    @property
-    def contexts(self):
+    def get_contexts(self):
         if self._contexts is None:
             cs = Context.load_all(self.path)
             self._contexts = {c.url: c for c in cs}
         return self._contexts
 
     def _url_to_context(self, url):
-        context = self.contexts.get(url)
+        context = self.get_contexts().get(url)
         if context:
             return context
         else:
@@ -434,21 +551,17 @@ class Post:
             context.url = context.permalink = url
             return context
 
-    @property
-    def reply_contexts(self):
-        return (self._url_to_context(url) for url in self.in_reply_to)
+    def get_reply_contexts(self):
+        return [self._url_to_context(url) for url in self.in_reply_to]
 
-    @property
-    def repost_contexts(self):
-        return (self._url_to_context(url) for url in self.repost_of)
+    def get_repost_contexts(self):
+        return [self._url_to_context(url) for url in self.repost_of]
 
-    @property
-    def like_contexts(self):
-        return (self._url_to_context(url) for url in self.like_of)
+    def get_like_contexts(self):
+        return [self._url_to_context(url) for url in self.like_of]
 
-    @property
-    def bookmark_contexts(self):
-        return (self._url_to_context(url) for url in self.bookmark_of)
+    def get_bookmark_contexts(self):
+        return [self._url_to_context(url) for url in self.bookmark_of]
 
     @property
     def likes(self):
@@ -505,7 +618,19 @@ class Post:
                 self.content[:140] if self.content else 'BLANK')
 
 
-class ForeignPost:
+class Context(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(512))
+    permalink = db.Column(db.String(512))
+    author_name = db.Column(db.String(128))
+    author_url = db.Column(db.String(512))
+    author_image = db.Column(db.String(512))
+    content = db.Column(db.Text)
+    content_plain = db.Column(db.Text)
+    published = db.Column(db.DateTime)
+    title = db.Column(db.String(512))
+    syndication = db.Column(JsonType)
+
     def __init__(self, post_path):
         self.index = None
         self.post_path = post_path
@@ -518,6 +643,7 @@ class ForeignPost:
         self.content_plain = None
         self.published = None
         self.title = None
+        self.syndication = []
 
     def to_json_blob(self):
         return util.filter_empty_keys({
@@ -530,6 +656,7 @@ class ForeignPost:
             'content_plain': self.content_plain,
             'published': util.isoformat(self.published),
             'title': self.title,
+            'syndication': self.syndication,
         })
 
     def read_json_blob(self, blob):
@@ -542,6 +669,7 @@ class ForeignPost:
         self.content_plain = blob.get('content_plain')
         self.published = util.isoparse(blob.get('published'))
         self.title = blob.get('title')
+        self.syndication = blob.get('syndication', {})
 
     @property
     def path(self):
@@ -595,40 +723,124 @@ class ForeignPost:
                 result.append(foreign)
         return result
 
-
-class Context(ForeignPost):
-    def __init__(self, post_path):
-        super(Context, self).__init__(post_path)
-
     @classmethod
     def get_folder_name(cls):
         return 'contexts'
 
 
-class Mention(ForeignPost):
+class Mention(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(512))
+    permalink = db.Column(db.String(512))
+    author_name = db.Column(db.String(128))
+    author_url = db.Column(db.String(512))
+    author_image = db.Column(db.String(512))
+    content = db.Column(db.Text)
+    content_plain = db.Column(db.Text)
+    published = db.Column(db.DateTime)
+    title = db.Column(db.String(512))
+    syndication = db.Column(JsonType)
+    reftype = db.Column(db.String(32))
+
     def __init__(self, post_path):
-        super(Mention, self).__init__(post_path)
+        self.index = None
+        self.post_path = post_path
+        self.url = None
+        self.permalink = None
+        self.author_name = None
+        self.author_url = None
+        self.author_image = None
+        self.content = None
+        self.content_plain = None
+        self.published = None
+        self.title = None
         self.reftype = None
         self.syndication = []
         self._children = []
 
+    def to_json_blob(self):
+        return util.filter_empty_keys({
+            'url': self.url,
+            'permalink': self.permalink,
+            'author_name': self.author_name,
+            'author_url': self.author_url,
+            'author_image': self.author_image,
+            'content': self.content,
+            'content_plain': self.content_plain,
+            'published': util.isoformat(self.published),
+            'title': self.title,
+            'syndication': self.syndication,
+            'reftype': self.reftype,
+        })
+
+    def read_json_blob(self, blob):
+        self.url = blob.get('url')
+        self.permalink = blob.get('permalink')
+        self.author_name = blob.get('author_name')
+        self.author_url = blob.get('author_url')
+        self.author_image = blob.get('author_image')
+        self.content = blob.get('content')
+        self.content_plain = blob.get('content_plain')
+        self.published = util.isoparse(blob.get('published'))
+        self.title = blob.get('title')
+        self.syndication = blob.get('syndication', {})
+        self.reftype = blob.get('reftype')
+
+    @property
+    def path(self):
+        return '{}/{}/{}.json'.format(
+            self.post_path,
+            self.get_folder_name(),
+            self.index)
+
+    @property
+    def title_or_url(self):
+        return self.title or util.prettify_url(self.permalink)
+
+    def reserve_index(self):
+        if not self.index:
+            idx = 1
+            while True:
+                self.index = util.base60_encode(idx)
+                if not os.path.exists(get_fs_path(self.path)):
+                    break
+                idx += 1
+
+    def save(self):
+        self.reserve_index()
+        fullpath = get_fs_path(self.path)
+        if not os.path.exists(os.path.dirname(fullpath)):
+            os.makedirs(os.path.dirname(fullpath))
+        app.logger.debug('saving foreign post %s', fullpath)
+        with open(fullpath, 'w') as fp:
+            json.dump(self.to_json_blob(), fp, indent=True)
+
+    def delete(self):
+        fullpath = get_fs_path(self.path)
+        app.logger.debug('deleting foreign post %s', fullpath)
+        if os.path.exists(fullpath):
+            os.remove(fullpath)
+            if os.path.exists(fullpath):
+                app.logger.debug('path still exists after deleting %s', fullpath)
+
+    @classmethod
+    def load_all(cls, post_path):
+        result = []
+        path = os.path.join(get_fs_path(post_path), cls.get_folder_name())
+        if os.path.exists(path):
+            for fn in os.listdir(path):
+                foreign = cls(post_path)
+                index, _ = os.path.splitext(fn)
+                foreign.index = index
+
+                with open(os.path.join(path, fn)) as fp:
+                    foreign.read_json_blob(json.load(fp))
+                result.append(foreign)
+        return result
+
     @classmethod
     def get_folder_name(cls):
         return 'mentions'
-
-    def to_json_blob(self):
-        result = super(Mention, self).to_json_blob()
-        result.update(
-            util.filter_empty_keys({
-                'reftype': self.reftype,
-                'syndication': self.syndication,
-            }))
-        return result
-
-    def read_json_blob(self, blob):
-        super(Mention, self).read_json_blob(blob)
-        self.reftype = blob.get('reftype')
-        self.syndication = blob.get('syndication')
 
 
 class AddressBook:
@@ -677,7 +889,7 @@ class Metadata:
     @staticmethod
     def regenerate():
         posts = []
-        mentions = []
+        # mentions = []
 
         basedir = os.path.join(app.root_path, '_data')
         for post_type in POST_TYPES:
@@ -686,6 +898,7 @@ class Metadata:
                     if filen != 'data.json':
                         continue
                     postpath = os.path.relpath(root, basedir)
+                    print('loading', postpath)
                     post = Post.load(postpath)
                     if not post:
                         continue
@@ -693,30 +906,30 @@ class Metadata:
                     posts.append(util.filter_empty_keys(
                         Metadata.post_to_blob(post)))
 
-                    for mention in post.mentions:
-                        mention_published = post.published
-                        parsed = archiver.load_json_from_archive(mention)
-                        if parsed:
-                            entry = mf2util.interpret_comment(
-                                parsed, mention, [post.permalink])
-                            if entry and 'published' in entry:
-                                mention_published = entry.get('published')
+                    # for mention in post.mentions:
+                    #     mention_published = post.published
+                    #     parsed = archiver.load_json_from_archive(mention)
+                    #     if parsed:
+                    #         entry = mf2util.interpret_comment(
+                    #             parsed, mention, [post.permalink])
+                    #         if entry and 'published' in entry:
+                    #             mention_published = entry.get('published')
 
-                        mentions.append((post.path, mention,
-                                         util.isoformat(mention_published)
-                                         or '1970-01-01'))
+                    #     mentions.append((post.path, mention,
+                    #                      util.isoformat(mention_published)
+                    #                      or '1970-01-01'))
 
         # keep the 30 most recent mentions
-        mentions.sort(key=itemgetter(2), reverse=True)
-        recent_mentions = [{
-            'mention': mention,
-            'post': post_path,
-        } for post_path, mention, published in mentions[:30]]
+        # mentions.sort(key=itemgetter(2), reverse=True)
+        # recent_mentions = [{
+        #     'mention': mention,
+        #     'post': post_path,
+        # } for post_path, mention, published in mentions[:30]]
 
         util.filter_empty_keys(posts)
         blob = {
             'posts': posts,
-            'mentions': recent_mentions,
+            #'mentions': recent_mentions,
         }
 
         json.dump(blob,

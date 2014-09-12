@@ -26,7 +26,12 @@ RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
 
 def isoparse(s):
     """Parse (UTC) datetimes in ISO8601 format"""
-    return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+    if s:
+        try:
+            return datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+        except:
+            return datetime.datetime.strptime(s, '%Y-%m-%d')
+
 
 
 def isoparse_with_tz(s):

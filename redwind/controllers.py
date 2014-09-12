@@ -40,12 +40,33 @@ AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
 def render_posts(title, post_types, page, per_page, tag=None,
                  include_hidden=False, include_drafts=False):
-    mdata = Metadata()
-    posts, is_first, is_last = mdata.load_posts(
-        reverse=True, post_types=post_types, tag=tag,
-        include_hidden=include_hidden,
-        include_drafts=include_drafts,
-        page=page, per_page=per_page)
+    from sqlalchemy.orm import subqueryload, joinedload
+
+    # mdata = Metadata()
+    # posts, is_first, is_last = mdata.load_posts(
+    #     reverse=True, post_types=post_types, tag=tag,
+    #     include_hidden=include_hidden,
+    #     include_drafts=include_drafts,
+    #     page=page, per_page=per_page)
+
+    query = Post.query
+    query = query.options(subqueryload(Post.mentions),
+                          subqueryload(Post.photos),
+                          subqueryload(Post.location),
+                          subqueryload(Post.reply_contexts),
+                          subqueryload(Post.repost_contexts),
+                          subqueryload(Post.like_contexts),
+                          subqueryload(Post.bookmark_contexts))
+
+    if not include_hidden:
+        query = query.filter_by(hidden=False)
+    if not include_drafts:
+        query = query.filter_by(draft=False)
+    query = query.order_by(Post.published.desc())
+    pagination = query.paginate(page=page, per_page=per_page)
+    posts = pagination.items
+    is_first = not pagination.has_prev
+    is_last = not pagination.has_next
 
     if not posts:
         abort(404)
@@ -61,7 +82,7 @@ def render_posts(title, post_types, page, per_page, tag=None,
 @app.route('/page/<int:page>')
 def index(page):
     # leave out hidden posts
-    return render_posts(None, POST_TYPES, page, 15,
+    return render_posts(None, POST_TYPES, page, 30,
                         include_hidden=False,
                         include_drafts=current_user.is_authenticated())
 
@@ -637,7 +658,7 @@ def save_post(post):
                 os.makedirs(os.path.dirname(fullpath))
             inphoto.save(fullpath)
             caption = request.form.get('caption')
-            post.photos = [Photo(post, 
+            post.photos = [Photo(post,
                                  filename=os.path.basename(relpath),
                                  caption=caption)]
 

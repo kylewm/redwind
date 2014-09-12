@@ -6,8 +6,9 @@ for module in ('mf2py', 'mf2util'):
         sys.path.append(module)
 
 from flask import Flask
-#from flask_debugtoolbar import DebugToolbarExtension
+from flask_debugtoolbar import DebugToolbarExtension
 from flask.ext.assets import Environment, Bundle
+from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from config import Configuration
@@ -17,8 +18,11 @@ from logging.handlers import RotatingFileHandler
 
 
 app = Flask('redwind')
-
 app.config.from_object(Configuration)
+
+db = SQLAlchemy(app)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 redis = Redis()
 
 assets = Environment(app)
@@ -41,7 +45,7 @@ if app.config.get('PROFILE'):
                                       sort_by=('cumtime', 'tottime', 'ncalls'))
 
 if app.debug:
-    #toolbar = DebugToolbarExtension(app)
+    toolbar = DebugToolbarExtension(app)
     app.config['SITE_URL'] = 'http://localhost:5000'
 
 if not app.debug:
