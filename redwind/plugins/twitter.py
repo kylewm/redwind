@@ -1,5 +1,6 @@
 from .. import app
 from .. import archiver
+from .. import db
 from .. import hooks
 from .. import queue
 from .. import util
@@ -83,7 +84,7 @@ def twitter_callback():
         current_user.twitter_oauth_token = access_token
         current_user.twitter_oauth_token_secret = access_token_secret
 
-        current_user.save()
+        db.session.commit()
         return redirect(url_for('settings'))
     except requests.RequestException as e:
         return make_response(str(e))
@@ -213,7 +214,7 @@ def repost_preview(url):
             return embed_response.json().get('html')
 
 
-def create_context(post_path, url):
+def create_context(url):
     match = PERMALINK_RE.match(url)
     if not match:
         app.logger.debug('url is not a twitter permalink %s', url)
@@ -256,7 +257,7 @@ def create_context(post_path, url):
             if media_url:
                 tweet_text += '<div><img src="{}"/></div>'.format(media_url)
 
-    context = Context(post_path)
+    context = Context()
     context.url = context.permalink = url
     context.author_name = author_name
     context.author_image = author_image
@@ -392,16 +393,16 @@ def guess_tweet_content(post, in_reply_to):
 def do_tweet(post_id, preview, img_url, in_reply_to,
              repost_of, like_of):
     try:
-        with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            twitter_url = handle_new_or_edit(
-                post, preview, img_url, in_reply_to, repost_of, like_of)
-            post.save()
+        post = Post.load_by_shortid(post_id)
+        twitter_url = handle_new_or_edit(
+            post, preview, img_url, in_reply_to, repost_of, like_of)
+        db.session.commit()
 
-            flash('Shared on Twitter: <a href="{}">Original</a>, '
-                  '<a href="{}">On Twitter</a>'
-                  .format(post.permalink, twitter_url))
+        flash('Shared on Twitter: <a href="{}">Original</a>, '
+              '<a href="{}">On Twitter</a>'
+              .format(post.permalink, twitter_url))
 
-            return redirect(post.permalink)
+        return redirect(post.permalink)
     except Exception as e:
         app.logger.exception('posting to twitter')
         flash('Share on Twitter Failed!. Exception: {}'.format(e))

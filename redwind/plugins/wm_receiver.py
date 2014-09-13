@@ -1,8 +1,9 @@
 from .. import app
+from .. import db
 from .. import queue
 from .. import archiver
 from .. import util
-from ..models import Post, Metadata, Mention
+from ..models import Post, Mention
 
 from flask import request, make_response, render_template, url_for
 from werkzeug.exceptions import NotFound
@@ -72,10 +73,10 @@ def process_webmention(source, target, callback):
         if callback:
             requests.post(callback, data=result)
     try:
-        target_post, mention_url, delete, error = do_process_webmention(
+        target_post, mention, delete, error = do_process_webmention(
             source, target)
 
-        if error or not target_post or not mention_url:
+        if error or not target_post or not mention:
             app.logger.warn("Failed to process webmention: %s", error)
             result = {
                 'source': source,
@@ -87,17 +88,15 @@ def process_webmention(source, target, callback):
             call_callback(result)
             return result
 
-        with Post.writeable(target_post.path) as writeable_post:
-            if delete:
-                writeable_post.mention_urls.remove(mention_url)
-            elif mention_url not in writeable_post.mention_urls:
-                writeable_post.mention_urls.append(mention_url)
-            writeable_post.save()
-            app.logger.debug("saved mentions to %s", writeable_post.path)
+        if delete:
+            target_post.mentions = [m for m in target_post.mentions if
+                                    m.url != source]
 
-        with Metadata.writeable() as mdata:
-            mdata.insert_recent_mention(target_post, mention_url)
-            mdata.save()
+        if not delete:
+            target_post.mentions.append(mention)
+
+        db.session.commit()
+        app.logger.debug("saved mentions to %s", target_post.path)
 
         result = {
             'source': source,
@@ -106,6 +105,7 @@ def process_webmention(source, target, callback):
             'status': 'success',
             'reason': 'Deleted' if delete else 'Created'
         }
+
         call_callback(result)
         return result
 
@@ -179,9 +179,8 @@ def do_process_webmention(source, target):
 
     archiver.archive_html(source, source_response.text)
     archiver.archive_response(source, source_response)
-    create_mention(target_post, source)
-
-    return target_post, source, False, None
+    mention = create_mention(target_post, source)
+    return target_post, mention, False, None
 
 
 def find_link_to_target(source_url, source_response, target_urls):
@@ -261,7 +260,7 @@ def create_mention(post, url):
             post.permalink,
             post.permalink_without_slug,
             post.short_permalink,
-        ] + post.previous_permalinks
+        ]
 
         for base_url in base_target_urls:
             target_urls.append(base_url)
@@ -307,5 +306,4 @@ def create_mention(post, url):
     mention.published = published
     mention.title = entry.get('name')
     mention.syndication = entry.get('syndication', [])
-    mention.save()
     return mention

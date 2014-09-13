@@ -1,10 +1,10 @@
-
 from . import app
 from . import archiver
-
+from . import db
 from . import hooks
 from . import queue
 from . import util
+from .models import Post
 
 from .models import Context
 import bs4
@@ -14,26 +14,42 @@ import mf2util
 
 
 def fetch_contexts(post):
-    for url in itertools.chain(post.in_reply_to, post.repost_of,
-                               post.like_of, post.bookmark_of):
-        do_fetch_context.delay(post.path, url)
+    for url in post.in_reply_to:
+        do_fetch_context.delay(post.path, 'reply_contexts', url)
+
+    for url in post.repost_of:
+        do_fetch_context.delay(post.path, 'repost_contexts', url)
+
+    for url in post.like_of:
+        do_fetch_context.delay(post.path, 'like_contexts', url)
+
+    for url in post.bookmark_of:
+        do_fetch_context.delay(post.path, 'bookmark_contexts', url)
 
 
 @queue.queueable
-def do_fetch_context(post_path, url):
+def do_fetch_context(post_path, context_attr, url):
     app.logger.debug("fetching url %s", url)
-    context = create_context(post_path, url)
+    context = create_context(url)
     if context:
-        for old in Context.load_all(post_path):
-            app.logger.debug('checking old context wtih url %s', old.url)
+        post = Post.load_by_path(post_path)
+        old_contexts = getattr(post, context_attr)
+        new_contexts = []
+
+        for old in old_contexts:
             if old.url == url:
-                app.logger.debug('deleting old context')
-                old.delete()
-        context.save()
+                db.session.delete(old)
+            else:
+                new_contexts.append(old)
 
+        db.session.add(context)
+        new_contexts.append(context)
 
-def create_context(post_path, url):
-    for context in hooks.fire('create-context', post_path, url):
+        setattr(post, context_attr, new_contexts)
+        db.session.commit()
+
+def create_context(url):
+    for context in hooks.fire('create-context', url):
         if context:
             return context
 
@@ -56,7 +72,7 @@ def create_context(post_path, url):
             if not permalink or not isinstance(permalink, str):
                 permalink = url
 
-            context = Context(post_path)
+            context = Context()
             context.url = url
             context.permalink = permalink
             context.author_name = author_name
@@ -68,7 +84,7 @@ def create_context(post_path, url):
             context.title = title
 
     if not context:
-        context = Context(post_path)
+        context = Context()
         context.url = context.permalink = url
         html = archiver.load_html_from_archive(url)
         soup = bs4.BeautifulSoup(html)

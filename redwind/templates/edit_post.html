@@ -10,12 +10,12 @@
 
   <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
   <ul id="uploads"></ul>
-  
+
   {% block above_content %}{% endblock above_content %}
-  
+
   {% block content_fields %}
     <label>Content</label>
-    <textarea name="content" id="content" rows="3">{{ post.content }}</textarea>
+    <textarea name="content" id="content" rows="3">{{ post.content or '' }}</textarea>
   {% endblock content_fields %}
   {% block below_content %}{% endblock below_content %}
 
