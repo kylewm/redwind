@@ -32,6 +32,39 @@
         loadCssFile(leafletCss, function() {complete.css = true; if (complete.js) { cb(); }});
     };
 
+    // credit http://waterpigs.co.uk/articles/a-minimal-javascript-http-abstraction/
+    var Http = (function() {
+        var open = function open(method, url) {
+            var xhr = new XMLHttpRequest();
+            xhr.open(method.toUpperCase(), url);
+            return xhr;
+        };
+
+        var send = function send(xhr, value) {
+            var value = value || null;
+            return new Promise(function (resolve, reject) {
+                xhr.onload = function () {
+                    // Success if status in 2XX.
+                    if (xhr.status - 200 <= 99 && xhr.status - 200 > -1) {
+                        resolve(xhr);
+                    } else {
+                        reject(xhr);
+                    }
+                };
+
+                xhr.onerror = function () {
+                    reject(xhr);
+                };
+
+                xhr.send(value);
+            });
+        };
+        return {
+            open: open,
+            send: send
+        };
+    })();
+
     var Location = (function() {
 
         var setupAllMaps = function() {
@@ -165,49 +198,49 @@
                 contentField.value  + '\n![' + filename + '](' + filename + ')';
         };
 
-            setupCheckinMap()
+        setupCheckinMap()
 
-            each(all('#edit_form a.top_tag'), function(tagBtn) {
-                tagBtn.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    var tagField = first('#edit_form #tags');
-                    tagField.value = (tagField.value ? tagField.value + ',' : '') + tagBtn.textContent;
-                });
-
+        each(all('#edit_form a.top_tag'), function(tagBtn) {
+            tagBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                var tagField = first('#edit_form #tags');
+                tagField.value = (tagField.value ? tagField.value + ',' : '') + tagBtn.textContent;
             });
 
-            var coordsBtn = first('#get_coords_button')
-            if (coordsBtn) {
-                coordsBtn.addEventListener('change', function(event) {
-                    if (coordsBtn.checked) {
-                        getCoords();
-                    }
-                });
-            }
+        });
 
-            var attachExpandListener = function(handle, textarea) {
-                if (handle && textarea) {
-                    handle.addEventListener('click', function(event) {
-                        expandArea(handle, textarea);
-                    });
-                    expandArea(handle, textarea);
+        var coordsBtn = first('#get_coords_button')
+        if (coordsBtn) {
+            coordsBtn.addEventListener('change', function(event) {
+                if (coordsBtn.checked) {
+                    getCoords();
                 }
-            };
+            });
+        }
 
-            attachExpandListener(
-                first('#edit_form #syndication_expander'),
-                first('#edit_form #syndication_textarea'));
-
-            attachExpandListener(
-                first('#edit_form #audience_expander'),
-                first('#edit_form #audience_textarea'));
-
-            var uploadBtn = first('#edit_form #image_upload_button');
-            if (uploadBtn) {
-                uploadBtn.addEventListener('change', function() {
-                    handleUploadButton(this);
+        var attachExpandListener = function(handle, textarea) {
+            if (handle && textarea) {
+                handle.addEventListener('click', function(event) {
+                    expandArea(handle, textarea);
                 });
+                expandArea(handle, textarea);
             }
+        };
+
+        attachExpandListener(
+            first('#edit_form #syndication_expander'),
+            first('#edit_form #syndication_textarea'));
+
+        attachExpandListener(
+            first('#edit_form #audience_expander'),
+            first('#edit_form #audience_textarea'));
+
+        var uploadBtn = first('#edit_form #image_upload_button');
+        if (uploadBtn) {
+            uploadBtn.addEventListener('change', function() {
+                handleUploadButton(this);
+            });
+        }
 
 
         return {};
@@ -216,15 +249,13 @@
     var AddressBook = (function(){
         var fetchProfile = function() {
             var url = first('#url');
-            require(['http'], function(http) {
-                var xhr = http.open('GET', '/api/fetch_profile?url=' + encodeURIComponent(url.value));
-                http.send(xhr).then(function(xhr) {
-                    var data = JSON.parse(xhr.responseText);
-                    ['name', 'photo', 'twitter', 'facebook'].forEach(function(field) {
-                        if (field in data) {
-                            document.getElementById(field).value = data[field];
-                        }
-                    });
+            var xhr = Http.open('GET', '/api/fetch_profile?url=' + encodeURIComponent(url.value));
+            Http.send(xhr).then(function(xhr) {
+                var data = JSON.parse(xhr.responseText);
+                ['name', 'photo', 'twitter', 'facebook'].forEach(function(field) {
+                    if (field in data) {
+                        document.getElementById(field).value = data[field];
+                    }
                 });
             });
         };
