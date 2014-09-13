@@ -32,21 +32,21 @@
 	    Liked {{like.permalink|prettify_url}}
 	  {% endfor %}
 	{% else %}
-  	  {{ (post.title or post.content_plain) | atom_sanitize }}
+  	  {{ (post.title or post.content) | atom_sanitize }}
 	{% endif %}
     </title>
     <content type="html" xml:base="http://kylewm.com/" xml:space="preserve">
 	{% for reply in post.reply_contexts %}
 	  &lt;p>In reply to &lt;a href="{{reply.permalink}}">{{reply.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
-	{% for share in post.share_contexts %}
+	{% for share in post.repost_contexts %}
 	  &lt;p>Shared &lt;a href="{{share.permalink}}">{{share.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 	{% for like in post.like_contexts %}
 	  &lt;p>Liked &lt;a href="{{like.permalink}}">{{like.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 
-        {{ post.content | atom_sanitize }}
+        {{ post.content_html | atom_sanitize }}
     </content>
     <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/{{ post.post_type }}</object-type>
   </entry>

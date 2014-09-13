@@ -197,7 +197,9 @@ def handle_new_or_edit(post, preview, img_url, post_type,
                 user_id, post_id = split
                 fb_url = 'https://facebook.com/{}/posts/{}'.format(
                     user_id, facebook_photo_id)
-                post.syndication.append(fb_url)
+                new_syndication = list(post.syndication)
+                new_syndication.append(fb_url)
+                post.syndication = new_syndication
                 return fb_url
 
         else:
@@ -207,7 +209,9 @@ def handle_new_or_edit(post, preview, img_url, post_type,
                 user_id, post_id = split
                 fb_url = 'https://facebook.com/{}/posts/{}'.format(
                     user_id, post_id)
-                post.syndication.append(fb_url)
+                new_syndication = list(post.syndication)
+                new_syndication.append(fb_url)
+                post.syndication = new_syndication
                 return fb_url
 
 

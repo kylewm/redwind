@@ -479,7 +479,12 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
     twitter_url = 'https://twitter.com/{}/status/{}'.format(
         result_json.get('user', {}).get('screen_name'),
         result_json.get('id_str'))
-    post.syndication.append(twitter_url)
+    
+    #FIXME json objects aren't yet mutable
+    new_syndication = list(post.syndication)
+    new_syndication.append(twitter_url)
+    post.syndication = new_syndication
+    
     return twitter_url
 
 
