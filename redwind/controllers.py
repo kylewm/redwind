@@ -1,31 +1,28 @@
 from . import api
 from . import app
 from . import auth
+from . import contexts
 from . import db
 from . import hooks
 from . import util
-from . import contexts
-
-from .models import Post, Location, Metadata, AddressBook, Mention,\
-    Context, Photo, POST_TYPES
+from .models import Post, Location, Context, AddressBook, Photo, POST_TYPES
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
-from sqlalchemy.orm import subqueryload
-
-import urllib.parse
-import jinja2.filters
+import sqlalchemy.orm
+import sqlalchemy.sql
 
 import bleach
 import collections
 import datetime
-import itertools
+import jinja2.filters
 import operator
 import os
 import pytz
 import requests
+import urllib.parse
 
 
 bleach.ALLOWED_TAGS += ['img', 'p', 'br']
@@ -43,20 +40,19 @@ AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
 def render_posts(title, post_types, page, per_page, tag=None,
                  include_hidden=False, include_drafts=False):
-
     query = Post.query
-    query = query.options(subqueryload(Post.mentions),
-                          subqueryload(Post.photos),
-                          subqueryload(Post.location),
-                          subqueryload(Post.reply_contexts),
-                          subqueryload(Post.repost_contexts),
-                          subqueryload(Post.like_contexts),
-                          subqueryload(Post.bookmark_contexts))
-
+    query = query.options(sqlalchemy.orm.subqueryload(Post.mentions),
+                          sqlalchemy.orm.subqueryload(Post.photos),
+                          sqlalchemy.orm.subqueryload(Post.location),
+                          sqlalchemy.orm.subqueryload(Post.reply_contexts),
+                          sqlalchemy.orm.subqueryload(Post.repost_contexts),
+                          sqlalchemy.orm.subqueryload(Post.like_contexts),
+                          sqlalchemy.orm.subqueryload(Post.bookmark_contexts))
     if not include_hidden:
         query = query.filter_by(hidden=False)
     if not include_drafts:
         query = query.filter_by(draft=False)
+    query = query.filter_by(deleted=False)
     query = query.order_by(Post.published.desc())
     pagination = query.paginate(page=page, per_page=per_page)
     posts = pagination.items
@@ -139,10 +135,19 @@ def posts_by_tag(tag, page):
 
 
 def render_posts_atom(title, feed_id, post_types, count):
-    mdata = Metadata()
-    posts, _, _ = mdata.load_posts(reverse=True, post_types=post_types,
-                                   page=1, per_page=10)
-    posts = [post for post in posts if check_audience(post)]
+    query = Post.query
+    query = query.options(sqlalchemy.orm.subqueryload(Post.mentions),
+                          sqlalchemy.orm.subqueryload(Post.photos),
+                          sqlalchemy.orm.subqueryload(Post.location),
+                          sqlalchemy.orm.subqueryload(Post.reply_contexts),
+                          sqlalchemy.orm.subqueryload(Post.repost_contexts),
+                          sqlalchemy.orm.subqueryload(Post.like_contexts),
+                          sqlalchemy.orm.subqueryload(Post.bookmark_contexts))
+    if post_types:
+        query = query.filter(Post.post_type.in_(post_types))
+    query = query.filter_by(deleted=False)
+    query = query.order_by(Post.published.desc()).limit(5)
+    posts = [post for post in query.all() if check_audience(post)]
     return make_response(
         render_template('posts.atom', title=title, feed_id=feed_id,
                         posts=posts),
@@ -163,41 +168,6 @@ def updates_atom():
 @app.route("/articles.atom")
 def articles_atom():
     return render_posts_atom('Articles', 'articles.atom', ('article',), 5)
-
-
-# @app.route("/mentions.atom")
-# def mentions_atom():
-#     mdata = Metadata()
-#     mentions = mdata.get_recent_mentions()
-#     proxies = []
-#     for mention in mentions:
-#         post_path = mention.get('post')
-#         post = Post.load(post_path) if post_path else None
-#         mention_url = mention.get('mention')
-#         proxies.append(create_dmention(post, mention_url))
-#     return make_response(render_template('mentions.atom',
-#                                          title='kylewm.com: Mentions',
-#                                          feed_id='mentions.atom',
-#                                          mentions=proxies), 200,
-#                          {'Content-Type': 'application/atom+xml'})
-
-
-@app.route('/archive', defaults={'year': None, 'month': None})
-@app.route('/archive/<int:year>/<int(fixed_digits=2):month>')
-def archive(year, month):
-    # give the template the posts from this month,
-    # and the list of all years/month
-    posts = []
-    if year and month:
-        posts = [post for post
-                 in Metadata().load_by_month(year, month)
-                 if check_audience(post)]
-
-    years = Metadata().get_archive_months()
-    return render_template(
-        'archive.html', years=years,
-        expanded_year=year, expanded_month=month,
-        posts=posts)
 
 
 def check_audience(post):
@@ -357,15 +327,11 @@ def settings():
 @login_required
 def delete_by_id():
     shortid = request.args.get('id')
-    with Post.writeable(Post.shortid_to_path(shortid)) as post:
-        if not post:
-            abort(404)
-        post.deleted = True
-        post.save()
-
-    with Metadata.writeable() as mdata:
-        mdata.add_or_update_post(post)
-        mdata.save()
+    post = Post.load_by_shortid(shortid)
+    if not post:
+        abort(404)
+    post.deleted = True
+    db.session.commit()
 
     redirect_url = request.args.get('redirect') or url_for('index')
     app.logger.debug("redirecting to {}".format(redirect_url))
@@ -379,9 +345,10 @@ def get_top_tags(n=10):
     """
     rank = collections.defaultdict(int)
     now = datetime.datetime.utcnow()
-    mdata = Metadata()
-    for post in mdata.get_post_blobs():
-        published = util.isoparse(post.get('published'))
+
+    select_tags = sqlalchemy.sql.select([Post.published, Post.tags])
+    entries = db.engine.execute(select_tags)
+    for published, tags in entries:
         weight = 0
         if published:
             delta = now - published
@@ -395,7 +362,7 @@ def get_top_tags(n=10):
                 weight = 0.3
             elif delta < datetime.timedelta(days=730):
                 weight = 0.1
-        for tag in post.get('tags', []):
+        for tag in tags:
             rank[tag] += weight
 
     ordered = sorted(list(rank.items()), key=operator.itemgetter(1),
@@ -408,39 +375,33 @@ def get_top_tags(n=10):
 def new_post(type):
     post = Post(type)
     post.published = datetime.datetime.utcnow()
-    post._content = ''
+    post.content = ''
 
     if type == 'reply':
         in_reply_to = request.args.get('url')
         if in_reply_to:
             post.in_reply_to = [in_reply_to]
+            post.reply_contexts = [contexts.create_context(in_reply_to)]
 
-    if type == 'share':
+    elif type == 'share':
         repost_of = request.args.get('url')
         if repost_of:
             post.repost_of = [repost_of]
+            post.repost_contexts = [contexts.create_context(repost_of)]
 
-    if type == 'like':
+    elif type == 'like':
         like_of = request.args.get('url')
         if like_of:
             post.like_of = [like_of]
+            post.like_contexts = [contexts.create_context(like_of)]
 
-    if type == 'bookmark':
+    elif type == 'bookmark':
         bookmark_of = request.args.get('url')
         if bookmark_of:
             post.bookmark_of = [bookmark_of]
+            post.bookmark_contexts = [contexts.create_context(bookmark_of)]
 
-    context_urls = itertools.chain(post.in_reply_to, post.repost_of,
-                                   post.like_of, post.bookmark_of)
-    post._contexts = {
-        url: contexts.create_context(post.path, url)
-        for url in context_urls
-    }
-
-    content = request.args.get('content')
-    if content:
-        post._content = content
-
+    post.content = request.args.get('content')
     return render_template('edit_' + type + '.html', edit_type='new',
                            post=post, top_tags=get_top_tags(20))
 
@@ -565,8 +526,8 @@ def mirror_image(src, side=None):
 def save_edit():
     shortid = request.form.get('post_id')
     app.logger.debug("saving post %s", shortid)
-    with Post.writeable(Post.shortid_to_path(shortid)) as post:
-        return save_post(post)
+    post = Post.load_by_shortid(shortid)
+    return save_post(post)
 
 
 @app.route('/save_new', methods=['POST'])
@@ -575,125 +536,104 @@ def save_new():
     post_type = request.form.get('post_type', 'note')
     app.logger.debug("saving new post of type %s", post_type)
     post = Post(post_type)
-    try:
-        post._writeable = True
-        return save_post(post)
-    finally:
-        post._writeable = False
+    return save_post(post)
 
 
 def save_post(post):
-    try:
-        app.logger.debug("acquired write lock %s", post)
+    if not post.published:
+        post.published = datetime.datetime.utcnow()
+    post.reserve_date_index()
 
-        # populate the Post object and save it to the database,
-        # redirect to the view
-        post.title = request.form.get('title', '')
-        post.content = post._content = request.form.get('content')
+    # populate the Post object and save it to the database,
+    # redirect to the view
+    post.title = request.form.get('title', '')
+    post.content = request.form.get('content')
+    post.content_html = util.markdown_filter(
+        post.content, img_path=post.get_image_path())
 
-        post.draft = request.form.get('draft', 'false') == 'true'
-        post.hidden = request.form.get('hidden', 'false') == 'true'
+    post.draft = request.form.get('draft', 'false') == 'true'
+    post.hidden = request.form.get('hidden', 'false') == 'true'
 
-        lat = request.form.get('latitude')
-        lon = request.form.get('longitude')
-        if lat and lon:
-            post.location = Location(latitude=float(lat),
-                                     longitude=float(lon),
-                                     name=request.form.get('location_name'))
-        else:
-            post.location = None
+    lat = request.form.get('latitude')
+    lon = request.form.get('longitude')
+    if lat and lon:
+        post.location = Location(latitude=float(lat),
+                                 longitude=float(lon),
+                                 name=request.form.get('location_name'))
+    else:
+        post.location = None
 
-        if not post.published:
-            post.published = datetime.datetime.utcnow()
-        post.reserve_date_index()
+    slug = request.form.get('slug')
+    if slug:
+        post.slug = util.slugify(slug)
+    elif not post.slug:
+        if post.title:
+            post.slug = util.slugify(post.title)
+        elif post.content:
+            post.slug = util.slugify(post.content, 32)
 
-        slug = request.form.get('slug')
-        if slug:
-            post.slug = util.slugify(slug)
-        elif not post.slug:
-            if post.title:
-                post.slug = util.slugify(post.title)
-            elif post.content:
-                post.slug = util.slugify(post.content, 32)
+    for url_attr, context_attr in (('in_reply_to', 'reply_contexts'),
+                                   ('repost_of', 'repost_contexts'),
+                                   ('like_of', 'like_contexts'),
+                                   ('bookmark_of', 'bookmark_contexts')):
+        url_str = request.form.get(url_attr)
+        if url_str is not None:
+            urls = util.multiline_string_to_list(url_str)
+            setattr(post, url_attr, urls)
+            setattr(post, context_attr, [Context(url=u, permalink=u)
+                                         for u in urls])
 
-        in_reply_to = request.form.get('in_reply_to')
-        if in_reply_to is not None:
-            post.in_reply_to = util.multiline_string_to_list(in_reply_to)
+    syndication = request.form.get('syndication')
+    if syndication is not None:
+        post.syndication = util.multiline_string_to_list(syndication)
 
-        repost_of = request.form.get('repost_of')
-        if repost_of is not None:
-            post.repost_of = util.multiline_string_to_list(repost_of)
+    audience = request.form.get('audience')
+    if audience is not None:
+        post.audience = util.multiline_string_to_list(audience)
 
-        like_of = request.form.get('like_of')
-        if like_of is not None:
-            post.like_of = util.multiline_string_to_list(like_of)
+    tags = request.form.get('tags', '').split(',')
+    post.tags = list(filter(None, map(util.normalize_tag, tags)))
 
-        bookmark_of = request.form.get('bookmark_of')
-        if bookmark_of is not None:
-            post.bookmark_of = util.multiline_string_to_list(bookmark_of)
+    # TODO accept multiple photos and captions
+    inphoto = request.files.get('photo')
+    if inphoto and inphoto.filename:
+        app.logger.debug('receiving uploaded file %s', inphoto)
+        relpath, photo_url, fullpath \
+            = api.generate_upload_path(post, inphoto)
+        if not os.path.exists(os.path.dirname(fullpath)):
+            os.makedirs(os.path.dirname(fullpath))
+        inphoto.save(fullpath)
+        caption = request.form.get('caption')
+        post.photos = [Photo(post,
+                             filename=os.path.basename(relpath),
+                             caption=caption)]
 
-        syndication = request.form.get('syndication')
-        if syndication is not None:
-            post.syndication = util.multiline_string_to_list(syndication)
-
-        audience = request.form.get('audience')
-        if audience is not None:
-            post.audience = util.multiline_string_to_list(audience)
-
-        tags = request.form.get('tags', '').split(',')
-        post.tags = list(filter(None, map(util.normalize_tag, tags)))
-
-        # TODO accept multiple photos and captions
-        inphoto = request.files.get('photo')
-        if inphoto and inphoto.filename:
-            app.logger.debug('receiving uploaded file %s', inphoto)
+    file_to_url = {}
+    infiles = request.files.getlist('files')
+    app.logger.debug('infiles: %s', infiles)
+    for infile in infiles:
+        if infile and infile.filename:
+            app.logger.debug('receiving uploaded file %s', infile)
             relpath, photo_url, fullpath \
-                = api.generate_upload_path(post, inphoto)
+                = api.generate_upload_path(post, infile)
             if not os.path.exists(os.path.dirname(fullpath)):
                 os.makedirs(os.path.dirname(fullpath))
-            inphoto.save(fullpath)
-            caption = request.form.get('caption')
-            post.photos = [Photo(post,
-                                 filename=os.path.basename(relpath),
-                                 caption=caption)]
+            infile.save(fullpath)
+            file_to_url[infile] = photo_url
 
-        file_to_url = {}
-        infiles = request.files.getlist('files')
-        app.logger.debug('infiles: %s', infiles)
-        for infile in infiles:
-            if infile and infile.filename:
-                app.logger.debug('receiving uploaded file %s', infile)
-                relpath, photo_url, fullpath \
-                    = api.generate_upload_path(post, infile)
-                if not os.path.exists(os.path.dirname(fullpath)):
-                    os.makedirs(os.path.dirname(fullpath))
-                infile.save(fullpath)
-                file_to_url[infile] = photo_url
+    app.logger.debug('uploaded files map %s', file_to_url)
 
-        app.logger.debug('uploaded files map %s', file_to_url)
+    if not post.id:
+        db.session.add(post)
+    db.session.commit()
 
-        post.save()
-        if not post.id:
-            db.session.add(post)
-        db.session.commit()
+    app.logger.debug("saved post %s %s", post.shortid, post.permalink)
+    redirect_url = post.permalink
 
-        with Metadata.writeable() as mdata:
-            mdata.add_or_update_post(post)
-            mdata.save()
+    contexts.fetch_contexts(post)
+    hooks.fire('post-saved', post, request.form)
 
-        app.logger.debug("saved post %s %s", post.shortid, post.permalink)
-        redirect_url = post.permalink
-
-        contexts.fetch_contexts(post)
-        hooks.fire('post-saved', post, request.form)
-
-        return redirect(redirect_url)
-
-    except Exception as e:
-        app.logger.exception("Failed to save post")
-        flash('failed to save post {}'.format(e))
-
-        return redirect(url_for('index'))
+    return redirect(redirect_url)
 
 
 @app.route('/addressbook', methods=['GET', 'POST'])

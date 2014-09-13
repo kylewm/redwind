@@ -33,8 +33,7 @@ def queue_daemon(app, rv_ttl=86400):
                         func_name, func, args, kwargs)
         try:
             with app.test_request_context():
-                user = models.User.load(os.path.join(app.root_path,
-                                                     '_data/user.json'))
+                user = models.User.query.first()
                 login_user(user)
                 rv = func(*args, **kwargs)
         except Exception as e:

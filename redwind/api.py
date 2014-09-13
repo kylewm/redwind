@@ -1,13 +1,12 @@
 from . import app
 from . import auth
-from . import util
-from . import hooks
 from . import contexts
-from .models import Post, Location, Metadata, Photo
-
+from . import db
+from . import hooks
+from . import util
+from .models import Post, Location, Photo, Context
 from flask import request, jsonify, abort, make_response
 from werkzeug import secure_filename
-
 import datetime
 import jwt
 import mf2py
@@ -50,17 +49,29 @@ def generate_upload_path(post, f, default_ext=None):
 @app.route('/api/mf2')
 def convert_mf2():
     url = request.args.get('url')
-    p = mf2py.Parser(url=url)
-    json = p.to_dict()
-    return jsonify(json)
+    if url:
+        p = mf2py.Parser(url=url)
+        json = p.to_dict()
+        return jsonify(json)
+    return """<html><body>
+    <h1>mf2py</h1>
+    <form><label>URL to parse: <input name="url"></label>
+    <input type="Submit">
+    </form></body></html> """
 
 
 @app.route('/api/mf2util')
 def convert_mf2util():
     url = request.args.get('url')
-    p = mf2py.Parser(url=url)
-    json = mf2util.interpret(p.to_dict(), url)
-    return jsonify(json)
+    if url:
+        p = mf2py.Parser(url=url)
+        json = mf2util.interpret(p.to_dict(), url)
+        return jsonify(json)
+    return """<html><body>
+    <h1>mf2util</h1>
+    <form><label>URL to parse: <input name="url"></label>
+    <input type="Submit">
+    </form></body></html>"""
 
 
 @app.route('/api/token', methods=['POST'])
@@ -99,7 +110,8 @@ def token_endpoint():
 
     if me not in auth_me:
         app.logger.warn(
-            "rejecting access token request me=%s, expected me=%s", me, auth_me)
+            "rejecting access token request me=%s, expected me=%s",
+            me, auth_me)
         abort(400)
 
     token = jwt.encode({
@@ -126,8 +138,6 @@ def token_endpoint():
 
 @app.route('/api/micropub', methods=['POST'])
 def micropub_endpoint():
-    from . import controllers
-
     app.logger.info(
         "received micropub request %s, args=%s, form=%s, headers=%s",
         request, request.args, request.form, request.headers)
@@ -164,16 +174,19 @@ def micropub_endpoint():
 
     post = Post('photo' if photo_file else 'reply' if in_reply_to
                 else 'like' if like_of else 'note')
-    post._writeable = True
 
     post.title = request.form.get('name')
-    post._content = request.form.get('content')
+    post.content = request.form.get('content')
 
     if in_reply_to:
         post.in_reply_to.append(in_reply_to)
+        post.reply_contexts.append(
+            Context(url=in_reply_to, permalink=in_reply_to))
 
     if like_of:
         post.like_of.append(like_of)
+        post.like_contexts.append(
+            Context(url=like_of, permalink=like_of))
 
     pub_str = request.form.get('published')
     if pub_str:
@@ -220,22 +233,18 @@ def micropub_endpoint():
     elif post.content:
         post.slug = util.slugify(post.content, 32)
 
-    post.save()
-    post._writeable = False
-
-    with Metadata.writeable() as mdata:
-        mdata.add_or_update_post(post)
-        mdata.save()
+    db.session.add(post)
+    db.session.commit()
 
     contexts.fetch_contexts(post)
     hooks.fire('post-saved', post, {})
-    return make_response('Created: ' + post.permalink, 201, {'Location': post.permalink})
+    return make_response('Created: ' + post.permalink, 201,
+                         {'Location': post.permalink})
 
 
 @app.route('/api/fetch_profile')
 def fetch_profile():
-    from .controllers import TWITTER_PROFILE_RE, FACEBOOK_PROFILE_RE
-
+    from .util import TWITTER_PROFILE_RE, FACEBOOK_PROFILE_RE
     try:
         url = request.args.get('url')
         name = None

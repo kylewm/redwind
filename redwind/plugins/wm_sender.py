@@ -1,5 +1,4 @@
 from .. import app
-from .. import controllers
 from .. import queue
 from .. import hooks
 from ..models import Post

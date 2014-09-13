@@ -1,9 +1,10 @@
 from .. import app
-from .. import controllers
+from .. import db
+from .. import util
 from ..models import Post
 
 from flask.ext.login import login_required, current_user
-from flask import request, redirect, url_for, render_template
+from flask import request, redirect, url_for, render_template, flash
 
 import requests
 import json
@@ -36,7 +37,7 @@ def authorize_facebook():
 
         access_token = payload[b'access_token'][0].decode('ascii')
         current_user.facebook_access_token = access_token
-        current_user.save()
+        db.session.commit()
         return redirect(url_for('settings'))
     else:
         return redirect('https://graph.facebook.com/oauth/authorize?'
@@ -81,19 +82,19 @@ def share_on_facebook():
                 request.form.get('new_album_name'),
                 request.form.get('new_album_message'))
 
-        with Post.writeable(Post.shortid_to_path(post_id)) as post:
-            facebook_url = handle_new_or_edit(post, preview, img_url,
-                                              post_type, album_id)
-            post.save()
-
-            return """Shared on Facebook<br/>
-            <a href="{}">Original</a><br/>
-            <a href="{}">On Facebook</a><br/>
-            """.format(post.permalink, facebook_url)
+        post = Post.load_by_shortid(post_id)
+        facebook_url = handle_new_or_edit(post, preview, img_url,
+                                          post_type, album_id)
+        db.session.commit()
+        flash('Shared on Facebook: <a href="{}">Original</a>, '
+              '<a href="{}">On Facebook</a><br/>'
+              .format(post.permalink, facebook_url))
+        return redirect(post.permalink)
 
     except Exception as e:
         app.logger.exception('posting to facebook')
-        return """Share on Facebook Failed!<br/>Exception: {}""".format(e)
+        flash('Share on Facebook Failed! Exception: {}'.format(e))
+        return redirect(url_for('index'))
 
 
 class PersonTagger:
@@ -139,7 +140,7 @@ def handle_new_or_edit(post, preview, img_url, post_type,
     app.logger.debug('publishing to facebook')
 
     tagger = PersonTagger()
-    preview = controllers.process_people(preview, tagger)
+    preview = util.process_people(preview, tagger)
 
     post_args = {
         'access_token': current_user.facebook_access_token,
@@ -211,6 +212,6 @@ def handle_new_or_edit(post, preview, img_url, post_type,
 
 
 def format_markdown_as_facebook(data):
-    return controllers.format_as_text(
-        controllers.markdown_filter(data, link_twitter_names=False,
-                                    person_processor=None))
+    return util.format_as_text(
+        util.markdown_filter(data, link_twitter_names=False,
+                             person_processor=None))
