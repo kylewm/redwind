@@ -11,6 +11,7 @@ from flask.ext.assets import Environment, Bundle
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
+from rq import Queue
 from config import Configuration
 
 import logging
@@ -24,6 +25,7 @@ db = SQLAlchemy(app)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 redis = Redis()
+queue = Queue(connection=redis)
 
 assets = Environment(app)
 assets.register(
@@ -62,7 +64,7 @@ for handler in ['controllers']:
 
 for plugin in ['facebook', 'locations', 'push', 'reader', 'twitter',
                'wm_receiver', 'wm_sender']:
-    app.logger.info('loading plugin module %s', plugin)
+    #app.logger.info('loading plugin module %s', plugin)
     module = importlib.import_module('redwind.plugins.' + plugin)
     try:
         module.register()

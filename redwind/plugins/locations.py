@@ -8,11 +8,13 @@ from .. import queue
 
 
 def register():
-    hooks.register('post-saved', lambda post, args:
-                   do_reverse_geocode.delay(post.shortid))
+    hooks.register('post-saved', reverse_geocode)
 
 
-@queue.queueable
+def reverse_geocode(post, args):
+    queue.enqueue(do_reverse_geocode, post.shortid)
+
+
 def do_reverse_geocode(postid):
     def region(adr):
         if adr.get('country_code') == 'us':

@@ -7,6 +7,7 @@ from ..models import Post, Mention
 
 from flask import request, make_response, render_template, url_for
 from werkzeug.exceptions import NotFound
+from rq.job import Job
 
 import urllib.parse
 import urllib.request
@@ -38,14 +39,9 @@ def receive_webmention():
             'webmention missing required target parameter', 400)
 
     app.logger.debug("Webmention from %s to %s received", source, target)
-    delayed = process_webmention.delay(source, target, callback)
 
-    key = delayed.key
-    prefix = app.config['REDIS_QUEUE_KEY'] + ':result:'
-    if key.startswith(prefix):
-        key = key[len(prefix):]
-
-    status_url = url_for('webmention_status', key=key, _external=True)
+    job = queue.enqueue(process_webmention, source, target, callback)
+    status_url = url_for('webmention_status', key=job.id, _external=True)
 
     return make_response(
         render_template('wm_received.html', status_url=status_url), 202)
@@ -53,9 +49,8 @@ def receive_webmention():
 
 @app.route('/webmention/status/<key>')
 def webmention_status(key):
-    key = app.config['REDIS_QUEUE_KEY'] + ':result:' + key
-    delayed = queue.DelayedResult(key)
-    rv = delayed.return_value
+    job = Job.fetch(key)
+    rv = job.result
     if not rv:
         rv = {
             'response_code': 202,
@@ -67,7 +62,6 @@ def webmention_status(key):
         rv.get('response_code', 400))
 
 
-@queue.queueable
 def process_webmention(source, target, callback):
     def call_callback(result):
         if callback:

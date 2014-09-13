@@ -27,13 +27,12 @@ def load_subscriptions():
 def reader_retrieve():
     feeds = load_subscriptions()
     for feed in feeds:
-        retrieve_feed.delay(feed)
+        queue.enqueue(retrieve_feed, feed)
 
     return """<!DOCTYPE html><html>Retrieving feeds: <ul>{}</ul><a href="{}">Read!</a></html>""".format(
         '\n'.join('<li>{}</li>'.format(feed) for feed in feeds), '/reader')
 
 
-@queue.queueable
 def retrieve_feed(url):
     archiver.archive_url(url)
 

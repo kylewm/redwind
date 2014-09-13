@@ -11,15 +11,14 @@ def register():
 def send_notifications(post, args):
     site_url = app.config['SITE_URL']
     if post.post_type in ('article', 'note', 'share'):
-        publish.delay(site_url + '/updates.atom')
+        queue.enqueue(publish, site_url + '/updates.atom')
 
     if post.post_type == 'article':
-        publish.delay(site_url + '/articles.atom')
+        queue.enqueue(publish, site_url + '/articles.atom')
 
-    publish.delay(site_url + '/all.atom')
+    queue.enqueue(publish, site_url + '/all.atom')
 
 
-@queue.queueable
 def publish(url):
     publish_url = app.config.get('PUSH_HUB')
     if publish_url:

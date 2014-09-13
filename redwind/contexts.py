@@ -5,32 +5,36 @@ from . import hooks
 from . import queue
 from . import util
 from .models import Post
-
 from .models import Context
 import bs4
 import bleach
 import itertools
 import mf2util
+from flask.ext.login import current_user
 
 
 def fetch_contexts(post):
+    user_domain = current_user.domain
     for url in post.in_reply_to:
-        do_fetch_context.delay(post.path, 'reply_contexts', url)
+        queue.enqueue(
+            do_fetch_context, post.path, 'reply_contexts', url, user_domain)
 
     for url in post.repost_of:
-        do_fetch_context.delay(post.path, 'repost_contexts', url)
+        queue.enqueue(
+            do_fetch_context, post.path, 'repost_contexts', url, user_domain)
 
     for url in post.like_of:
-        do_fetch_context.delay(post.path, 'like_contexts', url)
+        queue.enqueue(
+            do_fetch_context, post.path, 'like_contexts', url, user_domain)
 
     for url in post.bookmark_of:
-        do_fetch_context.delay(post.path, 'bookmark_contexts', url)
+        queue.enqueue(
+            do_fetch_context, post.path, 'bookmark_contexts', url, user_domain)
 
 
-@queue.queueable
-def do_fetch_context(post_path, context_attr, url):
+def do_fetch_context(post_path, context_attr, url, user_domain):
     app.logger.debug("fetching url %s", url)
-    context = create_context(url)
+    context = create_context(url, user_domain)
     if context:
         post = Post.load_by_path(post_path)
         old_contexts = getattr(post, context_attr)
@@ -48,8 +52,9 @@ def do_fetch_context(post_path, context_attr, url):
         setattr(post, context_attr, new_contexts)
         db.session.commit()
 
-def create_context(url):
-    for context in hooks.fire('create-context', url):
+
+def create_context(url, user_domain=None):
+    for context in hooks.fire('create-context', url, user_domain):
         if context:
             return context
 

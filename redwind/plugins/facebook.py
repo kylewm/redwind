@@ -4,7 +4,8 @@ from .. import util
 from ..models import Post
 
 from flask.ext.login import login_required, current_user
-from flask import request, redirect, url_for, render_template, flash
+from flask import request, redirect, url_for, render_template, flash,\
+    has_request_context
 
 import requests
 import json
@@ -86,14 +87,16 @@ def share_on_facebook():
         facebook_url = handle_new_or_edit(post, preview, img_url,
                                           post_type, album_id)
         db.session.commit()
-        flash('Shared on Facebook: <a href="{}">Original</a>, '
-              '<a href="{}">On Facebook</a><br/>'
-              .format(post.permalink, facebook_url))
-        return redirect(post.permalink)
+        if has_request_context():
+            flash('Shared on Facebook: <a href="{}">Original</a>, '
+                  '<a href="{}">On Facebook</a><br/>'
+                  .format(post.permalink, facebook_url))
+            return redirect(post.permalink)
 
     except Exception as e:
-        app.logger.exception('posting to facebook')
-        flash('Share on Facebook Failed! Exception: {}'.format(e))
+        if has_request_context():
+            app.logger.exception('posting to facebook')
+            flash('Share on Facebook Failed! Exception: {}'.format(e))
         return redirect(url_for('index'))
 
 

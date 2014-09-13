@@ -17,7 +17,7 @@ def register():
 def send_webmentions(post, args):
     try:
         app.logger.debug("queueing webmentions for {}".format(post.shortid))
-        do_send_webmentions.delay(post.shortid)
+        queue.enqueue(do_send_webmentions, post.shortid)
         return True, 'Success'
 
     except Exception as e:
@@ -26,7 +26,6 @@ def send_webmentions(post, args):
             .format(e)
 
 
-@queue.queueable
 def do_send_webmentions(post_id):
     app.logger.debug("sending mentions for {}".format(post_id))
     post = Post.load_by_shortid(post_id)

@@ -4,7 +4,7 @@ actions = {}
 
 
 def register(hook, action):
-    app.logger.debug('registering hook %s -> %s', hook, action)
+    #app.logger.debug('registering hook %s -> %s', hook, action)
     actions.setdefault(hook, []).append(action)
 
 
