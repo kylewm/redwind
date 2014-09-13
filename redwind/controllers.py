@@ -1,6 +1,7 @@
 from . import api
 from . import app
 from . import auth
+from . import db
 from . import hooks
 from . import util
 from . import contexts
@@ -12,6 +13,8 @@ from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user
+from sqlalchemy.orm import subqueryload
+
 import urllib.parse
 import jinja2.filters
 
@@ -40,14 +43,6 @@ AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
 def render_posts(title, post_types, page, per_page, tag=None,
                  include_hidden=False, include_drafts=False):
-    from sqlalchemy.orm import subqueryload, joinedload
-
-    # mdata = Metadata()
-    # posts, is_first, is_last = mdata.load_posts(
-    #     reverse=True, post_types=post_types, tag=tag,
-    #     include_hidden=include_hidden,
-    #     include_drafts=include_drafts,
-    #     page=page, per_page=per_page)
 
     query = Post.query
     query = query.options(subqueryload(Post.mentions),
@@ -82,7 +77,7 @@ def render_posts(title, post_types, page, per_page, tag=None,
 @app.route('/page/<int:page>')
 def index(page):
     # leave out hidden posts
-    return render_posts(None, POST_TYPES, page, 30,
+    return render_posts(None, POST_TYPES, page, 15,
                         include_hidden=False,
                         include_drafts=current_user.is_authenticated())
 
@@ -594,7 +589,7 @@ def save_post(post):
         # populate the Post object and save it to the database,
         # redirect to the view
         post.title = request.form.get('title', '')
-        post._content = request.form.get('content')
+        post.content = post._content = request.form.get('content')
 
         post.draft = request.form.get('draft', 'false') == 'true'
         post.hidden = request.form.get('hidden', 'false') == 'true'
@@ -678,6 +673,9 @@ def save_post(post):
         app.logger.debug('uploaded files map %s', file_to_url)
 
         post.save()
+        if not post.id:
+            db.session.add(post)
+        db.session.commit()
 
         with Metadata.writeable() as mdata:
             mdata.add_or_update_post(post)

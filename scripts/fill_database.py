@@ -7,7 +7,11 @@ db.create_all()
 
 with app.test_request_context():
     for post in Metadata().iterate_all_posts():
+        if not post:
+            continue
+
         print('adding post', post.path)
+        post._path = post.path
         post.content = post.get_content()
         post.content_html = post.get_content_html()
 

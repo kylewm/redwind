@@ -9,9 +9,9 @@ login_mgr.login_view = 'index'
 
 @login_mgr.user_loader
 def load_user(domain):
-    user = User.load(os.path.join(app.root_path, '_data/user.json'))
-    user.authenticated = True
-    if user.domain == domain:
+    user = User.load(domain)
+    if user:
+        user.authenticated = True
         return user
     else:
         # guest user

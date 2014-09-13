@@ -70,28 +70,28 @@ class JsonType(db.TypeDecorator):
 
 posts_to_mentions = db.Table(
     'posts_to_mentions', db.Model.metadata,
-    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
-    db.Column('mention_id', db.Integer, db.ForeignKey('mention.id')))
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
+    db.Column('mention_id', db.Integer, db.ForeignKey('mention.id'), index=True))
 
 posts_to_reply_contexts = db.Table(
     'posts_to_reply_contexts', db.Model.metadata,
-    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
 
 posts_to_repost_contexts = db.Table(
     'posts_to_repost_contexts', db.Model.metadata,
-    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
 
 posts_to_like_contexts = db.Table(
     'posts_to_like_contexts', db.Model.metadata,
-    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
 
 posts_to_bookmark_contexts = db.Table(
     'posts_to_bookmark_contexts', db.Model.metadata,
-    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id')))
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
 
 
 class User(db.Model):
@@ -102,7 +102,11 @@ class User(db.Model):
     facebook_access_token = db.Column(db.String(512))
 
     @classmethod
-    def load(cls, path):
+    def load(cls, domain):
+        return cls.query.filter(cls.domain==domain).first()
+
+    @classmethod
+    def load_from_file(cls, path):
         # app.logger.debug("loading from path %s", os.path.abspath(path))
         if os.path.exists(path):
             with open(path, 'r') as f:
@@ -133,7 +137,7 @@ class User(db.Model):
         }
         return util.filter_empty_keys(data)
 
-    def save(self):
+    def save_to_file(self):
         filename = os.path.join(app.root_path, '_data/user.json')
         with open(filename, 'w') as f:
             json.dump(self.to_json(), f, indent=True)
@@ -162,7 +166,7 @@ class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(256))
     caption = db.Column(db.Text)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), index=True)
 
     @classmethod
     def from_json(cls, post, data):
@@ -201,9 +205,7 @@ class Location(db.Model):
     postal_code = db.Column(db.String(32))
     country_code = db.Column(db.String(8))
 
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-
-
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), index=True)
 
     @classmethod
     def from_json(cls, data):
@@ -280,7 +282,7 @@ class Post(db.Model):
         'Context', secondary=posts_to_bookmark_contexts)
 
     title = db.Column(db.String(256))
-    published = db.Column(db.DateTime)
+    published = db.Column(db.DateTime, index=True)
     slug = db.Column(db.String(256))
 
     syndication = db.Column(JsonType)
@@ -328,12 +330,15 @@ class Post(db.Model):
 
     @classmethod
     def load_by_date(cls, post_type, year, month, day, index):
-        return cls.load(
-            cls.date_to_path(post_type, year, month, day, index))
+        return cls.query.filter(
+            cls._path==cls.date_to_path(post_type, year, month, day, index)
+        ).first()
 
     @classmethod
     def load_by_shortid(cls, shortid):
-        return cls.load(cls.shortid_to_path(shortid))
+        return cls.query.filter(
+            cls._path==cls.load(cls.shortid_to_path(shortid))
+        ).first()
 
     @classmethod
     def date_to_path(cls, post_type, year, month, day, index):
@@ -427,7 +432,7 @@ class Post(db.Model):
             idx = 1
             while True:
                 self.date_index = util.base60_encode(idx)
-                if not os.path.exists(get_fs_path(self.path)):
+                if Post.query.filter(Post._path==self.path).count() == 0:
                     break
                 idx += 1
 
