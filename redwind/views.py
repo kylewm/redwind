@@ -318,12 +318,6 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/setup')
-def setup():
-    db.create_all()
-    return redirect(url_for('index'))
-
-
 @app.route('/settings')
 @login_required
 def settings():
@@ -353,9 +347,8 @@ def get_top_tags(n=10):
     rank = collections.defaultdict(int)
     now = datetime.datetime.utcnow()
 
-    select_tags = sqlalchemy.sql.select([Post.published, Post.tags])
-    entries = db.engine.execute(select_tags)
-    for published, tags in entries:
+    entries = Post.query.join(Post.tags).values(Post.published, Tag.name)
+    for published, tag in entries:
         weight = 0
         if published:
             delta = now - published
@@ -369,8 +362,7 @@ def get_top_tags(n=10):
                 weight = 0.3
             elif delta < datetime.timedelta(days=730):
                 weight = 0.1
-        for tag in tags:
-            rank[tag] += weight
+        rank[tag] += weight
 
     ordered = sorted(list(rank.items()), key=operator.itemgetter(1),
                      reverse=True)

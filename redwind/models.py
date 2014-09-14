@@ -1,16 +1,10 @@
 from . import app
 from . import db
 from . import util
-from . import archiver
 
-import collections
-import mf2util
 import os
 import os.path
 import json
-import time
-from operator import attrgetter, itemgetter
-from contextlib import contextmanager
 
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'

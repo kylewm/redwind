@@ -14,19 +14,27 @@ from redis import Redis
 from rq import Queue
 from config import Configuration
 
-import os
 import logging
-from logging.handlers import RotatingFileHandler
 
 
 app = Flask('redwind')
 app.config.from_object(Configuration)
-
-db = SQLAlchemy(app)
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
 redis = Redis()
 queue = Queue(connection=redis)
+db = SQLAlchemy(app)
+toolbar = DebugToolbarExtension(app)
+
+
+def init_db():
+    db.create_all()
+
+
+#@app.cli.command('initdb')
+#def initdb_command():
+#    """Creates the database tables."""
+#    init_db()
+#    print('Initialized the database.')
+
 
 assets = Environment(app)
 assets.register(
@@ -47,9 +55,9 @@ if app.config.get('PROFILE'):
     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, f, restrictions=[60],
                                       sort_by=('cumtime', 'tottime', 'ncalls'))
 
-if app.debug:
-    toolbar = DebugToolbarExtension(app)
-    app.config['SITE_URL'] = 'http://localhost:5000'
+
+
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 if not app.debug:
     app.logger.setLevel(logging.DEBUG)
