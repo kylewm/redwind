@@ -40,27 +40,37 @@ class JsonType(db.TypeDecorator):
 posts_to_mentions = db.Table(
     'posts_to_mentions', db.Model.metadata,
     db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
-    db.Column('mention_id', db.Integer, db.ForeignKey('mention.id'), index=True))
+    db.Column('mention_id', db.Integer, db.ForeignKey('mention.id'),
+              index=True))
 
 posts_to_reply_contexts = db.Table(
     'posts_to_reply_contexts', db.Model.metadata,
     db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'),
+              index=True))
 
 posts_to_repost_contexts = db.Table(
     'posts_to_repost_contexts', db.Model.metadata,
     db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'),
+              index=True))
 
 posts_to_like_contexts = db.Table(
     'posts_to_like_contexts', db.Model.metadata,
     db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'),
+              index=True))
 
 posts_to_bookmark_contexts = db.Table(
     'posts_to_bookmark_contexts', db.Model.metadata,
     db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
-    db.Column('context_id', db.Integer, db.ForeignKey('context.id'), index=True))
+    db.Column('context_id', db.Integer, db.ForeignKey('context.id'),
+              index=True))
+
+posts_to_tags = db.Table(
+    'posts_to_tags', db.Model.metadata,
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
+    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), index=True))
 
 
 class User(db.Model):
@@ -72,7 +82,7 @@ class User(db.Model):
 
     @classmethod
     def load(cls, domain):
-        return cls.query.filter(cls.domain==domain).first()
+        return cls.query.filter_by(domain=domain).first()
 
     def __init__(self, domain):
         self.domain = domain
@@ -169,6 +179,7 @@ class Location(db.Model):
 
 
 class Post(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(256))
     post_type = db.Column(db.String(64))
@@ -202,11 +213,11 @@ class Post(db.Model):
     photos = db.relationship('Photo', backref='post')
 
     # TODO create Tag table
-    tags = db.Column(JsonType)
-    audience = db.Column(JsonType)
+    #tags = db.Column(JsonType)
+    tags = db.relationship('Tag', secondary=posts_to_tags)
 
-    mentions = db.relationship(
-        'Mention', secondary=posts_to_mentions, backref='posts')
+    audience = db.Column(JsonType)
+    mentions = db.relationship('Mention', secondary=posts_to_mentions)
 
     content = db.Column(db.Text)
     content_html = db.Column(db.Text)
@@ -438,6 +449,18 @@ class Mention(db.Model):
     @property
     def title_or_url(self):
         return self.title or util.prettify_url(self.permalink)
+
+
+class Tag(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256))
+    posts = db.relationship('Post', secondary=posts_to_tags)
+
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return self.name
 
 
 class AddressBook:
