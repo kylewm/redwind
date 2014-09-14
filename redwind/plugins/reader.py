@@ -1,7 +1,7 @@
 from .. import app
 from .. import queue
 from .. import archiver
-from .. import controllers
+from .. import views
 
 from flask import render_template
 import datetime
@@ -55,7 +55,7 @@ def reader_handler():
         json = archiver.load_json_from_archive(feed)
         if json:
             for entry in mf2util.interpret_feed(json, feed)['feed']:
-                entry['human-time'] = controllers.human_time(
+                entry['human-time'] = views.human_time(
                     entry.get('published') or entry.get('start'))
                 all_entries.append(entry)
 

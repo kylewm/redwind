@@ -19,10 +19,6 @@ FAVORITE_INTENT_URL = 'https://twitter.com/intent/favorite?tweet_id={}'
 OPEN_STREET_MAP_URL = 'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'
 
 
-POST_TYPES = ('article', 'note', 'like', 'share', 'reply',
-              'checkin', 'photo', 'bookmark')
-
-
 class JsonType(db.TypeDecorator):
     """Represents an immutable structure as a json-encoded string.
     http://docs.sqlalchemy.org/en/rel_0_9/core/types.html#marshal-json-strings

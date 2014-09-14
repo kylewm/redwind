@@ -8,9 +8,7 @@
     <meta name="description" content=""/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-    <link rel="updates alternate" type="application/atom+xml" href="{{ url_for('updates_atom') }}" title="Kyle Mahan: Updates" />
-    <link rel="articles alternate" type="application/atom+xml" href="{{ url_for('articles_atom') }}" title="Kyle Mahan: Articles" />
-    <link rel="all alternate" type="application/atom+xml" href="{{ url_for('all_atom') }}" title="Kyle Mahan: All" />
+    {% if atom_url and atom_title %}<link rel="updates alternate" type="application/atom+xml" href="{{atom_url}}" title="{{atom_title}}" />{% endif %}
     <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
 
     <link rel="webmention" href="{{ url_for('receive_webmention') }}"/>

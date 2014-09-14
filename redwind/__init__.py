@@ -59,7 +59,7 @@ if not app.debug:
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
 
-for handler in ['controllers']:
+for handler in ['views']:
     importlib.import_module('redwind.' + handler)
 
 for plugin in ['facebook', 'locations', 'push', 'reader', 'twitter',

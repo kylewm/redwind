@@ -5,7 +5,7 @@ from . import contexts
 from . import db
 from . import hooks
 from . import util
-from .models import Post, Location, Context, AddressBook, Photo, POST_TYPES
+from .models import Post, Location, Context, AddressBook, Photo
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
@@ -24,7 +24,6 @@ import pytz
 import requests
 import urllib.parse
 
-
 bleach.ALLOWED_TAGS += ['img', 'p', 'br']
 bleach.ALLOWED_ATTRIBUTES.update({
     'img': ['src', 'alt', 'title']
@@ -32,14 +31,27 @@ bleach.ALLOWED_ATTRIBUTES.update({
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
-POST_TYPE_RULE = '<any({}):post_type>'.format(','.join(POST_TYPES))
-DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<index>')
+POST_TYPES = [
+    ('article', 'articles', 'All Articles'),
+    ('note', 'notes', 'All Notes'),
+    ('like', 'likes', 'All Likes'),
+    ('share', 'shares', 'All Shares'),
+    ('reply', 'replies', 'All Replies'),
+    ('checkin', 'checkins', 'All Check-ins'),
+    ('photo', 'photos', 'All Photos'),
+    ('bookmark', 'bookmarks', 'All Bookmarks'),
+]
+
+POST_TYPE_RULE = '<any({}):post_type>'.format(
+    ','.join(tup[0] for tup in POST_TYPES))
+DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/'
+             '<int(fixed_digits=2):day>/<index>')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
 
-def render_posts(title, post_types, page, per_page, tag=None,
-                 include_hidden=False, include_drafts=False):
+def collect_posts(post_types, page, per_page, tag,
+                  include_hidden=False, include_drafts=False):
     query = Post.query
     query = query.options(sqlalchemy.orm.subqueryload(Post.mentions),
                           sqlalchemy.orm.subqueryload(Post.photos),
@@ -53,121 +65,105 @@ def render_posts(title, post_types, page, per_page, tag=None,
     if not include_drafts:
         query = query.filter_by(draft=False)
     query = query.filter_by(deleted=False)
+    if post_types:
+        query = query.filter(Post.post_type.in_(post_types))
     query = query.order_by(Post.published.desc())
     pagination = query.paginate(page=page, per_page=per_page)
     posts = pagination.items
     is_first = not pagination.has_prev
     is_last = not pagination.has_next
+    posts = [post for post in posts if check_audience(post)]
+    return posts, is_first, is_last
 
+
+def render_posts(title, posts, page, is_first, is_last):
     if not posts:
         abort(404)
-
-    posts = [post for post in posts if check_audience(post)]
+    atom_url = url_for(request.endpoint, feed='atom', _external=True)
+    atom_title = title or 'Stream'
     return render_template('posts.html', posts=posts, title=title,
                            prev_page=None if is_first else page-1,
                            next_page=None if is_last else page+1,
-                           body_class='h-feed', article_class='h-entry')
+                           body_class='h-feed', article_class='h-entry',
+                           atom_url=atom_url, atom_title=atom_title)
 
 
-@app.route('/', defaults={'page': 1})
-@app.route('/page/<int:page>')
-def index(page):
-    # leave out hidden posts
-    return render_posts(None, POST_TYPES, page, 15,
-                        include_hidden=False,
-                        include_drafts=current_user.is_authenticated())
-
-
-@app.route('/articles', defaults={'page': 1})
-@app.route('/articles/page/<int:page>')
-def articles(page):
-    return render_posts('All Articles', ('article',), page, 10,
-                        include_hidden=True,
-                        include_drafts=current_user.is_authenticated())
-
-
-@app.route('/checkins', defaults={'page': 1})
-@app.route('/checkins/page/<int:page>')
-def checkins(page):
-    return render_posts('All Check-ins', ('checkin',), page, 10,
-                        include_hidden=True,
-                        include_drafts=current_user.is_authenticated())
-
-
-@app.route('/bookmarks', defaults={'page': 1})
-@app.route('/bookmarks/page/<int:page>')
-def bookmarks(page):
-    return render_posts('All Bookmarks', ('bookmark',), page, 10,
-                        include_hidden=True,
-                        include_drafts=current_user.is_authenticated())
-
-
-@app.route('/photos', defaults={'page': 1})
-@app.route('/photos/page/<int:page>')
-def photos(page):
-    return render_posts('All Photos', ('photo',), page, 10,
-                        include_hidden=True,
-                        include_drafts=current_user.is_authenticated())
-
-
-@app.route('/likes', defaults={'page': 1})
-@app.route('/likes/page/<int:page>')
-def likes(page):
-    return render_posts('All Likes', ('like',), page, 30,
-                        include_hidden=True,
-                        include_drafts=current_user.is_authenticated())
-
-
-@app.route('/everything', defaults={'page': 1})
-@app.route('/everything/page/<int:page>')
-def everything(page):
-    return render_posts('Everything', POST_TYPES, page, 30,
-                        include_hidden=True,
-                        include_drafts=current_user.is_authenticated())
-
-
-@app.route('/tag/<tag>', defaults={'page': 1})
-@app.route('/tag/<tag>/page/<int:page>')
-def posts_by_tag(tag, page):
-    return render_posts('All posts tagged ' + tag, POST_TYPES, page, 30,
-                        tag=tag, include_hidden=True,
-                        include_drafts=current_user.is_authenticated())
-
-
-def render_posts_atom(title, feed_id, post_types, count):
-    query = Post.query
-    query = query.options(sqlalchemy.orm.subqueryload(Post.mentions),
-                          sqlalchemy.orm.subqueryload(Post.photos),
-                          sqlalchemy.orm.subqueryload(Post.location),
-                          sqlalchemy.orm.subqueryload(Post.reply_contexts),
-                          sqlalchemy.orm.subqueryload(Post.repost_contexts),
-                          sqlalchemy.orm.subqueryload(Post.like_contexts),
-                          sqlalchemy.orm.subqueryload(Post.bookmark_contexts))
-    if post_types:
-        query = query.filter(Post.post_type.in_(post_types))
-    query = query.filter_by(deleted=False)
-    query = query.order_by(Post.published.desc()).limit(5)
-    posts = [post for post in query.all() if check_audience(post)]
+def render_posts_atom(title, feed_id, posts):
     return make_response(
         render_template('posts.atom', title=title, feed_id=feed_id,
                         posts=posts),
         200, {'Content-Type': 'application/atom+xml; charset=utf-8'})
 
 
+@app.route('/', defaults={'page': 1})
+@app.route('/page/<int:page>')
+def index(page):
+    # leave out hidden posts
+    posts, is_first, is_last = collect_posts(
+        None, page, app.config['POSTS_PER_PAGE'], None, include_hidden=False,
+        include_drafts=current_user.is_authenticated())
+    if request.args.get('feed') == 'atom':
+        return render_posts_atom('Stream', 'index.atom', posts)
+    return render_posts(None, posts, page, is_first, is_last)
+
+
+@app.route('/everything', defaults={'page': 1})
+@app.route('/everything/page/<int:page>')
+def everything(page):
+    posts, is_first, is_last = collect_posts(
+        None, page, app.config['POSTS_PER_PAGE'], None, include_hidden=True,
+        include_drafts=current_user.is_authenticated())
+
+    if request.args.get('feed') == 'atom':
+        return render_posts_atom('Everything', 'everything.atom', posts)
+    return render_posts('Everything', posts, page, is_first, is_last)
+
+
+# register view functions for each post type /notes, /photos, etc.
+def create_posts_of_type_view_func(post_type, plural, title):
+    def posts_of_type(page):
+        posts, is_first, is_last = collect_posts(
+            (post_type,), page, app.config['POSTS_PER_PAGE'], None,
+            include_hidden=True,
+            include_drafts=current_user.is_authenticated())
+
+        if request.args.get('feed') == 'atom':
+            return render_posts_atom(title, plural + '.atom', posts)
+        return render_posts(title, posts, page, is_first, is_last)
+    return posts_of_type
+
+for post_type, plural, title in POST_TYPES:
+    view_func = create_posts_of_type_view_func(post_type, plural, title)
+    app.add_url_rule('/' + plural, plural, view_func, defaults={'page': 1})
+    app.add_url_rule('/' + plural + '/page/<int:page>', plural, view_func)
+
+
+@app.route('/tag/<tag>', defaults={'page': 1})
+@app.route('/tag/<tag>/page/<int:page>')
+def posts_by_tag(tag, page):
+    posts, is_first, is_last = collect_posts(
+        None, page, app.config['POSTS_PER_PAGE'], tag, include_hidden=True,
+        include_drafts=current_user.is_authenticated())
+    title = 'All posts tagged' + tag
+
+    if request.args.get('feed') == 'atom':
+        return render_posts_atom(title, 'tag-' + tag + '.atom', posts)
+    return render_posts(title, posts, page, is_first, is_last)
+
+
 @app.route("/all.atom")
 def all_atom():
-    return render_posts_atom('All', 'all.atom', None, 5)
+    return redirect(url_for('everything', feed='atom'))
 
 
 @app.route("/updates.atom")
 def updates_atom():
-    return render_posts_atom('Updates', 'updates.atom',
-                             ('article', 'note', 'share'), 5)
+    return redirect(url_for('index', feed='atom'))
 
 
 @app.route("/articles.atom")
 def articles_atom():
-    return render_posts_atom('Articles', 'articles.atom', ('article',), 5)
+    return redirect(url_for('articles', feed='atom'))
 
 
 def check_audience(post):
