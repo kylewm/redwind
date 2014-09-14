@@ -1,13 +1,15 @@
+import os
+
 
 class Configuration(object):
     DEBUG = False
     PROFILE = False
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///temp.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/kylewm.com.db'.format(os.environ['HOME'])
     SECRET_KEY = 'this is a secret key'
     PYGMENTS_STYLE = 'tango'
-    PROD_URL = 'http://boiling-plateau-1247.herokuapp.com/'
-    SITE_URL = 'http://boiling-plateau-1247.herokuapp.com/'
+    PROD_URL = 'http://kylewm.com'
+    SITE_URL = 'http://localhost:5000'
     SHORT_SITE_URL = 'http://kyl.im'
     SHORT_SITE_CITE = 'kyl.im'
     TIMEZONE = 'America/Los_Angeles'

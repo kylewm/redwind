@@ -53,14 +53,7 @@ if app.debug:
 
 if not app.debug:
     app.logger.setLevel(logging.DEBUG)
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-    file_handler = RotatingFileHandler('logs/app.log', maxBytes=1048576,
-                                       backupCount=5)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    app.logger.addHandler(file_handler)
+    app.logger.addHandler(logging.StreamHandler())
 
 for handler in ['views']:
     importlib.import_module('redwind.' + handler)

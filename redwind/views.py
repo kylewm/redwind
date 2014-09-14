@@ -82,13 +82,8 @@ def collect_posts(post_types, page, per_page, tag,
 
 
 def render_posts(title, posts, page, is_first, is_last):
-    if not posts:
-        abort(404)
-
     atom_args = request.view_args.copy()
-    atom_args.update({'page': 1,
-                      'feed': 'atom',
-                      '_external': True})
+    atom_args.update({'page': 1, 'feed': 'atom', '_external': True})
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
     return render_template('posts.html', posts=posts, title=title,
@@ -320,6 +315,12 @@ def indieauth():
 @app.route("/logout")
 def logout():
     logout_user()
+    return redirect(url_for('index'))
+
+
+@app.route('/setup')
+def setup():
+    db.create_all()
     return redirect(url_for('index'))
 
 
