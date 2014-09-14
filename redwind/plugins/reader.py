@@ -8,7 +8,6 @@ import datetime
 import json
 import mf2util
 import os
-import pytz
 
 
 def register():
@@ -42,11 +41,11 @@ def reader_handler():
     def get_pub_date(entry):
         result = entry.get('published') or entry.get('start')
         if not result:
-            result = datetime.datetime(1982, 11, 24, tzinfo=pytz.utc)
+            result = datetime.datetime(1982, 11, 24, tzinfo=datetime.timezone.utc)
         if isinstance(result, datetime.date) and not isinstance(result, datetime.datetime):
             result = datetime.datetime.combine(result, datetime.time())
         if result and hasattr(result, 'tzinfo') and not result.tzinfo:
-            result = pytz.utc.localize(result)
+            result = result.replace(tzinfo=datetime.timezone.utc)
         return result
 
     all_entries = []
