@@ -14,6 +14,7 @@ from redis import Redis
 from rq import Queue
 from config import Configuration
 
+import os
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -52,6 +53,8 @@ if app.debug:
 
 if not app.debug:
     app.logger.setLevel(logging.DEBUG)
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
     file_handler = RotatingFileHandler('logs/app.log', maxBytes=1048576,
                                        backupCount=5)
     formatter = logging.Formatter(
