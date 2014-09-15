@@ -44,7 +44,7 @@ h6{font-size:14px; line-height:15px}
 
 ul {list-style-type: disc; margin-left: 1em;}
 .microcard img { height: 1.2em; width: auto; vertical-align: middle; }
-article img { max-width: 100%; max-height: 512px; }
+article img { max-width: 100%; max-height: 512px; width: auto; height: auto; }
 .sidebar .h-card {text-align: center;}
 .sidebar .h-card .u-photo {height: 114px; width: auto; border-radius: 57px;}
 .sidebar .h-card a {text-decoration: none; color: #333;}
@@ -114,8 +114,7 @@ article a.p-category {background-color: #eee; padding: 0px 5px;
                       display: inline-block; text-decoration: none;}
 
 .webactions { float: right; }
-
-/*article .tags, article .syndication-links {margin: 10px 0px;}*/
+.p-in-reply-to {max-height: 300px; overflow-y: auto;}
 
 
 /* #Page Styles

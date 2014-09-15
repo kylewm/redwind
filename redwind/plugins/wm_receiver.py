@@ -1,6 +1,7 @@
 from .. import app
 from .. import db
 from .. import queue
+from .. import redis
 from .. import archiver
 from .. import util
 from ..models import Post, Mention
@@ -49,7 +50,7 @@ def receive_webmention():
 
 @app.route('/webmention/status/<key>')
 def webmention_status(key):
-    job = Job.fetch(key)
+    job = Job.fetch(key, connection=redis)
     rv = job.result
     if not rv:
         rv = {
