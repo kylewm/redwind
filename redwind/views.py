@@ -44,6 +44,8 @@ POST_TYPES = [
 
 POST_TYPE_RULE = '<any({}):post_type>'.format(
     ','.join(tup[0] for tup in POST_TYPES))
+PLURAL_TYPE_RULE = '<any({}):plural_type>'.format(
+    ','.join(tup[1] for tup in POST_TYPES))
 DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/'
              '<int(fixed_digits=2):day>/<index>')
 
@@ -124,23 +126,19 @@ def everything(page):
     return render_posts('Everything', posts, page, is_first, is_last)
 
 
-# register view functions for each post type /notes, /photos, etc.
-def create_posts_of_type_view_func(post_type, plural, title):
-    def posts_of_type(page):
-        posts, is_first, is_last = collect_posts(
-            (post_type,), page, app.config['POSTS_PER_PAGE'], None,
-            include_hidden=True,
-            include_drafts=current_user.is_authenticated())
+@app.route('/' + PLURAL_TYPE_RULE, defaults={'page': 1})
+@app.route('/' + PLURAL_TYPE_RULE + '/page/<int:page>')
+def posts_by_type(plural_type, page):
+    post_type, _, title = next(tup for tup in POST_TYPES
+                               if tup[1] == plural_type)
+    posts, is_first, is_last = collect_posts(
+        (post_type,), page, app.config['POSTS_PER_PAGE'], None,
+        include_hidden=True,
+        include_drafts=current_user.is_authenticated())
 
-        if request.args.get('feed') == 'atom':
-            return render_posts_atom(title, plural + '.atom', posts)
-        return render_posts(title, posts, page, is_first, is_last)
-    return posts_of_type
-
-for post_type, plural, title in POST_TYPES:
-    view_func = create_posts_of_type_view_func(post_type, plural, title)
-    app.add_url_rule('/' + plural, plural, view_func, defaults={'page': 1})
-    app.add_url_rule('/' + plural + '/page/<int:page>', plural, view_func)
+    if request.args.get('feed') == 'atom':
+        return render_posts_atom(title, plural_type + '.atom', posts)
+    return render_posts(title, posts, page, is_first, is_last)
 
 
 @app.route('/tag/<tag>', defaults={'page': 1})
@@ -256,7 +254,7 @@ def post_by_date(post_type, year, month, day, index, slug):
                     slug=post.slug))
 
     title = post.title
-    if not title:
+    if not title and post.content:
         title = jinja2.filters.do_truncate(
             util.format_as_text(post.content), 50)
     if not title:
@@ -556,11 +554,19 @@ def save_post(post):
     lat = request.form.get('latitude')
     lon = request.form.get('longitude')
     if lat and lon:
-        post.location = Location(latitude=float(lat),
-                                 longitude=float(lon),
-                                 name=request.form.get('location_name'))
+        if not post.location:
+            post.location = Location()
+
+        post.location.latitude = float(lat)
+        post.location.longitude = float(lon)
+        loc_name = request.form.get('location_name')
+        if loc_name:
+            post.location.name = loc_name
     else:
+        old_loc = post.location
         post.location = None
+        if old_loc:
+            db.session.delete(old_loc)
 
     slug = request.form.get('slug')
     if slug:
