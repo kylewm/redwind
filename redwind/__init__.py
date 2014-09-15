@@ -57,7 +57,7 @@ if app.config.get('PROFILE'):
 
 
 
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 if not app.debug:
     app.logger.setLevel(logging.DEBUG)

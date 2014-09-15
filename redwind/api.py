@@ -174,9 +174,12 @@ def micropub_endpoint():
 
     post = Post('photo' if photo_file else 'reply' if in_reply_to
                 else 'like' if like_of else 'note')
+    post.reserve_date_index()
 
     post.title = request.form.get('name')
     post.content = request.form.get('content')
+    post.content_html = util.markdown_filter(
+        post.content, img_path=post.get_image_path())
 
     if in_reply_to:
         post.in_reply_to.append(in_reply_to)
@@ -197,8 +200,6 @@ def micropub_endpoint():
         post.published = pub
     else:
         post.published = datetime.datetime.utcnow()
-
-    post.reserve_date_index()
 
     loc_str = request.form.get('location')
     geo_prefix = 'geo:'

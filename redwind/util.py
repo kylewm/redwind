@@ -328,6 +328,9 @@ def person_to_microcard(fullname, displayname, entry, pos):
 
 def markdown_filter(data, img_path=None, link_twitter_names=True,
                     person_processor=person_to_microcard):
+    if data is None:
+        return ''
+    
     if img_path:
         # replace relative paths to images with absolute
         data = RELATIVE_PATH_RE.sub('[\g<1>](' + img_path + '/\g<2>)', data)
@@ -362,6 +365,8 @@ def process_people(data, person_processor):
 
 
 def format_as_text(html, remove_imgs=True):
+    if html is None:
+        return ''
     soup = bs4.BeautifulSoup(html)
     # replace links with the URL
     for a in soup.find_all('a'):
