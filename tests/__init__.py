@@ -3,6 +3,7 @@ from redwind import app, db
 from redwind.models import User
 from flask import redirect
 from flask.ext.login import login_user, logout_user, current_user
+import re
 
 
 class AppTestCase(unittest.TestCase):
@@ -26,8 +27,12 @@ class AppTestCase(unittest.TestCase):
 class AuthedTestCase(AppTestCase):
 
     def _register_bypass_login(self):
+        user = User('example.com')
+        db.session.add(user)
+        db.session.commit()
+
         def bypass_login():
-            user = User('example.com')
+            user = User.load('example.com')
             user.authenticated = True
             login_user(user)
             return redirect('/')
@@ -41,25 +46,25 @@ class AuthedTestCase(AppTestCase):
         self.client.get('/bypass_login')
 
     def tearDown(self):
-        super(AuthedTestCase, self).tearDown()
         self.client.get('/logout')
+        super(AuthedTestCase, self).tearDown()
 
 
 class ViewsTest(AuthedTestCase):
 
     def test_empty_db(self):
+        """Make sure there are no articles when the database is empty"""
         rv = self.client.get('/')
-        self.assertTrue('<article' not in rv.get_data(as_text=True))
+        self.assertNotIn('<article', rv.get_data(as_text=True))
 
     def test_create_post(self):
-        print('current_user', current_user)
-        print('is authed', current_user.is_authenticated())
-
+        """Create a simple post as the current user"""
         rv = self.client.post('/save_new', data={
             'post_type': 'note',
             'content': 'This is a test note'})
         self.assertEqual(302, rv.status_code)
-
+        self.assertTrue(re.match('.*/note/\d+/\d+/\d+/1/this-is-a-test-note$',
+                                 rv.location))
+        # follow the redirect
         rv = self.client.get(rv.location)
-        print(rv.get_data(as_text=True))
-        self.assertFalse(True)
+        self.assertIn('This is a test note', rv.get_data(as_text=True))
