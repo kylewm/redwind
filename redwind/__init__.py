@@ -34,9 +34,8 @@ assets = Environment(app)
 #    'css_all', Bundle('css/base.css', 'css/skeleton.css',
 #                      'css/layout.css', 'css/pygments.css',
 #                      filters='cssmin', output='css/site.css'))
-assets.register(
-    'css_all', Bundle('css/style.css', 'css/pygments.css',
-                      filters='cssmin', output='css/site.css'))
+assets.register('css_all', Bundle('css/style.css', 'css/pygments.css',
+                                  output='css/site.css'))
 
 
 app.jinja_options = ImmutableDict(

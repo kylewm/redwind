@@ -1,6 +1,4 @@
-
 <article class="{%if article_class%}{{article_class}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}">
-
 
   {% include "_reply_contexts.html" %}
   {% include "_like_contexts.html" %}
@@ -11,7 +9,7 @@
   {% endif %}
 
   <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
-    {% include "_repost_contexts.html" %}
+
     <div class="primary-content">{{post.content_html | safe}}</div>
     {% for photo in post.photos %}
       <div class="photo-holder">
@@ -43,6 +41,8 @@
 
   <div class="post-metadata">
 
+    {% include "_admin_post_controls.html" %}
+
     <span class="metadata-component">
       <a class="u-url" href="{{post.permalink}}">
         <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
@@ -63,14 +63,14 @@
     {% endif %}
 
 
-    <span class="syndication-links metadata-component">
-      {% if post.syndication %}
+    {% if post.syndication %}
+      <span class="syndication-links metadata-component">
         Also on
         {% for s in post.syndication %}
           {{ s | format_syndication_url }}
         {% endfor %}
-      {% endif %}
-    </span>
+      </span>
+    {% endif %}
 
     <span class="webactions metadata-component">
       <indie-action do="reply" with="{{post.permalink}}">
@@ -100,21 +100,7 @@
         {% endif %}
       </div>
     {% endif %}
-
-  {% if current_user.is_authenticated() %}
-    <a class="admin-post-controls-arrow" href="#"><i class="fa fa-pencil"></i></a>
-    <span class="admin-post-controls" style="display:none;">
-      <a href="{{ url_for('edit_by_id', id=post.shortid) }}"><i class="fa fa-edit"></i> Edit </a>
-      | <a href="{{ url_for('share_on_twitter', id=post.shortid) }}"><i class="fa fa-twitter"></i> Twitter </a>
-      | <a href="{{ url_for('share_on_facebook', id=post.shortid) }}"><i class="fa fa-facebook"></i> Facebook </a>
-      | <a href="{{ url_for('delete_by_id', id=post.shortid) }}" onclick="return window.confirm('Delete {{post.post_type}}?')">
-      <i class="fa fa-trash-o"></i> Delete </a>
-    </span>
-  {% endif %}
-
-
-  </div> <!-- . post-metadata -->
+  </div> <!--  .post-metadata -->
 
   {% include "_post_mentions.html" %}
-
 </article>

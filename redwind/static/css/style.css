@@ -55,7 +55,7 @@ article a.p-category {
 .post-metadata {
     color: #999;
     font-size: 0.9em;
-    margin-top: 0.3em;
+    margin-top: 0.5em;
 }
 .post-metadata a {
     color: #999;
@@ -63,6 +63,11 @@ article a.p-category {
 
 .post-metadata span + span {
   margin-left: 1em;
+}
+
+.microcard img {
+    max-height: 1.2em;
+    width: auto;
 }
 
 /* ----------- Navgation ----------- */
@@ -86,14 +91,85 @@ nav {
     border-bottom: 2px solid #ddd;
 }
 
+.page-arrows {
+    margin: 10px;
+}
+.page-arrows .page-right {
+    float: right;
+}
+.page-arrows .page-left {
+    float: left;
+}
+
+
 /* ----------- Contexts ----------- */
 
-.p-in-reply-to.h-cite .e-content, .p-repost-of.h-cite .e-content {
+.p-in-reply-to.h-cite .e-content {
     border-left: 1px solid #ddd;
     padding: 0.5em;
     margin-bottom: 0.5em;
 }
 
+.p-repost-of .p-author.image-holder {
+    float: left;
+    margin: 1em 0.5em;
+}
+
+.p-repost-of .p-author.image-holder img {
+    border-radius: 4px;
+    max-width: 64px;
+    height: auto;
+}
+
+.p-repost-of .repost-body {
+    margin-left: calc(64px + 0.5em);
+}
+
+/* ----------- Mentions ----------- */
+
+.mentions {
+    margin: 50px 0px;
+}
+
+.send_webmention {
+    margin-top: 50px;
+}
+
+.p-comment + .p-comment {
+    margin-top: 1rem;
+}
+
+.mention-metadata {
+    color: #999;
+}
+
+.mention-metadata a {
+    color: #999;
+}
+
+/* ----------- Footer ----------- */
+
+footer .site-info {
+    text-align: center;
+    color: #999;
+}
+
+footer .site-info a {
+    text-align: center;
+    color: #666;
+}
+
+footer .p-author.h-card img {
+    max-width: 64px;
+    border-radius: 4px;
+    display:inline;
+    float: left;
+    margin-right: 0.5em;
+}
+
+footer {
+    margin-top: 150px;
+}
 
 /* ----------- Forms ----------- */
 

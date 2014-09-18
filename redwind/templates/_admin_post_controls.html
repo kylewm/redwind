@@ -1,0 +1,11 @@
+
+    {% if current_user.is_authenticated() %}
+      <a class="admin-post-controls-arrow" href="#"><i class="fa fa-pencil"></i></a>
+      <span class="admin-post-controls" style="display:none;">
+        <a href="{{ url_for('edit_by_id', id=post.shortid) }}"><i class="fa fa-edit"></i> Edit </a>
+        | <a href="{{ url_for('share_on_twitter', id=post.shortid) }}"><i class="fa fa-twitter"></i> Twitter </a>
+        | <a href="{{ url_for('share_on_facebook', id=post.shortid) }}"><i class="fa fa-facebook"></i> Facebook </a>
+        | <a href="{{ url_for('delete_by_id', id=post.shortid) }}" onclick="return window.confirm('Delete {{post.post_type}}?')">
+        <i class="fa fa-trash-o"></i> Delete </a>
+      </span>
+    {% endif %}

@@ -1,0 +1,35 @@
+<article class="{%if article_class%}{{article_class}} {%endif%}share note-like">
+  {% for context in post.repost_contexts %}
+    <div class="p-repost-of h-cite">
+
+      {% if context.author_image %}
+        <div class="p-author h-card image-holder">
+          <img class="u-photo" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
+        </div>
+      {% endif %}
+
+      <div class="repost-body">
+        {% if context.author_name %}
+          <div class="p-author h-card name-holder">
+            <i class="fa fa-retweet"></i>
+            <a class="u-url" href="{{context.author_url}}">
+              <span class="p-name">{{context.author_name}}</span>
+            </a> {{context.permalink | domain_from_url}}
+          </div>
+        {% endif %}
+
+        {% if context.content %}
+          <div class="e-content primary-content">{{context.content | safe}}</div>
+        {% endif %}
+
+        <div class="post-metadata">
+              {% include "_admin_post_controls.html" %}
+
+          <a href="{{context.permalink}}">
+            <time class="dt-published" datetime="{{context.published | isotime}}">{{context.published | human_time}}</time></a>
+        </div> <!-- .post-metadata -->
+      </div>
+    </div> <!-- .p-repost-of -->
+  {% endfor %}
+
+</article>

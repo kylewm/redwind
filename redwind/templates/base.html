@@ -45,44 +45,46 @@
     <div style="clear:both"></div>
   </main>
 
-  <div class="p-author h-card">
-    <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle114.jpg')}}"/>
-    <a class="u-url" href="/"><span class="p-name">Kyle Mahan</span></a>
-  </div> <!-- .h-card -->
+  <footer>
 
-  <div class="widget social">
-    <ul>
-      <li><a rel="me" href="gtalk:kyle.mahan@gmail.com">GChat</a></li>
-      <li><a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a></li>
-      <li><a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> (<a class="u-key" rel="key publickey pgpkey" type="application/pgp-keys" href="{{url_for('static', filename='kyle-mahan-public-key.asc')}}">Key</a><a rel="pgp-fingerprint" href="https://twitter.com/kyle_wm/status/454668100873379842"></a>)</li>
-      <li><a rel="me" href="https://github.com/kylewm">GitHub</a></li>
-      <li><a rel="me" href="https://twitter.com/kyle_wm">Twitter</a></li>
-      <li><a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a></li>
-      <li><a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a></li>
-      <li><a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a></li>
-      <li><a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a></li>
-    </ul>
-  </div> <!-- .social -->
+    <div class="social">
+      <div class="p-author h-card">
+        <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle114.jpg')}}"/>
+      <a class="u-url" href="/"><span class="p-name">Kyle Mahan</span></a>
+      </div> <!-- .h-card -->
 
-  <div class="login widget">
-    {% if current_user.is_anonymous() %}
-      <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
-        <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
-        <button id="sign_in_button" type="submit">Sign In</button>
-        <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
-      </form>
-    {% else %}
-      {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
-    {% endif %}
-  </div> <!-- .login -->
+      <a rel="me" href="gtalk:kyle.mahan@gmail.com">GChat</a> &bull;
+      <a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a> &bull;
+      <a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> (<a class="u-key" rel="key publickey pgpkey" type="application/pgp-keys" href="{{url_for('static', filename='kyle-mahan-public-key.asc')}}">Key</a><a rel="pgp-fingerprint" href="https://twitter.com/kyle_wm/status/454668100873379842"></a>) &bull;
+      <a rel="me" href="https://github.com/kylewm">GitHub</a>  &bull;
+      <a rel="me" href="https://twitter.com/kyle_wm">Twitter</a> &bull;
+      <a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a> &bull;
+      <a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a> &bull;
+      <a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a> &bull;
+      <a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a>
+    </div> <!-- .social -->
 
-  <div class="site-info">
-    <div>
-      This site is powered by <a href="http://git.kylewm.com/?p=redwind.git;a=summary">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
+    <div style="clear:both"></div>
+
+    <div class="site-info">
+      <div class="login widget">
+        {% if current_user.is_anonymous() %}
+          <form id="indie_auth_form" action="https://indieauth.com/auth" method="get">
+            <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+            <button id="sign_in_button" type="submit">Sign In</button>
+            <input type="hidden" name="redirect_uri" value="{{ url_for('indieauth', _external=True) }}" />
+          </form>
+        {% else %}
+          {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
+        {% endif %}
+      </div> <!-- .login -->
+      <div>
+        This site is powered by <a href="http://git.kylewm.com/?p=redwind.git;a=summary">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
+      </div>
+      <div>
+        <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="{{ url_for('static', filename='img/cc-by.png') }}" /></a>
+      </div>
     </div>
-    <div>
-      <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="{{ url_for('static', filename='img/cc-by.png') }}" /></a>
-    </div>
-  </div>
+  </footer>
 
 {% endblock body %}

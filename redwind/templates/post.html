@@ -2,7 +2,11 @@
 
 {% block content %}
   {% with is_single = True %}
-    {% include "_post.html" %}
+    {% if post.post_type == 'share' %}
+      {% include "_repost.html" %}
+    {% else %}
+      {% include "_post.html" %}
+    {% endif %}
   {% endwith %}
 
 <form class="send_webmention" method="POST" action="{{ url_for('receive_webmention') }}">
