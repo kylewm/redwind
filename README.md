@@ -16,4 +16,4 @@ The name comes from the great Raymond Chandler short story, the first paragraph 
 
 # Requirements
 
-Python 3.3, Flask, uWSGI, Redis. See requirements.txt for details.
+Python 3.3+, Flask, uWSGI, SQLite (MySQL or Postgres should also work), and Redis. See requirements.txt for details.
