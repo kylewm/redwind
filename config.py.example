@@ -14,9 +14,15 @@ class Configuration(object):
     # the production URL (only used for interpreting comments)
     PROD_URL = 'http://example.com'
 
+    # schema to contact DB
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///replaceme.db'
+    
+    # the number of posts to display on any given page
+    POSTS_PER_PAGE = 15
+
     SHORT_SITE_URL = 'http://sho.rt'
     SHORT_SITE_CITE = 'sho.rt'
-    REDIS_QUEUE_KEY = 'a-unique-key-for-redis'
+
     TIMEZONE = 'America/Los_Angeles'
 
     TWITTER_CONSUMER_KEY = "..."

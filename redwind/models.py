@@ -211,7 +211,8 @@ class Post(db.Model):
     tags = db.relationship('Tag', secondary=posts_to_tags)
 
     audience = db.Column(JsonType)
-    mentions = db.relationship('Mention', secondary=posts_to_mentions)
+    mentions = db.relationship('Mention', secondary=posts_to_mentions,
+                               order_by='Mention.published')
 
     content = db.Column(db.Text)
     content_html = db.Column(db.Text)
