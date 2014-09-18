@@ -14,15 +14,15 @@
         {{ context.title_or_url }}
       </a>
       {% if context.author_name %}
-        by <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}
-        <img class="avatar" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" /></a>
+        by <a class="p-author h-card" href="{{context.author_url}}">
+        <img class="u-photo" src="{{ context.author_image | mirror_image(24) }}" alt="{{context.author_name}}" />
+        <span class="p-name">{{context.author_name}}</span>
+      </a>
       {% endif %}
       from {{context.permalink | domain_from_url}}
 
       {% if context.content %}
-        <blockquote>
-          <div class="">{{context.content | safe}}</div>
-        </blockquote>
+        <div class="e-content">{{context.content | safe}}</div>
       {% endif %}
     </div>
   {% endif %}

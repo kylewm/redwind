@@ -1,9 +1,10 @@
 {% for context in post.reply_contexts %}
   <div class="p-in-reply-to h-cite">
-    In reply to
+    <i class="fa fa-reply"></i> In reply to
     {% if context.author_name %}
-      <a class="p-author h-card" href="{{context.author_url}}">{{context.author_name}}
-        <img class="avatar" src="{{context.author_image | mirror_image(64)}}" alt="{{context.author_name}}" />
+      <a class="p-author h-card" href="{{context.author_url}}">
+        <img class="u-photo" src="{{context.author_image | mirror_image(24)}}" alt="{{context.author_name}}" />
+        <span class="p-name">{{context.author_name}}</span>
       </a> in
     {% endif %}
     <a class="u-url" href="{{context.permalink}}">
@@ -11,9 +12,7 @@
     </a>
     on {{context.permalink | domain_from_url}}
     {% if context.content %}
-      <blockquote>
-        <div class="">{{context.content | safe}}</div>
-      </blockquote>
+      <div class="e-content">{{context.content | safe}}</div>
     {% endif %}
   </div>
 {% endfor %}

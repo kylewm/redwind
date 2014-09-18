@@ -30,9 +30,12 @@ login_mgr.login_view = 'index'
 
 
 assets = Environment(app)
+#assets.register(
+#    'css_all', Bundle('css/base.css', 'css/skeleton.css',
+#                      'css/layout.css', 'css/pygments.css',
+#                      filters='cssmin', output='css/site.css'))
 assets.register(
-    'css_all', Bundle('css/base.css', 'css/skeleton.css',
-                      'css/layout.css', 'css/pygments.css',
+    'css_all', Bundle('css/style.css', 'css/pygments.css',
                       filters='cssmin', output='css/site.css'))
 
 
