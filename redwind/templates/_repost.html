@@ -15,8 +15,11 @@
         {% endif %}
       </div>
       <div class="repost-body">
+        {% if context.title %}
+        <h1 class="p-name">{{context.title}}</h1>
+        {% endif %}
         {% if context.content %}
-          <div class="e-content primary-content">{{context.content | safe}}</div>
+          <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">{{context.content | safe}}</div>
         {% endif %}
         <div class="post-metadata">
           <span>

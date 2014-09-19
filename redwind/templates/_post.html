@@ -5,7 +5,7 @@
   {% if post.title %}
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
-  <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
+  <div class="{% if not post.title %}p-name {% endif %}e-content">
     <div class="primary-content">{{post.content_html | safe}}</div>
     {% for photo in post.photos %}
       <div class="photo-holder">
