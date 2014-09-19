@@ -1,29 +1,31 @@
 {% for context in post.repost_contexts %}
-<div class="repost-entry">
-  <div class="p-author h-card">
-    {% if context.author_image %}
-    <img class="u-photo" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
-    {% endif %}
-    {% if context.author_name %}
-    <i class="fa fa-retweet"></i>
-    <a class="p-name u-url" href="{{context.author_url}}">
-      <span class="p-name">{{context.author_name}}</span>
-    </a> {{context.permalink | domain_from_url}}
-    {% endif %}
-  </div>
-  <div class="repost-body">
-    {% if context.title %}
-    <h1 class="p-name">{{context.title}}</h1>
-    {% endif %}
-    {% if context.content %}
-    <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">{{context.content | safe}}</div>
-    {% endif %}
-    <div class="post-metadata">
-      <span>
+  <div class="repost-entry">
+    <div class="p-author h-card">
+      {% if context.author_image %}
+        <img class="u-photo" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
+      {% else %}
+        <img class="u-photo" src="{{ url_for('static', filename='img/users/placeholder.png') }}" alt="{{context.author_name}}" />
+      {% endif %}
+      <i class="fa fa-retweet"></i>
+      {% if context.author_name %}
+        <a class="p-name u-url" href="{{context.author_url}}">{{context.author_name}}</a>
+        &bullet;
+        <a class="u-repost-of" href="{{context.permalink}}">{{context.permalink | domain_from_url}}</a>
+      {% else %}
         <a class="u-repost-of" href="{{context.permalink}}">
-          <time class="dt-published" datetime="{{context.published | isotime}}">{{context.published | human_time}}</time></a>
-      </span>
-    </div> <!-- .post-metadata -->
-  </div> <!-- .repost-body -->
-</div> <!-- .repost-entry -->
+          {% if context.title %}
+            {{context.title}}
+          {% else %}
+            {{context.permalink | domain_from_url}}
+          {% endif %}
+        </a>
+      {% endif %}
+    </div>
+    <div class="repost-body">
+      {% if context.content %}
+        <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">{{context.content | safe}}</div>
+      {% endif %}
+    </div> <!-- .repost-body -->
+  </div> <!-- .repost-entry -->
+  <div style="clear: both"></div>
 {% endfor %}
