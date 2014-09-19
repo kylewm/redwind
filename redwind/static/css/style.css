@@ -73,6 +73,10 @@ article a.p-category {
 blockquote {
     margin-left: 0;
     padding-left: 1em;
+    border-left: 1px solid #999;
+}
+
+.note-like blockquote {
     border-left: 2px solid #999;
 }
 
