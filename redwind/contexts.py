@@ -69,7 +69,7 @@ def create_context(url, user_domain=None):
             content = entry.get('content', '')
             content_plain = util.format_as_text(content)
 
-            title = entry.get('name', 'a post')
+            title = entry.get('name')
             author_name = entry.get('author', {}).get('name', '')
             author_image = entry.get('author', {}).get('photo')
 
