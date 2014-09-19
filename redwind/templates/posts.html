@@ -2,11 +2,7 @@
 
 {% block content %}
   {% for post in posts %}
-    {% if post.post_type == 'share' %}
-      {% include "_repost.html" %}
-    {% else %}
       {% include "_post.html" %}
-    {% endif %}
   {% endfor %}
 
   <div class="page-arrows clearfix">

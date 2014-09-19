@@ -1,19 +1,29 @@
 {% for context in post.repost_contexts %}
-  <div class="p-repost-of h-cite">
-    Shared
-    <a class="u-url" href="{{context.permalink}}">
-      {{ context.title_or_url }}
-    </a>
+<div class="repost-entry">
+  <div class="p-author h-card">
+    {% if context.author_image %}
+    <img class="u-photo" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
+    {% endif %}
     {% if context.author_name %}
-      by <a class="p-author h-card" href="{{context.author_url}}">
-      <img class="u-photo" src="{{ context.author_image | mirror_image(24) }}" alt="{{context.author_name}}" />
+    <i class="fa fa-retweet"></i>
+    <a class="p-name u-url" href="{{context.author_url}}">
       <span class="p-name">{{context.author_name}}</span>
-    </a>
-  {% endif %}
-  from {{context.permalink | domain_from_url}}
-
-  {% if context.content %}
-    <div class="e-content">{{context.content | safe}}</div>
-  {% endif %}
+    </a> {{context.permalink | domain_from_url}}
+    {% endif %}
   </div>
+  <div class="repost-body">
+    {% if context.title %}
+    <h1 class="p-name">{{context.title}}</h1>
+    {% endif %}
+    {% if context.content %}
+    <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">{{context.content | safe}}</div>
+    {% endif %}
+    <div class="post-metadata">
+      <span>
+        <a class="u-repost-of" href="{{context.permalink}}">
+          <time class="dt-published" datetime="{{context.published | isotime}}">{{context.published | human_time}}</time></a>
+      </span>
+    </div> <!-- .post-metadata -->
+  </div> <!-- .repost-body -->
+</div> <!-- .repost-entry -->
 {% endfor %}

@@ -36,18 +36,19 @@ def do_fetch_context(post_path, context_attr, url, user_domain):
     app.logger.debug("fetching url %s", url)
     context = create_context(url, user_domain)
     if context:
-        post = Post.load_by_path(post_path)
-        old_contexts = getattr(post, context_attr)
-        new_contexts = []
+        if not context.id:
+            post = Post.load_by_path(post_path)
+            old_contexts = getattr(post, context_attr)
+            new_contexts = []
 
-        for old in old_contexts:
-            if old.url == url:
-                db.session.delete(old)
-            else:
-                new_contexts.append(old)
+            for old in old_contexts:
+                if old.url == url:
+                    db.session.delete(old)
+                else:
+                    new_contexts.append(old)
 
-        db.session.add(context)
-        new_contexts.append(context)
+            db.session.add(context)
+            new_contexts.append(context)
 
         setattr(post, context_attr, new_contexts)
         db.session.commit()
@@ -60,7 +61,7 @@ def create_context(url, user_domain=None):
 
     archiver.archive_url(url)
 
-    context = None
+    context = Context.query.filter_by(url=url).first()
     blob = archiver.load_json_from_archive(url)
     if blob:
         entry = mf2util.interpret(blob, url)

@@ -585,8 +585,8 @@ def save_post(post):
         if url_str is not None:
             urls = util.multiline_string_to_list(url_str)
             setattr(post, url_attr, urls)
-            setattr(post, context_attr, [Context(url=u, permalink=u)
-                                         for u in urls])
+            #setattr(post, context_attr, [Context(url=u, permalink=u)
+            #                             for u in urls])
 
     syndication = request.form.get('syndication')
     if syndication is not None:

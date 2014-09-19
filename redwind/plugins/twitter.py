@@ -271,7 +271,7 @@ def create_context(url, user_domain):
     context.author_image = author_image
     context.author_url = author_url
     context.published = pub_date
-    context.title = 'a tweet'
+    context.title = None
     context.content = tweet_text
     return context
 

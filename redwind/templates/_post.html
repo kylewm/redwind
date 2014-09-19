@@ -2,22 +2,26 @@
   {% include "_reply_contexts.html" %}
   {% include "_like_contexts.html" %}
   {% include "_bookmark_contexts.html" %}
+  {% include "_repost_contexts.html" %}
+
   {% if post.title %}
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
-  <div class="{% if not post.title %}p-name {% endif %}e-content">
-    <div class="primary-content">{{post.content_html | safe}}</div>
-    {% for photo in post.photos %}
-      <div class="photo-holder">
-        <a href="{{photo.url}}">
-          <img class="u-photo" src="{{photo.thumbnail}}" />
-        </a>
-        {% if photo.caption %}
-          <div class="caption">{{ photo.caption | safe }}</div>
-        {% endif %}
-      </div>
-    {% endfor %}
-  </div>
+  {% if post.photos or post.content %}
+    <div class="{% if not post.title %}p-name {% endif %}e-content">
+      <div class="primary-content">{{post.content_html | safe}}</div>
+      {% for photo in post.photos %}
+        <div class="photo-holder">
+          <a href="{{photo.url}}">
+            <img class="u-photo" src="{{photo.thumbnail}}" />
+          </a>
+          {% if photo.caption %}
+            <div class="caption">{{ photo.caption | safe }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
   {% if post.post_type == 'checkin' and post.location %}
     <div class="map"
          data-latitude="{{post.location.latitude}}"
