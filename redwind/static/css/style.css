@@ -115,9 +115,11 @@ nav {
 /* ----------- Contexts ----------- */
 
 .p-in-reply-to.h-cite .e-content {
-    border-left: 1px solid #ddd;
+    border-left: 1px solid #999;
     padding: 0.5em;
     margin-bottom: 0.5em;
+    max-height: 320px;
+    overflow-y: auto;
 }
 
 article.share .p-author .u-photo {
