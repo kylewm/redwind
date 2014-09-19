@@ -1,15 +1,11 @@
 <article class="{%if article_class%}{{article_class}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}">
-
   {% include "_reply_contexts.html" %}
   {% include "_like_contexts.html" %}
   {% include "_bookmark_contexts.html" %}
-
   {% if post.title %}
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
-
   <div class={% if post.title %}"e-content"{% else %}"p-name e-content"{% endif %}>
-
     <div class="primary-content">{{post.content_html | safe}}</div>
     {% for photo in post.photos %}
       <div class="photo-holder">
@@ -22,7 +18,6 @@
       </div>
     {% endfor %}
   </div>
-
   {% if post.post_type == 'checkin' and post.location %}
     <div class="map"
          data-latitude="{{post.location.latitude}}"
@@ -30,7 +25,6 @@
          data-location="{{post.location.name}}">
     </div>
   {% endif %}
-
   {% if post.tags %}
     <div class="tags">
       {% for tag in post.tags %}
@@ -38,17 +32,12 @@
       {% endfor %}
     </div>
   {% endif %}
-
   <div class="post-metadata">
-
-    {% include "_admin_post_controls.html" %}
-
     <span class="metadata-component">
       <a class="u-url" href="{{post.permalink}}">
         <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
       </a>
     </span>
-
     {% if post.location %}
       <span class="location metadata-component">
         <i class="fa fa-map-marker"></i>
@@ -61,8 +50,6 @@
         </a>
       </span>
     {% endif %}
-
-
     {% if post.syndication %}
       <span class="syndication-links metadata-component">
         Also on
@@ -71,7 +58,6 @@
         {% endfor %}
       </span>
     {% endif %}
-
     <span class="webactions metadata-component">
       <indie-action do="reply" with="{{post.permalink}}">
         {% if post.reply_url %}<a href="{{post.reply_url}}">Reply</a>{% endif %}
@@ -83,6 +69,8 @@
         {% if post.favorite_url %}<a href="{{post.favorite_url}}">Favorite</a>{% endif %}
       </indie-action>
     </span>
+
+    {% include "_admin_post_controls.html" %}
 
     {% if not is_single %}
       <div class="mention-counts metadata-component">
@@ -101,6 +89,5 @@
       </div>
     {% endif %}
   </div> <!--  .post-metadata -->
-
   {% include "_post_mentions.html" %}
 </article>

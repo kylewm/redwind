@@ -70,6 +70,16 @@ article a.p-category {
     width: auto;
 }
 
+blockquote {
+    margin-left: 0;
+    padding-left: 1em;
+    border-left: 2px solid #999;
+}
+
+.admin-post-controls, .admin-post-controls-arrow {
+    float: right;
+}
+
 /* ----------- Navgation ----------- */
 
 .site-title {
@@ -110,19 +120,21 @@ nav {
     margin-bottom: 0.5em;
 }
 
-.p-repost-of .p-author.image-holder {
+article.share .p-author .u-photo {
     float: left;
-    margin: 1em 0.5em;
-}
-
-.p-repost-of .p-author.image-holder img {
+    margin-top: 0.5em;
+    margin-right: 0.7em;
     border-radius: 4px;
     max-width: 64px;
     height: auto;
 }
 
-.p-repost-of .repost-body {
-    margin-left: calc(64px + 0.5em);
+article.share .repost-body {
+    margin-left: calc(64px + 0.7em);
+}
+
+article.share .repost-entry + .repost-entry {
+    margin-top: 1em;
 }
 
 /* ----------- Mentions ----------- */
