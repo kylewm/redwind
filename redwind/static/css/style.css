@@ -28,7 +28,7 @@ pre {
 }
 
 main {
-    margin-top: 50px;
+    margin: 50px 0.5em 10px 0.5em;
 }
 
 article + article {
@@ -50,6 +50,11 @@ article a.p-category {
     padding: 0px 5px;
     display: inline-block;
     text-decoration: none;
+}
+
+article img {
+    max-width: 100%;
+    height: auto;
 }
 
 .post-metadata {
@@ -126,13 +131,8 @@ nav {
     overflow-y: auto;
 }
 
-.p-in-reply-to .e-content img {
-    max-width: 80%;
-    height: auto;
-}
-
-.share .e-content img {
-    max-width: 80%;
+.p-in-reply-to .e-content img, .share .e-content img {
+    max-width: 100%;
     height: auto;
 }
 
