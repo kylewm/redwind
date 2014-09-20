@@ -24,11 +24,6 @@ import pytz
 import requests
 import urllib.parse
 
-bleach.ALLOWED_TAGS += ['img', 'p', 'br']
-bleach.ALLOWED_ATTRIBUTES.update({
-    'img': ['src', 'alt', 'title']
-})
-
 TIMEZONE = pytz.timezone('US/Pacific')
 
 POST_TYPES = [

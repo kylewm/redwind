@@ -1,16 +1,22 @@
 from . import app
 from datetime import date
+from flask import url_for
 from markdown import markdown
 from smartypants import smartypants
-from flask import url_for
+import bleach
 import bs4
+import datetime
 import os
 import os.path
 import re
 import requests
-import datetime
 import unicodedata
 import urllib
+
+bleach.ALLOWED_TAGS += ['img', 'p', 'br']
+bleach.ALLOWED_ATTRIBUTES.update({
+    'img': ['src', 'alt', 'title']
+})
 
 
 TWITTER_PROFILE_RE = re.compile(r'https?://(?:www\.)?twitter\.com/(\w+)')
@@ -330,7 +336,7 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
                     person_processor=person_to_microcard):
     if data is None:
         return ''
-    
+
     if img_path:
         # replace relative paths to images with absolute
         data = RELATIVE_PATH_RE.sub('[\g<1>](' + img_path + '/\g<2>)', data)
@@ -400,3 +406,30 @@ def prettify_url(url):
     else:
         path = url
     return path.strip('/')
+
+
+def fetch_html(url):
+    """Utility to fetch HTML from an external site. If the Content-Type
+    header does not explicitly list a charset, Requests will assume a
+    bad one, so we ahve to use 'get_encodings_from_content` to find
+    the meta charset or other indications in the actual response body.
+
+    Return a requests.Response
+    """
+    response = requests.get(url, timeout=30)
+    if response.status_code // 2 == 100:
+        # requests ignores <meta charset> when a Content-Type header
+        # is provided, even if the header does not define a charset
+        if 'charset' not in response.headers.get('content-type', ''):
+            encodings = requests.utils.get_encodings_from_content(
+                response.text)
+            if encodings:
+                response.encoding = encodings[0]
+    else:
+        app.logger.warn('failed to fetch url %s. got response %s.',
+                        url, response)
+    return response
+
+
+def clean_foreign_html(html):
+    return bleach.clean(html, strip=True)

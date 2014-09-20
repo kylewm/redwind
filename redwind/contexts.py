@@ -1,14 +1,11 @@
 from . import app
-from . import archiver
 from . import db
 from . import hooks
-from . import queue
 from . import util
 from .models import Post
 from .models import Context
 import bs4
-import bleach
-import itertools
+import mf2py
 import mf2util
 from flask.ext.login import current_user
 
@@ -16,20 +13,16 @@ from flask.ext.login import current_user
 def fetch_contexts(post):
     user_domain = current_user.domain
     for url in post.in_reply_to:
-        queue.enqueue(
-            do_fetch_context, post.path, 'reply_contexts', url, user_domain)
+        do_fetch_context(post.path, 'reply_contexts', url, user_domain)
 
     for url in post.repost_of:
-        queue.enqueue(
-            do_fetch_context, post.path, 'repost_contexts', url, user_domain)
+        do_fetch_context(post.path, 'repost_contexts', url, user_domain)
 
     for url in post.like_of:
-        queue.enqueue(
-            do_fetch_context, post.path, 'like_contexts', url, user_domain)
+        do_fetch_context(post.path, 'like_contexts', url, user_domain)
 
     for url in post.bookmark_of:
-        queue.enqueue(
-            do_fetch_context, post.path, 'bookmark_contexts', url, user_domain)
+        do_fetch_context(post.path, 'bookmark_contexts', url, user_domain)
 
 
 def do_fetch_context(post_path, context_attr, url, user_domain):
@@ -59,15 +52,20 @@ def create_context(url, user_domain=None):
         if context:
             return context
 
-    archiver.archive_url(url)
+    response = util.fetch_html(url)
+    if response.status_code // 100 != 2:
+        app.logger.error(
+            'Could not fetch context for url %s, received response %s',
+            url, response)
+        return None
 
     context = Context.query.filter_by(url=url).first()
-    blob = archiver.load_json_from_archive(url)
+    blob = mf2py.Parser(doc=response.text, url=url).to_dict()
     if blob:
         entry = mf2util.interpret(blob, url)
         if entry:
             published = entry.get('published')
-            content = entry.get('content', '')
+            content = util.clean_foreign_html(entry.get('content', ''))
             content_plain = util.format_as_text(content)
 
             title = entry.get('name')
@@ -92,7 +90,7 @@ def create_context(url, user_domain=None):
     if not context:
         context = Context()
         context.url = context.permalink = url
-        html = archiver.load_html_from_archive(url)
+        html = response.text
         soup = bs4.BeautifulSoup(html)
         if soup.title:
             context.title = soup.title.string

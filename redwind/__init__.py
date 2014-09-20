@@ -63,8 +63,7 @@ if not app.debug:
 for handler in ['views']:
     importlib.import_module('redwind.' + handler)
 
-for plugin in ['facebook', 'locations', 'push', 'reader', 'twitter',
-               'wm_receiver', 'wm_sender']:
+for plugin in app.config['PLUGINS']:
     #app.logger.info('loading plugin module %s', plugin)
     module = importlib.import_module('redwind.plugins.' + plugin)
     try:

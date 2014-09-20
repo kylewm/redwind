@@ -2,7 +2,6 @@ from .. import app
 from .. import db
 from .. import queue
 from .. import redis
-from .. import archiver
 from .. import util
 from ..models import Post, Mention
 
@@ -13,7 +12,9 @@ from rq.job import Job
 import urllib.parse
 import urllib.request
 import requests
+import mf2py
 import mf2util
+import datetime
 
 from bs4 import BeautifulSoup
 
@@ -142,7 +143,7 @@ def do_process_webmention(source, target):
                 '{} and {} refer to the same post'.format(source, target))
 
     # confirm that source actually refers to the post
-    source_response = requests.get(source)
+    source_response = util.fetch_html(source)
     app.logger.debug('received response from source %s', source_response)
 
     if source_response.status_code == 410:
@@ -172,9 +173,7 @@ def do_process_webmention(source, target):
         return target_post, None, False,\
             "Could not find any links from source to target"
 
-    archiver.archive_html(source, source_response.text)
-    archiver.archive_response(source, source_response)
-    mention = create_mention(target_post, source)
+    mention = create_mention(target_post, source, source_response)
     return target_post, mention, False, None
 
 
@@ -246,7 +245,7 @@ def find_target_post(target_url):
     return post
 
 
-def create_mention(post, url):
+def create_mention(post, url, source_response):
     prod_url = app.config.get('PROD_URL')
     site_url = app.config.get('SITE_URL')
     target_urls = []
@@ -266,7 +265,7 @@ def create_mention(post, url):
             if prod_url and prod_url != site_url:
                 target_urls.append(base_url.replace(site_url, prod_url))
 
-    blob = archiver.load_json_from_archive(url)
+    blob = mf2py.Parser(doc=source_response.text, url=url).to_dict()
     if not blob:
         return
     entry = mf2util.interpret_comment(blob, url, target_urls)
@@ -274,16 +273,12 @@ def create_mention(post, url):
         return
     comment_type = entry.get('comment_type')
 
-    content = entry.get('content', '')
+    content = util.clean_foreign_html(entry.get('content', ''))
     content_plain = util.format_as_text(content)
 
     published = entry.get('published')
     if not published:
-        resp = archiver.load_response(url)
-        published = resp and util.isoparse(resp.get('received'))
-
-    if not published:
-        published = post.published
+        published = datetime.datetime.utcnow()
 
     # update an existing mention
     mention = next((m for m in post.mentions if m.url == url), None)
