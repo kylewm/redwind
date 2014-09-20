@@ -11,7 +11,7 @@
       {{ context.title_or_url }}
     </a>
     on {{context.permalink | domain_from_url}}
-    {% if context.content %}
+    {% if is_single and context.content %}
       <div class="e-content">{{context.content | safe}}</div>
     {% endif %}
   </div>

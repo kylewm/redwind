@@ -14,7 +14,9 @@ from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from rq import Queue
 from config import Configuration
+from logging.handlers import RotatingFileHandler
 
+import os
 import logging
 
 
@@ -58,8 +60,16 @@ if app.config.get('PROFILE'):
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 if not app.debug:
     app.logger.setLevel(logging.DEBUG)
-    app.logger.addHandler(logging.StreamHandler())
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+    file_handler = RotatingFileHandler(
+        'logs/app.log', maxBytes=1048576, backupCount=5)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    app.logger.addHandler(file_handler)
 
+    
 for handler in ['views']:
     importlib.import_module('redwind.' + handler)
 
