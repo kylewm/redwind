@@ -37,13 +37,8 @@
     </div>
   {% endif %}
   <div class="post-metadata">
-    <span class="metadata-component">
-      <a class="u-url" href="{{post.permalink}}">
-        <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
-      </a>
-    </span>
     {% if post.location %}
-      <span class="location metadata-component">
+      <div class="location metadata-component">
         <i class="fa fa-map-marker"></i>
         <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.latitude}},{{post.location.longitude}}">
           <data class="p-latitude" value="{{post.location.latitude}}"></data>
@@ -52,17 +47,23 @@
             {{post.location.geo_name}}
           </span>
         </a>
-      </span>
+      </div>
     {% endif %}
-    {% if post.syndication %}
-      <span class="syndication-links metadata-component">
+    <div class="metadata-component">
+      <a class="u-url" href="{{post.permalink}}">
+        <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
+      </a>
+    </div>
+    {% if is_single and post.syndication %}
+      <div class="syndication-links metadata-component">
         Also on
         {% for s in post.syndication %}
           {{ s | format_syndication_url }}
         {% endfor %}
-      </span>
+      </div>
     {% endif %}
-    <span class="webactions metadata-component">
+      {% if is_single %}
+    <div class="webactions metadata-component">
       <indie-action do="reply" with="{{post.permalink}}">
         {% if post.reply_url %}<a href="{{post.reply_url}}">Reply</a>{% endif %}
       </indie-action>
@@ -72,10 +73,9 @@
       <indie-action do="favorite" with="{{post.permalink}}">
         {% if post.favorite_url %}<a href="{{post.favorite_url}}">Favorite</a>{% endif %}
       </indie-action>
-    </span>
-
-    {% include "_admin_post_controls.html" %}
-
+    </div>
+    {% endif %}
+    
     {% if not is_single %}
       <div class="mention-counts metadata-component">
         {% if post.replies %}
@@ -92,6 +92,11 @@
         {% endif %}
       </div>
     {% endif %}
+
+    {% if is_single %}
+      {% include "_admin_post_controls.html" %}
+    {% endif %}
+
   </div> <!--  .post-metadata -->
   {% include "_post_mentions.html" %}
 </article>

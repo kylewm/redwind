@@ -94,7 +94,9 @@
             var map = L.map(element, {
                 center: [lat, lon],
                 zoom: 16,
-                layers: [tileset]
+                layers: [tileset],
+                touchZoom: false,
+                scrollWheelZoom: false,
             });
 
             L.marker([lat, lon], {'title': loc}).addTo(map);

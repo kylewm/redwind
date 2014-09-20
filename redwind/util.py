@@ -102,7 +102,7 @@ NEW_LINK_REGEX = (
     # hostname and port
     '([a-z0-9.\-]+[.][a-z]{2,4}(?::\d{2,6})?'
     # path
-    '(?:/[a-z0-9\-_.;:$?&%#@()/]*[a-z0-9\-_$?#/])?)'
+    '(?:/[a-z0-9\-_.;:$?&%#@()/=]*[a-z0-9\-_$?#/])?)'
 )
 
 
@@ -271,7 +271,7 @@ def mirror_image(src, side=None):
     """
     site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
     o = urllib.parse.urlparse(src)
-    if not o.netloc or o.netloc == site_netloc:
+    if not o.netloc or o.netloc == site_netloc and not side:
         return src
 
     relpath = os.path.join("_mirror", o.netloc, o.path.strip('/'))

@@ -560,7 +560,7 @@ def save_post(post):
         post.location.latitude = float(lat)
         post.location.longitude = float(lon)
         loc_name = request.form.get('location_name')
-        if loc_name:
+        if loc_name is not None:
             post.location.name = loc_name
     else:
         old_loc = post.location

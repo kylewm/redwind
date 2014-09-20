@@ -86,7 +86,7 @@ blockquote {
 }
 
 .admin-post-controls, .admin-post-controls-arrow {
-    float: right;
+    margin-top: 1em;
 }
 
 /* ----------- Navgation ----------- */
@@ -209,6 +209,8 @@ footer {
 
 .new-post-bar ul {
     list-style-type: none;
+    padding: 0;
+    margin: 0;
 }
 
 .new-post-bar ul li {
@@ -254,4 +256,12 @@ a.top_tag {
 
 a.top_tag:hover {
     background-color: #ddf;
+}
+
+/* ----------- Leaflet ----------- */
+
+.map { 
+    height: 320px; 
+    max-width: 800px; 
+    width: 100%; 
 }
