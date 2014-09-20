@@ -123,6 +123,18 @@
                 });
             }
         });
+        each(all('.h-feed article'), function(article) {
+            article.addEventListener('mouseover', function(event) {
+                article.classList.add('highlight');
+            });
+            article.addEventListener('mouseout', function(event) {
+                article.classList.remove('highlight');
+            });
+            article.addEventListener('click', function(event) {
+                var permalink = first('.post-metadata a.u-url', article).href;
+                window.location = permalink;
+            });
+        });
 
         return {};
     }());

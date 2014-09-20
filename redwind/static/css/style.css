@@ -31,9 +31,20 @@ main {
     margin: 50px 0.5em 10px 0.5em;
 }
 
+article {
+    padding: 0.5em;
+}
+
 article + article {
     margin-top: 150px;
 }
+
+
+article.highlight {
+    background-color: rgb(255, 255, 245);
+    box-shadow: 0 0 2px #ddd;
+}
+
 
 article.note-like .primary-content {
     font-size: 1.5em;
