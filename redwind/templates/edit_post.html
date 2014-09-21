@@ -30,14 +30,11 @@
   <label><i class="fa fa-plus-square-o" id="syndication_expander"></i> Syndication</label>
   <textarea id="syndication_textarea" name="syndication">{{ post.syndication | join('\n') }}</textarea>
 
-  <input type="hidden" id="send_webmentions" name="send_webmentions" value="true"/>
-  <input type="hidden" id="send_push" name="send_push" value="true"/>
-
   <div class="clearfix">
     <input style="float: left;" type="submit" id="publish_button" value="Publish"/>
-
     <div style="float: left;">
       {% block additional_params %}{% endblock additional_params %}
+      <input type="checkbox" id="inhibit_wms" name="inhibit_wms" value="true"/>
     </div>
   </div>
 
