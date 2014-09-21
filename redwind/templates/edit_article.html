@@ -5,5 +5,5 @@
 <label>Stub</label>
 <input type="text" name="stub" value="{{ post.stub or '' }}"/>
 <label>Content</label>
-<textarea name="content" id="content" rows="30" placeholder="Content">{{ post.content }}</textarea>
+<textarea name="content" id="content" rows="30">{{ post.content or '' }}</textarea>
 {% endblock content_fields %}
