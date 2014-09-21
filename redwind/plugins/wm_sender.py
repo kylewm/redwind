@@ -15,6 +15,10 @@ def register():
 
 
 def send_webmentions(post, args):
+    if args.get('inhibit_wms') == 'true':
+        app.logger.debug('skipping webmentions for {}'.format(post.shortid))
+        return
+
     try:
         app.logger.debug("queueing webmentions for {}".format(post.shortid))
         queue.enqueue(do_send_webmentions, post.shortid)
