@@ -1,6 +1,6 @@
 {
     "name": "Red Wind",
-    "description": "IndieWeb-ready blog software written in Python and running on Flask. It is intended to be clean, lightweight, and amenable to experimentation.",
+    "description": "IndieWeb-ready blog software written in Python and running on Flask.",
     "keywords": ["indieweb", "social", "blog"],
     "website": "https://indiewebcamp.com/Red_Wind",
     "repository": "https://github.com/kylewm/redwind",
