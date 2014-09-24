@@ -21,6 +21,8 @@ class Configuration(object):
     # schema to contact DB
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
 
+    REDIS_URL = os.environ.get('REDISTOGO_URL')
+
     # the number of posts to display on any given page
     POSTS_PER_PAGE = 15
 

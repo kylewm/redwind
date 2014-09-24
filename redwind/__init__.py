@@ -23,7 +23,8 @@ import logging
 app = Flask(__name__)
 app.config.from_object(Configuration)
 
-redis = Redis()
+redis = Redis.from_url(app.config.get('REDIS_URL', 'redis://localhost:6379'))
+
 queue = Queue(connection=redis)
 db = SQLAlchemy(app)
 #toolbar = DebugToolbarExtension(app)
@@ -69,7 +70,7 @@ if not app.debug:
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
 
-    
+
 for handler in ['views']:
     importlib.import_module('redwind.' + handler)
 
