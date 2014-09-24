@@ -136,7 +136,7 @@ def token_endpoint():
         {'Content-Type': 'application/x-www-form-urlencoded'})
 
 
-@app.route('/api/micropub', methods=['POST'])
+@app.route('/api/micropub', methods=['GET', 'POST'])
 def micropub_endpoint():
     app.logger.info(
         "received micropub request %s, args=%s, form=%s, headers=%s",
@@ -167,6 +167,14 @@ def micropub_endpoint():
         abort(401)
 
     app.logger.debug('successfully authenticated as user %s => %s', me, user)
+
+    if request.method == 'GET':
+        if request.args.get('q') == 'syndicate-to':
+            return urllib.parse.urlencode({
+                    'syndicate-to': ','.join(['twitter.com/kyle_wm', 'facebook.com/kyle.mahan'])
+                    })
+        else:
+            return """Hi I'm your micropub endpoint"""
 
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
