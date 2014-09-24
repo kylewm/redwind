@@ -23,7 +23,7 @@ import logging
 app = Flask(__name__)
 app.config.from_object(Configuration)
 
-redis = Redis.from_url(app.config.get('REDIS_URL', 'redis://localhost:6379'))
+redis = Redis.from_url(app.config['REDIS_URL'])
 
 queue = Queue(connection=redis)
 db = SQLAlchemy(app)
