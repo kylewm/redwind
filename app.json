@@ -14,7 +14,7 @@
         }
     },
     "addons": [
-        "redistogo",
-        "heroku-postgresql"
+        "redistogo:nano",
+        "heroku-postgresql:hobby-dev"
     ]
 }
