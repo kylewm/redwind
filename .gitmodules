@@ -1,6 +1,0 @@
-[submodule "mf2util"]
-	path = mf2util
-	url = https://github.com/kylewm/mf2util.git
-[submodule "mf2py"]
-	path = mf2py
-	url = https://github.com/kylewm/mf2py.git
