@@ -11,6 +11,14 @@
         "SECRET_KEY": {
             "description": "A secret key for verifying the integrity of signed cookies.",
             "generator": "secret"
+        },
+        "URL": {
+            "descrption": "The URL where the app will be deployed",
+            "value": "http://appname.herokuapp.com"
+        },
+        "TIMEZONE": {
+            "description": "The user's location timezone",
+            "value": "America/Los_Angeles"
         }
     },
     "addons": [
