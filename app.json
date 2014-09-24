@@ -1,0 +1,20 @@
+{
+    "name": "Red Wind",
+    "description": "IndieWeb-ready blog software written in Python and running on Flask. It is intended to be clean, lightweight, and amenable to experimentation.",
+    "keywords": ["indieweb", "social", "blog"],
+    "website": "https://indiewebcamp.com/Red_Wind",
+    "repository": "https://github.com/kylewm/redwind",
+    "scripts": {
+        "postdeploy": "cp config.py.heroku config.py && init_db.py"
+    },
+    "env": {
+        "SECRET_KEY": {
+            "description": "A secret key for verifying the integrity of signed cookies.",
+            "generator": "secret"
+        }
+    },
+    "addons": [
+        "redistogo",
+        "heroku-postgresql"
+    ]
+}
