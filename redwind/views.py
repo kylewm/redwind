@@ -161,7 +161,7 @@ def updates_atom():
 
 @app.route("/articles.atom")
 def articles_atom():
-    return redirect(url_for('articles', feed='atom'))
+    return redirect(url_for('posts_by_type', plural_type='articles', feed='atom'))
 
 
 def check_audience(post):

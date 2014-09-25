@@ -18,8 +18,8 @@
   {% for post in posts %}
 
   <entry>
-    <updated>{{ post.pub_date_iso }}</updated>
-    <published>{{ post.pub_date_iso }}</published>
+    <updated>{{ post.published | isotime }}</updated>
+    <published>{{ post.published | isotime }}</published>
     <link href="{{ post.permalink }}" rel="alternate" type="text/html"/>
     <id>{{ post.permalink }}</id>
     <title type="html">
