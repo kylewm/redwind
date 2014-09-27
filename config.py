@@ -2,7 +2,7 @@ import os
 
 
 class Configuration(object):
-    DEBUG = False
+    DEBUG = os.environ.get('REDWIND_DEBUG') == 'true'
 
     # Some secret key used by Flask-Login
     SECRET_KEY = os.environ.get('SECRET_KEY')

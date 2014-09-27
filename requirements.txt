@@ -28,5 +28,6 @@ six==1.6.1
 smartypants==1.8.3
 uWSGI==2.0.4
 webassets==0.10.1
--e git+https://github.com/kylewm/mf2py.git@d44a49f7de2060cee719463df27b46cdd97c30f0#egg=mf2py
--e git+https://github.com/kylewm/mf2util.git@7aa3cb4a5ebf6e59be98f49b9776ff7d60dafeca#egg=mf2util
+git+https://github.com/kylewm/mf2py.git
+git+https://github.com/kylewm/mf2util.git
+psycopg2==2.5.4

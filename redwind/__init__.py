@@ -27,7 +27,7 @@ redis = Redis.from_url(app.config['REDIS_URL'])
 
 queue = Queue(connection=redis)
 db = SQLAlchemy(app)
-#toolbar = DebugToolbarExtension(app)
+toolbar = DebugToolbarExtension(app)
 login_mgr = LoginManager(app)
 login_mgr.login_view = 'index'
 
