@@ -11,6 +11,13 @@
     {% if atom_url and atom_title %}<link rel="feed alternate" type="application/atom+xml" href="{{atom_url}}" title="{{atom_title}}" />{% endif %}
     <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
 
+    {% if request.endpoint == 'index' %}
+    <!-- PubSubHubbub Discovery -->
+    <link rel="hub" href="http://kylewm.superfeedr.com/" />
+    <link rel="self" href="{{url_for('index', _external=True)}}"/>
+    <!-- End Of PubSubHubbub Discovery -->
+    {% endif %}
+
     <link rel="webmention" href="{{ url_for('receive_webmention') }}"/>
     <link rel="pingback" href="https://webmention.io/webmention?forward={{ url_for('receive_webmention', _external=True) }}" />
 
@@ -27,6 +34,9 @@
     <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/users/kyle76.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/users/kyle114.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/kyle152.jpg') }}"/>
+    
+    <link rel="pgpkey" type="application/pgp-keys" href="https://keybase.io/kylewm/key.asc" />
+    
     {% assets 'css_all' %}
     <link rel="stylesheet" href="{{ ASSET_URL }}"/>
     {% endassets %}

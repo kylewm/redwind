@@ -2,18 +2,18 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
   <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
   <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"></link>
-  <link href="{{ request.base_url }}" rel="self"></link>
+  <link href="{{ request.url }}" rel="self"></link>
 
   <!-- PubSubHubbub Discovery -->
   <link rel="hub" href="http://kylewm.superfeedr.com/" />
   <!-- End Of PubSubHubbub Discovery -->
 
-  <id>http://kylewm.com/{{ feed_id }}</id>
+  <id>{{request.url}}</id>
   <author>
-    <name>Kyle</name>
-    <uri>http://kylewm.com</uri>
+    <name>Kyle Mahan</name>
+    <uri>{{url_for('index', _external=True)}}</uri>
   </author>
-  <updated>{{ posts | first | attr('pub_date_iso') }}</updated>
+  <updated>{{ posts | first | attr('published') | isotime }}</updated>
 
   {% for post in posts %}
 

@@ -2,6 +2,7 @@ from .. import app
 from .. import hooks
 from .. import queue
 import requests
+from flask import url_for
 
 
 def register():
@@ -9,16 +10,11 @@ def register():
 
 
 def send_notifications(post, args):
-    site_url = app.config['SITE_URL']
-    if post.post_type in ('article', 'note', 'share'):
-        queue.enqueue(publish, site_url + '/updates.atom')
+    if not post.hidden and not post.draft:
+        queue.enqueue(publish, url_for('index', _external=True))
+        queue.enqueue(publish, url_for('index', feed='atom', _external=True))
 
-    if post.post_type == 'article':
-        queue.enqueue(publish, site_url + '/articles.atom')
-
-    queue.enqueue(publish, site_url + '/all.atom')
-
-
+        
 def publish(url):
     publish_url = app.config.get('PUSH_HUB')
     if publish_url:
