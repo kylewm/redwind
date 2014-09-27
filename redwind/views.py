@@ -5,7 +5,7 @@ from . import contexts
 from . import db
 from . import hooks
 from . import util
-from .models import Post, Location, Context, AddressBook, Photo, Tag
+from .models import Post, Location, AddressBook, Photo, Tag, Mention
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
@@ -14,7 +14,6 @@ from flask.ext.login import login_required, login_user, logout_user,\
 import sqlalchemy.orm
 import sqlalchemy.sql
 
-import bleach
 import collections
 import datetime
 import jinja2.filters
@@ -147,6 +146,12 @@ def posts_by_tag(tag, page):
     if request.args.get('feed') == 'atom':
         return render_posts_atom(title, 'tag-' + tag + '.atom', posts)
     return render_posts(title, posts, page, is_first, is_last)
+
+
+@app.route('/mentions')
+def mentions():
+    mentions = Mention.query.order_by(Mention.published.desc()).limit(30)
+    return render_template('mentions.html', mentions=mentions)
 
 
 @app.route("/all.atom")

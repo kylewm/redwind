@@ -1,0 +1,76 @@
+<div class="p-comment h-cite {{mention.reftype}}">
+  {% if mention.reftype == 'mention' %}
+    <i class="fa fa-comment-o"></i>
+  {% elif mention.reftype == 'like' %}
+    <i class="fa fa-star-o"></i>
+  {% elif mention.reftype == 'repost' %}
+    <i class="fa fa-retweet"></i>
+  {% elif mention.reftype == 'reference' %}
+    <i class="fa fa-ellipsis-h"></i>
+  {% endif %}
+
+  <span class="p-author h-card microcard">
+    {% if mention.author_image %}
+      <img class="u-photo" src="{{mention.author_image | mirror_image(20) }}" alt="{{mention.author_name}}" />
+    {% endif %}
+    {% if mention.author_name and mention.author_url %}
+      <a class="p-name u-url" href="{{ mention.author_url }}">
+        {{ mention.author_name }}
+      </a>
+    {% elif mention.author_name %}
+      <span class="p-name">{{ mention.author_name }}</span>
+    {% elif mention.author_url %}
+      <a class="u-url" href="{{ mention.author_url }}">
+        {{ mention.author_url | prettify_url }}
+      </a>
+    {% endif %}
+  </span>
+
+  {% if mention.reftype == 'mention' %}
+    <div class="e-content">
+      <!-- start of foreign content -->
+      {{ mention.content | safe }}
+      <!-- end of foreign content -->
+    </div>
+
+  {% elif mention.reftype == 'like' %}
+    <span class="e-content">
+      {% if mention.content %}
+        {{ mention.content | safe }}
+      {% else %}
+        liked this.
+      {% endif %}
+    </span>
+
+  {% elif mention.reftype == 'repost' %}
+    <span class="e-content">
+      {% if mention.content %}
+        {{ mention.content | safe }}
+      {% else %}
+        reposted this.
+      {% endif %}
+    </span>
+
+  {% else %}
+    <span class="e-content">
+      referenced this: <a href="{{mention.permalink}}">{{ mention.title or (mention.permalink|prettify_url) }}</a>.
+    </span>
+
+  {% endif %}
+
+  <div class="mention-metadata">
+    {% if mention.reftype == 'mention' %}
+      <time class="dt-published" datetime="{{mention.pub_date_iso }}">
+        <a class="u-url" href="{{ mention.permalink }}">
+          {{ mention.pub_date_human}}
+        </a>
+      </time>
+    {% endif %}
+    on <a class="u-url" href="{{mention.permalink}}">{{mention.permalink | domain_from_url }}</a>
+    {% if mention.children %}
+      {% for child in mention.children %}
+        {{ child | safe}}
+      {% endfor %}
+    {% endif %}
+  </div> <!-- .mention-metadata -->
+</div> <!-- .p-comment -->

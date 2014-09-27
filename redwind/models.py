@@ -424,6 +424,7 @@ class Mention(db.Model):
     title = db.Column(db.String(512))
     syndication = db.Column(JsonType)
     reftype = db.Column(db.String(32))
+    posts = db.relationship('Post', secondary=posts_to_mentions)
 
     def __init__(self, post_path):
         self.index = None

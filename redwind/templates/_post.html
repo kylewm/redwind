@@ -75,7 +75,7 @@
       </indie-action>
     </div>
     {% endif %}
-    
+
     {% if not is_single %}
       <div class="mention-counts metadata-component">
         {% if post.replies %}
@@ -98,5 +98,14 @@
     {% endif %}
 
   </div> <!--  .post-metadata -->
-  {% include "_post_mentions.html" %}
+
+  {% if is_single and post.mentions %}
+    <div class="mentions replies">
+      <a name="mentions"></a>
+      {% for mention in post.mentions %}
+        {% include "_post_mention.html" %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
 </article>
