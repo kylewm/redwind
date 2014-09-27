@@ -26,7 +26,7 @@
     {% endif %}
   </span>
 
-  {% if mention.reftype == 'mention' %}
+  {% if mention.reftype == 'reply' %}
     <div class="e-content">
       <!-- start of foreign content -->
       {{ mention.content | safe }}
