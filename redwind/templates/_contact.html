@@ -12,7 +12,7 @@
 
   <br/>
 
-  <a class="u-url" href="{{ contact.url }}">{{ contact.url }}</a><br/>
+  <a class="u-url" href="{{ contact.url }}"><i class="fa fa-globe"></i> {{ contact.url | prettify_url }}</a><br/>
 
   {% if 'twitter' in contact.social %}
   <a href="https://twitter.com/{{contact.social['twitter']}}"> <i class="fa fa-twitter"></i> {{ contact.social['twitter'] }}</a><br/>
