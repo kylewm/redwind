@@ -99,7 +99,7 @@ def collect_images(post):
     else:
         html = util.markdown_filter(
             post.content, img_path=post.get_image_path(),
-            link_twitter_names=False, person_processor=None)
+            person_processor=None)
         soup = BeautifulSoup(html)
         for img in soup.find_all('img'):
             if not img.find_parent(class_='h-card'):
@@ -181,15 +181,12 @@ def share_on_twitter():
 
 
 def format_markdown_as_tweet(data):
-    def person_to_twitter_handle(fullname, displayname, entry, pos):
-        handle = entry.get('twitter')
-        if handle:
-            return '@' + handle
-        return displayname
+    def person_to_twitter_handle(contact, nick):
+        if contact.social and 'twitter' in contact.social:
+            return '@' + contact.social['twitter']
 
     return util.format_as_text(
-        util.markdown_filter(data, link_twitter_names=False,
-                             person_processor=person_to_twitter_handle))
+        util.markdown_filter(data, person_processor=person_to_twitter_handle))
 
 
 def get_auth(user):
@@ -278,9 +275,8 @@ def create_context(url, user_domain):
 
 # TODO use twitter API entities to expand links without fetch requests
 def expand_links(text):
-    return re.sub(util.LINK_REGEX,
-                  lambda match: expand_link(match.group(0)),
-                  text)
+    return util.LINK_RE.sub(lambda match: expand_link(match.group(0)),
+                            text)
 
 
 def expand_link(url):
@@ -347,7 +343,7 @@ def guess_tweet_content(post, in_reply_to):
 
     components = []
     prev_end = 0
-    for match in re.finditer(util.LINK_REGEX, preview):
+    for match in util.LINK_RE.finditer(preview):
         text = preview[prev_end:match.start()]
         components.append(TweetComponent(
             length=len(text), can_shorten=True, can_drop=True, text=text))

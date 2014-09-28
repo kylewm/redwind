@@ -4,6 +4,9 @@ import os
 class Configuration(object):
     DEBUG = os.environ.get('REDWIND_DEBUG') == 'true'
 
+    # do not intercept redirects when using debug toolbar
+    DEBUG_TB_INTERCEPT_REDIRECTS = False
+
     # Some secret key used by Flask-Login
     SECRET_KEY = os.environ.get('SECRET_KEY')
 

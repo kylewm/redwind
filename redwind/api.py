@@ -259,11 +259,12 @@ def fetch_profile():
         name = None
         twitter = None
         facebook = None
-        photo = None
+        image = None
 
         d = mf2py.Parser(url=url).to_dict()
 
-        for alt in d['rels'].get('me', []):
+        relmes = d['rels'].get('me', [])
+        for alt in relmes:
             m = TWITTER_PROFILE_RE.match(alt)
             if m:
                 twitter = m.group(1)
@@ -277,27 +278,27 @@ def fetch_profile():
                       if 'h-feed' in item['type']), None)
         if hfeed:
             authors = hfeed.get('properties', {}).get('author')
-            photos = hfeed.get('properties', {}).get('photo')
+            images = hfeed.get('properties', {}).get('photo')
             if authors:
                 if isinstance(authors[0], dict):
                     name = authors[0].get('properties', {}).get('name')
-                    photo = authors[0].get('properties', {}).get('photo')
+                    image = authors[0].get('properties', {}).get('photo')
                 else:
                     name = authors[0]
-            if photos and not photo:
-                photo = photos[0]
+            if images and not image:
+                image = images[0]
 
         # check for top-level h-card
         for item in d['items']:
             if 'h-card' in item.get('type', []):
                 if not name:
                     name = item.get('properties', {}).get('name')
-                if not photo:
-                    photo = item.get('properties', {}).get('photo')
+                if not image:
+                    image = item.get('properties', {}).get('photo')
 
         return jsonify({
             'name': name,
-            'photo': photo,
+            'image': image,
             'twitter': twitter,
             'facebook': facebook,
         })

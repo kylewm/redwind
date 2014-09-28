@@ -29,6 +29,16 @@ INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
 RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
 
+AT_USERNAME_RE = re.compile(r'(?i)(?<!\w)@([a-z0-9_]+)')
+LINK_RE = re.compile(
+    # optional schema
+    r'(?i)\b([a-z]{3,9}://)?'
+    # hostname and port
+    '([a-z0-9.\-]+[.][a-z]{2,4}(?::\d{2,6})?'
+    # path
+    '(?:/[a-z0-9\-_.;:$?&%#@()/=]*[a-z0-9\-_$?#/])?)'
+)
+
 
 def isoparse(s):
     """Parse (UTC) datetimes in ISO8601 format"""
@@ -100,19 +110,7 @@ def urls_match(url1, url2):
     return p1.netloc == p2.netloc and p1.path == p2.path
 
 
-LINK_REGEX = r'\bhttps?://([a-zA-Z0-9/\.\-_:;%?@$#&=+]+)'
-TWITTER_USERNAME_REGEX = r'(?i)(?<!\w)@([a-z0-9_]+)'
-NEW_LINK_REGEX = (
-    # optional schema
-    r'(?i)\b([a-z]{3,9}://)?'
-    # hostname and port
-    '([a-z0-9.\-]+[.][a-z]{2,4}(?::\d{2,6})?'
-    # path
-    '(?:/[a-z0-9\-_.;:$?&%#@()/=]*[a-z0-9\-_$?#/])?)'
-)
-
-
-def autolink(plain, twitter_names=True):
+def autolink(plain):
 
     def bs4_sub(regex, repl):
         for txt in soup.find_all(text=True):
@@ -120,7 +118,7 @@ def autolink(plain, twitter_names=True):
                 continue
             nodes = []
             start = 0
-            for m in re.finditer(regex, txt):
+            for m in regex.finditer(txt):
                 nodes.append(txt[start:m.start()])
                 nodes.append(repl(m))
                 start = m.end()
@@ -138,17 +136,10 @@ def autolink(plain, twitter_names=True):
         a.string = m.group(2)
         return a
 
-    def twitter_repl(m):
-        a = soup.new_tag('a', href='https://twitter.com/' + m.group(1))
-        a.string = m.group(0)
-        return a
-
     blacklist = ('a', 'script', 'pre', 'code', 'embed', 'object',
                  'audio', 'video')
     soup = bs4.BeautifulSoup(plain)
-    bs4_sub(NEW_LINK_REGEX, link_repl)
-    if twitter_names:
-        bs4_sub(TWITTER_USERNAME_REGEX, twitter_repl)
+    bs4_sub(LINK_RE, link_repl)
     return ''.join(str(t) for t in soup.body.contents) if soup.body else ''
 
 
@@ -318,22 +309,21 @@ def mirror_image(src, side=None):
     return url_for('static', filename=rz_relpath)
 
 
-def person_to_microcard(fullname, displayname, entry, pos):
-    url = entry.get('url')
-    photo = entry.get('photo')
-    if url and photo:
-        photo_url = mirror_image(photo, 26)
-        return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
-            url, photo_url, displayname)
-    elif url:
-        return '<a class="microcard h-card" href="{}">{}</a>'.format(
-            url, displayname)
+def person_to_microcard(contact, nick):
+    if contact:
+        url = contact.url or url_for('contact_by_name', nick)
+        image = contact.image
+        if image:
+            image = mirror_image(image, 26)
+            return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
+                url, image, contact.name)
+        return '<a class="microcard h-card" href="{}">@{}</a>'.format(
+            url, contact.name)
+    url = 'https://twitter.com/' + nick
+    return '<a href="{}">@{}</a>'.format(url, nick)
 
-    return displayname
 
-
-def markdown_filter(data, img_path=None, link_twitter_names=True,
-                    person_processor=person_to_microcard):
+def markdown_filter(data, img_path=None, person_processor=person_to_microcard):
     if data is None:
         return ''
 
@@ -345,29 +335,53 @@ def markdown_filter(data, img_path=None, link_twitter_names=True,
         data = process_people(data, person_processor)
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    result = autolink(result, twitter_names=link_twitter_names)
+    result = autolink(result)
     result = smartypants(result)
     return result
 
 
 def process_people(data, person_processor):
-    from .models import AddressBook
-    book = None
-    start = 0
-    while True:
-        m = PEOPLE_RE.search(data, start)
-        if not m:
-            break
-        if not book:
-            book = AddressBook()
+    from .models import Contact, Nick
+
+    def process_name(m):
         fullname = m.group(1)
-        displayname = m.group(2) or fullname
-        replacement = person_processor(fullname, displayname,
-                                       book.entries.get(fullname, {}),
-                                       m.start())
-        data = data[:m.start()] + replacement + data[m.end():]
-        start = m.start() + len(replacement)
+        displayname = m.group(2)
+        contact = Contact.query.filter_by(name=fullname).first()
+        processed = person_processor(contact, displayname)
+        if processed:
+            return processed
+        return displayname
+
+    def process_nick(m):
+        name = m.group(1)
+        nick = Nick.query.filter_by(name=name).first()
+        contact = nick and nick.contact
+        processed = person_processor(contact, name)
+        if processed:
+            return processed
+        return m.group(0)
+
+    app.logger.debug('in data %s', data)
+    data = PEOPLE_RE.sub(process_name, data)
+    app.logger.debug('processed names %s', data)
+    data = AT_USERNAME_RE.sub(process_nick, data)
+    app.logger.debug('processed nicks %s', data)
     return data
+
+    # while True:
+    #     m = PEOPLE_RE.search(data, start)
+    #     if not m:
+    #         break
+    #     if not book:
+    #         book = AddressBook()
+    #     fullname = m.group(1)
+    #     displayname = m.group(2) or fullname
+    #     replacement = person_processor(fullname, displayname,
+    #                                    book.entries.get(fullname, {}),
+    #                                    m.start())
+    #     data = data[:m.start()] + replacement + data[m.end():]
+    #     start = m.start() + len(replacement)
+    # return data
 
 
 def format_as_text(html, remove_imgs=True):

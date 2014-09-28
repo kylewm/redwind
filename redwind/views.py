@@ -5,12 +5,13 @@ from . import contexts
 from . import db
 from . import hooks
 from . import util
-from .models import Post, Location, AddressBook, Photo, Tag, Mention
+from .models import Post, Location, AddressBook, Photo, Tag, Mention, \
+    Contact, Nick
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
-    current_user
+    current_user, current_app
 import sqlalchemy.orm
 import sqlalchemy.sql
 
@@ -642,29 +643,84 @@ def save_post(post):
     return redirect(redirect_url)
 
 
-@app.route('/addressbook', methods=['GET', 'POST'])
+@app.route('/addressbook')
 def addressbook():
-    book = AddressBook()
+    return redirect(url_for('contacts'))
 
-    if request.method == 'POST':
-        if not current_user.is_authenticated():
-            return app.login_manager.unauthorized()
 
-        name = request.form.get('name').strip()
-        url = request.form.get('url').strip()
-        photo = request.form.get('photo').strip()
-        twitter_name = request.form.get('twitter').strip()
-        facebook_id = request.form.get('facebook').strip()
+@app.route('/contacts')
+def contacts():
+    contacts = Contact.query.order_by(Contact.name).all()
+    return render_template('contacts.html', contacts=contacts)
 
-        book.entries[name] = {
-            'url': url,
-            'photo': photo,
-            'twitter': twitter_name,
-            'facebook': facebook_id,
-        }
 
-        book.save()
-        return redirect(url_for('addressbook'))
+@app.route('/contacts/<name>')
+def contact_by_name(name):
+    nick = Nick.query.filter_by(name=name).first()
+    contact = nick and nick.contact
+    if not contact:
+        abort(404)
+    return render_template('contact.html', contact=contact)
 
-    od = collections.OrderedDict(sorted(book.entries.items()))
-    return render_template('addressbook.html', entries=od)
+
+@app.route('/delete_contact')
+def delete_contact():
+    id = request.args.get('id')
+    contact = Contact.query.get(id)
+    db.session.delete(contact)
+    db.session.commit()
+    return redirect(url_for('contacts'))
+
+
+@app.route('/new_contact', methods=['GET', 'POST'])
+def new_contact():
+    if request.method == 'GET':
+        contact = Contact()
+        return render_template('edit_contact.html', contact=contact)
+
+    if not current_user.is_authenticated():
+        return current_app.login_manager.unauthorized()
+
+    contact = Contact()
+    db.session.add(contact)
+    return save_contact(contact)
+
+
+@app.route('/edit_contact', methods=['GET', 'POST'])
+def edit_contact():
+    if request.method == 'GET':
+        id = request.args.get('id')
+        contact = Contact.query.get(id)
+        return render_template('edit_contact.html', contact=contact)
+
+    if not current_user.is_authenticated():
+        return current_app.login_manager.unauthorized()
+
+    id = request.form.get('id')
+    contact = Contact.query.get(id)
+    return save_contact(contact)
+
+
+def save_contact(contact):
+    contact.name = request.form.get('name')
+    contact.image = request.form.get('image')
+    contact.url = request.form.get('url')
+
+    contact.nicks = [Nick(name=nick.strip())
+                     for nick
+                     in request.form.get('nicks', '').split(',')
+                     if nick.strip()]
+
+    contact.social = util.filter_empty_keys({
+        'twitter': request.form.get('twitter'),
+        'facebook': request.form.get('facebook'),
+    })
+
+    if not contact.id:
+        db.session.add(contact)
+    db.session.commit()
+
+    if contact.nicks:
+        return redirect(url_for('contact_by_name', name=contact.nicks[0].name))
+    else:
+        return redirect(url_for('contacts'))

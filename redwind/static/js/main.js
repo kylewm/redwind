@@ -6,36 +6,47 @@
     var leafletCss = '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css';
 
     // DOM convenience functions, from Barnaby Walters (waterpigs.co.uk)
-    var first = function(selector, context) { return (context || document).querySelector(selector); };
-    var all = function(selector, context) { return (context || document).querySelectorAll(selector); };
-    var each = function(els, callback) { return Array.prototype.forEach.call(els, callback); };
-    var map = function(els, callback) { return Array.prototype.map.call(els, callback); };
+    function first(selector, context) {
+        return (context || document).querySelector(selector);
+    }
 
-    var loadJsFile = function(url, cb) {
+    function all(selector, context) {
+        return (context || document).querySelectorAll(selector);
+    }
+
+    function each(els, callback) {
+        return Array.prototype.forEach.call(els, callback);
+    }
+
+    function map(els, callback) {
+        return Array.prototype.map.call(els, callback);
+    }
+
+    function loadJsFile(url, cb) {
         var scriptTag = document.createElement('script');
         scriptTag.type = 'text/javascript';
         scriptTag.src = url;
         scriptTag.onload = cb;
         first('head').appendChild(scriptTag);
-    };
+    }
 
-    var loadCssFile = function(url, cb) {
+    function loadCssFile(url, cb) {
         var linkTag = document.createElement('link');
         linkTag.rel = 'stylesheet';
         linkTag.type = 'text/css'
         linkTag.href = url;
         linkTag.onload = cb;
         first('head').appendChild(linkTag);
-    };
+    }
 
-    var loadLeaflet = function(cb) {
+    function loadLeaflet(cb) {
         var complete = {};
         loadJsFile(leafletJs, function() {complete.js = true; if (complete.css) { cb(); }});
         loadCssFile(leafletCss, function() {complete.css = true; if (complete.js) { cb(); }});
-    };
+    }
 
     // credit http://waterpigs.co.uk/articles/a-minimal-javascript-http-abstraction/
-    var Http = (function() {
+    var http = (function() {
         var open = function open(method, url) {
             var xhr = new XMLHttpRequest();
             xhr.open(method.toUpperCase(), url);
@@ -264,19 +275,27 @@
 
     var AddressBook = (function(){
         var fetchProfile = function() {
-            var url = first('#url');
-            var xhr = Http.open('GET', '/api/fetch_profile?url=' + encodeURIComponent(url.value));
-            Http.send(xhr).then(function(xhr) {
+            var url = first('input[name="url"]');
+            var xhr = http.open('GET', '/api/fetch_profile?url=' + encodeURIComponent(url.value));
+            http.send(xhr).then(function(xhr) {
                 var data = JSON.parse(xhr.responseText);
-                ['name', 'photo', 'twitter', 'facebook'].forEach(function(field) {
-                    if (field in data) {
-                        document.getElementById(field).value = data[field];
-                    }
-                });
+                if (data.name) {
+                    first('input[name="name"]').value = data.name;
+                }
+                if (data.image) {
+                    first('input[name="image"]').value = data.image;
+                }
+                if (data.twitter) {
+                    first('input[name="twitter"]').value = data.twitter;
+                    first('input[name="nick"]').value |= data.twitter;
+                }
+                if (data.facebook) {
+                    first('input[name="facebook"]').value = data.facebook;
+                }
             });
         };
 
-        each(all('#addressbook_form #fetch'), function(fetchButton) {
+        each(all('#fetch_profile'), function(fetchButton) {
             fetchButton.addEventListener('click', fetchProfile);
         });
 

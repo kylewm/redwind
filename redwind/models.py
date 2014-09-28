@@ -459,6 +459,30 @@ class Tag(db.Model):
         return self.name
 
 
+class Nick(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), index=True)
+    name = db.Column(db.String(256), unique=True)
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+
+
+class Contact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256))
+    nicks = db.relationship('Nick', backref='contact',
+                            cascade='all,delete-orphan')
+    image = db.Column(db.String(512))
+    url = db.Column(db.String(512))
+    social = db.Column(JsonType)
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        self.url = kwargs.get('url')
+        self.image = kwargs.get('image')
+
+
 class AddressBook:
     """Address book contains entries like
     {
