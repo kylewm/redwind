@@ -6,6 +6,7 @@ from . import hooks
 from . import util
 from .models import Post, Location, Photo, Context
 from flask import request, jsonify, abort, make_response
+from flask.ext.login import login_user
 from werkzeug import secure_filename
 import datetime
 import jwt
@@ -167,7 +168,8 @@ def micropub_endpoint():
         abort(401)
 
     app.logger.debug('successfully authenticated as user %s => %s', me, user)
-
+    login_user(user)
+    
     if request.method == 'GET':
         if request.args.get('q') == 'syndicate-to':
             return urllib.parse.urlencode({
@@ -182,6 +184,16 @@ def micropub_endpoint():
 
     post = Post('photo' if photo_file else 'reply' if in_reply_to
                 else 'like' if like_of else 'note')
+
+    pub_str = request.form.get('published')
+    if pub_str:
+        pub = mf2util.parse_dt(pub_str)
+        if pub.tzinfo:
+            pub = pub.astimezone(datetime.timezone.utc)
+            pub = pub.replace(tzinfo=None)
+        post.published = pub
+    else:
+        post.published = datetime.datetime.utcnow()
     post.reserve_date_index()
 
     post.title = request.form.get('name')
@@ -198,16 +210,6 @@ def micropub_endpoint():
         post.like_of.append(like_of)
         post.like_contexts.append(
             Context(url=like_of, permalink=like_of))
-
-    pub_str = request.form.get('published')
-    if pub_str:
-        pub = mf2util.parse_dt(pub_str)
-        if pub.tzinfo:
-            pub = pub.astimezone(datetime.timezone.utc)
-            pub = pub.replace(tzinfo=None)
-        post.published = pub
-    else:
-        post.published = datetime.datetime.utcnow()
 
     loc_str = request.form.get('location')
     geo_prefix = 'geo:'
