@@ -341,6 +341,7 @@ def markdown_filter(data, img_path=None, person_processor=person_to_microcard):
 
 
 def process_people(data, person_processor):
+    from . import db
     from .models import Contact, Nick
 
     def process_name(m):
@@ -354,7 +355,8 @@ def process_people(data, person_processor):
 
     def process_nick(m):
         name = m.group(1)
-        nick = Nick.query.filter_by(name=name).first()
+        nick = Nick.query.filter(
+            db.func.lower(Nick.name) == db.func.lower(name)).first()
         contact = nick and nick.contact
         processed = person_processor(contact, name)
         if processed:
