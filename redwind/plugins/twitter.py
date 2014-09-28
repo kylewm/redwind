@@ -182,9 +182,9 @@ def share_on_twitter():
 
 def format_markdown_as_tweet(data):
     def person_to_twitter_handle(contact, nick):
-        if contact.social and 'twitter' in contact.social:
-            return '@' + contact.social['twitter']
-
+        if contact and contact.social:
+            nick = contact.social.get('twitter') or nick
+        return '@' + nick
     return util.format_as_text(
         util.markdown_filter(data, person_processor=person_to_twitter_handle))
 
