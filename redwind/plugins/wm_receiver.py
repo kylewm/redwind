@@ -1,10 +1,9 @@
 from .. import app
-from .. import settings
 from .. import db
 from .. import queue
 from .. import redis
 from .. import util
-from ..models import Post, Mention
+from ..models import Post, Mention, get_settings
 
 from flask import request, make_response, render_template, url_for
 from werkzeug.exceptions import NotFound
@@ -121,7 +120,7 @@ def process_webmention(source, target, callback):
 
 def do_process_webmention(source, target):
     app.logger.debug("processing webmention from %s to %s", source, target)
-    if target and target.strip('/') == settings.site_url.strip('/'):
+    if target and target.strip('/') == get_settings().site_url.strip('/'):
         # received a domain-level mention
         app.logger.debug('received domain-level webmention from %s', source)
         target_post = None
@@ -212,7 +211,7 @@ def find_target_post(target_url):
         return None
 
     try:
-        urls = app.url_map.bind(settings.site_url)
+        urls = app.url_map.bind(get_settings().site_url)
         endpoint, args = urls.match(parsed_url.path)
     except NotFound:
         app.logger.warn("Webmention could not find target for %s",

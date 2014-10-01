@@ -65,38 +65,6 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 
 
-class Settings:
-    def __init__(self):
-        self.clear_cache()
-
-    def clear_cache(self):
-        object.__setattr__(self, '_cache', None)
-
-    def get_cache(self):
-        if not self._cache:
-            from .models import Setting
-            object.__setattr__(self, '_cache',
-                               dict((s.key, s) for s in Setting.query.all()))
-        return self._cache
-
-    def all(self):
-        return self.get_cache().values()
-
-    def __getattr__(self, key):
-        s = self.get_cache()[key]
-        return s.value
-
-    def __setattr__(self, key, value):
-        # Cannot re-use a Setting that's been open across requests,
-        # make a fresh query
-        from .models import Setting
-        s = Setting.query.get(key)
-        s.value = value
-        db.session.commit()
-        self.clear_cache()
-
-settings = Settings()
-
 for handler in ['views']:
     importlib.import_module('redwind.' + handler)
 

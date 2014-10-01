@@ -1,8 +1,7 @@
 from .. import app
-from .. import settings
 from .. import db
 from .. import util
-from ..models import Post
+from ..models import Post, Setting, get_settings
 
 from flask.ext.login import login_required
 from flask import request, redirect, url_for, render_template, flash,\
@@ -24,7 +23,7 @@ def authorize_facebook():
     import urllib.request
     redirect_uri = url_for('authorize_facebook', _external=True)
     params = {
-        'client_id': settings.facebook_app_id,
+        'client_id': get_settings().facebook_app_id,
         'redirect_uri': redirect_uri,
         'scope': 'publish_stream,user_photos',
     }
@@ -32,7 +31,7 @@ def authorize_facebook():
     code = request.args.get('code')
     if code:
         params['code'] = code
-        params['client_secret'] = settings.facebook_app_secret
+        params['client_secret'] = get_settings().facebook_app_secret
 
         r = urllib.request.urlopen(
             'https://graph.facebook.com/oauth/access_token?'
@@ -40,7 +39,7 @@ def authorize_facebook():
         payload = urllib.parse.parse_qs(r.read())
 
         access_token = payload[b'access_token'][0].decode('ascii')
-        settings.facebook_access_token = access_token
+        Setting.query.get('facebook_access_token').value = access_token
         db.session.commit()
         return redirect(url_for('edit_settings'))
     else:
@@ -58,7 +57,7 @@ def share_on_facebook():
 
         preview = post.title + '\n\n' if post.title else ''
         preview += format_markdown_as_facebook(post.content)
-        imgs = [urllib.parse.urljoin(settings.site_url, img)
+        imgs = [urllib.parse.urljoin(get_settings().site_url, img)
                 for img in collect_images(post)]
 
         albums = []
@@ -66,7 +65,7 @@ def share_on_facebook():
             app.logger.debug('fetching user albums')
             resp = requests.get(
                 'https://graph.facebook.com/v2.0/me/albums',
-                params={'access_token': settings.facebook_access_token})
+                params={'access_token': get_settings().facebook_access_token})
             resp.raise_for_status()
             app.logger.debug('user albums response %s: %s', resp, resp.text)
             albums = resp.json().get('data', [])
@@ -113,7 +112,7 @@ class PersonTagger:
             r = requests.get(
                 'https://graph.facebook.com/v2.0/me/taggable_friends',
                 params={
-                    'access_token': settings.facebook_access_token
+                    'access_token': get_settings().facebook_access_token
                 })
             self.taggable_friends = r.json()
 
@@ -131,7 +130,7 @@ def create_album(name, msg):
     app.logger.debug('creating new facebook album %s', name)
     resp = requests.post(
         'https://graph.facebook.com/v2.0/me/albums', data={
-            'access_token': settings.facebook_access_token,
+            'access_token': get_settings().facebook_access_token,
             'name': name,
             'message': msg,
             'privacy': json.dumps({'value': 'EVERYONE'}),
@@ -149,7 +148,7 @@ def handle_new_or_edit(post, preview, img_url, post_type,
     preview = util.process_people(preview, tagger)
 
     post_args = {
-        'access_token': settings.facebook_access_token,
+        'access_token': get_settings().facebook_access_token,
         'message': preview.strip(),
         'actions': json.dumps({'name': 'See Original',
                                'link': post.permalink}),

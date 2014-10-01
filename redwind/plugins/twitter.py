@@ -1,10 +1,9 @@
 from .. import app
-from .. import settings
 from .. import db
 from .. import hooks
 from .. import queue
 from .. import util
-from ..models import Post, Context, User
+from ..models import Post, Context, User, Setting, get_settings
 
 from flask.ext.login import login_required, current_user
 from flask import request, redirect, url_for, make_response,\
@@ -55,8 +54,8 @@ def authorize_twitter():
     callback_url = url_for('twitter_callback', _external=True)
     try:
         oauth = OAuth1Session(
-            client_key=settings.twitter_api_key,
-            client_secret=settings.twitter_api_secret,
+            client_key=get_settings().twitter_api_key,
+            client_secret=get_settings().twitter_api_secret,
             callback_uri=callback_url)
 
         oauth.fetch_request_token(REQUEST_TOKEN_URL)
@@ -72,16 +71,16 @@ def twitter_callback():
        access token"""
     try:
         oauth = OAuth1Session(
-            client_key=settings.twitter_api_key,
-            client_secret=settings.twitter_api_secret)
+            client_key=get_settings().twitter_api_key,
+            client_secret=get_settings().twitter_api_secret)
         oauth.parse_authorization_response(request.url)
 
         response = oauth.fetch_access_token(ACCESS_TOKEN_URL)
         access_token = response.get('oauth_token')
         access_token_secret = response.get('oauth_token_secret')
 
-        settings.twitter_oauth_token = access_token
-        settings.twitter_oauth_token_secret = access_token_secret
+        Setting.query.get('twitter_oauth_token').value = access_token
+        Setting.query.get('twitter_oauth_token_secret').value = access_token_secret
 
         db.session.commit()
         return redirect(url_for('edit_settings'))
@@ -106,7 +105,7 @@ def collect_images(post):
             if not img.find_parent(class_='h-card'):
                 src = img.get('src')
                 if src:
-                    yield urljoin(settings.site_url, src)
+                    yield urljoin(get_settings().site_url, src)
 
 
 def send_to_twitter(post, args):
@@ -192,10 +191,10 @@ def format_markdown_as_tweet(data):
 
 def get_auth(user):
     return OAuth1(
-        client_key=settings.twitter_api_key,
-        client_secret=settings.twitter_api_secret,
-        resource_owner_key=settings.twitter_oauth_token,
-        resource_owner_secret=settings.twitter_oauth_token_secret)
+        client_key=get_settings().twitter_api_key,
+        client_secret=get_settings().twitter_api_secret,
+        resource_owner_key=get_settings().twitter_oauth_token,
+        resource_owner_secret=get_settings().twitter_oauth_token_secret)
 
 
 def repost_preview(url):
@@ -507,5 +506,5 @@ def download_image_to_temp(url):
 
 
 def is_twitter_authorized():
-    return (settings.twitter_oauth_token
-            and settings.twitter_oauth_token_secret)
+    return (get_settings().twitter_oauth_token
+            and get_settings().twitter_oauth_token_secret)

@@ -1,7 +1,8 @@
 from . import app
-from . import settings
 from . import db
 from . import util
+
+from flask import g
 
 import os
 import os.path
@@ -36,6 +37,19 @@ class Setting(db.Model):
     key = db.Column(db.String(256), primary_key=True)
     name = db.Column(db.String(256))
     value = db.Column(db.Text)
+
+
+class Settings:
+    def __init__(self):
+        for s in Setting.query.all():
+            setattr(self, s.key, s.value)
+
+
+def get_settings():
+    settings = getattr(g, 'rw_settings', None)
+    if settings is None:
+        g.rw_settings = settings = Settings()
+    return settings
 
 
 posts_to_mentions = db.Table(
@@ -82,7 +96,7 @@ class User:
 
     def is_authenticated(self):
         # user matching user.json is authenticated, all others are guests
-        return self.domain == settings.author_domain
+        return self.domain == get_settings().author_domain
 
     def is_active(self):
         return True
@@ -285,7 +299,7 @@ class Post(db.Model):
         return self._permalink(include_slug=False)
 
     def _permalink(self, include_slug):
-        site_url = settings.site_url or 'http://localhost'
+        site_url = get_settings().site_url or 'http://localhost'
 
         path_components = [site_url,
                            self.post_type,
@@ -307,16 +321,16 @@ class Post(db.Model):
 
     @property
     def short_permalink(self):
-        if settings.shortener_url:
-            return '{}/{}'.format(settings.shortener_url,
+        if get_settings().shortener_url:
+            return '{}/{}'.format(get_settings().shortener_url,
                                   self.shortid)
 
     @property
     def short_cite(self):
-        if settings.shortener_url:
+        if get_settings().shortener_url:
             tag = util.tag_for_post_type(self.post_type)
             ordinal = util.date_to_ordinal(self.published.date())
-            cite = '{} {}{}{}'.format(settings.shortener_url,
+            cite = '{} {}{}{}'.format(get_settings().shortener_url,
                                       tag, util.base60_encode(ordinal),
                                       self.date_index)
             return cite
