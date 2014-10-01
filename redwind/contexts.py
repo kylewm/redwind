@@ -52,47 +52,51 @@ def create_context(url, user_domain=None):
         if context:
             return context
 
-    response = util.fetch_html(url)
-    if response.status_code // 100 != 2:
-        app.logger.error(
+    context = None
+    response = None
+    try:
+        response = util.fetch_html(url)
+        response.raise_for_status()
+
+        context = Context.query.filter_by(url=url).first()
+        blob = mf2py.Parser(doc=response.text, url=url).to_dict()
+        if blob:
+            entry = mf2util.interpret(blob, url)
+            if entry:
+                published = entry.get('published')
+                content = util.clean_foreign_html(entry.get('content', ''))
+                content_plain = util.format_as_text(content)
+
+                title = entry.get('name')
+                author_name = entry.get('author', {}).get('name', '')
+                author_image = entry.get('author', {}).get('photo')
+
+                permalink = entry.get('url')
+                if not permalink or not isinstance(permalink, str):
+                    permalink = url
+
+                context = Context()
+                context.url = url
+                context.permalink = permalink
+                context.author_name = author_name
+                context.author_url = entry.get('author', {}).get('url', '')
+                context.author_image = author_image
+                context.content = content
+                context.content_plain = content_plain
+                context.published = published
+                context.title = title
+    except:
+        app.logger.exception(
             'Could not fetch context for url %s, received response %s',
             url, response)
-        return None
-
-    context = Context.query.filter_by(url=url).first()
-    blob = mf2py.Parser(doc=response.text, url=url).to_dict()
-    if blob:
-        entry = mf2util.interpret(blob, url)
-        if entry:
-            published = entry.get('published')
-            content = util.clean_foreign_html(entry.get('content', ''))
-            content_plain = util.format_as_text(content)
-
-            title = entry.get('name')
-            author_name = entry.get('author', {}).get('name', '')
-            author_image = entry.get('author', {}).get('photo')
-
-            permalink = entry.get('url')
-            if not permalink or not isinstance(permalink, str):
-                permalink = url
-
-            context = Context()
-            context.url = url
-            context.permalink = permalink
-            context.author_name = author_name
-            context.author_url = entry.get('author', {}).get('url', '')
-            context.author_image = author_image
-            context.content = content
-            context.content_plain = content_plain
-            context.published = published
-            context.title = title
 
     if not context:
         context = Context()
         context.url = context.permalink = url
-        html = response.text
-        soup = bs4.BeautifulSoup(html)
-        if soup.title:
-            context.title = soup.title.string
+        if response:
+            html = response.text
+            soup = bs4.BeautifulSoup(html)
+            if soup.title:
+                context.title = soup.title.string
 
     return context

@@ -5,7 +5,10 @@
       <a class="u-like u-likeof" href="{{context.permalink}}">
         {{ context.title_or_url }}
       </a>
-      by {{context.author_name}} on {{context.permalink|domain_from_url}}
+      {% if context.author_name %}
+        by {{context.author_name}}
+      {% endif %}
+      on {{context.permalink|domain_from_url}}
     </div>
   {% else %}
     <div class="p-like p-like-of h-cite">
