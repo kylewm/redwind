@@ -3,9 +3,9 @@ from .. import db
 from .. import hooks
 from .. import queue
 from .. import util
-from ..models import Post, Context, User, Setting, get_settings
+from ..models import Post, Context, Setting, get_settings
 
-from flask.ext.login import login_required, current_user
+from flask.ext.login import login_required
 from flask import request, redirect, url_for, make_response,\
     render_template, flash, abort, has_request_context
 
@@ -118,8 +118,7 @@ def send_to_twitter(post, args):
 
         try:
             app.logger.debug("auto-posting to twitter {}".format(post.shortid))
-            queue.enqueue(do_send_to_twitter, post.shortid,
-                          current_user.domain)
+            queue.enqueue(do_send_to_twitter, post.shortid)
             return True, 'Success'
 
         except Exception as e:
@@ -127,15 +126,14 @@ def send_to_twitter(post, args):
             return False, 'Exception while auto-posting to twitter: {}'.format(e)
 
 
-def do_send_to_twitter(post_id, user_domain):
-    user = User.load(user_domain)
+def do_send_to_twitter(post_id):
     app.logger.debug("auto-posting to twitter for {}".format(post_id))
     post = Post.load_by_shortid(post_id)
 
     in_reply_to, repost_of, like_of = posse_post_discovery(post)
     preview, img_url = guess_tweet_content(post, in_reply_to)
     response = do_tweet(
-        post_id, preview, img_url, in_reply_to, repost_of, like_of, user)
+        post_id, preview, img_url, in_reply_to, repost_of, like_of)
     return str(response)
 
 
@@ -189,7 +187,7 @@ def format_markdown_as_tweet(data):
         util.markdown_filter(data, person_processor=person_to_twitter_handle))
 
 
-def get_auth(user):
+def get_auth():
     return OAuth1(
         client_key=get_settings().twitter_api_key,
         client_secret=get_settings().twitter_api_secret,
@@ -208,18 +206,13 @@ def repost_preview(url):
         embed_response = requests.get(
             'https://api.twitter.com/1.1/statuses/oembed.json',
             params={'id': tweet_id},
-            auth=get_auth(current_user))
+            auth=get_auth())
 
         if embed_response.status_code // 2 == 100:
             return embed_response.json().get('html')
 
 
-def create_context(url, user_domain):
-    if user_domain:
-        user = User.load(user_domain)
-    else:
-        user = current_user
-
+def create_context(url):
     match = PERMALINK_RE.match(url)
     if not match:
         app.logger.debug('url is not a twitter permalink %s', url)
@@ -229,7 +222,7 @@ def create_context(url, user_domain):
     tweet_id = match.group(2)
     status_response = requests.get(
         'https://api.twitter.com/1.1/statuses/show/{}.json'.format(tweet_id),
-        auth=get_auth(user))
+        auth=get_auth())
 
     if status_response.status_code // 2 != 100:
         app.logger.warn("failed to fetch tweet %s %s", status_response,
@@ -395,12 +388,11 @@ def guess_tweet_content(post, in_reply_to):
 
 
 def do_tweet(post_id, preview, img_url, in_reply_to,
-             repost_of, like_of, user=None):
+             repost_of, like_of):
     try:
         post = Post.load_by_shortid(post_id)
         twitter_url = handle_new_or_edit(
-            post, preview, img_url, in_reply_to, repost_of, like_of,
-            user)
+            post, preview, img_url, in_reply_to, repost_of, like_of)
         db.session.commit()
 
         if has_request_context():
@@ -417,9 +409,7 @@ def do_tweet(post_id, preview, img_url, in_reply_to,
 
 
 def handle_new_or_edit(post, preview, img, in_reply_to,
-                       repost_of, like_of, user=None):
-
-    user = user or current_user
+                       repost_of, like_of):
     if not is_twitter_authorized():
         app.logger.warn('current user is not authorized for twitter')
         return
@@ -434,7 +424,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
             result = requests.post(
                 'https://api.twitter.com/1.1/statuses/retweet/{}.json'
                 .format(tweet_id),
-                auth=get_auth(user))
+                auth=get_auth())
             if result.status_code // 2 != 100:
                 raise RuntimeError("{}: {}".format(result,
                                                    result.content))
@@ -447,7 +437,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
             result = requests.post(
                 'https://api.twitter.com/1.1/favorites/create.json',
                 data={'id': tweet_id},
-                auth=get_auth(user))
+                auth=get_auth())
             if result.status_code // 2 != 100:
                 raise RuntimeError("{}: {}".format(result,
                                                    result.content))
@@ -472,12 +462,12 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
                 'https://api.twitter.com/1.1/statuses/update_with_media.json',
                 data=data,
                 files={'media[]': open(tempfile, 'rb')},
-                auth=get_auth(user))
+                auth=get_auth())
 
         else:
             result = requests.post(
                 'https://api.twitter.com/1.1/statuses/update.json',
-                data=data, auth=get_auth(user))
+                data=data, auth=get_auth())
 
         if result.status_code // 2 != 100:
             raise RuntimeError("status code: {}, headers: {}, body: {}"

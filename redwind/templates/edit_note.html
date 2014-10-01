@@ -2,10 +2,11 @@
 
 {% block additional_params %}
 {% block location_check %}
- <label><input type="checkbox" id="get_coords_button"/> Location</label>
+ <label><input type="checkbox" id="get_coords_button"/> Location
  <input id="location_name" name="location_name" size="10" value="{{ post.location.name if post.location else ''}}"/>
  <input id="latitude" name="latitude" size="5" value="{{ post.location.latitude if post.location else ''}}"/>
  <input id="longitude" name="longitude" size="5" value="{{ post.location.longitude if post.location else ''}}"/>
+ </label>
 {% endblock location_check %}
 
 <label><input type="checkbox" name="tweet" value="true" {% if edit_type == 'new' %}checked{% endif %} /> <i class="fa fa-twitter"></i> Tweet</label>
