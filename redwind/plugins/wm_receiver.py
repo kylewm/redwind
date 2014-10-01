@@ -1,4 +1,5 @@
 from .. import app
+from .. import settings
 from .. import db
 from .. import queue
 from .. import redis
@@ -120,7 +121,7 @@ def process_webmention(source, target, callback):
 
 def do_process_webmention(source, target):
     app.logger.debug("processing webmention from %s to %s", source, target)
-    if target and target.strip('/') == app.config['SITE_URL'].strip('/'):
+    if target and target.strip('/') == settings.site_url.strip('/'):
         # received a domain-level mention
         app.logger.debug('received domain-level webmention from %s', source)
         target_post = None
@@ -211,7 +212,7 @@ def find_target_post(target_url):
         return None
 
     try:
-        urls = app.url_map.bind(app.config['SITE_URL'])
+        urls = app.url_map.bind(settings.site_url)
         endpoint, args = urls.match(parsed_url.path)
     except NotFound:
         app.logger.warn("Webmention could not find target for %s",
@@ -246,8 +247,6 @@ def find_target_post(target_url):
 
 
 def create_mention(post, url, source_response):
-    prod_url = app.config.get('PROD_URL')
-    site_url = app.config.get('SITE_URL')
     target_urls = []
     if post:
         base_target_urls = [
@@ -261,9 +260,6 @@ def create_mention(post, url, source_response):
             target_urls.append(base_url.replace('https://', 'http://')
                                if base_url.startswith('https://')
                                else base_url.replace('http://', 'https://'))
-            # use localhost url for testing if it's different from prod
-            if prod_url and prod_url != site_url:
-                target_urls.append(base_url.replace(site_url, prod_url))
 
     blob = mf2py.Parser(doc=source_response.text, url=url).to_dict()
     if not blob:

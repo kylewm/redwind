@@ -1,4 +1,5 @@
 from .. import app
+from .. import settings
 from .. import db
 from .. import hooks
 from .. import queue
@@ -54,8 +55,8 @@ def authorize_twitter():
     callback_url = url_for('twitter_callback', _external=True)
     try:
         oauth = OAuth1Session(
-            client_key=app.config['TWITTER_CONSUMER_KEY'],
-            client_secret=app.config['TWITTER_CONSUMER_SECRET'],
+            client_key=settings.twitter_api_key,
+            client_secret=settings.twitter_api_secret,
             callback_uri=callback_url)
 
         oauth.fetch_request_token(REQUEST_TOKEN_URL)
@@ -71,19 +72,19 @@ def twitter_callback():
        access token"""
     try:
         oauth = OAuth1Session(
-            client_key=app.config['TWITTER_CONSUMER_KEY'],
-            client_secret=app.config['TWITTER_CONSUMER_SECRET'])
+            client_key=settings.twitter_api_key,
+            client_secret=settings.twitter_api_secret)
         oauth.parse_authorization_response(request.url)
 
         response = oauth.fetch_access_token(ACCESS_TOKEN_URL)
         access_token = response.get('oauth_token')
         access_token_secret = response.get('oauth_token_secret')
 
-        current_user.twitter_oauth_token = access_token
-        current_user.twitter_oauth_token_secret = access_token_secret
+        settings.twitter_oauth_token = access_token
+        settings.twitter_oauth_token_secret = access_token_secret
 
         db.session.commit()
-        return redirect(url_for('settings'))
+        return redirect(url_for('edit_settings'))
     except requests.RequestException as e:
         return make_response(str(e))
 
@@ -105,7 +106,7 @@ def collect_images(post):
             if not img.find_parent(class_='h-card'):
                 src = img.get('src')
                 if src:
-                    yield urljoin(app.config['SITE_URL'], src)
+                    yield urljoin(settings.site_url, src)
 
 
 def send_to_twitter(post, args):
@@ -113,7 +114,7 @@ def send_to_twitter(post, args):
     attempt to guess the appropriate parameters and content
     """
     if args.get('tweet') == 'true':
-        if not is_twitter_authorized(current_user):
+        if not is_twitter_authorized():
             return False, 'Current user is not authorized to tweets'
 
         try:
@@ -191,14 +192,14 @@ def format_markdown_as_tweet(data):
 
 def get_auth(user):
     return OAuth1(
-        client_key=app.config['TWITTER_CONSUMER_KEY'],
-        client_secret=app.config['TWITTER_CONSUMER_SECRET'],
-        resource_owner_key=user.twitter_oauth_token,
-        resource_owner_secret=user.twitter_oauth_token_secret)
+        client_key=settings.twitter_api_key,
+        client_secret=settings.twitter_api_secret,
+        resource_owner_key=settings.twitter_oauth_token,
+        resource_owner_secret=settings.twitter_oauth_token_secret)
 
 
 def repost_preview(url):
-    if not is_twitter_authorized(current_user):
+    if not is_twitter_authorized():
         app.logger.warn('current user is not authorized for twitter')
         return
 
@@ -420,7 +421,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
                        repost_of, like_of, user=None):
 
     user = user or current_user
-    if not is_twitter_authorized(user):
+    if not is_twitter_authorized():
         app.logger.warn('current user is not authorized for twitter')
         return
 
@@ -505,6 +506,6 @@ def download_image_to_temp(url):
     return tempfile
 
 
-def is_twitter_authorized(user):
-    return (user and user.twitter_oauth_token
-            and user.twitter_oauth_token_secret)
+def is_twitter_authorized():
+    return (settings.twitter_oauth_token
+            and settings.twitter_oauth_token_secret)

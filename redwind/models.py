@@ -1,4 +1,5 @@
 from . import app
+from . import settings
 from . import db
 from . import util
 
@@ -29,6 +30,12 @@ class JsonType(db.TypeDecorator):
         if value is not None:
             value = json.loads(value)
         return value
+
+
+class Setting(db.Model):
+    key = db.Column(db.String(256), primary_key=True)
+    name = db.Column(db.String(256))
+    value = db.Column(db.Text)
 
 
 posts_to_mentions = db.Table(
@@ -292,7 +299,7 @@ class Post(db.Model):
         return self._permalink(include_slug=False)
 
     def _permalink(self, include_slug):
-        site_url = app.config.get('SITE_URL') or 'http://localhost'
+        site_url = settings.site_url or 'http://localhost'
 
         path_components = [site_url,
                            self.post_type,
@@ -314,17 +321,19 @@ class Post(db.Model):
 
     @property
     def short_permalink(self):
-        return '{}/{}'.format(app.config.get('SHORT_SITE_URL'),
-                              self.shortid)
+        if settings.shortener_url:
+            return '{}/{}'.format(settings.shortener_url,
+                                  self.shortid)
 
     @property
     def short_cite(self):
-        tag = util.tag_for_post_type(self.post_type)
-        ordinal = util.date_to_ordinal(self.published.date())
-        cite = '{} {}{}{}'.format(app.config.get('SHORT_SITE_CITE'),
-                                  tag, util.base60_encode(ordinal),
-                                  self.date_index)
-        return cite
+        if settings.shortener_url:
+            tag = util.tag_for_post_type(self.post_type)
+            ordinal = util.date_to_ordinal(self.published.date())
+            cite = '{} {}{}{}'.format(settings.shortener_url,
+                                      tag, util.base60_encode(ordinal),
+                                      self.date_index)
+            return cite
 
     @property
     def likes(self):

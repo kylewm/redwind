@@ -2,7 +2,7 @@
 {% block body %}
 
   <nav>
-    <span class="site-title">kylewm.com</span>
+    <span class="site-title">{{ settings.site_title }}</span>
     <a href="{{url_for('index')}}">Stream</a>
     <a href="{{url_for('posts_by_type', plural_type='articles')}}">Articles</a>
     <a href="{{url_for('posts_by_type', plural_type='photos')}}">Photos</a>
@@ -51,21 +51,10 @@
 
     <div class="social">
       <div class="p-author h-card">
-        <img class="u-photo" alt="me" src="{{url_for('static', filename='img/users/kyle_large.jpg')}}"/>
-      <a class="u-url" href="/"><span class="p-name">Kyle Mahan</span></a>
+        <img class="u-photo" alt="me" src="{{ settings.author_image }}"/>
+        <a class="u-url" href="{{ settings.site_url }}"><span class="p-name">{{ settings.author_name }}</span></a>
       </div> <!-- .h-card -->
-
-      <a rel="me" href="gtalk:kyle.mahan@gmail.com">GChat</a> &bull;
-      <a rel="me" href="irc://freenode.net/kylewm,isnick">IRC</a> &bull;
-      <a class="u-email" rel="me" href="mailto:kyle@kylewm.com">Email</a> &bull;
-      <a rel="me" href="https://keybase.io/kylewm">Keybase</a> &bull;
-      <a rel="me" href="https://github.com/kylewm">GitHub</a>  &bull;
-      <a rel="me" href="https://twitter.com/kyle_wm">Twitter</a> &bull;
-      <a rel="me" href="https://www.facebook.com/kyle.mahan">Facebook</a> &bull;
-      <a rel="me" href="http://www.flickr.com/photos/kindofblue115/">Flickr</a> &bull;
-      <a rel="me" href="http://www.linkedin.com/pub/kyle-mahan/3/207/349">LinkedIn</a> &bull;
-      <a rel="payment me" href="https://venmo.com/kyle-mahan">Venmo</a>
-
+      {{ settings.author_bio | safe }}
     </div> <!-- .social -->
 
     <div style="clear:both"></div>

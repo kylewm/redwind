@@ -5,6 +5,7 @@ from . import contexts
 from . import db
 from . import hooks
 from . import util
+from . import settings
 from .models import Post, Location, AddressBook, Photo, Tag, Mention, \
     Contact, Nick
 
@@ -23,6 +24,8 @@ import os
 import pytz
 import requests
 import urllib.parse
+from operator import attrgetter
+
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
@@ -45,6 +48,13 @@ DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/'
              '<int(fixed_digits=2):day>/<index>')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
+
+
+@app.context_processor
+def inject_settings_variable():
+    return {
+        'settings': settings
+    }
 
 
 def collect_posts(post_types, page, per_page, tag,
@@ -102,7 +112,7 @@ def render_posts_atom(title, feed_id, posts):
 def index(page):
     # leave out hidden posts
     posts, is_first, is_last = collect_posts(
-        None, page, app.config['POSTS_PER_PAGE'], None, include_hidden=False,
+        None, page, int(settings.posts_per_page), None, include_hidden=False,
         include_drafts=current_user.is_authenticated())
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
@@ -113,7 +123,7 @@ def index(page):
 @app.route('/everything/page/<int:page>')
 def everything(page):
     posts, is_first, is_last = collect_posts(
-        None, page, app.config['POSTS_PER_PAGE'], None, include_hidden=True,
+        None, page, int(settings.posts_per_page), None, include_hidden=True,
         include_drafts=current_user.is_authenticated())
 
     if request.args.get('feed') == 'atom':
@@ -127,7 +137,7 @@ def posts_by_type(plural_type, page):
     post_type, _, title = next(tup for tup in POST_TYPES
                                if tup[1] == plural_type)
     posts, is_first, is_last = collect_posts(
-        (post_type,), page, app.config['POSTS_PER_PAGE'], None,
+        (post_type,), page, int(settings.posts_per_page), None,
         include_hidden=True,
         include_drafts=current_user.is_authenticated())
 
@@ -140,7 +150,7 @@ def posts_by_type(plural_type, page):
 @app.route('/tag/<tag>/page/<int:page>')
 def posts_by_tag(tag, page):
     posts, is_first, is_last = collect_posts(
-        None, page, app.config['POSTS_PER_PAGE'], tag, include_hidden=True,
+        None, page, int(settings.posts_per_page), tag, include_hidden=True,
         include_drafts=current_user.is_authenticated())
     title = '#' + tag
 
@@ -317,10 +327,18 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 @login_required
-def settings():
-    return render_template("settings.html", user=current_user)
+def edit_settings():
+    if request.method == 'GET':
+        return render_template(
+            'settings.html',
+            raw_settings=sorted(settings.all(), key=attrgetter('name')))
+
+    for key, value in request.form.items():
+        setattr(settings, key, value)
+
+    return redirect(url_for('edit_settings'))
 
 
 @app.route('/delete')
@@ -428,7 +446,7 @@ def isotime_filter(thedate):
         thedate = datetime.date(1982, 11, 24)
 
     if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
-        tz = pytz.timezone(app.config['TIMEZONE'])
+        tz = pytz.timezone(settings.timezone)
         thedate = pytz.utc.localize(thedate).astimezone(tz)
 
     if isinstance(thedate, datetime.datetime):
@@ -442,7 +460,7 @@ def human_time(thedate, alternate=None):
         return alternate
 
     if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
-        tz = pytz.timezone(app.config['TIMEZONE'])
+        tz = pytz.timezone(settings.timezone)
         thedate = pytz.utc.localize(thedate).astimezone(tz)
 
     #return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')

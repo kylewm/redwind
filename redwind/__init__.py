@@ -31,12 +31,7 @@ toolbar = DebugToolbarExtension(app)
 login_mgr = LoginManager(app)
 login_mgr.login_view = 'index'
 
-
 assets = Environment(app)
-#assets.register(
-#    'css_all', Bundle('css/base.css', 'css/skeleton.css',
-#                      'css/layout.css', 'css/pygments.css',
-#                      filters='cssmin', output='css/site.css'))
 assets.register('css_all', Bundle('css/style.css', 'css/pygments.css',
                                   output='css/site.css'))
 
@@ -71,24 +66,40 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 
 
+class Settings:
+    def all(self):
+        from .models import Setting
+        return Setting.query.order_by(Setting.key).all()
+
+    def __getattr__(self, key):
+        from .models import Setting
+        s = Setting.query.get(key)
+        return s.value
+
+    def __setattr__(self, key, value):
+        from .models import Setting
+        s = Setting.query.get(key)
+        s.value = value
+        db.session.commit()
+
+settings = Settings()
+
+
 for handler in ['views']:
     importlib.import_module('redwind.' + handler)
 
-for plugin in app.config['PLUGINS']:
+
+for plugin in [
+        'facebook',
+        'locations',
+        'push',
+        'twitter',
+        'wm_receiver',
+        'wm_sender',
+]:
     #app.logger.info('loading plugin module %s', plugin)
     module = importlib.import_module('redwind.plugins.' + plugin)
     try:
         module.register()
     except:
         app.logger.warn('no register method for plugin module %s', plugin)
-
-
-def init_db():
-    db.create_all()
-
-
-#@app.cli.command('initdb')
-#def initdb_command():
-#    """Creates the database tables."""
-#    init_db()
-#    print('Initialized the database.')

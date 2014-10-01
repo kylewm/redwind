@@ -1,4 +1,5 @@
 from . import app
+from . import settings
 from datetime import date
 from flask import url_for
 from markdown import markdown
@@ -91,7 +92,7 @@ def filter_empty_keys(data):
 
 def download_resource(url, path):
     app.logger.debug("downloading {} to {}".format(url, path))
-    response = requests.get(urllib.parse.urljoin(app.config['SITE_URL'], url),
+    response = requests.get(urllib.parse.urljoin(settings.site_url, url),
                             stream=True, timeout=10)
     response.raise_for_status()
     if not os.path.exists(os.path.dirname(path)):
@@ -266,7 +267,7 @@ def mirror_image(src, side=None):
     static/_mirror/domain/path and optionally resizes it to
     static/_mirro/domain/dirname(path)/resized-64/basename(path)
     """
-    site_netloc = urllib.parse.urlparse(app.config['SITE_URL']).netloc
+    site_netloc = urllib.parse.urlparse(settings.site_url).netloc
     o = urllib.parse.urlparse(src)
     if not o.netloc or o.netloc == site_netloc and not side:
         return src
