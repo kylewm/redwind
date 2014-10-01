@@ -74,29 +74,15 @@ posts_to_tags = db.Table(
     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), index=True))
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    domain = db.Column(db.String(120), unique=True)
-    twitter_oauth_token = db.Column(db.String(512))
-    twitter_oauth_token_secret = db.Column(db.String(512))
-    facebook_access_token = db.Column(db.String(512))
-
-    @classmethod
-    def load(cls, domain):
-        return cls.query.filter_by(domain=domain).first()
-
+class User:
     def __init__(self, domain):
         self.domain = domain
-        self.authenticated = False
-        self.twitter_oauth_token = None
-        self.twitter_oauth_token_secret = None
-        self.facebook_access_token = None
 
     # Flask-Login integration
 
     def is_authenticated(self):
         # user matching user.json is authenticated, all others are guests
-        return self.authenticated
+        return self.domain == settings.author_domain
 
     def is_active(self):
         return True

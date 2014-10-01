@@ -24,7 +24,6 @@ import os
 import pytz
 import requests
 import urllib.parse
-from operator import attrgetter
 
 
 TIMEZONE = pytz.timezone('US/Pacific')
@@ -333,7 +332,7 @@ def edit_settings():
     if request.method == 'GET':
         return render_template(
             'settings.html',
-            raw_settings=sorted(settings.all(), key=attrgetter('name')))
+            raw_settings=sorted(settings.all(), key=operator.attrgetter('name')))
 
     for key, value in request.form.items():
         setattr(settings, key, value)
