@@ -188,7 +188,7 @@ def format_markdown_as_tweet(data):
         util.markdown_filter(data, person_processor=person_to_twitter_handle))
 
 
-def get_auth(user):
+def get_auth():
     return OAuth1(
         client_key=get_settings().twitter_api_key,
         client_secret=get_settings().twitter_api_secret,
@@ -207,18 +207,13 @@ def repost_preview(url):
         embed_response = requests.get(
             'https://api.twitter.com/1.1/statuses/oembed.json',
             params={'id': tweet_id},
-            auth=get_auth(current_user))
+            auth=get_auth())
 
         if embed_response.status_code // 2 == 100:
             return embed_response.json().get('html')
 
 
-def create_context(url, user_domain):
-    if user_domain:
-        user = User.load(user_domain)
-    else:
-        user = current_user
-
+def create_context(url):
     match = PERMALINK_RE.match(url)
     if not match:
         app.logger.debug('url is not a twitter permalink %s', url)
@@ -228,7 +223,7 @@ def create_context(url, user_domain):
     tweet_id = match.group(2)
     status_response = requests.get(
         'https://api.twitter.com/1.1/statuses/show/{}.json'.format(tweet_id),
-        auth=get_auth(user))
+        auth=get_auth())
 
     if status_response.status_code // 2 != 100:
         app.logger.warn("failed to fetch tweet %s %s", status_response,
@@ -433,7 +428,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
             result = requests.post(
                 'https://api.twitter.com/1.1/statuses/retweet/{}.json'
                 .format(tweet_id),
-                auth=get_auth(user))
+                auth=get_auth())
             if result.status_code // 2 != 100:
                 raise RuntimeError("{}: {}".format(result,
                                                    result.content))
@@ -446,7 +441,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
             result = requests.post(
                 'https://api.twitter.com/1.1/favorites/create.json',
                 data={'id': tweet_id},
-                auth=get_auth(user))
+                auth=get_auth())
             if result.status_code // 2 != 100:
                 raise RuntimeError("{}: {}".format(result,
                                                    result.content))
@@ -471,12 +466,12 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
                 'https://api.twitter.com/1.1/statuses/update_with_media.json',
                 data=data,
                 files={'media[]': open(tempfile, 'rb')},
-                auth=get_auth(user))
+                auth=get_auth())
 
         else:
             result = requests.post(
                 'https://api.twitter.com/1.1/statuses/update.json',
-                data=data, auth=get_auth(user))
+                data=data, auth=get_auth())
 
         if result.status_code // 2 != 100:
             raise RuntimeError("status code: {}, headers: {}, body: {}"
