@@ -389,12 +389,11 @@ def guess_tweet_content(post, in_reply_to):
 
 
 def do_tweet(post_id, preview, img_url, in_reply_to,
-             repost_of, like_of, user=None):
+             repost_of, like_of):
     try:
         post = Post.load_by_shortid(post_id)
         twitter_url = handle_new_or_edit(
-            post, preview, img_url, in_reply_to, repost_of, like_of,
-            user)
+            post, preview, img_url, in_reply_to, repost_of, like_of)
         db.session.commit()
 
         if has_request_context():
@@ -411,9 +410,8 @@ def do_tweet(post_id, preview, img_url, in_reply_to,
 
 
 def handle_new_or_edit(post, preview, img, in_reply_to,
-                       repost_of, like_of, user=None):
+                       repost_of, like_of):
 
-    user = user or current_user
     if not is_twitter_authorized():
         app.logger.warn('current user is not authorized for twitter')
         return
