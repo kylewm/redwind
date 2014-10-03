@@ -1,12 +1,21 @@
 import unittest
 from redwind import app, db
-from redwind.models import User
+from redwind.models import User, Setting
 from flask import redirect
 from flask.ext.login import login_user, logout_user, current_user
 import re
 
 
 class AppTestCase(unittest.TestCase):
+
+    def _set_setting(self, key, value):
+        s = Setting.query.get('key')
+        if not s:
+            s = Setting()
+            s.key = key
+            db.session.add(s)
+        s.value = value
+        db.session.commit()
 
     def setUp(self):
         app.config['DEBUG'] = False
@@ -17,6 +26,10 @@ class AppTestCase(unittest.TestCase):
         self.app_context.push()
         self.client = app.test_client()
         db.create_all()
+        self._set_setting('posts_per_page', '15')
+        self._set_setting('author_domain', 'example.com')
+        self._set_setting('site_url', 'http://example.com')
+        self._set_setting('timezone', 'America/Los_Angeles')
 
     def tearDown(self):
         self.app_context.pop()
@@ -27,13 +40,8 @@ class AppTestCase(unittest.TestCase):
 class AuthedTestCase(AppTestCase):
 
     def _register_bypass_login(self):
-        user = User('example.com')
-        db.session.add(user)
-        db.session.commit()
-
         def bypass_login():
-            user = User.load('example.com')
-            user.authenticated = True
+            user = User('example.com')
             login_user(user)
             return redirect('/')
 
