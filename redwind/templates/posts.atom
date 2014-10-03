@@ -47,6 +47,16 @@
 	{% endfor %}
 
         {{ post.content_html | atom_sanitize }}
+
+        {% for photo in post.photos %}
+          &lt;a href="{{photo.url}}">
+            &lt;img src="{{photo.thumbnail}}" />
+          &lt;/a>
+          {% if photo.caption %}
+            {{ photo.caption | atom_sanitize }}
+          {% endif %}
+        {% endfor %}
+        
     </content>
     <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/{{ post.post_type }}</object-type>
   </entry>

@@ -11,23 +11,22 @@ from flask.ext.login import current_user
 
 
 def fetch_contexts(post):
-    user_domain = current_user.domain
     for url in post.in_reply_to:
-        do_fetch_context(post.path, 'reply_contexts', url, user_domain)
+        do_fetch_context(post.path, 'reply_contexts', url)
 
     for url in post.repost_of:
-        do_fetch_context(post.path, 'repost_contexts', url, user_domain)
+        do_fetch_context(post.path, 'repost_contexts', url)
 
     for url in post.like_of:
-        do_fetch_context(post.path, 'like_contexts', url, user_domain)
+        do_fetch_context(post.path, 'like_contexts', url)
 
     for url in post.bookmark_of:
-        do_fetch_context(post.path, 'bookmark_contexts', url, user_domain)
+        do_fetch_context(post.path, 'bookmark_contexts', url)
 
 
-def do_fetch_context(post_path, context_attr, url, user_domain):
+def do_fetch_context(post_path, context_attr, url):
     app.logger.debug("fetching url %s", url)
-    context = create_context(url, user_domain)
+    context = create_context(url)
     if context:
         if not context.id:
             post = Post.load_by_path(post_path)
@@ -47,8 +46,8 @@ def do_fetch_context(post_path, context_attr, url, user_domain):
         db.session.commit()
 
 
-def create_context(url, user_domain=None):
-    for context in hooks.fire('create-context', url, user_domain):
+def create_context(url):
+    for context in hooks.fire('create-context', url):
         if context:
             return context
 

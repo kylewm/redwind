@@ -225,6 +225,15 @@ label {
     display: block;
 }
 
+.not-logged-in {
+    border: solid 1px #ddd;
+    box-shadow: 0 0 2px #ddd;
+    padding: 0.5em;
+    margin: 0.5em;
+    background: #fdd;
+    font-style: italic;
+}
+
 #edit_form textarea, #edit_form input[type="text"] {
     width: 100%;
 }

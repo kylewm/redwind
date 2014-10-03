@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
+
+{% if not current_user.is_authenticated() %}
+<div class="not-logged-in">
+  You are not currently logged in. Feel free to poke around, but you won't be able to post anything without first authenticating as the blog owner. 
+</div>
+{% endif %}
+
+
   {% with is_single = True %}
     {% include "_contexts.html" %}
   {% endwith %}
@@ -34,9 +42,9 @@
 
   <div class="clearfix">
     <input style="float: left;" type="submit" id="publish_button" value="Publish"/>
-    <div style="float: left;">
+    <div style="float: left; margin-left: 1em;">
       {% block additional_params %}{% endblock additional_params %}
-      <label><input type="checkbox" id="inhibit_wms" name="inhibit_wms" value="true"/> Inhibit WMs</label>
+      <label><input type="checkbox" id="inhibit_wms" name="inhibit_wms" value="true"/> Inhibit Webmentions</label>
     </div>
   </div>
 

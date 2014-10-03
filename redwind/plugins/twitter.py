@@ -3,9 +3,9 @@ from .. import db
 from .. import hooks
 from .. import queue
 from .. import util
-from ..models import Post, Context, User, Setting, get_settings
+from ..models import Post, Context, Setting, get_settings
 
-from flask.ext.login import login_required, current_user
+from flask.ext.login import login_required
 from flask import request, redirect, url_for, make_response,\
     render_template, flash, abort, has_request_context
 
