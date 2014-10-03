@@ -118,8 +118,7 @@ def send_to_twitter(post, args):
 
         try:
             app.logger.debug("auto-posting to twitter {}".format(post.shortid))
-            queue.enqueue(do_send_to_twitter, post.shortid,
-                          current_user.domain)
+            queue.enqueue(do_send_to_twitter, post.shortid)
             return True, 'Success'
 
         except Exception as e:
@@ -127,16 +126,16 @@ def send_to_twitter(post, args):
             return False, 'Exception while auto-posting to twitter: {}'.format(e)
 
 
-def do_send_to_twitter(post_id, user_domain):
-    user = User.load(user_domain)
-    app.logger.debug("auto-posting to twitter for {}".format(post_id))
-    post = Post.load_by_shortid(post_id)
+def do_send_to_twitter(post_id):
+    with app.app_context():
+        app.logger.debug("auto-posting to twitter for {}".format(post_id))
+        post = Post.load_by_shortid(post_id)
 
-    in_reply_to, repost_of, like_of = posse_post_discovery(post)
-    preview, img_url = guess_tweet_content(post, in_reply_to)
-    response = do_tweet(
-        post_id, preview, img_url, in_reply_to, repost_of, like_of, user)
-    return str(response)
+        in_reply_to, repost_of, like_of = posse_post_discovery(post)
+        preview, img_url = guess_tweet_content(post, in_reply_to)
+        response = do_tweet(
+            post_id, preview, img_url, in_reply_to, repost_of, like_of)
+        return str(response)
 
 
 @app.route('/share_on_twitter', methods=['GET', 'POST'])

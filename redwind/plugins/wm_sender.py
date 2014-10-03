@@ -31,9 +31,10 @@ def send_webmentions(post, args):
 
 
 def do_send_webmentions(post_id):
-    app.logger.debug("sending mentions for {}".format(post_id))
-    post = Post.load_by_shortid(post_id)
-    return handle_new_or_edit(post)
+    with app.app_context():
+        app.logger.debug("sending mentions for {}".format(post_id))
+        post = Post.load_by_shortid(post_id)
+        return handle_new_or_edit(post)
 
 
 def get_source_url(post):

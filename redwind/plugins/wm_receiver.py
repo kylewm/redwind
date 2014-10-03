@@ -68,54 +68,55 @@ def process_webmention(source, target, callback):
     def call_callback(result):
         if callback:
             requests.post(callback, data=result)
-    try:
-        target_post, mention, delete, error = do_process_webmention(
-            source, target)
+    with app.app_context():
+        try:
+            target_post, mention, delete, error = do_process_webmention(
+                source, target)
 
-        if error or not target_post or not mention:
-            app.logger.warn("Failed to process webmention: %s", error)
+            if error or not target_post or not mention:
+                app.logger.warn("Failed to process webmention: %s", error)
+                result = {
+                    'source': source,
+                    'target': target,
+                    'response_code': 400,
+                    'status': 'error',
+                    'reason': error
+                }
+                call_callback(result)
+                return result
+
+            if delete:
+                target_post.mentions = [m for m in target_post.mentions if
+                                        m.url != source]
+
+            if not delete:
+                target_post.mentions.append(mention)
+
+            db.session.commit()
+            app.logger.debug("saved mentions to %s", target_post.path)
+
+            result = {
+                'source': source,
+                'target': target,
+                'response_code': 200,
+                'status': 'success',
+                'reason': 'Deleted' if delete else 'Created'
+            }
+
+            call_callback(result)
+            return result
+
+        except Exception as e:
+            app.logger.exception("exception while processing webmention")
             result = {
                 'source': source,
                 'target': target,
                 'response_code': 400,
                 'status': 'error',
-                'reason': error
+                'reason': "exception while processing webmention {}".format(e)
             }
             call_callback(result)
             return result
-
-        if delete:
-            target_post.mentions = [m for m in target_post.mentions if
-                                    m.url != source]
-
-        if not delete:
-            target_post.mentions.append(mention)
-
-        db.session.commit()
-        app.logger.debug("saved mentions to %s", target_post.path)
-
-        result = {
-            'source': source,
-            'target': target,
-            'response_code': 200,
-            'status': 'success',
-            'reason': 'Deleted' if delete else 'Created'
-        }
-
-        call_callback(result)
-        return result
-
-    except Exception as e:
-        app.logger.exception("exception while processing webmention")
-        result = {
-            'source': source,
-            'target': target,
-            'response_code': 400,
-            'status': 'error',
-            'reason': "exception while processing webmention {}".format(e)
-        }
-        call_callback(result)
-        return result
 
 
 def do_process_webmention(source, target):

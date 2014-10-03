@@ -46,7 +46,7 @@ class Settings:
 
 
 def get_settings():
-    settings = getattr(g, 'rw_settings', None)
+    settings = g.get('rw_settings', None)
     if settings is None:
         g.rw_settings = settings = Settings()
     return settings
