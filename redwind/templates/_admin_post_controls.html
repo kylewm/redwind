@@ -3,11 +3,11 @@
   <!-- <a class="admin-post-controls-arrow" href="#">Admin</a> -->
   <div class="admin-post-controls">
     <a href="{{ url_for('edit_by_id', id=post.shortid) }}"><i class="fa fa-edit"></i> Edit Post</a>
-    &bullet; 
+    | 
     <a href="{{ url_for('share_on_twitter', id=post.shortid) }}"><i class="fa fa-twitter"></i> Share on Twitter </a>
-    &bullet; 
+    | 
     <a href="{{ url_for('share_on_facebook', id=post.shortid) }}"><i class="fa fa-facebook"></i> Share on Facebook </a>
-    &bullet; 
+    | 
     <a href="{{ url_for('delete_by_id', id=post.shortid) }}" onclick="return window.confirm('Delete {{post.post_type}}?')"><i class="fa fa-trash-o"></i> Delete </a>
   </div>
 {% endif %}

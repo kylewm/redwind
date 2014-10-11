@@ -1,4 +1,5 @@
 <article class="{%if article_class%}{{article_class}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}">
+
   {% include "_reply_contexts.html" %}
   {% include "_like_contexts.html" %}
   {% include "_bookmark_contexts.html" %}
@@ -93,11 +94,13 @@
       </div>
     {% endif %}
 
+  </div> <!--  .post-metadata -->
+
+
     {% if is_single %}
       {% include "_admin_post_controls.html" %}
     {% endif %}
 
-  </div> <!--  .post-metadata -->
 
   {% if is_single and post.mentions %}
     <div class="mentions replies">

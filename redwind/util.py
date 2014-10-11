@@ -2,7 +2,7 @@ from . import app
 from datetime import date
 from flask import url_for
 from markdown import markdown
-from smartypants import smartypants
+from smartypants import smartyPants
 import bleach
 import bs4
 import datetime
@@ -338,7 +338,7 @@ def markdown_filter(data, img_path=None, person_processor=person_to_microcard):
 
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
     result = autolink(result)
-    result = smartypants(result)
+    result = smartyPants(result)
     return result
 
 

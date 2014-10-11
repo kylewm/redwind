@@ -42,8 +42,8 @@ def do_fetch_context(post_path, context_attr, url):
             db.session.add(context)
             new_contexts.append(context)
 
-        setattr(post, context_attr, new_contexts)
-        db.session.commit()
+            setattr(post, context_attr, new_contexts)
+            db.session.commit()
 
 
 def create_context(url):

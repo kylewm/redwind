@@ -1,6 +1,7 @@
 import sys
 import importlib
 
+sys.path.append('external')
 for module in ('mf2py', 'mf2util'):
     if module not in sys.path:
         sys.path.append(module)
