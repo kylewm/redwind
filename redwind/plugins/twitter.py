@@ -338,7 +338,7 @@ def guess_tweet_content(post, in_reply_to):
     components = []
     prev_end = 0
     for match in util.LINK_RE.finditer(preview):
-        text = preview[prev_end:match.start()]
+        text = preview[prev_end:match.start()].strip(' ')
         components.append(TweetComponent(
             length=len(text), can_shorten=True, can_drop=True, text=text))
         link = match.group(0)
@@ -347,7 +347,7 @@ def guess_tweet_content(post, in_reply_to):
             can_drop=True, text=link))
         prev_end = match.end()
 
-    text = preview[prev_end:]
+    text = preview[prev_end:].strip()
     components.append(TweetComponent(
         length=len(text), can_shorten=True, can_drop=True, text=text))
 

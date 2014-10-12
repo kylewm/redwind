@@ -19,6 +19,7 @@ from logging.handlers import RotatingFileHandler
 
 import os
 import logging
+import webassets
 
 app = Flask(__name__)
 app.config.from_object(Configuration)
@@ -32,9 +33,16 @@ login_mgr = LoginManager(app)
 login_mgr.login_view = 'index'
 
 assets = Environment(app)
-assets.register('css_all', Bundle('css/style.css', 'css/pygments.css',
-                                  output='css/site.css'))
 
+assets.register('css_all',
+                Bundle('css/style.css', 'css/pygments.css',
+                       filters='cssmin', output='css/site.css'))
+
+assets.register('js_all',
+                Bundle('js/util.js', 'js/http.js', 'js/posts.js',
+                       'js/twitter.js', 'js/edit_contact.js',
+                       'js/edit_post.js', filters='jsmin',
+                       output='js/main.js'))
 
 app.jinja_options = ImmutableDict(
     trim_blocks=True,

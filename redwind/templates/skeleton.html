@@ -34,10 +34,10 @@
     <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/users/kyle76.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/users/kyle114.jpg') }}"/>
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/kyle152.jpg') }}"/>
-    
+
     <link rel="pgpkey" type="application/pgp-keys" href="https://keybase.io/kylewm/key.asc" />
 
-    
+
     {% assets 'css_all' %}
     <link rel="stylesheet" href="{{ ASSET_URL }}"/>
     {% endassets %}
@@ -48,10 +48,13 @@
 
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/>
 
+    {% assets 'js_all' %}
+    <script src="{{ ASSET_URL }}"/>
+    {% endassets %}
+
     {% block other_resources %}{% endblock other_resources %}
 
-    <script src="/static/js/main.js"></script>
-    
+
 <!-- Piwik -->
 <script type="text/javascript">
   var _paq = _paq || [];
