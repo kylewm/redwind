@@ -53,7 +53,9 @@
         }
     });
 
-    each(all('.h-feed article'), function(article) {
+    // commented out until I can figure out how not to catch events
+    // that would otherwise be handled (e.g., links)
+    /*each(all('.h-feed article'), function(article) {
         article.addEventListener('mouseover', function(event) {
             article.classList.add('highlight');
         });
@@ -64,6 +66,6 @@
             var permalink = first('.post-metadata a.u-url', article).href;
             window.location = permalink;
         });
-    });
+    });*/
 
 })(this);

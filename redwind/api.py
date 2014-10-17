@@ -63,11 +63,23 @@ def convert_mf2():
 
 @app.route('/api/mf2util')
 def convert_mf2util():
+    def dates_to_string(json):
+        if isinstance(json, dict):
+            return {k: dates_to_string(v) for (k, v) in json.items()}
+        if isinstance(json, list):
+            return [dates_to_string(v) for v in json]
+        if isinstance(json, datetime.date) or isinstance(json, datetime.datetime):
+            return json.isoformat()
+        return json
+    
     url = request.args.get('url')
     if url:
-        p = mf2py.Parser(url=url)
-        json = mf2util.interpret(p.to_dict(), url)
-        return jsonify(json)
+        d = mf2py.Parser(url=url).to_dict()
+        if mf2util.find_first_entry(d, ['h-feed']):
+            json = mf2util.interpret_feed(d, url)
+        else:
+            json = mf2util.interpret(d, url)
+        return jsonify(dates_to_string(json))
     return """<html><body>
     <h1>mf2util</h1>
     <form><label>URL to parse: <input name="url"></label>
