@@ -13,7 +13,7 @@ import requests
 import unicodedata
 import urllib
 
-bleach.ALLOWED_TAGS += ['img', 'p', 'br']
+bleach.ALLOWED_TAGS += ['img', 'p', 'br', 'marquee', 'blink']
 bleach.ALLOWED_ATTRIBUTES.update({
     'img': ['src', 'alt', 'title']
 })
