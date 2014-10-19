@@ -64,10 +64,11 @@
         {% if current_user.is_anonymous() %}
           <form id="indie_auth_form" action="{{url_for('login')}}" method="get">
             <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+            <input type="hidden" name="next" value="{{ request.path }}" />
             <button id="sign_in_button" type="submit">Sign In</button>
           </form>
         {% else %}
-          {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout') }}">logout</a>)
+          {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout', next=request.path) }}">logout</a>)
         {% endif %}
       </div> <!-- .login -->
       <div>

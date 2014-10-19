@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<form method="POST">
+<form id="contact_form" method="POST" action="">
 
   {% if contact.id %}
   <input name="id" type="hidden" value="{{contact.id}}"/>

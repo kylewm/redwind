@@ -234,6 +234,7 @@ label {
     font-style: italic;
 }
 
+#contact_form textarea, #contact_form input[type="text"],
 #edit_form textarea, #edit_form input[type="text"] {
     width: 100%;
 }

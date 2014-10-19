@@ -50,13 +50,12 @@ def token_endpoint():
             me, auth_me)
         abort(400)
 
-    token = jwt.encode({
+    token = util.jwt_encode({
         'me': me,
         'client_id': client_id,
         'scope': auth_scope,
         'date_issued': util.isoformat(datetime.datetime.utcnow()),
-        'nonce': random.randint(1000000, 2**31),
-    }, app.config['SECRET_KEY'])
+    })
 
     app.logger.debug("generating access token %s", token)
 
@@ -90,7 +89,7 @@ def micropub_endpoint():
         abort(401)
 
     try:
-        decoded = jwt.decode(token, app.config['SECRET_KEY'])
+        decoded = util.jwt_decode(token)
     except jwt.DecodeError as e:
         app.logger.warn('could not decode access token: %s', e)
         abort(401)

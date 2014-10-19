@@ -6,8 +6,10 @@ from smartypants import smartyPants
 import bleach
 import bs4
 import datetime
+import jwt
 import os
 import os.path
+import random
 import re
 import requests
 import unicodedata
@@ -453,3 +455,12 @@ def fetch_html(url):
 
 def clean_foreign_html(html):
     return bleach.clean(html, strip=True)
+
+
+def jwt_encode(obj):
+    obj['nonce'] = random.randint(1000000, 2 ** 31)
+    return jwt.encode(obj, app.config['SECRET_KEY'])
+
+
+def jwt_decode(s):
+    return jwt.decode(s, app.config['SECRET_KEY'])

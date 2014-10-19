@@ -305,9 +305,16 @@ def login():
     if not me:
         return make_response('Missing "me" parameter', 400)
 
-    auth_url, _, _ = discover_endpoints(me)
+    auth_url, token_url, micropub_url = discover_endpoints(me)
     if not auth_url:
         auth_url = 'https://indieauth.com/auth'
+
+    state = util.jwt_encode(util.filter_empty_keys({
+        'next': request.args.get('next'),
+        'authorization_endpoint': auth_url,
+        'token_endpoint': token_url,
+        'micropub': micropub_url,
+    }))
 
     return redirect('{}?{}'.format(
         auth_url,
@@ -315,8 +322,7 @@ def login():
             'me': me,
             'client_id': get_settings().site_url,
             'redirect_uri': url_for('login_callback', _external=True),
-            'state': request.args.get('state', ''),
-            'scope': 'authenticate',
+            'state': state,
         })))
 
 
@@ -324,10 +330,11 @@ def login():
 def login_callback():
     app.logger.debug('callback fields: %s', request.args)
 
-    me = request.args.get('me')
-    auth_url, _, _ = discover_endpoints(me)
-    if not auth_url:
-        auth_url = 'https://indieauth.com/auth'
+    state = request.args.get('state')
+    state_obj = util.jwt_decode(state) if state else {}
+    next_url = state_obj.get('next', url_for('index'))
+    auth_url = state_obj.get('authorization_endpoint',
+                             'https://indieauth.com/auth')
 
     if not auth_url:
         flash('Login failed: No authorization URL in session')
@@ -345,12 +352,11 @@ def login_callback():
             app.logger.debug('verify response %s', response.text)
             if 'me' in rdata:
                 domain = rdata.get('me')[0]
-                scopes = rdata.get('scope')
+                #scopes = rdata.get('scope')
                 user = auth.load_user(urllib.parse.urlparse(domain).netloc)
                 if user:
                     login_user(user, remember=True)
-                    flash('Logged in with domain {}, scope {}'.format(
-                        domain, scopes and ','.join(scopes)))
+                    flash('Logged in with domain {}'.format(domain))
                 else:
                     flash('No user for domain {}'.format(domain))
             else:
@@ -360,13 +366,13 @@ def login_callback():
             flash('Login failed {}: {}'.format(rdata.get('error'),
                                                rdata.get('error_description')))
 
-    return redirect(url_for('index'))
+    return redirect(next_url)
 
 
 @app.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(request.args.get('next', url_for('index')))
 
 
 @app.route('/settings', methods=['GET', 'POST'])
