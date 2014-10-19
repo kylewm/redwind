@@ -4,8 +4,8 @@ from . import contexts
 from . import db
 from . import hooks
 from . import util
-from .models import Post, Location, Photo, Context
-from flask import request, jsonify, abort, make_response
+from .models import Post, Location, Photo, Context, get_settings
+from flask import request, jsonify, abort, make_response, url_for
 from flask.ext.login import login_user
 from werkzeug import secure_filename
 import datetime
@@ -179,9 +179,6 @@ def micropub_endpoint():
         app.logger.warn('received valid access token for invalid user: %s', me)
         abort(401)
 
-    app.logger.debug('successfully authenticated as user %s => %s', me, user)
-    login_user(user)
-
     if request.method == 'GET':
         if request.args.get('q') == 'syndicate-to':
             return urllib.parse.urlencode({
@@ -211,7 +208,7 @@ def micropub_endpoint():
             location_name = request.form.get('place_name')
 
     # translate from micropub's verbage.TODO unify
-    return app.post('/save_new', data={
+    translated = {
         'post_type': post_type,
         'published': request.form.get('published'),
         'title': request.form.get('name'),
@@ -225,7 +222,14 @@ def micropub_endpoint():
         'repost_of': request.form.get('repost-of'),
         'bookmark_of': request.form.get('bookmark-of'),
         'photo': photo_file,
-    })
+    }
+    with app.test_request_context(base_url=get_settings().site_url, path='/save_new',
+                                  method='POST', data=translated):
+        app.logger.debug('received fake request %s: %s', request, request.args)
+        login_user(user)
+        app.logger.debug('successfully authenticated as user %s => %s', me, user)
+        from . import views
+        return views.save_new()
 
 
 @app.route('/api/fetch_profile')

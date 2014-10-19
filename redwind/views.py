@@ -204,9 +204,9 @@ def resize_associated_image(post, sourcepath, side):
     return targetpath
 
 
-@app.route('/{}/{}/files/<filename>'.format(POST_TYPE_RULE, DATE_RULE))
-def post_associated_file(post_type, year, month, day, index, filename):
-    post = Post.load_by_date(post_type, year, month, day, index)
+@app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
+def post_associated_file(year, month, slug, filename):
+    post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
     if not post:
         abort(404)
 
