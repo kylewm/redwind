@@ -16,12 +16,12 @@ def register():
 
 def send_webmentions(post, args):
     if args.get('inhibit_wms') == 'true':
-        app.logger.debug('skipping webmentions for {}'.format(post.shortid))
+        app.logger.debug('skipping webmentions for {}'.format(post.id))
         return
 
     try:
-        app.logger.debug("queueing webmentions for {}".format(post.shortid))
-        queue.enqueue(do_send_webmentions, post.shortid)
+        app.logger.debug("queueing webmentions for {}".format(post.id))
+        queue.enqueue(do_send_webmentions, post.id)
         return True, 'Success'
 
     except Exception as e:
@@ -33,7 +33,7 @@ def send_webmentions(post, args):
 def do_send_webmentions(post_id):
     with app.app_context():
         app.logger.debug("sending mentions for {}".format(post_id))
-        post = Post.load_by_shortid(post_id)
+        post = Post.load_by_id(post_id)
         return handle_new_or_edit(post)
 
 

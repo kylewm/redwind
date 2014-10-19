@@ -38,12 +38,9 @@ POST_TYPES = [
     ('bookmark', 'bookmarks', 'All Bookmarks'),
 ]
 
-POST_TYPE_RULE = '<any({}):post_type>'.format(
-    ','.join(tup[0] for tup in POST_TYPES))
-PLURAL_TYPE_RULE = '<any({}):plural_type>'.format(
-    ','.join(tup[1] for tup in POST_TYPES))
-DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/'
-             '<int(fixed_digits=2):day>/<index>')
+POST_TYPE_RULE = '<any({}):post_type>'.format(','.join(tup[0] for tup in POST_TYPES))
+PLURAL_TYPE_RULE = '<any({}):plural_type>'.format(','.join(tup[1] for tup in POST_TYPES))
+DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<index>')
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
@@ -163,17 +160,17 @@ def mentions():
     return render_template('mentions.html', mentions=mentions)
 
 
-@app.route("/all.atom")
+@app.route('/all.atom')
 def all_atom():
     return redirect(url_for('everything', feed='atom'))
 
 
-@app.route("/updates.atom")
+@app.route('/updates.atom')
 def updates_atom():
     return redirect(url_for('index', feed='atom'))
 
 
-@app.route("/articles.atom")
+@app.route('/articles.atom')
 def articles_atom():
     return redirect(url_for('posts_by_type', plural_type='articles', feed='atom'))
 
@@ -243,7 +240,16 @@ def post_associated_file(post_type, year, month, day, index, filename):
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
 @app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
-    post = Post.load_by_date(post_type, year, month, day, index)
+    post = Post.load_by_historic_path('{}/{}/{:02d}/{:02d}/{}'.format(
+        post_type, year, month, day, index))
+    if post:
+        return redirect(post.permalink)
+
+
+@app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>')
+def post_by_path(year, month, slug):
+    post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
+
     if not post or (post.draft and not current_user.is_authenticated()):
         abort(404)
 
@@ -256,35 +262,15 @@ def post_by_date(post_type, year, month, day, index, slug):
     if post.redirect:
         return redirect(post.redirect)
 
-    if not slug and post.slug:
-        return redirect(
-            url_for('post_by_date', post_type=post_type,
-                    year=year, month=month, day=day, index=index,
-                    slug=post.slug))
-
     title = post.title
     if not title and post.content:
         title = jinja2.filters.do_truncate(
             util.format_as_text(post.content), 50)
     if not title:
-        title = "A {} from {}".format(post.post_type, post.published)
+        title = 'A {} from {}'.format(post.post_type, post.published)
 
     return render_template('post.html', post=post, title=title,
                            body_class='h-entry', article_class=None)
-
-
-@app.route('/short/<string(minlength=5,maxlength=6):tag>')
-def shortlink(tag):
-    post_type = util.parse_type(tag)
-    published = util.parse_date(tag)
-    index = util.parse_index(tag)
-
-    if not post_type or not published or not index:
-        abort(404)
-
-    return redirect(url_for('post_by_date', post_type=post_type,
-                            year=published.year, month=published.month,
-                            day=published.day, index=index))
 
 
 # for testing -- allows arbitrary logins as any user
@@ -296,7 +282,7 @@ def shortlink(tag):
 #     return redirect(url_for('index'))
 
 
-@app.route("/indieauth")
+@app.route('/indieauth')
 def indieauth():
     token = request.args.get('token')
     response = requests.get('https://indieauth.com/verify',
@@ -319,7 +305,7 @@ def indieauth():
     return redirect(url_for('index'))
 
 
-@app.route("/logout")
+@app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('index'))
@@ -341,15 +327,15 @@ def edit_settings():
 @app.route('/delete')
 @login_required
 def delete_by_id():
-    shortid = request.args.get('id')
-    post = Post.load_by_shortid(shortid)
+    id = request.args.get('id')
+    post = Post.load_by_id(id)
     if not post:
         abort(404)
     post.deleted = True
     db.session.commit()
 
     redirect_url = request.args.get('redirect') or url_for('index')
-    app.logger.debug("redirecting to {}".format(redirect_url))
+    app.logger.debug('redirecting to {}'.format(redirect_url))
     return redirect(redirect_url)
 
 
@@ -421,8 +407,8 @@ def new_post(type):
 
 @app.route('/edit')
 def edit_by_id():
-    shortid = request.args.get('id')
-    post = Post.load_by_shortid(shortid)
+    id = request.args.get('id')
+    post = Post.load_by_id(id)
     if not post:
         abort(404)
     type = 'post'
@@ -537,9 +523,9 @@ def mirror_image(src, side=None):
 @app.route('/save_edit', methods=['POST'])
 @login_required
 def save_edit():
-    shortid = request.form.get('post_id')
-    app.logger.debug("saving post %s", shortid)
-    post = Post.load_by_shortid(shortid)
+    id = request.form.get('post_id')
+    app.logger.debug('saving post %d', id)
+    post = Post.load_by_id(id)
     return save_post(post)
 
 
@@ -547,23 +533,24 @@ def save_edit():
 @login_required
 def save_new():
     post_type = request.form.get('post_type', 'note')
-    app.logger.debug("saving new post of type %s", post_type)
+    app.logger.debug('saving new post of type %s', post_type)
     post = Post(post_type)
     return save_post(post)
 
 
 def save_post(post):
+    # reserve a db id
+    if not post.id:
+        db.session.add(post)
+        db.session.commit()
+
     if not post.published:
         post.published = datetime.datetime.utcnow()
-    post.reserve_date_index()
 
     # populate the Post object and save it to the database,
     # redirect to the view
     post.title = request.form.get('title', '')
     post.content = request.form.get('content')
-    post.content_html = util.markdown_filter(
-        post.content, img_path=post.get_image_path())
-
     post.draft = request.form.get('draft', 'false') == 'true'
     post.hidden = request.form.get('hidden', 'false') == 'true'
 
@@ -584,15 +571,6 @@ def save_post(post):
         if old_loc:
             db.session.delete(old_loc)
 
-    slug = request.form.get('slug')
-    if slug:
-        post.slug = util.slugify(slug)
-    elif not post.slug:
-        if post.title:
-            post.slug = util.slugify(post.title)
-        elif post.content:
-            post.slug = util.slugify(post.content, 32)
-
     for url_attr, context_attr in (('in_reply_to', 'reply_contexts'),
                                    ('repost_of', 'repost_contexts'),
                                    ('like_of', 'like_contexts'),
@@ -601,8 +579,8 @@ def save_post(post):
         if url_str is not None:
             urls = util.multiline_string_to_list(url_str)
             setattr(post, url_attr, urls)
-            #setattr(post, context_attr, [Context(url=u, permalink=u)
-            #                             for u in urls])
+
+    contexts.fetch_contexts(post)
 
     syndication = request.form.get('syndication')
     if syndication is not None:
@@ -615,6 +593,23 @@ def save_post(post):
     tags = request.form.get('tags', '').split(',')
     tags = list(filter(None, map(util.normalize_tag, tags)))
     post.tags = [Tag(tag) for tag in tags]
+
+    slug = request.form.get('slug')
+    if slug:
+        post.slug = util.slugify(slug)
+    elif not post.slug:
+        post.slug = post.generate_slug()
+
+    if not post.path:
+        base_path = '{}/{:02d}/{}'.format(
+            post.published.year, post.published.month, post.slug)
+        # generate a unique path
+        unique_path = base_path
+        idx = 1
+        while Post.load_by_path(unique_path):
+            unique_path = '{}-{}'.format(base_path, idx)
+            idx += 1
+        post.path = unique_path
 
     # TODO accept multiple photos and captions
     inphoto = request.files.get('photo')
@@ -645,14 +640,15 @@ def save_post(post):
 
     app.logger.debug('uploaded files map %s', file_to_url)
 
-    if not post.id:
-        db.session.add(post)
+    # pre-render the post html
+    post.content_html = util.markdown_filter(
+        post.content, img_path=post.get_image_path())
+
     db.session.commit()
 
-    app.logger.debug("saved post %s %s", post.shortid, post.permalink)
+    app.logger.debug('saved post %d %s', post.id, post.permalink)
     redirect_url = post.permalink
 
-    contexts.fetch_contexts(post)
     hooks.fire('post-saved', post, request.form)
 
     return redirect(redirect_url)

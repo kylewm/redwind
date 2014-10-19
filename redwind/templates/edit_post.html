@@ -15,7 +15,7 @@
 <form id="edit_form" method="POST" action="/save_{{edit_type}}" enctype="multipart/form-data">
 
   <data id="post_path" value="{{post.path}}" />
-  <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid or 'new' }}"/>
+  <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
   <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>

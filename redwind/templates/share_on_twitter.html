@@ -3,7 +3,7 @@
 {% block content %}
 
 <form id="share_on_twitter" method="POST">
-  <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid }}"/>
+  <input type="hidden" id="post_id" name="post_id" value="{{ post.id }}"/>
 
   <input style="padding: 10px 20px 10px 20px" type="submit" id="publish_button" value="Share on Twitter"/>
   <br/>
@@ -33,16 +33,6 @@
 
   <label><span class="heading-small">Permalink:</span>
     <input id="permalink" size="60" value="{{post.permalink}}"/>
-  </label>
-  <br/>
-
-  <label><span class="heading-small">Short:</span>
-    <input id="permashortlink" size="60" value="({{post.short_permalink}})"/>
-  </label>
-  <br/>
-
-  <label><span class="heading-small">Cite:</span>
-    <input id="permashortcite" size="60" value="({{post.short_cite}})"/>
   </label>
   <br/>
 

@@ -53,7 +53,7 @@ def share_on_facebook():
     from .twitter import collect_images
 
     if request.method == 'GET':
-        post = Post.load_by_shortid(request.args.get('id'))
+        post = Post.load_by_id(request.args.get('id'))
 
         preview = post.title + '\n\n' if post.title else ''
         preview += format_markdown_as_facebook(post.content)
@@ -85,7 +85,7 @@ def share_on_facebook():
                 request.form.get('new_album_name'),
                 request.form.get('new_album_message'))
 
-        post = Post.load_by_shortid(post_id)
+        post = Post.load_by_id(post_id)
         facebook_url = handle_new_or_edit(post, preview, img_url,
                                           post_type, album_id)
         db.session.commit()

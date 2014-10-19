@@ -117,8 +117,8 @@ def send_to_twitter(post, args):
             return False, 'Current user is not authorized to tweets'
 
         try:
-            app.logger.debug("auto-posting to twitter {}".format(post.shortid))
-            queue.enqueue(do_send_to_twitter, post.shortid)
+            app.logger.debug("auto-posting to twitter {}".format(post.id))
+            queue.enqueue(do_send_to_twitter, post.shorid)
             return True, 'Success'
 
         except Exception as e:
@@ -129,7 +129,7 @@ def send_to_twitter(post, args):
 def do_send_to_twitter(post_id):
     with app.app_context():
         app.logger.debug("auto-posting to twitter for {}".format(post_id))
-        post = Post.load_by_shortid(post_id)
+        post = Post.load_by_id(post_id)
 
         in_reply_to, repost_of, like_of = posse_post_discovery(post)
         preview, img_url = guess_tweet_content(post, in_reply_to)
@@ -142,11 +142,11 @@ def do_send_to_twitter(post_id):
 @login_required
 def share_on_twitter():
     if request.method == 'GET':
-        shortid = request.args.get('id')
-        if not shortid:
+        id = request.args.get('id')
+        if not id:
             abort(404)
 
-        post = Post.load_by_shortid(shortid)
+        post = Post.load_by_id(id)
         if not post:
             abort(404)
 
@@ -391,7 +391,7 @@ def guess_tweet_content(post, in_reply_to):
 def do_tweet(post_id, preview, img_url, in_reply_to,
              repost_of, like_of):
     try:
-        post = Post.load_by_shortid(post_id)
+        post = Post.load_by_id(post_id)
         twitter_url = handle_new_or_edit(
             post, preview, img_url, in_reply_to, repost_of, like_of)
         db.session.commit()

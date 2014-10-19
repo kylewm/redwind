@@ -2,7 +2,7 @@
 
 {% block content %}
   <form id="share_on_facebook" method="POST">
-    <input type="hidden" id="post_id" name="post_id" value="{{ post.shortid }}"/>
+    <input type="hidden" id="post_id" name="post_id" value="{{ post.id }}"/>
     <input type="submit" id="publish_button" value="Share on Facebook"/>
 
     {% if imgs %}

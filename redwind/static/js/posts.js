@@ -68,4 +68,6 @@
         });
     });*/
 
+    global.setupMap = setupMap;
+
 })(this);

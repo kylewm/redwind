@@ -12,7 +12,7 @@ def register():
 
 
 def reverse_geocode(post, args):
-    queue.enqueue(do_reverse_geocode, post.shortid)
+    queue.enqueue(do_reverse_geocode, post.id)
 
 
 def do_reverse_geocode(postid):
@@ -23,7 +23,7 @@ def do_reverse_geocode(postid):
             return adr.get('county') or adr.get('state')
 
     with app.app_context():
-        post = models.Post.load_by_shortid(postid)
+        post = models.Post.load_by_id(postid)
         if post.location and post.location.latitude \
            and post.location.longitude:
             app.logger.debug('reverse geocoding with nominatum')

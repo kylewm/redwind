@@ -183,8 +183,9 @@ class Post(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(256))
+    historic_path = db.Column(db.String(256))
     post_type = db.Column(db.String(64))
-    date_index = db.Column(db.String(4))
+    #date_index = db.Column(db.String(4))
     draft = db.Column(db.Boolean)
     deleted = db.Column(db.Boolean)
     hidden = db.Column(db.Boolean)
@@ -225,30 +226,16 @@ class Post(db.Model):
     content_html = db.Column(db.Text)
 
     @classmethod
-    def load_by_date(cls, post_type, year, month, day, index):
-        return cls.load_by_path(
-            cls.date_to_path(post_type, year, month, day, index))
-
-    @classmethod
-    def load_by_shortid(cls, shortid):
-        return cls.load_by_path(cls.shortid_to_path(shortid))
+    def load_by_id(cls, dbid):
+        return cls.query.get(dbid)
 
     @classmethod
     def load_by_path(cls, path):
         return cls.query.filter_by(path=path).first()
 
     @classmethod
-    def date_to_path(cls, post_type, year, month, day, index):
-        return "{}/{}/{:02d}/{:02d}/{}".format(
-            post_type, year, month, day, index)
-
-    @classmethod
-    def shortid_to_path(cls, shortid):
-        post_type = util.parse_type(shortid)
-        published = util.parse_date(shortid)
-        index = util.parse_index(shortid)
-        return '{}/{}/{:02d}/{:02d}/{}'.format(
-            post_type, published.year, published.month, published.day, index)
+    def load_by_historic_path(cls, path):
+        return cls.query.filter_by(historic_path=path).first()
 
     def __init__(self, post_type, date_index=None):
         self.post_type = post_type
@@ -274,66 +261,13 @@ class Post(db.Model):
         self.content = None
         self.content_html = None
 
-    def reserve_date_index(self):
-        """assign a new date index if we don't have one yet"""
-        if not self.date_index:
-            idx = 1
-            while True:
-                self.date_index = util.base60_encode(idx)
-                self.path = self.date_to_path(
-                    self.post_type, self.published.year, self.published.month,
-                    self.published.day, self.date_index)
-                if Post.query.filter_by(path=self.path).count() == 0:
-                    break
-                idx += 1
-
     def get_image_path(self):
         return '/' + self.path + '/files'
 
     @property
     def permalink(self):
-        return self._permalink(include_slug=True)
-
-    @property
-    def permalink_without_slug(self):
-        return self._permalink(include_slug=False)
-
-    def _permalink(self, include_slug):
         site_url = get_settings().site_url or 'http://localhost'
-
-        path_components = [site_url,
-                           self.post_type,
-                           self.published.strftime('%Y/%m/%d'),
-                           str(self.date_index)]
-        if include_slug and self.slug:
-            path_components.append(self.slug)
-
-        return '/'.join(path_components)
-
-    @property
-    def shortid(self):
-        if not self.published or not self.date_index:
-            return None
-        tag = util.tag_for_post_type(self.post_type)
-        ordinal = util.date_to_ordinal(self.published.date())
-        return '{}{}{}'.format(tag, util.base60_encode(ordinal),
-                               self.date_index)
-
-    @property
-    def short_permalink(self):
-        if get_settings().shortener_url:
-            return '{}/{}'.format(get_settings().shortener_url,
-                                  self.shortid)
-
-    @property
-    def short_cite(self):
-        if get_settings().shortener_url:
-            tag = util.tag_for_post_type(self.post_type)
-            ordinal = util.date_to_ordinal(self.published.date())
-            cite = '{} {}{}{}'.format(get_settings().shortener_url,
-                                      tag, util.base60_encode(ordinal),
-                                      self.date_index)
-            return cite
+        return '/'.join((site_url, self.path))
 
     @property
     def likes(self):
@@ -382,6 +316,25 @@ class Post(db.Model):
             return OPEN_STREET_MAP_URL.format(self.location.latitude,
                                               self.location.longitude)
 
+    def generate_slug(self):
+        if self.title:
+            return util.slugify(self.title)
+
+        if self.content:
+            return util.slugify(self.content, 64)
+        # the slug is generated before these are fetched/parsed, so
+        # unfortunately, have to base them on the url instead of the
+        # context
+        for ctxs, prefix in ((self.bookmark_contexts, 'bookmark-of-'),
+                             (self.like_contexts, 'like-of-'),
+                             (self.repost_contexts, 'repost-of-'),
+                             (self.reply_contexts, 'reply-to-')):
+            if ctxs:
+                return util.slugify(prefix + ctxs[0].get_slugify_target(), 64)
+                #return util.slugify(prefix + util.prettify_url(urls[0]), 64)
+
+        return 'untitled'
+
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.title)
@@ -418,6 +371,20 @@ class Context(db.Model):
     @property
     def title_or_url(self):
         return self.title or util.prettify_url(self.permalink)
+
+    def get_slugify_target(self):
+        components = []
+        if self.author_name:
+            components.append(self.author_name)
+
+        if self.title:
+            components.append(self.title)
+        elif self.content_plain:
+            components.append(self.content_plain)
+        else:
+            components.append(util.prettify_url(self.permalink or self.url))
+
+        return ' '.join(components)
 
 
 class Mention(db.Model):

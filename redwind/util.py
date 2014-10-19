@@ -388,20 +388,22 @@ def process_people(data, person_processor):
     # return data
 
 
-def format_as_text(html, remove_imgs=True):
+def format_as_text(html, link_fn=None):
     if html is None:
         return ''
     soup = bs4.BeautifulSoup(html)
+
     # replace links with the URL
     for a in soup.find_all('a'):
-        a.replace_with(a.get('href') or 'link')
-    # and images with their alt text
-    for i in soup.find_all('img'):
-        if remove_imgs:
-            i.hidden = True
+        if link_fn:
+            link_fn(a)
         else:
-            i.replace_with('[{}]'.format(
-                i.get('title') or i.get('alt') or 'image'))
+            a.replace_with(a.get('href') or '[link]')
+
+    # and remove images
+    for i in soup.find_all('img'):
+        i.hidden = True
+
     return soup.get_text().strip()
 
 

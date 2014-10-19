@@ -71,7 +71,7 @@ class ViewsTest(AuthedTestCase):
             'post_type': 'note',
             'content': 'This is a test note'})
         self.assertEqual(302, rv.status_code)
-        self.assertTrue(re.match('.*/note/\d+/\d+/\d+/1/this-is-a-test-note$',
+        self.assertTrue(re.match('.*/\d+/\d+/this-is-a-test-note$',
                                  rv.location))
         # follow the redirect
         rv = self.client.get(rv.location)

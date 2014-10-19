@@ -71,7 +71,7 @@ def convert_mf2util():
         if isinstance(json, datetime.date) or isinstance(json, datetime.datetime):
             return json.isoformat()
         return json
-    
+
     url = request.args.get('url')
     if url:
         d = mf2py.Parser(url=url).to_dict()
@@ -181,12 +181,13 @@ def micropub_endpoint():
 
     app.logger.debug('successfully authenticated as user %s => %s', me, user)
     login_user(user)
-    
+
     if request.method == 'GET':
         if request.args.get('q') == 'syndicate-to':
             return urllib.parse.urlencode({
-                    'syndicate-to': ','.join(['twitter.com/kyle_wm', 'facebook.com/kyle.mahan'])
-                    })
+                'syndicate-to': ','.join(['twitter.com/kyle_wm',
+                                          'facebook.com/kyle.mahan'])
+            })
         else:
             return """Hi I'm your micropub endpoint"""
 

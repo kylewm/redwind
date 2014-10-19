@@ -61,7 +61,7 @@
                     var lon = position.coords.longitude;
                     latField.value = lat;
                     lonField.value = lon;
-                    Location.setupMap(checkinMap, lat, lon, 'new location');
+                    setupMap(checkinMap, lat, lon, 'new location');
                 });
             });
         }
