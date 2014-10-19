@@ -691,7 +691,7 @@ def generate_upload_path(post, f, default_ext=None):
             filename = '{}-{}{}'.format(basename, idx, ext)
         relpath = '{}/files/{}'.format(post.path, filename)
         fullpath = os.path.join(app.root_path, '_data', relpath)
-        if not os.path.exsts(fullpath):
+        if not os.path.exists(fullpath):
             break
         idx += 1
 
