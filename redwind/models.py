@@ -321,17 +321,13 @@ class Post(db.Model):
             return util.slugify(self.title)
 
         if self.content:
-            return util.slugify(self.content, 64)
-        # the slug is generated before these are fetched/parsed, so
-        # unfortunately, have to base them on the url instead of the
-        # context
+            return util.slugify(self.content, 48)
         for ctxs, prefix in ((self.bookmark_contexts, 'bookmark-of-'),
                              (self.like_contexts, 'like-of-'),
                              (self.repost_contexts, 'repost-of-'),
                              (self.reply_contexts, 'reply-to-')):
             if ctxs:
-                return util.slugify(prefix + ctxs[0].get_slugify_target(), 64)
-                #return util.slugify(prefix + util.prettify_url(urls[0]), 64)
+                return util.slugify(prefix + ctxs[0].get_slugify_target(), 48)
 
         return 'untitled'
 

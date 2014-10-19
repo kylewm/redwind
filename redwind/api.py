@@ -7,7 +7,6 @@ from . import util
 from .models import Post, Location, Photo, Context, get_settings
 from flask import request, jsonify, abort, make_response, url_for
 from flask.ext.login import login_user
-from werkzeug import secure_filename
 import datetime
 import jwt
 import mf2py
@@ -16,35 +15,6 @@ import os
 import random
 import requests
 import urllib
-
-
-def generate_upload_path(post, f, default_ext=None):
-    filename = secure_filename(f.filename)
-    basename, ext = os.path.splitext(filename)
-
-    if ext:
-        app.logger.debug('file has extension: %s, %s', basename, ext)
-    else:
-        app.logger.debug('no file extension, checking mime_type: %s',
-                         f.mimetype)
-        if f.mimetype == 'image/png':
-            ext = '.png'
-        elif f.mimetype == 'image/jpeg':
-            ext = '.jpg'
-        elif default_ext:
-            # fallback application/octet-stream
-            ext = default_ext
-
-        filename = basename + ext
-
-    #now = datetime.datetime.utcnow()
-    #relpath = 'uploads/{}/{:02d}/{:02d}/{}'.format(now.year, now.month,
-    #                                               now.day, filename)
-
-    relpath = '{}/files/{}'.format(post.path, filename)
-    url = '/' + relpath
-    fullpath = os.path.join(app.root_path, '_data', relpath)
-    return relpath, url, fullpath
 
 
 @app.route('/api/mf2')
@@ -193,7 +163,7 @@ def micropub_endpoint():
     photo_file = request.files.get('photo')
     bookmark = request.form.get('bookmark')
     post_type = ('photo' if photo_file else 'reply' if in_reply_to
-                 else 'like' if like_of else 'bookmark' if bookmark 
+                 else 'like' if like_of else 'bookmark' if bookmark
                  else 'note')
 
     latitude = None

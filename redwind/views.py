@@ -12,6 +12,7 @@ from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user, current_app
+from werkzeug import secure_filename
 import sqlalchemy.orm
 import sqlalchemy.sql
 
@@ -621,7 +622,7 @@ def save_post(post):
     if inphoto and inphoto.filename:
         app.logger.debug('receiving uploaded file %s', inphoto)
         relpath, photo_url, fullpath \
-            = api.generate_upload_path(post, inphoto)
+            = generate_upload_path(post, inphoto)
         if not os.path.exists(os.path.dirname(fullpath)):
             os.makedirs(os.path.dirname(fullpath))
         inphoto.save(fullpath)
@@ -637,7 +638,7 @@ def save_post(post):
         if infile and infile.filename:
             app.logger.debug('receiving uploaded file %s', infile)
             relpath, photo_url, fullpath \
-                = api.generate_upload_path(post, infile)
+                = generate_upload_path(post, infile)
             if not os.path.exists(os.path.dirname(fullpath)):
                 os.makedirs(os.path.dirname(fullpath))
             infile.save(fullpath)
@@ -659,6 +660,42 @@ def save_post(post):
     hooks.fire('post-saved', post, request.form)
 
     return redirect(redirect_url)
+
+
+def generate_upload_path(post, f, default_ext=None):
+    filename = secure_filename(f.filename)
+    basename, ext = os.path.splitext(filename)
+
+    if ext:
+        app.logger.debug('file has extension: %s, %s', basename, ext)
+    else:
+        app.logger.debug('no file extension, checking mime_type: %s',
+                         f.mimetype)
+        if f.mimetype == 'image/png':
+            ext = '.png'
+        elif f.mimetype == 'image/jpeg':
+            ext = '.jpg'
+        elif default_ext:
+            # fallback application/octet-stream
+            ext = default_ext
+
+    # special handling for ugly filenames from OwnYourGram
+    if basename.startswith('tmp_') and ext.lower() in ('.png', '.jpg'):
+        basename = 'photo'
+
+    idx = 0
+    while True:
+        if idx == 0:
+            filename = '{}{}'.format(basename, ext)
+        else:
+            filename = '{}-{}{}'.format(basename, idx, ext)
+        relpath = '{}/files/{}'.format(post.path, filename)
+        fullpath = os.path.join(app.root_path, '_data', relpath)
+        if not os.path.exsts(fullpath):
+            break
+        idx += 1
+
+    return relpath, '/' + relpath, fullpath
 
 
 @app.route('/addressbook')
