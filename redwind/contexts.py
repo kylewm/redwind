@@ -2,7 +2,6 @@ from . import app
 from . import db
 from . import hooks
 from . import util
-from .models import Post
 from .models import Context
 import bs4
 import mf2py
@@ -12,24 +11,23 @@ from flask.ext.login import current_user
 
 def fetch_contexts(post):
     for url in post.in_reply_to:
-        do_fetch_context(post.id, 'reply_contexts', url)
+        do_fetch_context(post, 'reply_contexts', url)
 
     for url in post.repost_of:
-        do_fetch_context(post.id, 'repost_contexts', url)
+        do_fetch_context(post, 'repost_contexts', url)
 
     for url in post.like_of:
-        do_fetch_context(post.id, 'like_contexts', url)
+        do_fetch_context(post, 'like_contexts', url)
 
     for url in post.bookmark_of:
-        do_fetch_context(post.id, 'bookmark_contexts', url)
+        do_fetch_context(post, 'bookmark_contexts', url)
 
 
-def do_fetch_context(post_id, context_attr, url):
+def do_fetch_context(post, context_attr, url):
     app.logger.debug("fetching url %s", url)
     context = create_context(url)
     if context:
         if not context.id:
-            post = Post.load_by_id(post_id)
             old_contexts = getattr(post, context_attr)
             new_contexts = []
 

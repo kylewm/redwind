@@ -194,35 +194,12 @@ def micropub_endpoint():
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
     photo_file = request.files.get('photo')
+    post_type = ('photo' if photo_file else 'reply' if in_reply_to
+                 else 'like' if like_of else 'note')
 
-    post = Post('photo' if photo_file else 'reply' if in_reply_to
-                else 'like' if like_of else 'note')
-
-    pub_str = request.form.get('published')
-    if pub_str:
-        pub = mf2util.parse_dt(pub_str)
-        if pub.tzinfo:
-            pub = pub.astimezone(datetime.timezone.utc)
-            pub = pub.replace(tzinfo=None)
-        post.published = pub
-    else:
-        post.published = datetime.datetime.utcnow()
-    post.reserve_date_index()
-
-    post.title = request.form.get('name')
-    post.content = request.form.get('content')
-    post.content_html = util.markdown_filter(
-        post.content, img_path=post.get_image_path())
-
-    if in_reply_to:
-        post.in_reply_to.append(in_reply_to)
-        post.reply_contexts.append(
-            Context(url=in_reply_to, permalink=in_reply_to))
-
-    if like_of:
-        post.like_of.append(like_of)
-        post.like_contexts.append(
-            Context(url=like_of, permalink=like_of))
+    latitude = None
+    longitude = None
+    location_name = None
 
     loc_str = request.form.get('location')
     geo_prefix = 'geo:'
@@ -230,40 +207,25 @@ def micropub_endpoint():
         loc_str = loc_str[len(geo_prefix):]
         loc_params = loc_str.split(';')
         if loc_params:
-            lat, lon = loc_params[0].split(',', 1)
-            if lat and lon:
-                post.location = Location(latitude=float(lat),
-                                         longitude=float(lon),
-                                         name=request.form.get('place_name'))
+            latitude, longitude = loc_params[0].split(',', 1)
+            location_name = request.form.get('place_name')
 
-    synd_url = request.form.get('syndication')
-    if synd_url:
-        post.syndication.append(synd_url)
-
-    if photo_file:
-        relpath, photo_url, fullpath \
-            = generate_upload_path(post, photo_file, '.jpg')
-        if not os.path.exists(os.path.dirname(fullpath)):
-            os.makedirs(os.path.dirname(fullpath))
-        photo_file.save(fullpath)
-        # no caption for now
-        post.photos = [Photo(post, filename=os.path.basename(relpath))]
-
-    slug = request.form.get('slug')
-    if slug:
-        post.slug = util.slugify(slug)
-    elif post.title:
-        post.slug = util.slugify(post.title)
-    elif post.content:
-        post.slug = util.slugify(post.content, 32)
-
-    db.session.add(post)
-    db.session.commit()
-
-    contexts.fetch_contexts(post)
-    hooks.fire('post-saved', post, {})
-    return make_response('Created: ' + post.permalink, 201,
-                         {'Location': post.permalink})
+    # translate from micropub's verbage.TODO unify
+    return app.post('/save_new', data={
+        'post_type': post_type,
+        'published': request.form.get('published'),
+        'title': request.form.get('name'),
+        'content': request.form.get('content'),
+        'latitude': latitude,
+        'longitude': longitude,
+        'location_name': location_name,
+        'syndication': request.form.get('syndication'),
+        'in_reply_to': request.form.get('in-reply-to'),
+        'like_of': request.form.get('like-of'),
+        'repost_of': request.form.get('repost-of'),
+        'bookmark_of': request.form.get('bookmark-of'),
+        'photo': photo_file,
+    })
 
 
 @app.route('/api/fetch_profile')

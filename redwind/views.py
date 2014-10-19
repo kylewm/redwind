@@ -18,6 +18,7 @@ import sqlalchemy.sql
 import collections
 import datetime
 import jinja2.filters
+import mf2util
 import operator
 import os
 import pytz
@@ -539,10 +540,13 @@ def save_new():
 
 
 def save_post(post):
-    # reserve a db id
-    if not post.id:
-        db.session.add(post)
-        db.session.commit()
+    pub_str = request.form.get('published')
+    if pub_str:
+        pub = mf2util.parse_dt(pub_str)
+        if pub.tzinfo:
+            pub = pub.astimezone(datetime.timezone.utc)
+            pub = pub.replace(tzinfo=None)
+        post.published = pub
 
     if not post.published:
         post.published = datetime.datetime.utcnow()
@@ -580,6 +584,7 @@ def save_post(post):
             urls = util.multiline_string_to_list(url_str)
             setattr(post, url_attr, urls)
 
+    # fetch contexts before generating a slug
     contexts.fetch_contexts(post)
 
     syndication = request.form.get('syndication')
@@ -644,6 +649,8 @@ def save_post(post):
     post.content_html = util.markdown_filter(
         post.content, img_path=post.get_image_path())
 
+    if not post.id:
+        db.session.add(post)
     db.session.commit()
 
     app.logger.debug('saved post %d %s', post.id, post.permalink)
