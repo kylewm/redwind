@@ -3,7 +3,7 @@
 
     function fetchProfile() {
         var url = first('input[name="url"]');
-        var xhr = Http.open('GET', '/api/fetch_profile?url=' + encodeURIComponent(url.value));
+        var xhr = Http.open('GET', '/services/fetch_profile?url=' + encodeURIComponent(url.value));
         Http.send(xhr).then(function(xhr) {
             var data = JSON.parse(xhr.responseText);
             if (data.name) {

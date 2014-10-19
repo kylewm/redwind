@@ -74,7 +74,7 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 
 
-for handler in ['views']:
+for handler in ['views', 'services', 'micropub']:
     importlib.import_module('redwind.' + handler)
 
 

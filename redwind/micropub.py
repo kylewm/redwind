@@ -10,54 +10,12 @@ from flask.ext.login import login_user
 import datetime
 import jwt
 import mf2py
-import mf2util
-import os
 import random
 import requests
 import urllib
 
 
-@app.route('/api/mf2')
-def convert_mf2():
-    url = request.args.get('url')
-    if url:
-        p = mf2py.Parser(url=url)
-        json = p.to_dict()
-        return jsonify(json)
-    return """<html><body>
-    <h1>mf2py</h1>
-    <form><label>URL to parse: <input name="url"></label>
-    <input type="Submit">
-    </form></body></html> """
-
-
-@app.route('/api/mf2util')
-def convert_mf2util():
-    def dates_to_string(json):
-        if isinstance(json, dict):
-            return {k: dates_to_string(v) for (k, v) in json.items()}
-        if isinstance(json, list):
-            return [dates_to_string(v) for v in json]
-        if isinstance(json, datetime.date) or isinstance(json, datetime.datetime):
-            return json.isoformat()
-        return json
-
-    url = request.args.get('url')
-    if url:
-        d = mf2py.Parser(url=url).to_dict()
-        if mf2util.find_first_entry(d, ['h-feed']):
-            json = mf2util.interpret_feed(d, url)
-        else:
-            json = mf2util.interpret(d, url)
-        return jsonify(dates_to_string(json))
-    return """<html><body>
-    <h1>mf2util</h1>
-    <form><label>URL to parse: <input name="url"></label>
-    <input type="Submit">
-    </form></body></html>"""
-
-
-@app.route('/api/token', methods=['POST'])
+@app.route('/token', methods=['POST'])
 def token_endpoint():
     code = request.form.get('code')
     me = request.form.get('me')
@@ -119,7 +77,7 @@ def token_endpoint():
         {'Content-Type': 'application/x-www-form-urlencoded'})
 
 
-@app.route('/api/micropub', methods=['GET', 'POST'])
+@app.route('/micropub', methods=['GET', 'POST'])
 def micropub_endpoint():
     app.logger.info(
         "received micropub request %s, args=%s, form=%s, headers=%s",
@@ -202,61 +160,3 @@ def micropub_endpoint():
         app.logger.debug('successfully authenticated as user %s => %s', me, user)
         from . import views
         return views.save_new()
-
-
-@app.route('/api/fetch_profile')
-def fetch_profile():
-    from .util import TWITTER_PROFILE_RE, FACEBOOK_PROFILE_RE
-    try:
-        url = request.args.get('url')
-        name = None
-        twitter = None
-        facebook = None
-        image = None
-
-        d = mf2py.Parser(url=url).to_dict()
-
-        relmes = d['rels'].get('me', [])
-        for alt in relmes:
-            m = TWITTER_PROFILE_RE.match(alt)
-            if m:
-                twitter = m.group(1)
-            else:
-                m = FACEBOOK_PROFILE_RE.match(alt)
-                if m:
-                    facebook = m.group(1)
-
-        # check for h-feed
-        hfeed = next((item for item in d['items']
-                      if 'h-feed' in item['type']), None)
-        if hfeed:
-            authors = hfeed.get('properties', {}).get('author')
-            images = hfeed.get('properties', {}).get('photo')
-            if authors:
-                if isinstance(authors[0], dict):
-                    name = authors[0].get('properties', {}).get('name')
-                    image = authors[0].get('properties', {}).get('photo')
-                else:
-                    name = authors[0]
-            if images and not image:
-                image = images[0]
-
-        # check for top-level h-card
-        for item in d['items']:
-            if 'h-card' in item.get('type', []):
-                if not name:
-                    name = item.get('properties', {}).get('name')
-                if not image:
-                    image = item.get('properties', {}).get('photo')
-
-        return jsonify({
-            'name': name,
-            'image': image,
-            'twitter': twitter,
-            'facebook': facebook,
-        })
-
-    except BaseException as e:
-        resp = jsonify({'error': str(e)})
-        resp.status_code = 400
-        return resp
