@@ -8,13 +8,14 @@ from .models import Post, Location, Photo, Tag, Mention, Contact,\
     Nick, Setting, get_settings
 
 from flask import request, redirect, url_for, render_template, flash,\
-    abort, make_response, Markup, send_from_directory
+    abort, make_response, Markup, send_from_directory, session
 from flask.ext.login import login_required, login_user, logout_user,\
     current_user, current_app
 from werkzeug import secure_filename
 import sqlalchemy.orm
 import sqlalchemy.sql
 
+import bs4
 import collections
 import datetime
 import jinja2.filters
@@ -283,25 +284,81 @@ def post_by_path(year, month, slug):
 #     return redirect(url_for('index'))
 
 
-@app.route('/indieauth')
-def indieauth():
-    token = request.args.get('token')
-    response = requests.get('https://indieauth.com/verify',
-                            params={'token': token})
+def discover_endpoints(me):
+    me_response = requests.get(me)
+    if me_response.status_code != 200:
+        return make_response(
+            'Unexpected response from URL: {}'.format(me_response), 400)
+    soup = bs4.BeautifulSoup(me_response.text)
+    auth_endpoint = soup.find('link[rel="authorization_endpoint"]')
+    token_endpoint = soup.find('link[rel="token_endpoint"]')
+    micropub_endpoint = soup.find('link[rel="micropub"]')
 
-    if response.status_code == 200:
-        domain = response.json().get('me')
-        user = auth.load_user(urllib.parse.urlparse(domain).netloc)
-        if user:
-            login_user(user, remember=True)
-            flash('Logged in with domain {}'.format(domain))
-        else:
-            flash('No user for domain {}'.format(domain))
+    return (auth_endpoint and auth_endpoint.href,
+            token_endpoint and token_endpoint.href,
+            micropub_endpoint and micropub_endpoint.href)
 
+
+@app.route('/login')
+def login():
+    me = request.args.get('me')
+    if not me:
+        return make_response('Missing "me" parameter', 400)
+
+    auth_url, _, _ = discover_endpoints(me)
+    if not auth_url:
+        auth_url = 'https://indieauth.com/auth'
+
+    return redirect('{}?{}'.format(
+        auth_url,
+        urllib.parse.urlencode({
+            'me': me,
+            'client_id': get_settings().site_url,
+            'redirect_uri': url_for('login_callback', _external=True),
+            'state': request.args.get('state', ''),
+            'scope': 'authenticate',
+        })))
+
+
+@app.route('/login_callback')
+def login_callback():
+    app.logger.debug('callback fields: %s', request.args)
+
+    me = request.args.get('me')
+    auth_url, _, _ = discover_endpoints(me)
+    if not auth_url:
+        auth_url = 'https://indieauth.com/auth'
+
+    if not auth_url:
+        flash('Login failed: No authorization URL in session')
     else:
-        respjson = response.json()
-        flash('Login failed {}: {}'.format(respjson.get('error'),
-                                           respjson.get('error_description')))
+        app.logger.debug('callback with auth endpoint %s', auth_url)
+        response = requests.post(auth_url, data={
+            'code': request.args.get('code'),
+            'client_id': get_settings().site_url,
+            'redirect_uri': url_for('login_callback', _external=True),
+            'state': request.args.get('state', ''),
+        })
+
+        rdata = urllib.parse.parse_qs(response.text)
+        if response.status_code == 200:
+            app.logger.debug('verify response %s', response.text)
+            if 'me' in rdata:
+                domain = rdata.get('me')[0]
+                scopes = rdata.get('scope')
+                user = auth.load_user(urllib.parse.urlparse(domain).netloc)
+                if user:
+                    login_user(user, remember=True)
+                    flash('Logged in with domain {}, scope {}'.format(
+                        domain, scopes and ','.join(scopes)))
+                else:
+                    flash('No user for domain {}'.format(domain))
+            else:
+                flash('Verify response missing required "me" field {}'.format(
+                    response.text))
+        else:
+            flash('Login failed {}: {}'.format(rdata.get('error'),
+                                               rdata.get('error_description')))
 
     return redirect(url_for('index'))
 
