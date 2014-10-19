@@ -191,8 +191,10 @@ def micropub_endpoint():
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
     photo_file = request.files.get('photo')
+    bookmark = request.form.get('bookmark')
     post_type = ('photo' if photo_file else 'reply' if in_reply_to
-                 else 'like' if like_of else 'note')
+                 else 'like' if like_of else 'bookmark' if bookmark 
+                 else 'note')
 
     latitude = None
     longitude = None
@@ -208,7 +210,7 @@ def micropub_endpoint():
             location_name = request.form.get('place_name')
 
     # translate from micropub's verbage.TODO unify
-    translated = {
+    translated = util.filter_empty_keys({
         'post_type': post_type,
         'published': request.form.get('published'),
         'title': request.form.get('name'),
@@ -220,9 +222,9 @@ def micropub_endpoint():
         'in_reply_to': request.form.get('in-reply-to'),
         'like_of': request.form.get('like-of'),
         'repost_of': request.form.get('repost-of'),
-        'bookmark_of': request.form.get('bookmark-of'),
+        'bookmark_of': request.form.get('bookmark'),
         'photo': photo_file,
-    }
+    })
     with app.test_request_context(base_url=get_settings().site_url, path='/save_new',
                                   method='POST', data=translated):
         app.logger.debug('received fake request %s: %s', request, request.args)
