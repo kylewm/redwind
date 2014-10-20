@@ -1,11 +1,10 @@
 from . import app
 from . import auth
 from . import util
-from flask import request, abort, make_response
+from flask import request, abort, make_response, url_for
 from flask.ext.login import login_user
 import datetime
 import jwt
-import random
 import requests
 import urllib
 
@@ -102,13 +101,24 @@ def micropub_endpoint():
         abort(401)
 
     if request.method == 'GET':
+        app.logger.debug('micropub GET request %s -> %s', request,
+                         request.args)
         if request.args.get('q') == 'syndicate-to':
+            app.logger.debug('returning syndication targets')
             return urllib.parse.urlencode({
                 'syndicate-to': ','.join(['twitter.com/kyle_wm',
                                           'facebook.com/kyle.mahan'])
             })
+        elif request.args.get('q') == 'actions':
+            app.logger.debug('returning action handlers')
+            return urllib.parse.urlencode({
+                'reply': url_for('new_post', type='reply', url='{url}', _external=True),
+                'repost': url_for('new_post', type='share', url='{url}', _external=True),
+                'favorite': url_for('new_post', type='like', url='{url}', _external=True),
+                'like': url_for('new_post', type='like', url='{url}', _external=True),
+            })
         else:
-            return """Hi I'm your micropub endpoint"""
+            return ''
 
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')

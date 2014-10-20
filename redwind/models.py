@@ -2,7 +2,7 @@ from . import app
 from . import db
 from . import util
 
-from flask import g
+from flask import g, session
 
 import os
 import os.path
@@ -294,18 +294,33 @@ class Post(db.Model):
 
     @property
     def reply_url(self):
+        handlers = session.get('action-handlers', {})
+        handler = handlers.get('reply')
+        if handler:
+            return handler.replace('{url}', self.permalink)
+
         tweet_id = self.tweet_id
         if tweet_id:
             return TWEET_INTENT_URL.format(tweet_id)
 
     @property
     def retweet_url(self):
+        handlers = session.get('action-handlers', {})
+        handler = handlers.get('repost')
+        if handler:
+            return handler.replace('{url}', self.permalink)
+
         tweet_id = self.tweet_id
         if tweet_id:
             return RETWEET_INTENT_URL.format(tweet_id)
 
     @property
     def favorite_url(self):
+        handlers = session.get('action-handlers', {})
+        handler = handlers.get('favorite') or handlers.get('like')
+        if handler:
+            return handler.replace('{url}', self.permalink)
+
         tweet_id = self.tweet_id
         if tweet_id:
             return FAVORITE_INTENT_URL.format(tweet_id)

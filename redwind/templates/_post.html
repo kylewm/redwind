@@ -69,10 +69,10 @@
         {% if post.reply_url %}<a href="{{post.reply_url}}">Reply</a>{% endif %}
       </indie-action>
       <indie-action do="repost" with="{{post.permalink}}">
-        {% if post.retweet_url %}<a href="{{post.retweet_url}}">Retweet</a>{% endif %}
+        {% if post.retweet_url %}<a href="{{post.retweet_url}}">Repost</a>{% endif %}
       </indie-action>
       <indie-action do="favorite" with="{{post.permalink}}">
-        {% if post.favorite_url %}<a href="{{post.favorite_url}}">Favorite</a>{% endif %}
+        {% if post.favorite_url %}<a href="{{post.favorite_url}}">Like</a>{% endif %}
       </indie-action>
     </div>
     {% endif %}

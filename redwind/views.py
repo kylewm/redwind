@@ -290,13 +290,13 @@ def discover_endpoints(me):
         return make_response(
             'Unexpected response from URL: {}'.format(me_response), 400)
     soup = bs4.BeautifulSoup(me_response.text)
-    auth_endpoint = soup.find('link[rel="authorization_endpoint"]')
-    token_endpoint = soup.find('link[rel="token_endpoint"]')
-    micropub_endpoint = soup.find('link[rel="micropub"]')
+    auth_endpoint = soup.find('link', {'rel': 'authorization_endpoint'})
+    token_endpoint = soup.find('link', {'rel': 'token_endpoint'})
+    micropub_endpoint = soup.find('link', {'rel': 'micropub'})
 
-    return (auth_endpoint and auth_endpoint.href,
-            token_endpoint and token_endpoint.href,
-            micropub_endpoint and micropub_endpoint.href)
+    return (auth_endpoint and auth_endpoint['href'],
+            token_endpoint and token_endpoint['href'],
+            micropub_endpoint and micropub_endpoint['href'])
 
 
 @app.route('/login')
@@ -309,21 +309,24 @@ def login():
     if not auth_url:
         auth_url = 'https://indieauth.com/auth'
 
-    state = util.jwt_encode(util.filter_empty_keys({
-        'next': request.args.get('next'),
-        'authorization_endpoint': auth_url,
-        'token_endpoint': token_url,
-        'micropub': micropub_url,
-    }))
+    app.logger.debug('Found endpoints %s, %s, %s', auth_url, token_url,
+                     micropub_url)
+    state = request.args.get('next')
+    session['endpoints'] = (auth_url, token_url, micropub_url)
+
+    auth_params = {
+        'me': me,
+        'client_id': get_settings().site_url,
+        'redirect_uri': url_for('login_callback', _external=True),
+        'state': state,
+    }
+
+    # if they support micropub try to get read indie-config permission
+    if token_url and micropub_url:
+        auth_params['scope'] = 'config'
 
     return redirect('{}?{}'.format(
-        auth_url,
-        urllib.parse.urlencode({
-            'me': me,
-            'client_id': get_settings().site_url,
-            'redirect_uri': url_for('login_callback', _external=True),
-            'state': state,
-        })))
+        auth_url, urllib.parse.urlencode(auth_params)))
 
 
 @app.route('/login_callback')
@@ -331,47 +334,103 @@ def login_callback():
     app.logger.debug('callback fields: %s', request.args)
 
     state = request.args.get('state')
-    state_obj = util.jwt_decode(state) if state else {}
-    next_url = state_obj.get('next', url_for('index'))
-    auth_url = state_obj.get('authorization_endpoint',
-                             'https://indieauth.com/auth')
+    next_url = state or url_for('index')
+    auth_url, token_url, micropub_url = session['endpoints']
 
     if not auth_url:
         flash('Login failed: No authorization URL in session')
-    else:
-        app.logger.debug('callback with auth endpoint %s', auth_url)
-        response = requests.post(auth_url, data={
-            'code': request.args.get('code'),
-            'client_id': get_settings().site_url,
-            'redirect_uri': url_for('login_callback', _external=True),
-            'state': request.args.get('state', ''),
-        })
+        return redirect(next_url)
 
-        rdata = urllib.parse.parse_qs(response.text)
-        if response.status_code == 200:
-            app.logger.debug('verify response %s', response.text)
-            if 'me' in rdata:
-                domain = rdata.get('me')[0]
-                #scopes = rdata.get('scope')
-                user = auth.load_user(urllib.parse.urlparse(domain).netloc)
-                if user:
-                    login_user(user, remember=True)
-                    flash('Logged in with domain {}'.format(domain))
-                else:
-                    flash('No user for domain {}'.format(domain))
-            else:
-                flash('Verify response missing required "me" field {}'.format(
-                    response.text))
-        else:
-            flash('Login failed {}: {}'.format(rdata.get('error'),
-                                               rdata.get('error_description')))
+    code = request.args.get('code')
+    client_id = get_settings().site_url
+    redirect_uri = url_for('login_callback', _external=True)
+
+    app.logger.debug('callback with auth endpoint %s', auth_url)
+    response = requests.post(auth_url, data={
+        'code': code,
+        'client_id': client_id,
+        'redirect_uri': redirect_uri,
+        'state': state,
+    })
+
+    rdata = urllib.parse.parse_qs(response.text)
+    if response.status_code != 200:
+        flash('Login failed {}: {}'.format(rdata.get('error'),
+                                           rdata.get('error_description')))
+        return redirect(next_url)
+
+    app.logger.debug('verify response %s', response.text)
+    if 'me' not in rdata:
+        flash('Verify response missing required "me" field {}'.format(
+            response.text))
+        return redirect(next_url)
+
+    me = rdata.get('me')[0]
+    scopes = rdata.get('scope')
+    user = auth.load_user(urllib.parse.urlparse(me).netloc)
+    if not user:
+        flash('No user for domain {}'.format(me))
+        return redirect(next_url)
+
+    try_micropub_config(token_url, micropub_url, scopes, code, me,
+                        redirect_uri, client_id, state)
+
+    login_user(user, remember=True)
+    flash('Logged in with domain {}'.format(me))
 
     return redirect(next_url)
+
+
+def try_micropub_config(token_url, micropub_url, scopes, code, me,
+                        redirect_uri, client_id, state):
+    if 'config' not in scopes or not token_url or not micropub_url:
+        flash('Micropub not supported (which is fine).')
+        return False
+
+    token_response = requests.post(token_url, data={
+        'code': code,
+        'me': me,
+        'redirect_uri': redirect_uri,
+        'client_id': client_id,
+        'state': state,
+    })
+
+    if token_response.status_code != 200:
+        flash('Unexpected response from token endpoint {}'.format(
+            token_response))
+        return False
+
+    tdata = urllib.parse.parse_qs(token_response.text)
+    if 'access_token' not in tdata:
+        flash('Response from token endpoint missing '
+              'access_token {}'.format(tdata))
+        return False
+
+    access_token = tdata.get('access_token')[0]
+    session['micropub'] = (micropub_url, access_token)
+
+    flash('Got micropub access token {}'.format(access_token[:6] + '...'))
+
+    actions_response = requests.get(micropub_url + '?q=actions', headers={
+        'Authorization': 'Bearer ' + access_token,
+    })
+    if actions_response.status_code == 200:
+        app.logger.debug('Successful action handler query %s',
+                         actions_response.text)
+        adata = urllib.parse.parse_qs(actions_response.text)
+        app.logger.debug('action handlers: %s', adata)
+        session['action-handlers'] = adata
+    else:
+        app.logger.debug('Bad response to action handler query %s',
+                         actions_response)
+
+    return True
 
 
 @app.route('/logout')
 def logout():
     logout_user()
+
     return redirect(request.args.get('next', url_for('index')))
 
 
