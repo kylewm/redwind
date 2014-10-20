@@ -111,11 +111,15 @@ def micropub_endpoint():
             })
         elif request.args.get('q') == 'actions':
             app.logger.debug('returning action handlers')
+            reply_url = url_for('new_post', type='reply', _external=True)
+            repost_url = url_for('new_post', type='share', _external=True)
+            like_url = url_for('new_post', type='like', _external=True)
+
             return urllib.parse.urlencode({
-                'reply': url_for('new_post', type='reply', url='{url}', _external=True),
-                'repost': url_for('new_post', type='share', url='{url}', _external=True),
-                'favorite': url_for('new_post', type='like', url='{url}', _external=True),
-                'like': url_for('new_post', type='like', url='{url}', _external=True),
+                'reply': reply_url + '?url={url}',
+                'repost': repost_url + '?url={url}',
+                'favorite': like_url + '?url={url}',
+                'like': like_url + '?url={url}',
             })
         else:
             return ''

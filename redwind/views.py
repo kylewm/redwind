@@ -419,7 +419,8 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
                          actions_response.text)
         adata = urllib.parse.parse_qs(actions_response.text)
         app.logger.debug('action handlers: %s', adata)
-        session['action-handlers'] = adata
+        session['action-handlers'] = {key: value[0] for key, value
+                                      in adata.items()}
     else:
         app.logger.debug('Bad response to action handler query %s',
                          actions_response)

@@ -295,6 +295,7 @@ class Post(db.Model):
     @property
     def reply_url(self):
         handlers = session.get('action-handlers', {})
+
         handler = handlers.get('reply')
         if handler:
             return handler.replace('{url}', self.permalink)
