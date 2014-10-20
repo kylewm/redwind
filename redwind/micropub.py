@@ -1,7 +1,7 @@
 from . import app
 from . import auth
 from . import util
-from flask import request, abort, make_response, url_for
+from flask import request, abort, make_response, url_for, jsonify
 from flask.ext.login import login_user
 import datetime
 import jwt
@@ -103,24 +103,28 @@ def micropub_endpoint():
     if request.method == 'GET':
         app.logger.debug('micropub GET request %s -> %s', request,
                          request.args)
-        if request.args.get('q') == 'syndicate-to':
+        q = request.args.get('q')
+        if q == 'syndicate-to':
             app.logger.debug('returning syndication targets')
             return urllib.parse.urlencode({
                 'syndicate-to': ','.join(['twitter.com/kyle_wm',
                                           'facebook.com/kyle.mahan'])
             })
-        elif request.args.get('q') == 'actions':
+        elif q in ('actions', 'json_actions'):
             app.logger.debug('returning action handlers')
             reply_url = url_for('new_post', type='reply', _external=True)
             repost_url = url_for('new_post', type='share', _external=True)
             like_url = url_for('new_post', type='like', _external=True)
-
-            return urllib.parse.urlencode({
+            payload = {
                 'reply': reply_url + '?url={url}',
                 'repost': repost_url + '?url={url}',
                 'favorite': like_url + '?url={url}',
                 'like': like_url + '?url={url}',
-            })
+            }
+            if q == 'json_actions':
+                return jsonify(payload)
+            else:
+                return urllib.parse.urlencode(payload)
         else:
             return ''
 

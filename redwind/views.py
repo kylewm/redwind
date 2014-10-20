@@ -433,6 +433,7 @@ def logout():
     logout_user()
     del session['action-handlers']
     del session['endpoints']
+    del session['micropub']
     return redirect(request.args.get('next', url_for('index')))
 
 
