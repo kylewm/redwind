@@ -126,7 +126,7 @@ def micropub_endpoint():
             else:
                 return urllib.parse.urlencode(payload)
         else:
-            return ''
+            abort(404)
 
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')

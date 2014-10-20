@@ -136,8 +136,7 @@ def do_process_webmention(source, target):
                 "Webmention could not find target post: %s. Giving up", target)
             return (None, None, False,
                     "Webmention could not find target post: {}".format(target))
-        target_urls = (target, target_post.permalink,
-                       target_post.short_permalink)
+        target_urls = (target, target_post.permalink,)
 
     if source in target_urls:
         return (None, None, False,
@@ -219,7 +218,14 @@ def find_target_post(target_url):
                         parsed_url.path)
         return None
 
-    if endpoint == 'post_by_date':
+    post = None
+    if endpoint == 'post_by_path':
+        year = args.get('year')
+        month = args.get('month')
+        slug = args.get('slug')
+        post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
+
+    elif endpoint == 'post_by_date':
         post_type = args.get('post_type')
         year = args.get('year')
         month = args.get('month')
@@ -249,11 +255,7 @@ def find_target_post(target_url):
 def create_mention(post, url, source_response):
     target_urls = []
     if post:
-        base_target_urls = [
-            post.permalink,
-            post.permalink_without_slug,
-            post.short_permalink,
-        ]
+        base_target_urls = [post.permalink]
 
         for base_url in base_target_urls:
             target_urls.append(base_url)

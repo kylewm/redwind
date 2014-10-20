@@ -421,19 +421,25 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
 
     app.logger.debug('Successful action handler query %s',
                      actions_response.text)
-    adata = urllib.parse.parse_qs(actions_response.text)
-    app.logger.debug('action handlers: %s', adata)
-    session['action-handlers'] = {
-        key: value[0] for key, value in adata.items()}
+    actions_content_type = actions_response.headers.get('content-type')
+    if 'application/json' in actions_content_type:
+        adata = json.loads(action_response.text)
+        app.logger.debug('action handlers (json): %s', adata)
+        session['action-handlers'] = adata
+    else:
+        adata = urllib.parse.parse_qs(actions_response.text)
+        app.logger.debug('action handlers: %s', adata)
+        session['action-handlers'] = {
+            key: value[0] for key, value in adata.items()}
     return True
 
 
 @app.route('/logout')
 def logout():
     logout_user()
-    del session['action-handlers']
-    del session['endpoints']
-    del session['micropub']
+    for key in ('action-handlers', 'endpoints', 'micropub'):
+        if key in session:
+            del session[key]
     return redirect(request.args.get('next', url_for('index')))
 
 
