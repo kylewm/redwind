@@ -7,6 +7,7 @@ from flask import g, session
 import os
 import os.path
 import json
+import urllib
 
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'
@@ -292,13 +293,15 @@ class Post(db.Model):
             if match:
                 return match.group(2)
 
+    def _fill_in_action_handler(self, url):
+        return url.replace('{url}', urllib.parse.quote_plus(self.permalink))
+
     @property
     def reply_url(self):
         handlers = session.get('action-handlers', {})
-
         handler = handlers.get('reply')
         if handler:
-            return handler.replace('{url}', self.permalink)
+            return self._fill_in_action_handler(handler)
 
         tweet_id = self.tweet_id
         if tweet_id:
@@ -309,7 +312,7 @@ class Post(db.Model):
         handlers = session.get('action-handlers', {})
         handler = handlers.get('repost')
         if handler:
-            return handler.replace('{url}', self.permalink)
+            return self._fill_in_action_handler(handler)
 
         tweet_id = self.tweet_id
         if tweet_id:
@@ -320,7 +323,7 @@ class Post(db.Model):
         handlers = session.get('action-handlers', {})
         handler = handlers.get('favorite') or handlers.get('like')
         if handler:
-            return handler.replace('{url}', self.permalink)
+            return self._fill_in_action_handler(handler)
 
         tweet_id = self.tweet_id
         if tweet_id:
