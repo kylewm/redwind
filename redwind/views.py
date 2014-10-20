@@ -414,24 +414,25 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
     actions_response = requests.get(micropub_url + '?q=actions', headers={
         'Authorization': 'Bearer ' + access_token,
     })
-    if actions_response.status_code == 200:
-        app.logger.debug('Successful action handler query %s',
-                         actions_response.text)
-        adata = urllib.parse.parse_qs(actions_response.text)
-        app.logger.debug('action handlers: %s', adata)
-        session['action-handlers'] = {key: value[0] for key, value
-                                      in adata.items()}
-    else:
-        app.logger.debug('Bad response to action handler query %s',
-                         actions_response)
+    if actions_response.status_code != 200:
+        app.logger.debug(
+            'Bad response to action handler query %s', actions_response)
+        return False
 
+    app.logger.debug('Successful action handler query %s',
+                     actions_response.text)
+    adata = urllib.parse.parse_qs(actions_response.text)
+    app.logger.debug('action handlers: %s', adata)
+    session['action-handlers'] = {
+        key: value[0] for key, value in adata.items()}
     return True
 
 
 @app.route('/logout')
 def logout():
     logout_user()
-
+    del session['action-handlers']
+    del session['endpoints']
     return redirect(request.args.get('next', url_for('index')))
 
 

@@ -63,7 +63,7 @@
         {% endfor %}
       </div>
     {% endif %}
-      {% if is_single %}
+
     <div class="webactions metadata-component">
       <indie-action do="reply" with="{{post.permalink}}">
         {% if post.reply_url %}<a href="{{post.reply_url}}">Reply</a>{% endif %}
@@ -75,7 +75,6 @@
         {% if post.favorite_url %}<a href="{{post.favorite_url}}">Like</a>{% endif %}
       </indie-action>
     </div>
-    {% endif %}
 
     {% if not is_single %}
       <div class="mention-counts metadata-component">
