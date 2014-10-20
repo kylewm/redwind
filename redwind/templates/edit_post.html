@@ -7,19 +7,16 @@
 </div>
 {% endif %}
 
-
   {% with is_single = True %}
     {% include "_contexts.html" %}
   {% endwith %}
 
 <form id="edit_form" method="POST" action="/save_{{edit_type}}" enctype="multipart/form-data">
 
-  <data id="post_path" value="{{post.path}}" />
-  <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
-  <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
-
-  <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
-  <ul id="uploads"></ul>
+  <input type="submit" name="action" value="Publish"/>
+  <input type="submit" name="action" value="Publish + Tweet"/>
+  <input type="submit" name="action" value="Publish Quietly"/>
+  <input type="submit" name="action" value="Save Draft"/>
 
   {% block above_content %}{% endblock above_content %}
 
@@ -39,14 +36,15 @@
 
   <label><i class="fa fa-plus-square-o" id="syndication_expander"></i> Syndication</label>
   <textarea id="syndication_textarea" name="syndication">{{ post.syndication | join('\n') }}</textarea>
+  
+  <data id="post_path" value="{{post.path}}" />
+  <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
+  <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
-  <div class="clearfix">
-    <input style="float: left;" type="submit" id="publish_button" value="Publish"/>
-    <div style="float: left; margin-left: 1em;">
-      {% block additional_params %}{% endblock additional_params %}
-      <label><input type="checkbox" id="inhibit_wms" name="inhibit_wms" value="true"/> Inhibit Webmentions</label>
-    </div>
-  </div>
+  <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
+  <ul id="uploads"></ul>
 
+  {% block additional_params %}{% endblock additional_params %}
+  
 </form>
 {% endblock  content %}

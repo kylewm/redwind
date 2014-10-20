@@ -2,8 +2,6 @@
 {% block content_fields %}
 <label>Title</label>
 <input type="text" name="title" value="{{ post.title or '' }}"/>
-<label>Stub</label>
-<input type="text" name="slug" value="{{ post.slug or '' }}"/>
 <label>Content</label>
-<textarea name="content" id="content" rows="30">{{ post.content or '' }}</textarea>
+<textarea name="content" id="content" rows="8">{{ post.content or '' }}</textarea>
 {% endblock content_fields %}

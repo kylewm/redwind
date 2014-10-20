@@ -112,13 +112,13 @@ def send_to_twitter(post, args):
     """Share a note to twitter without user-input. Makes a best-effort
     attempt to guess the appropriate parameters and content
     """
-    if args.get('tweet') == 'true':
+    if args.get('action') == 'Publish + Tweet':
         if not is_twitter_authorized():
             return False, 'Current user is not authorized to tweets'
 
         try:
             app.logger.debug("auto-posting to twitter {}".format(post.id))
-            queue.enqueue(do_send_to_twitter, post.shorid)
+            queue.enqueue(do_send_to_twitter, post.id)
             return True, 'Success'
 
         except Exception as e:

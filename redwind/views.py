@@ -680,7 +680,7 @@ def save_post(post):
     # redirect to the view
     post.title = request.form.get('title', '')
     post.content = request.form.get('content')
-    post.draft = request.form.get('draft', 'false') == 'true'
+    post.draft = request.form.get('action') == 'Save Draft'
     post.hidden = request.form.get('hidden', 'false') == 'true'
 
     lat = request.form.get('latitude')

@@ -15,7 +15,7 @@ def register():
 
 
 def send_webmentions(post, args):
-    if args.get('inhibit_wms') == 'true':
+    if  args.get('action') not in ('Save Draft', 'Publish Quietly'):
         app.logger.debug('skipping webmentions for {}'.format(post.id))
         return
 

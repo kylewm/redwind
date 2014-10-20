@@ -39,15 +39,30 @@
         handle.classList.toggle('fa-minus-square-o', closed);
     }
 
-    function getCoords(element) {
-        var latField = first('#latitude');
-        var lonField = first('#longitude');
-        navigator.geolocation.getCurrentPosition(function(position) {
-            latField.value = position.coords.latitude;
-            lonField.value = position.coords.longitude;
-        });
+    function showLocationFields(show) {
+        var div = first('#location_fields')
+        if (div) {
+            div.style.display = show ? 'inherit' : 'none';
+        }
     }
 
+    function getCoords() {
+        var latField = first('#latitude');
+        var lonField = first('#longitude');
+        if (latField && lonField) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                latField.value = position.coords.latitude;
+                lonField.value = position.coords.longitude;
+            });
+        }
+    }
+
+    function clearCoords() {
+        each(all('#latitude,#longitude,#location_name'), function (element) {
+            element.value = '';
+        });
+    }
+    
     function setupCheckinMap(element) {
         var checkinMap = first('#checkin-map');
         var latField = first('#latitude');
@@ -88,11 +103,16 @@
     var coordsBtn = first('#get_coords_button')
     if (coordsBtn) {
         coordsBtn.addEventListener('change', function(event) {
+            showLocationFields(coordsBtn.checked);
             if (coordsBtn.checked) {
                 getCoords();
+            } else {
+                clearCoords();
             }
         });
     }
+    var latField = first('#latitude');
+    showLocationFields(latField && latField.value !== '');
 
     var attachExpandListener = function(handle, textarea) {
         if (handle && textarea) {

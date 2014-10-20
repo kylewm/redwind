@@ -237,6 +237,7 @@ label {
 #contact_form textarea, #contact_form input[type="text"],
 #edit_form textarea, #edit_form input[type="text"] {
     width: 100%;
+    font-size: 1.4em;
 }
 
 .top_tags {
