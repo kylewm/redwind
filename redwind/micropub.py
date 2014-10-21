@@ -100,7 +100,7 @@ def micropub_endpoint():
                 'favorite': like_url + '?url={url}',
                 'like': like_url + '?url={url}',
             }
-            accept_header = actions_response.headers.get('accept', '')
+            accept_header = request.headers.get('accept', '')
             if q == 'json_actions' or 'application/json' in accept_header:
                 return jsonify(payload)
             else:
@@ -110,7 +110,6 @@ def micropub_endpoint():
 
         else:
             abort(404)
-
 
     bearer_prefix = 'Bearer '
     header_token = request.headers.get('authorization')
