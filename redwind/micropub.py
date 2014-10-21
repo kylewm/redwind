@@ -82,10 +82,13 @@ def micropub_endpoint():
         q = request.args.get('q')
         if q == 'syndicate-to':
             app.logger.debug('returning syndication targets')
-            return urllib.parse.urlencode({
+            response = make_response(urllib.parse.urlencode({
                 'syndicate-to': ','.join(['twitter.com/kyle_wm',
                                           'facebook.com/kyle.mahan'])
-            })
+            }))
+            response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+            return response
+
         elif q in ('actions', 'json_actions'):
             app.logger.debug('returning action handlers')
             reply_url = url_for('new_post', type='reply', _external=True)
@@ -101,7 +104,10 @@ def micropub_endpoint():
             if q == 'json_actions' or 'application/json' in accept_header:
                 return jsonify(payload)
             else:
-                return urllib.parse.urlencode(payload)
+                response = make_response(urllib.parse.urlencode(payload))
+                response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                return response
+
         else:
             abort(404)
 

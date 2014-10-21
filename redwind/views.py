@@ -304,7 +304,8 @@ def login():
     me = request.args.get('me')
     if not me:
         return make_response('Missing "me" parameter', 400)
-
+    if not me.startswith('http://') and not me.startswith('https://'):
+        me = 'http://' + me
     auth_url, token_url, micropub_url = discover_endpoints(me)
     if not auth_url:
         auth_url = 'https://indieauth.com/auth'
