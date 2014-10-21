@@ -76,6 +76,36 @@ def micropub_endpoint():
         "received micropub request %s, args=%s, form=%s, headers=%s",
         request, request.args, request.form, request.headers)
 
+    if request.method == 'GET':
+        app.logger.debug('micropub GET request %s -> %s', request,
+                         request.args)
+        q = request.args.get('q')
+        if q == 'syndicate-to':
+            app.logger.debug('returning syndication targets')
+            return urllib.parse.urlencode({
+                'syndicate-to': ','.join(['twitter.com/kyle_wm',
+                                          'facebook.com/kyle.mahan'])
+            })
+        elif q in ('actions', 'json_actions'):
+            app.logger.debug('returning action handlers')
+            reply_url = url_for('new_post', type='reply', _external=True)
+            repost_url = url_for('new_post', type='share', _external=True)
+            like_url = url_for('new_post', type='like', _external=True)
+            payload = {
+                'reply': reply_url + '?url={url}',
+                'repost': repost_url + '?url={url}',
+                'favorite': like_url + '?url={url}',
+                'like': like_url + '?url={url}',
+            }
+            accept_header = actions_response.headers.get('accept', '')
+            if q == 'json_actions' or 'application/json' in accept_header:
+                return jsonify(payload)
+            else:
+                return urllib.parse.urlencode(payload)
+        else:
+            abort(404)
+
+
     bearer_prefix = 'Bearer '
     header_token = request.headers.get('authorization')
     if header_token and header_token.startswith(bearer_prefix):
@@ -100,33 +130,6 @@ def micropub_endpoint():
         app.logger.warn('received valid access token for invalid user: %s', me)
         abort(401)
 
-    if request.method == 'GET':
-        app.logger.debug('micropub GET request %s -> %s', request,
-                         request.args)
-        q = request.args.get('q')
-        if q == 'syndicate-to':
-            app.logger.debug('returning syndication targets')
-            return urllib.parse.urlencode({
-                'syndicate-to': ','.join(['twitter.com/kyle_wm',
-                                          'facebook.com/kyle.mahan'])
-            })
-        elif q in ('actions', 'json_actions'):
-            app.logger.debug('returning action handlers')
-            reply_url = url_for('new_post', type='reply', _external=True)
-            repost_url = url_for('new_post', type='share', _external=True)
-            like_url = url_for('new_post', type='like', _external=True)
-            payload = {
-                'reply': reply_url + '?url={url}',
-                'repost': repost_url + '?url={url}',
-                'favorite': like_url + '?url={url}',
-                'like': like_url + '?url={url}',
-            }
-            if q == 'json_actions':
-                return jsonify(payload)
-            else:
-                return urllib.parse.urlencode(payload)
-        else:
-            abort(404)
 
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')

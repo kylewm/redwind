@@ -421,7 +421,7 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
 
     app.logger.debug('Successful action handler query %s',
                      actions_response.text)
-    actions_content_type = actions_response.headers.get('content-type')
+    actions_content_type = actions_response.headers.get('content-type', '')
     if 'application/json' in actions_content_type:
         adata = json.loads(action_response.text)
         app.logger.debug('action handlers (json): %s', adata)
