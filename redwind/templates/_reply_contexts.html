@@ -12,8 +12,7 @@
         {% if context.author_name %}
           <a class="p-name u-url" href="{{context.author_url}}">{{context.author_name}}</a>
           &bullet;
-          <a class="u-" href="{{context.permalink}}">{{context.permalink | domain_from_url}}</a>
-        {% else %}
+        {% endif %}
           <a class="u-url" href="{{context.permalink}}">
             {% if context.title %}
               {{context.title}}
@@ -21,7 +20,6 @@
               {{context.permalink | domain_from_url}}
             {% endif %}
           </a>
-        {% endif %}
       </div>
 
       <div class="reply-body">
