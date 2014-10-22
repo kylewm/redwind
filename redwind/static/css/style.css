@@ -136,20 +136,30 @@ nav {
 
 /* ----------- Contexts ----------- */
 
-.p-in-reply-to .e-content {
+/*.p-in-reply-to .e-content {
     border-left: 1px solid #999;
     padding: 0.5em;
     margin-bottom: 0.5em;
     max-height: 320px;
     overflow-y: auto;
-}
+}*/
 
 .p-in-reply-to .e-content img, .share .e-content img {
     max-width: 100%;
     height: auto;
 }
 
-article.share .p-author .u-photo {
+.p-in-reply-to {
+    padding: 0.5em;
+    margin-bottom: 0.5em;
+    background-color: #eee;
+    foreground-color: #333;
+    border: solid 1px #ddd;
+    border-radius: 4px;
+}
+
+article.share .p-author .u-photo,
+.p-in-reply-to .p-author .u-photo {
     float: left;
     margin-top: 0.5em;
     margin-right: 0.7em;
@@ -158,8 +168,9 @@ article.share .p-author .u-photo {
     height: auto;
 }
 
-article.share .repost-body {
-    margin-left: calc(64px + 0.7em);
+article.share .repost-body,
+.p-in-reply-to .e-content {
+    margin-left: 68px;
 }
 
 article.share .repost-entry + .repost-entry {
