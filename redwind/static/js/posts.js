@@ -10,28 +10,33 @@
                     var lon = map.dataset.longitude;
                     var loc = map.dataset.location;
                     if (lat && lon) {
-                        setupMap(map, lat, lon, loc);
+                        var map = setupMap(map, lat, lon);
+                        if (lat && lon && loc) {
+                            var marker = L.marker([lat, lon], {'title': loc}).addTo(map);
+                        }
+
                     }
                 });
             });
         }
     }
 
-    function setupMap(element, lat, lon, loc) {
+    function setupMap(element, lat, lon, wheelZoom, zoom) {
         var tileset = L.tileLayer(
             'http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri'
+                attribution: 'Tiles &copy; Esri',
+                noWrap: true,
             });
 
         var map = L.map(element, {
             center: [lat, lon],
-            zoom: 16,
+            zoom: zoom || 16,
             layers: [tileset],
-            touchZoom: false,
-            scrollWheelZoom: false,
+            touchZoom: wheelZoom,
+            scrollWheelZoom: wheelZoom,
         });
 
-        L.marker([lat, lon], {'title': loc}).addTo(map);
+        return map;
     }
 
     function showPostControls(arrow, controls) {

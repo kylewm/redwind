@@ -113,7 +113,6 @@ class User:
 
 
 class Photo(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(256))
     caption = db.Column(db.Text)
@@ -147,6 +146,7 @@ class Location(db.Model):
     country_code = db.Column(db.String(8))
 
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), index=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), index=True)
 
     def __init__(self, **kwargs):
         self.latitude = kwargs.get('latitude')
@@ -180,8 +180,26 @@ class Location(db.Model):
             return "Unknown Location"
 
 
-class Post(db.Model):
+class Venue(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256))
+    location = db.relationship('Location', uselist=False)
+    slug = db.Column(db.String(256))
 
+    def update_slug(self, geocode):
+        self.slug = util.slugify(self.name + ' ' + geocode)
+
+    @property
+    def path(self):
+        return 'venue/{}'.format(self.slug)
+
+    @property
+    def permalink(self):
+        site_url = get_settings().site_url or 'http://localhost'
+        return '/'.join((site_url, self.path))
+
+
+class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(256))
     historic_path = db.Column(db.String(256))
@@ -214,6 +232,8 @@ class Post(db.Model):
 
     location = db.relationship('Location', uselist=False, backref='post')
     photos = db.relationship('Photo', backref='post')
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'))
+    venue = db.relationship('Venue', uselist=False)
 
     # TODO create Tag table
     #tags = db.Column(JsonType)
@@ -341,6 +361,11 @@ class Post(db.Model):
 
         if self.content:
             return util.slugify(self.content, 48)
+
+        if self.post_type == 'checkin' and self.venue:
+            return util.slugify('checked into ' + self.venue.name + ' '
+                                + self.content, 48)
+
         for ctxs, prefix in ((self.bookmark_contexts, 'bookmark-of-'),
                              (self.like_contexts, 'like-of-'),
                              (self.repost_contexts, 'repost-of-'),

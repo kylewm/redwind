@@ -4,6 +4,14 @@
     var Http = (function(){
 
         return {
+            get: function(url) {
+                return this.open('GET', url);
+            },
+
+            post: function(url) {
+                return this.open('POST', url);
+            },
+
             open: function(method, url) {
                 var xhr = new XMLHttpRequest();
                 xhr.open(method.toUpperCase(), url);

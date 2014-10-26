@@ -5,7 +5,7 @@ from . import db
 from . import hooks
 from . import util
 from .models import Post, Location, Photo, Tag, Mention, Contact,\
-    Nick, Setting, get_settings
+    Nick, Setting, Venue, get_settings
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory, session
@@ -657,7 +657,7 @@ def mirror_image(src, side=None):
 @login_required
 def save_edit():
     id = request.form.get('post_id')
-    app.logger.debug('saving post %d', id)
+    app.logger.debug('saving post %s', id)
     post = Post.load_by_id(id)
     return save_post(post)
 
@@ -689,6 +689,26 @@ def save_post(post):
     post.content = request.form.get('content')
     post.draft = request.form.get('action') == 'Save Draft'
     post.hidden = request.form.get('hidden', 'false') == 'true'
+
+    venue_name = request.form.get('new_venue_name')
+    venue_lat = request.form.get('new_venue_latitude')
+    venue_lng = request.form.get('new_venue_longitude')
+    if venue_name and venue_lat and venue_lng:
+        venue = Venue()
+        venue.name = venue_name
+        venue.location = Location()
+        venue.location.latitude = venue_lat
+        venue.location.longitude = venue_lng
+        venue.update_slug('{}-{}'.format(venue_lat, venue_lng))
+        db.session.add(venue)
+        db.session.commit()
+        hooks.fire('venue-saved', venue, request.form)
+        post.venue = venue
+
+    else:
+        venue_id = request.form.get('venue')
+        if venue_id:
+            post.venue = Venue.query.get(venue_id)
 
     lat = request.form.get('latitude')
     lon = request.form.get('longitude')
@@ -849,7 +869,8 @@ def contact_by_name(name):
     return render_template('contact.html', contact=contact)
 
 
-@app.route('/delete_contact')
+@app.route('/delete/contact')
+@login_required
 def delete_contact():
     id = request.args.get('id')
     contact = Contact.query.get(id)
@@ -858,7 +879,7 @@ def delete_contact():
     return redirect(url_for('contacts'))
 
 
-@app.route('/new_contact', methods=['GET', 'POST'])
+@app.route('/new/contact', methods=['GET', 'POST'])
 def new_contact():
     if request.method == 'GET':
         contact = Contact()
@@ -872,7 +893,7 @@ def new_contact():
     return save_contact(contact)
 
 
-@app.route('/edit_contact', methods=['GET', 'POST'])
+@app.route('/edit/contact', methods=['GET', 'POST'])
 def edit_contact():
     if request.method == 'GET':
         id = request.args.get('id')
@@ -910,3 +931,61 @@ def save_contact(contact):
         return redirect(url_for('contact_by_name', name=contact.nicks[0].name))
     else:
         return redirect(url_for('contacts'))
+
+
+@app.route('/venue/<slug>')
+def venue_by_slug(slug):
+    venue = Venue.query.filter_by(slug=slug).first()
+    app.logger.debug('rendering venue, location. {}, {}',
+                     venue, venue.location)
+    return render_template('venue.html', venue=venue)
+
+
+@app.route('/venues')
+def all_venues():
+    venues = Venue.query.all()
+    return render_template('all_venues.html', venues=venues)
+
+
+@app.route('/new/venue', methods=['GET', 'POST'])
+def new_venue():
+    venue = Venue()
+    if request.method == 'GET':
+        return render_template('edit_venue.html', venue=venue)
+    return save_venue(venue)
+
+
+@app.route('/edit/venue', methods=['GET', 'POST'])
+def edit_venue():
+    id = request.args.get('id')
+    venue = Venue.query.get(id)
+    if request.method == 'GET':
+        return render_template('edit_venue.html', venue=venue)
+    return save_venue(venue)
+
+
+@app.route('/delete/venue')
+@login_required
+def delete_venue():
+    id = request.args.get('id')
+    venue = Venue.query.get(id)
+    db.session.delete(venue)
+    db.session.commit()
+    return redirect(url_for('all_venues'))
+
+
+def save_venue(venue):
+    venue.name = request.form.get('name')
+    if not venue.location:
+        venue.location = Location()
+
+    venue.location.latitude = float(request.form.get('latitude'))
+    venue.location.longitude = float(request.form.get('longitude'))
+    venue.update_slug(request.form.get('geocode'))
+
+    if not venue.id:
+        db.session.add(venue)
+    db.session.commit()
+
+    hooks.fire('venue-saved', venue, request.form)
+    return redirect(url_for('venue_by_slug', slug=venue.slug))

@@ -1,4 +1,5 @@
 from . import app
+from .models import Venue
 from flask import request, jsonify, redirect, url_for
 import datetime
 import mf2py
@@ -121,3 +122,23 @@ def fetch_profile():
         resp = jsonify({'error': str(e)})
         resp.status_code = 400
         return resp
+
+
+@app.route('/services/nearby')
+def nearby_venues():
+    lat = float(request.args.get('latitude'))
+    lng = float(request.args.get('longitude'))
+    venues = Venue.query.all()
+
+    venues.sort(key=lambda venue: (venue.location.latitude - lat) ** 2
+                + (venue.location.longitude - lng) ** 2)
+
+    return jsonify({
+        'venues': [{
+            'id': venue.id,
+            'name': venue.name,
+            'latitude': venue.location.latitude,
+            'longitude': venue.location.longitude,
+            'geocode': venue.location.geo_name,
+        } for venue in venues[:10]]
+    })

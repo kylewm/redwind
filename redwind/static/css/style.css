@@ -136,14 +136,6 @@ nav {
 
 /* ----------- Contexts ----------- */
 
-/*.p-in-reply-to .e-content {
-    border-left: 1px solid #999;
-    padding: 0.5em;
-    margin-bottom: 0.5em;
-    max-height: 320px;
-    overflow-y: auto;
-}*/
-
 .p-in-reply-to .e-content img, .share .e-content img {
     max-width: 100%;
     height: auto;
@@ -246,7 +238,9 @@ label {
 }
 
 #contact_form textarea, #contact_form input[type="text"],
-#edit_form textarea, #edit_form input[type="text"] {
+#edit_form textarea, #edit_form input[type="text"],
+#edit_form select
+{
     width: 100%;
     font-size: 1.4em;
 }
@@ -309,6 +303,10 @@ a.top_tag:hover {
     height: 320px;
     max-width: 800px;
     width: 100%;
+}
+
+#venue-map.map {
+    height: 500px;
 }
 
 /* ----------- Buttons (Skeleton) ----------- */

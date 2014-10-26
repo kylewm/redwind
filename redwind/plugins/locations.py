@@ -5,50 +5,91 @@ from .. import db
 from .. import hooks
 from .. import models
 from .. import queue
+from flask import request, jsonify
 
 
 def register():
     hooks.register('post-saved', reverse_geocode)
+    hooks.register('venue-saved', reverse_geocode_venue)
 
 
 def reverse_geocode(post, args):
-    queue.enqueue(do_reverse_geocode, post.id)
+    queue.enqueue(do_reverse_geocode_post, post.id)
 
 
-def do_reverse_geocode(postid):
+def reverse_geocode_venue(venue, args):
+    queue.enqueue(do_reverse_geocode_venue, venue.id)
+
+
+def do_reverse_geocode_post(postid):
+    with app.app_context():
+        post = models.Post.load_by_id(postid)
+        if post.location and post.location.latitude \
+           and post.location.longitude:
+
+            adr = do_reverse_geocode(post.location.latitude,
+                                     post.location.longitude)
+
+            for key, value in adr.items():
+                setattr(post.location, key, value)
+
+            db.session.commit()
+
+
+def do_reverse_geocode_venue(venueid):
+    with app.app_context():
+        venue = models.Venue.query.get(venueid)
+        if venue.location and venue.location.latitude \
+           and venue.location.longitude:
+
+            adr = do_reverse_geocode(venue.location.latitude,
+                                     venue.location.longitude)
+            for key, value in adr.items():
+                setattr(venue.location, key, value)
+            venue.update_slug(venue.location.geo_name)
+            db.session.commit()
+
+
+def do_reverse_geocode(lat, lng):
     def region(adr):
         if adr.get('country_code') == 'us':
             return adr.get('state') or adr.get('county')
         else:
             return adr.get('county') or adr.get('state')
 
-    with app.app_context():
-        post = models.Post.load_by_id(postid)
-        if post.location and post.location.latitude \
-           and post.location.longitude:
-            app.logger.debug('reverse geocoding with nominatum')
-            r = requests.get('http://nominatim.openstreetmap.org/reverse',
-                             params={
-                                 'lat': post.location.latitude,
-                                 'lon': post.location.longitude,
-                                 'format': 'json'
-                             })
-            r.raise_for_status()
+    app.logger.debug('reverse geocoding with nominatum')
+    r = requests.get('http://nominatim.openstreetmap.org/reverse',
+                     params={
+                         'lat': lat,
+                         'lon': lng,
+                         'format': 'json'
+                     })
+    r.raise_for_status()
 
-            data = json.loads(r.text)
-            app.logger.debug('received response %s',
-                             json.dumps(data, indent=True))
+    data = json.loads(r.text)
+    app.logger.debug('received response %s',
+                     json.dumps(data, indent=True))
 
-            # hat-tip https://gist.github.com/barnabywalters/8318401
-            adr = data.get('address', {})
+    adr = data.get('address', {})
 
-            post.location.street_address = adr.get('road')
-            post.location.extended_address = adr.get('suburb')
-            post.location.locality = (adr.get('hamlet') or adr.get('village') or adr.get('town')
-                                      or adr.get('city') or adr.get('locality'))
-            post.location.region = region(adr)
-            post.location.country_name = adr.get('country')
-            post.location.postal_code = adr.get('postcode')
-            post.location.country_code = adr.get('country_code')
+    # hat-tip https://gist.github.com/barnabywalters/8318401
+    return {
+        'street_address': adr.get('road'),
+        'extended_address': adr.get('suburb'),
+        'locality': (adr.get('hamlet')
+                     or adr.get('village')
+                     or adr.get('town')
+                     or adr.get('city')
+                     or adr.get('locality')),
+        'region': region(adr),
+        'country_name': adr.get('country'),
+        'postal_code': adr.get('postcode'),
+        'country_code': adr.get('country_code'),
+    }
 
-            db.session.commit()
+
+@app.route('/services/geocode')
+def reverse_geocode_service():
+    lat = request.args.get('latitude')
+    lng = request.args.get('longitude')
+    return jsonify(do_reverse_geocode(lat, lng))

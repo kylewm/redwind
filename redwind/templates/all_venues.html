@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div id="all-venues-map" style="height: 500px; max-width: 100%">
+</div>
+
+<ul id="all-venues">
+  {% for venue in venues %}
+  <li data-latitude="{{venue.location.latitude}}"
+      data-longitude="{{venue.location.longitude}}">
+    <a href="{{venue.permalink}}">
+      {{venue.name}}
+    </a>
+<a href="{{url_for('edit_venue', id=venue.id)}}"><i class="fa fa-edit"></i> Edit</a>
+<a href="{{url_for('delete_venue', id=venue.id)}}"><i class="fa fa-trash-o"></i> Delete</a>
+  </li>
+  {% endfor %}
+</ul>
+
+
+{% endblock %}
+
+
+{% block other_resources %}
+
+<script type="text/javascript">
+
+loadLeaflet(function () {
+
+    var count = 0, centerLat = 0, centerLng = 0;
+
+    each(all('#all-venues li'), function (li) {
+
+        centerLat += parseFloat(li.dataset.latitude);
+        centerLng += parseFloat(li.dataset.longitude);
+        count++;
+
+    });
+
+    centerLat /= count;
+    centerLng /= count;
+
+    var map = setupMap(first('#all-venues-map'), centerLat, centerLng, true, 10);
+    each(all('#all-venues li'), function (li) {
+        var marker = L.marker(
+            [li.dataset.latitude, li.dataset.longitude],
+            {'title': li.textContent}
+        ).addTo(map);
+    });
+});
+
+</script>
+
+{% endblock %}

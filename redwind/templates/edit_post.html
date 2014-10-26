@@ -22,7 +22,7 @@
 
   {% block content_fields %}
     <label>Content</label>
-    <textarea name="content" id="content" rows="3">{{ post.content or '' }}</textarea>
+    <textarea name="content" id="content" rows="2">{{ post.content or '' }}</textarea>
   {% endblock content_fields %}
   {% block below_content %}{% endblock below_content %}
 
@@ -36,7 +36,7 @@
 
   <label><i class="fa fa-plus-square-o" id="syndication_expander"></i> Syndication</label>
   <textarea id="syndication_textarea" name="syndication">{{ post.syndication | join('\n') }}</textarea>
-  
+
   <data id="post_path" value="{{post.path}}" />
   <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
@@ -45,6 +45,6 @@
   <ul id="uploads"></ul>
 
   {% block additional_params %}{% endblock additional_params %}
-  
+
 </form>
 {% endblock  content %}

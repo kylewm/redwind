@@ -7,7 +7,7 @@ for module in ('mf2py', 'mf2util'):
         sys.path.append(module)
 
 from flask import Flask
-from flask_debugtoolbar import DebugToolbarExtension
+#from flask_debugtoolbar import DebugToolbarExtension
 from flask.ext.assets import Environment, Bundle
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
@@ -19,7 +19,7 @@ from logging.handlers import RotatingFileHandler
 
 import os
 import logging
-import webassets
+
 
 app = Flask(__name__)
 app.config.from_object(Configuration)
@@ -28,7 +28,7 @@ redis = Redis.from_url(app.config['REDIS_URL'])
 
 queue = Queue(connection=redis)
 db = SQLAlchemy(app)
-toolbar = DebugToolbarExtension(app)
+#toolbar = DebugToolbarExtension(app)
 login_mgr = LoginManager(app)
 login_mgr.login_view = 'index'
 
@@ -41,7 +41,7 @@ assets.register('css_all',
 assets.register('js_all',
                 Bundle('js/util.js', 'js/http.js', 'js/posts.js',
                        'js/twitter.js', 'js/edit_contact.js',
-                       'js/edit_post.js', filters='jsmin',
+                       'js/edit_post.js', 'js/edit_venue.js', filters='jsmin',
                        output='js/main.js'))
 
 app.jinja_options = ImmutableDict(

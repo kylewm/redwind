@@ -8,9 +8,15 @@
   {% if post.title %}
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
-  {% if post.photos or post.content %}
-    <div class="{% if not post.title %}p-name {% endif %}e-content">
-      <div class="primary-content">{{post.content_html | safe}}</div>
+
+  {% if post.photos or post.content or post.post_type == 'checkin' %}
+    <div class="{% if not title %}p-name {% endif %}e-content">
+      <div class="primary-content">
+        {% if post.post_type == 'checkin' and post.venue %}
+          <p>Checked into {{ post.venue.name }}</p>
+        {% endif %}
+        {{post.content_html | safe}}
+      </div>
       {% for photo in post.photos %}
         <div class="photo-holder">
           <a href="{{photo.url}}">
@@ -23,12 +29,21 @@
       {% endfor %}
     </div>
   {% endif %}
-  {% if post.post_type == 'checkin' and post.location %}
-    <div class="map"
-         data-latitude="{{post.location.latitude}}"
-         data-longitude="{{post.location.longitude}}"
-         data-location="{{post.location.name}}">
-    </div>
+  {% if post.post_type == 'checkin' %}
+    {% if post.location %}
+      <div class="map"
+           data-latitude="{{post.location.latitude}}"
+           data-longitude="{{post.location.longitude}}"
+           data-location="{{post.location.name}}">
+      </div>
+    {% endif %}
+    {% if post.venue %}
+      <div class="map"
+           data-latitude="{{post.venue.location.latitude}}"
+           data-longitude="{{post.venue.location.longitude}}"
+           data-location="{{post.venue.name}}">
+      </div>
+    {% endif %}
   {% endif %}
   {% if post.tags %}
     <div class="tags">
@@ -50,6 +65,14 @@
         </a>
       </div>
     {% endif %}
+
+    {% if post.venue %}
+      <div class="venue metadata-component">
+        <i class="fa fa-map-marker"></i>
+        <a class="p-location h-card" href="{{ post.venue.permalink }}">{{ post.venue.name }} &ndash; {{ post.venue.location.geo_name }}</a>
+      </div>
+    {% endif %}
+
     <div class="metadata-component">
       <a class="u-url" href="{{post.permalink}}">
         <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>

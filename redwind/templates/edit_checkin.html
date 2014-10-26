@@ -3,12 +3,88 @@
 {% block location_check %}
 {% endblock %}
 
-{% block below_content %}
+{% block above_content %}
 
-<input type="hidden" id="latitude" name="latitude" size="10" value="{{ post.location.latitude if post.location else ''}}"/>
-<input type="hidden" id="longitude" name="longitude" size="10" value="{{ post.location.longitude if post.location else ''}}"/>
+  <div id="select_venue_holder">
+    <label>Venue</label>
+    <select id="venue" name="venue"></select>
+    <a href="#" id="new_venue_expander">Create New</a>
+  </div>
+  <div id="new_venue_holder">
+    <label>New Venue Name</label>
+    <input type="text" id="new_venue_name" name="new_venue_name" />
 
-<div class="map" id="checkin-map">
-</div>
+    <label>New Venue Latitude</label>
+    <input type="text" name="new_venue_latitude" id="new_venue_latitude" />
 
-{% endblock below_content %}
+    <label>New Venue Longitude</label>
+    <input type="text" name="new_venue_longitude" id="new_venue_longitude" />
+  </div>
+
+{% endblock above_content %}
+
+{% block other_resources %}
+
+<script type="text/javascript">
+
+function updateVenueList(lat, lng) {
+    var xhr = Http.get('/services/nearby?latitude=' + lat + '&longitude=' + lng);
+    Http.send(xhr).then(
+        function (xhr) {
+            var venueSelect = first('select#venue');
+            var blob = JSON.parse(xhr.responseText);
+            blob.venues.forEach(function (venue) {
+                var venueNode = document.createElement('option');
+                venueNode.setAttribute('value', venue.id);
+                venueNode.appendChild(
+                    document.createTextNode(venue.name + ': ' + venue.geocode));
+                venueSelect.appendChild(venueNode);
+            });
+        },
+        function (xhr) {
+
+        });
+}
+
+var prevLat, prevLng, prevVenue;
+
+{% if post.venue %}
+  prevVenue = {{post.venue.id}};
+  prevLat = {{post.venue.location.latitude}};
+  prevLng = {{post.venue.location.longitude}};
+{% elif post.location %}
+  prevLat = {{post.location.latitude}};
+  prevLng = {{post.location.longitude}};
+{% endif %}
+
+first('#new_venue_holder').style.display = 'none';
+first('#new_venue_expander').addEventListener('click', function(event) {
+    event.preventDefault();
+    first('#select_venue_holder').style.display = 'none';
+    first('#new_venue_holder').style.display = 'inherit';
+
+
+    if (prevLat && prevLng) {
+        first('#new_venue_latitude').value = prevLat;
+        first('#new_venue_longitude').value = prevLng;
+    } else {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            first('#new_venue_latitude').value = position.coords.latitude;
+            first('#new_venue_longitude').value = position.coords.longitude;
+        });
+    }
+});
+
+
+if (prevLat && prevLng) {
+    updateVenueList(prevLat, prevLng);
+}
+else {
+    navigator.geolocation.getCurrentPosition(function (position) {
+        updateVenueList(position.coords.latitude, position.coords.longitude);
+    });
+}
+
+</script>
+
+{% endblock other_resources %}

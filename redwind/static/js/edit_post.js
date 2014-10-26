@@ -62,21 +62,22 @@
             element.value = '';
         });
     }
-    
-    function setupCheckinMap(element) {
+
+    function setupCheckinMap() {
         var checkinMap = first('#checkin-map');
         var latField = first('#latitude');
         var lonField = first('#longitude');
 
         if (latField && lonField && checkinMap) {
             checkinMap.textContent = 'loading...';
-            loadLeaflet(function() {
-                navigator.geolocation.getCurrentPosition(function(position) {
+            loadLeaflet(function () {
+                navigator.geolocation.getCurrentPosition(function (position) {
                     var lat = position.coords.latitude;
                     var lon = position.coords.longitude;
                     latField.value = lat;
                     lonField.value = lon;
-                    setupMap(checkinMap, lat, lon, 'new location');
+                    var map = setupMap(checkinMap, lat, lon);
+                    L.marker([lat, lon]).addTo(map);
                 });
             });
         }
@@ -97,7 +98,6 @@
             var tagField = first('#edit_form #tags');
             tagField.value = (tagField.value ? tagField.value + ',' : '') + tagBtn.textContent;
         });
-
     });
 
     var coordsBtn = first('#get_coords_button')

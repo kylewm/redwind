@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+  <b>Venue:</b> {{ venue.name or '' }}<br />
+  <b>Location:</b> {{ venue.location.latitude if venue.location else '??' }},
+                   {{ venue.location.longitude if venue.location else '??' }}<br />
+  <b>Geo:</b> {{ venue.location.geo_name if venue.location else '??' }}<br />
+
+  <div class="map"
+       data-latitude="{{venue.location.latitude}}"
+       data-longitude="{{venue.location.longitude}}"
+       data-location="{{venue.name}}">
+  </div>
+
+{% endblock content %}
