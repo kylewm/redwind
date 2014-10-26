@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
+  <article>
   <b>Venue:</b> {{ venue.name or '' }}<br />
-  <b>Location:</b> {{ venue.location.latitude if venue.location else '??' }},
-                   {{ venue.location.longitude if venue.location else '??' }}<br />
   <b>Geo:</b> {{ venue.location.geo_name if venue.location else '??' }}<br />
 
   <div class="map"
@@ -11,5 +10,12 @@
        data-longitude="{{venue.location.longitude}}"
        data-location="{{venue.name}}">
   </div>
+  </article>
+
+  {% set no_map = true %}
+  {% for post in posts %}
+      {% include "_post.html" %}
+  {% endfor %}
+
 
 {% endblock content %}

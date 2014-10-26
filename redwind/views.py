@@ -938,7 +938,8 @@ def venue_by_slug(slug):
     venue = Venue.query.filter_by(slug=slug).first()
     app.logger.debug('rendering venue, location. {}, {}',
                      venue, venue.location)
-    return render_template('venue.html', venue=venue)
+    posts = Post.query.filter_by(venue_id=venue.id).all()
+    return render_template('venue.html', venue=venue, posts=posts)
 
 
 @app.route('/venues')
