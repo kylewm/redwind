@@ -1,1 +1,6 @@
 {% extends "edit_note.html" %}
+
+{% block file_upload %}
+  <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
+  <ul id="uploads"></ul>
+{% endblock %}

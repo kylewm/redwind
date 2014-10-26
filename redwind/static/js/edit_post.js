@@ -8,7 +8,7 @@
             uploadsList.removeChild(uploadsList.firstChild);
         }
 
-        each(button.files, function(ii, file) {
+        each(button.files, function(file) {
             var reader = new FileReader();
             reader.onload = function (e) {
                 var img = document.createElement('img');
@@ -26,6 +26,8 @@
                 link.addEventListener('click', function() {
                     addImageLink(file);
                 });
+
+                li.appendChild(link);
             };
             reader.readAsDataURL(file);
         });

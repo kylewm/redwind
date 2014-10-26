@@ -41,8 +41,10 @@
   <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
   <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
-  <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
+  {% block file_upload %}
+  <input type="file" id="image_upload_button" name="files" multiple="multiple" accept="image/*"></input>
   <ul id="uploads"></ul>
+  {% endblock %}
 
   {% block additional_params %}{% endblock additional_params %}
 
