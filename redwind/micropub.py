@@ -1,6 +1,7 @@
 from . import app
 from . import auth
 from . import util
+from .models import get_settings
 from flask import request, abort, make_response, url_for, jsonify
 from flask.ext.login import login_user
 import datetime

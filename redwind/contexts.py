@@ -11,38 +11,26 @@ from flask.ext.login import current_user
 
 
 def fetch_contexts(post):
-    for url in post.in_reply_to:
-        do_fetch_context(post, 'reply_contexts', url)
-
-    for url in post.repost_of:
-        do_fetch_context(post, 'repost_contexts', url)
-
-    for url in post.like_of:
-        do_fetch_context(post, 'like_contexts', url)
-
-    for url in post.bookmark_of:
-        do_fetch_context(post, 'bookmark_contexts', url)
+    do_fetch_context(post, 'reply_contexts', post.in_reply_to)
+    do_fetch_context(post, 'repost_contexts', post.repost_of)
+    do_fetch_context(post, 'like_contexts', post.like_of)
+    do_fetch_context(post, 'bookmark_contexts', post.bookmark_of)
 
 
-def do_fetch_context(post, context_attr, url):
-    app.logger.debug("fetching url %s", url)
-    context = create_context(url)
-    if context:
-        if not context.id:
-            old_contexts = getattr(post, context_attr)
-            new_contexts = []
+def do_fetch_context(post, context_attr, urls):
+    app.logger.debug("fetching urls %s", urls)
+    old_contexts = getattr(post, context_attr)
+    new_contexts = [create_context(url) for url in urls]
+    
+    for old in old_contexts:
+        if old not in new_contexts:
+            db.session.delete(old)
 
-            for old in old_contexts:
-                if old.url == url:
-                    db.session.delete(old)
-                else:
-                    new_contexts.append(old)
+    for new_context in new_contexts:
+        db.session.add(new_context)
 
-            db.session.add(context)
-            new_contexts.append(context)
-
-            setattr(post, context_attr, new_contexts)
-            db.session.commit()
+    setattr(post, context_attr, new_contexts)
+    db.session.commit()
 
 
 def create_context(url):
@@ -57,10 +45,13 @@ def create_context(url):
         response.raise_for_status()
 
         context = Context.query.filter_by(url=url).first()
+        app.logger.debug('checked for pre-existing context for this url: %s', context)
         blob = mf2py.Parser(doc=response.text, url=url).to_dict()
         if blob:
+            app.logger.debug('parsed successfully by mf2py: %s', url)
             entry = mf2util.interpret(blob, url)
-            if entry:
+            if entry: 
+                app.logger.debug('parsed successfully by mf2util: %s', url)
                 published = entry.get('published')
                 content = util.clean_foreign_html(entry.get('content', ''))
                 content_plain = util.format_as_text(content)
@@ -89,12 +80,14 @@ def create_context(url):
             url, response)
 
     if not context:
+        app.logger.debug('Generating default context: %s', url)
         context = Context()
         context.url = context.permalink = url
         if response:
             html = response.text
             soup = bs4.BeautifulSoup(html)
             if soup.title:
+                app.logger.debug('Found title: %s', soup.title.string)
                 context.title = soup.title.string
 
     return context

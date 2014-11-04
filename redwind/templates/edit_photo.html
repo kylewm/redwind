@@ -1,6 +1,15 @@
 {% extends "edit_note.html" %}
 
+{% block above_content %}
+{% for photo in post.photos %}
+<div>
+  <img src="{{photo.thumbnail}}" />
+</div>
+{% endfor %}
+{% endblock %}
+
 {% block file_upload %}
   <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
-  <ul id="uploads"></ul>
+  <ul id="uploads">
+  </ul>
 {% endblock %}

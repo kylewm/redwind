@@ -384,7 +384,7 @@ def login_callback():
 
 def try_micropub_config(token_url, micropub_url, scopes, code, me,
                         redirect_uri, client_id, state):
-    if 'config' not in scopes or not token_url or not micropub_url:
+    if not scopes or 'config' not in scopes or not token_url or not micropub_url:
         flash('Micropub not supported (which is fine).')
         return False
 

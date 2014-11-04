@@ -1,7 +1,7 @@
 {% for context in post.reply_contexts %}
-
-    <div class="p-in-reply-to h-cite">
-      <div class="p-author h-card">
+  <div class="p-in-reply-to h-cite">
+    <div>
+      <span class="p-author h-card">
         {% if context.author_image %}
           <img class="u-photo" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
         {% else %}
@@ -13,28 +13,29 @@
           <a class="p-name u-url" href="{{context.author_url}}">{{context.author_name}}</a>
           &bullet;
         {% endif %}
-          <a class="u-url" href="{{context.permalink}}">
-            {% if context.title %}
-              {{context.title}}
-            {% else %}
-              {{context.permalink | domain_from_url}}
-            {% endif %}
-          </a>
-      </div>
-
-      <div class="reply-body">
-        {% if context.content %}
-
-          <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">
-            {% if context.content_plain and (context.content_plain|length) > 256 %}
-              {{context.content_plain | truncate(256)}}
-            {% else %}
-              {{context.content | safe}}
-          {% endif %}
-          </div>
+      </span>
+      <a class="u-url" href="{{context.permalink}}">
+        {% if context.title %}
+          {{context.title}}
+        {% else %}
+          {{context.permalink | domain_from_url}}
         {% endif %}
-      </div> <!-- .reply-body -->
+      </a>
+    </div>
+
+    <div class="reply-body">
+      {% if context.content %}
+
+        <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">
+          {% if context.content_plain and (context.content_plain|length) > 256 %}
+            {{context.content_plain | truncate(256)}}
+          {% else %}
+            {{context.content | safe}}
+          {% endif %}
+        </div>
+      {% endif %}
+    </div> <!-- .reply-body -->
     <div style="clear: both"></div>
-    </div> <!-- .p-in-reply-to -->
+  </div> <!-- .p-in-reply-to -->
 
 {% endfor %}
