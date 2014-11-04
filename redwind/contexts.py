@@ -54,7 +54,8 @@ def create_context(url):
                 app.logger.debug('parsed successfully by mf2util: %s', url)
                 published = entry.get('published')
                 content = util.clean_foreign_html(entry.get('content', ''))
-                content_plain = util.format_as_text(content)
+                content_plain = util.format_as_text(
+                    content, link_fn=lambda a: a)
 
                 title = entry.get('name')
                 author_name = entry.get('author', {}).get('name', '')
