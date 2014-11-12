@@ -680,7 +680,7 @@ def save_post(post):
             pub = pub.replace(tzinfo=None)
         post.published = pub
 
-    if not post.published:
+    if not post.published or post.draft:
         post.published = datetime.datetime.utcnow()
 
     # populate the Post object and save it to the database,

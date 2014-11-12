@@ -12,6 +12,7 @@ import os.path
 import random
 import re
 import requests
+import shutil
 import unicodedata
 import urllib
 
@@ -38,7 +39,7 @@ LINK_RE = re.compile(
     # hostname and port
     '([a-z0-9.\-]+[.][a-z]{2,4}(?::\d{2,6})?'
     # path
-    '(?:/[a-z0-9\-_.;:$?&%#@()/=]*[a-z0-9\-_$?#/])?)'
+    '(?:/(?:[a-z0-9\-_~.;:$?&%#@()/=]*[a-z0-9\-_$?#/])?)?)'
 )
 
 
@@ -242,10 +243,12 @@ def resize_image(source, target, side):
         origw, origh = im.size
         ratio = side / max(origw, origh)
         # scale down, not up
-        if ratio < 1:
+        if ratio >= 1:
+            shutil.copyfile(source, target)
+        else:
             im = im.resize((int(origw * ratio), int(origh * ratio)),
                            Image.ANTIALIAS)
-        im.save(target)
+            im.save(target)
 
 
 def slugify(s, limit=256):
