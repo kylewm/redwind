@@ -9,8 +9,6 @@ from flask.ext.assets import Environment, Bundle
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 
-from flask.ext.script import Manager
-
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from rq import Queue
@@ -28,7 +26,6 @@ redis = Redis.from_url(app.config['REDIS_URL'])
 
 queue = Queue(connection=redis)
 db = SQLAlchemy(app)
-manager = Manager(app)
 
 # toolbar = DebugToolbarExtension(app)
 login_mgr = LoginManager(app)
