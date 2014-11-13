@@ -204,11 +204,12 @@ class Post(db.Model):
     path = db.Column(db.String(256))
     historic_path = db.Column(db.String(256))
     post_type = db.Column(db.String(64))
-    #date_index = db.Column(db.String(4))
     draft = db.Column(db.Boolean)
     deleted = db.Column(db.Boolean)
     hidden = db.Column(db.Boolean)
     redirect = db.Column(db.String(256))
+    tags = db.relationship('Tag', secondary=posts_to_tags)
+    audience = db.Column(JsonType)
 
     in_reply_to = db.Column(JsonType)
     repost_of = db.Column(JsonType)
@@ -235,11 +236,6 @@ class Post(db.Model):
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'))
     venue = db.relationship('Venue', uselist=False)
 
-    # TODO create Tag table
-    #tags = db.Column(JsonType)
-    tags = db.relationship('Tag', secondary=posts_to_tags)
-
-    audience = db.Column(JsonType)
     mentions = db.relationship('Mention', secondary=posts_to_mentions,
                                order_by='Mention.published')
 

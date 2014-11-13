@@ -2,15 +2,15 @@ import sys
 import importlib
 
 sys.path.append('external')
-for module in ('mf2py', 'mf2util'):
-    if module not in sys.path:
-        sys.path.append(module)
 
 from flask import Flask
-#from flask_debugtoolbar import DebugToolbarExtension
+# from flask_debugtoolbar import DebugToolbarExtension
 from flask.ext.assets import Environment, Bundle
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
+
+from flask.ext.script import Manager
+
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from rq import Queue
@@ -28,7 +28,9 @@ redis = Redis.from_url(app.config['REDIS_URL'])
 
 queue = Queue(connection=redis)
 db = SQLAlchemy(app)
-#toolbar = DebugToolbarExtension(app)
+manager = Manager(app)
+
+# toolbar = DebugToolbarExtension(app)
 login_mgr = LoginManager(app)
 login_mgr.login_view = 'index'
 
@@ -61,7 +63,7 @@ if app.config.get('PROFILE'):
                                       sort_by=('cumtime', 'tottime', 'ncalls'))
 
 
-#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 if not app.debug:
     app.logger.setLevel(logging.DEBUG)
     if not os.path.exists('logs'):
@@ -86,7 +88,7 @@ for plugin in [
         'wm_receiver',
         'wm_sender',
 ]:
-    #app.logger.info('loading plugin module %s', plugin)
+    # app.logger.info('loading plugin module %s', plugin)
     module = importlib.import_module('redwind.plugins.' + plugin)
     try:
         module.register()
