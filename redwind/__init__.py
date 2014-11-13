@@ -13,6 +13,7 @@ from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from rq import Queue
 from config import Configuration
+from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 
 import os
@@ -67,10 +68,13 @@ if not app.debug:
         os.makedirs('logs')
     file_handler = RotatingFileHandler(
         'logs/app.log', maxBytes=1048576, backupCount=5)
+    stream_handler = StreamHandler()
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
+    stream_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
+    app.logger.addHandler(stream_handler)
 
 
 for handler in ['views', 'services', 'micropub']:
