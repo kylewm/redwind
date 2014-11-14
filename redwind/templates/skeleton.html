@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    {% include "custom_head_top.html" ignore missing with context %}
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>{{ settings.author_name }}{% if title %}: {{ title }}{% endif %}</title>
@@ -41,8 +42,10 @@
     {% assets 'css_all' %}
     <link rel="stylesheet" href="{{ ASSET_URL }}"/>
     {% endassets %}
+    {% include "custom_head_bottom.html" ignore missing with context %}
   </head>
   <body class="container{%if body_class%} {{body_class}}{% endif %}">
+    {% include "custom_body_top.html" ignore missing with context %}
     {% block body %}
     {% endblock body %}
 
@@ -54,5 +57,6 @@
 
     {% block other_resources %}{% endblock other_resources %}
 
+    {% include "custom_body_bottom.html" ignore missing with context %}
   </body>
 </html>
