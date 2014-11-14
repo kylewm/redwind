@@ -25,6 +25,8 @@ defaults = [
     ('Facebook App ID',            ''),
     ('Facebook App Secret',        ''),
     ('Facebook Access Token',      ''),
+    ('PGP Key URL',                ''),
+    ('Avatar Prefix',              ''),
     ('Timezone',                   'America/Los_Angeles'),
 ]
 

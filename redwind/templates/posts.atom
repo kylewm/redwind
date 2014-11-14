@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
-  <title>Kyle Mahan{% if title %}: {{ title }}{% endif %}</title>
-  <link href="http://kylewm.com" rel="alternate" title="Kyle Mahan" type="text/html"></link>
+  <title>{{ settings.author_name }}{% if title %}: {{ title }}{% endif %}</title>
+  <link href="{{ settings.site_url }}" rel="alternate" title="{{ settings.author_name }}" type="text/html"></link>
   <link href="{{ request.url }}" rel="self"></link>
 
-  <!-- PubSubHubbub Discovery -->
-  <link rel="hub" href="http://kylewm.superfeedr.com/" />
-  <!-- End Of PubSubHubbub Discovery -->
+  {% if settings.push_hub %}
+      <!-- PubSubHubbub Discovery -->
+      <link rel="hub" href="{{ settings.push_hub }}" />
+      <!-- End Of PubSubHubbub Discovery -->
+  {% endif %}
 
   <id>{{request.url}}</id>
   <author>
-    <name>Kyle Mahan</name>
+    <name>{{ settings.author_name }}</name>
     <uri>{{url_for('index', _external=True)}}</uri>
   </author>
   <updated>{{ posts | first | attr('published') | isotime }}</updated>
@@ -35,7 +37,7 @@
   	  {{ (post.title or post.content) | atom_sanitize }}
 	{% endif %}
     </title>
-    <content type="html" xml:base="http://kylewm.com/" xml:space="preserve">
+    <content type="html" xml:base="{{ settings.site_url }}" xml:space="preserve">
 	{% for reply in post.reply_contexts %}
 	  &lt;p>In reply to &lt;a href="{{reply.permalink}}">{{reply.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
