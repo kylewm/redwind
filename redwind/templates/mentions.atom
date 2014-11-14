@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
   <title>{{ settings.author_name }}: Mentions</title>
-  <link href="{{ site.url }}" rel="alternate" title="{{ settings.author_name }}" type="text/html"></link>
+  <link href="{{ settings.site_url }}" rel="alternate" title="{{ settings.author_name }}" type="text/html"></link>
   <link href="{{ request.base_url }}" rel="self"></link>
 
 
@@ -11,10 +11,10 @@
       <!-- End Of PubSubHubbub Discovery -->
   {% endif %}
 
-  <id>{{ site.url }}/mentions.atom</id>
+  <id>{{ settings.site_url }}/mentions.atom</id>
   <author>
     <name>{{ settings.author_name }}</name>
-    <uri>{{ site.url }}</uri>
+    <uri>{{ settings.site_url }}</uri>
   </author>
   <updated>{{ mentions | first | attr('pub_date_iso') }}</updated>
 
@@ -28,7 +28,7 @@
     <title type="html">
         {{ mention.mention_type }} from {{ mention.author_name | atom_sanitize }}
     </title>
-    <content type="html" xml:base="{{ site.url }}/" xml:space="preserve">
+    <content type="html" xml:base="{{ settings.site_url }}/" xml:space="preserve">
         {{ mention.content | atom_sanitize }}
 
         {% if mention.target %}
