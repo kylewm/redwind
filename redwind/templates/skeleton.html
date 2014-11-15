@@ -51,6 +51,9 @@
 
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/>
 
+    <script type="text/javascript">
+      window.SITE_ROOT = '{{ settings.site_url }}';
+    </script>
     {% assets 'js_all' %}
     <script src="{{ ASSET_URL }}"></script>
     {% endassets %}
