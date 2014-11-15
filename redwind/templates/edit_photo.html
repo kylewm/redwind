@@ -3,7 +3,7 @@
 {% block above_content %}
 {% for photo in post.photos %}
 <div>
-  <img src="{{photo.thumbnail}}" />
+  <img src="{{settings.site_url}}{{photo.thumbnail}}" />
 </div>
 {% endfor %}
 {% endblock %}

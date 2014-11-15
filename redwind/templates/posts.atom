@@ -49,8 +49,8 @@
         {{ post.content_html | atom_sanitize }}
 
         {% for photo in post.photos %}
-          &lt;a href="{{photo.url}}">
-            &lt;img src="{{photo.thumbnail}}" />
+          &lt;a href="{{settings.site_url}}{{photo.url}}">
+            &lt;img src="{{settings.site_url}}{{photo.thumbnail}}" />
           &lt;/a>
           {% if photo.caption %}
             {{ photo.caption | atom_sanitize }}
