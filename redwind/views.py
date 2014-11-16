@@ -1,16 +1,17 @@
-from . import app
-from . import auth
 from . import contexts
-from . import db
+from .extensions import db
 from . import hooks
 from . import util
 from .models import Post, Tag, Mention, Contact, Nick, Setting,\
     Venue, get_settings
 
 from flask import request, redirect, url_for, render_template, flash,\
-    abort, make_response, Markup, send_from_directory, session
+    abort, make_response, Markup, send_from_directory, session, current_app,\
+    Blueprint
+
 from flask.ext.login import login_required, login_user, logout_user,\
-    current_user, current_app
+    current_user
+
 from werkzeug import secure_filename
 import sqlalchemy.orm
 import sqlalchemy.sql
@@ -22,10 +23,13 @@ import jinja2.filters
 import mf2util
 import operator
 import os
+import json
 import pytz
 import requests
 import urllib.parse
 
+
+views = Blueprint('views', __name__)
 
 TIMEZONE = pytz.timezone('US/Pacific')
 
@@ -47,13 +51,6 @@ DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
 
-@app.context_processor
-def inject_settings_variable():
-    return {
-        'settings': get_settings()
-    }
-
-
 def collect_posts(post_types, page, per_page, tag,
                   include_hidden=False, include_drafts=False):
 
@@ -66,7 +63,7 @@ def collect_posts(post_types, page, per_page, tag,
         sqlalchemy.orm.subqueryload(Post.like_contexts),
         sqlalchemy.orm.subqueryload(Post.bookmark_contexts))
     if tag:
-        query = query.filter(Post.tags.any(Tag.name==tag))
+        query = query.filter(Post.tags.any(Tag.name == tag))
     if not include_hidden:
         query = query.filter_by(hidden=False)
     if not include_drafts:
@@ -89,8 +86,8 @@ def render_posts(title, posts, page, is_first, is_last):
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
     return render_template('posts.html', posts=posts, title=title,
-                           prev_page=None if is_first else page-1,
-                           next_page=None if is_last else page+1,
+                           prev_page=None if is_first else page - 1,
+                           next_page=None if is_last else page + 1,
                            body_class='h-feed', article_class='h-entry',
                            atom_url=atom_url, atom_title=atom_title)
 
@@ -102,8 +99,8 @@ def render_posts_atom(title, feed_id, posts):
         200, {'Content-Type': 'application/atom+xml; charset=utf-8'})
 
 
-@app.route('/', defaults={'page': 1})
-@app.route('/page/<int:page>')
+@views.route('/', defaults={'page': 1})
+@views.route('/page/<int:page>')
 def index(page):
     # leave out hidden posts
     posts, is_first, is_last = collect_posts(
@@ -114,8 +111,8 @@ def index(page):
     return render_posts(None, posts, page, is_first, is_last)
 
 
-@app.route('/everything', defaults={'page': 1})
-@app.route('/everything/page/<int:page>')
+@views.route('/everything', defaults={'page': 1})
+@views.route('/everything/page/<int:page>')
 def everything(page):
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), None, include_hidden=True,
@@ -126,8 +123,8 @@ def everything(page):
     return render_posts('Everything', posts, page, is_first, is_last)
 
 
-@app.route('/' + PLURAL_TYPE_RULE, defaults={'page': 1})
-@app.route('/' + PLURAL_TYPE_RULE + '/page/<int:page>')
+@views.route('/' + PLURAL_TYPE_RULE, defaults={'page': 1})
+@views.route('/' + PLURAL_TYPE_RULE + '/page/<int:page>')
 def posts_by_type(plural_type, page):
     post_type, _, title = next(tup for tup in POST_TYPES
                                if tup[1] == plural_type)
@@ -141,8 +138,8 @@ def posts_by_type(plural_type, page):
     return render_posts(title, posts, page, is_first, is_last)
 
 
-@app.route('/tag/<tag>', defaults={'page': 1})
-@app.route('/tag/<tag>/page/<int:page>')
+@views.route('/tag/<tag>', defaults={'page': 1})
+@views.route('/tag/<tag>/page/<int:page>')
 def posts_by_tag(tag, page):
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), tag, include_hidden=True,
@@ -154,25 +151,25 @@ def posts_by_tag(tag, page):
     return render_posts(title, posts, page, is_first, is_last)
 
 
-@app.route('/mentions')
+@views.route('/mentions')
 def mentions():
     mentions = Mention.query.order_by(Mention.published.desc()).limit(30)
     return render_template('mentions.html', mentions=mentions)
 
 
-@app.route('/all.atom')
+@views.route('/all.atom')
 def all_atom():
-    return redirect(url_for('everything', feed='atom'))
+    return redirect(url_for('.everything', feed='atom'))
 
 
-@app.route('/updates.atom')
+@views.route('/updates.atom')
 def updates_atom():
-    return redirect(url_for('index', feed='atom'))
+    return redirect(url_for('.index', feed='atom'))
 
 
-@app.route('/articles.atom')
+@views.route('/articles.atom')
 def articles_atom():
-    return redirect(url_for('posts_by_type', plural_type='articles', feed='atom'))
+    return redirect(url_for('.posts_by_type', plural_type='articles', feed='atom'))
 
 
 def check_audience(post):
@@ -189,8 +186,8 @@ def check_audience(post):
         return False
 
     # check that their username is listed in the post's audience
-    app.logger.debug('checking that logged in user %s is in post audience %s',
-                     current_user.get_id(), post.audience)
+    current_app.logger.debug('checking that logged in user %s is in post audience %s',
+                             current_user.get_id(), post.audience)
     return current_user.get_id() in post.audience
 
 
@@ -198,12 +195,12 @@ def resize_associated_image(post, sourcepath, side):
     targetdir = os.path.join('_resized', post.path, 'files', str(side))
     targetpath = os.path.join(targetdir, os.path.basename(sourcepath))
     util.resize_image(
-        os.path.join(app.root_path, sourcepath),
-        os.path.join(app.root_path, targetpath), side)
+        os.path.join(current_app.root_path, sourcepath),
+        os.path.join(current_app.root_path, targetpath), side)
     return targetpath
 
 
-@app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
+@views.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
 def post_associated_file(year, month, slug, filename):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
     if not post:
@@ -225,10 +222,10 @@ def post_associated_file(year, month, slug, filename):
     elif size == 'large':
         sourcepath = resize_associated_image(post, sourcepath, 1024)
 
-    if app.debug:
+    if current_app.debug:
         _, ext = os.path.splitext(sourcepath)
         return send_from_directory(
-            os.path.join(app.root_path, os.path.dirname(sourcepath)),
+            os.path.join(current_app.root_path, os.path.dirname(sourcepath)),
             os.path.basename(sourcepath), mimetype=None)
 
     resp = make_response('')
@@ -237,8 +234,8 @@ def post_associated_file(year, month, slug, filename):
     return resp
 
 
-@app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
-@app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/<slug>')
+@views.route('/' + POST_TYPE_RULE + '/' + DATE_RULE, defaults={'slug': None})
+@views.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/<slug>')
 def post_by_date(post_type, year, month, day, index, slug):
     post = Post.load_by_historic_path('{}/{}/{:02d}/{:02d}/{}'.format(
         post_type, year, month, day, index))
@@ -246,7 +243,7 @@ def post_by_date(post_type, year, month, day, index, slug):
         return redirect(post.permalink)
 
 
-@app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>')
+@views.route('/<int:year>/<int(fixed_digits=2):month>/<slug>')
 def post_by_path(year, month, slug):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
 
@@ -274,12 +271,12 @@ def post_by_path(year, month, slug):
 
 
 # for testing -- allows arbitrary logins as any user
-# @app.route('/fakeauth')
+# @views.route('/fakeauth')
 # def fakeauth():
 #     domain = request.args.get('url')
 #     user = auth.load_user(domain)
 #     login_user(user, remember=True)
-#     return redirect(url_for('index'))
+#     return redirect(url_for('.index'))
 
 
 def discover_endpoints(me):
@@ -297,7 +294,7 @@ def discover_endpoints(me):
             micropub_endpoint and micropub_endpoint['href'])
 
 
-@app.route('/login')
+@views.route('/login')
 def login():
     me = request.args.get('me')
     if not me:
@@ -308,15 +305,15 @@ def login():
     if not auth_url:
         auth_url = 'https://indieauth.com/auth'
 
-    app.logger.debug('Found endpoints %s, %s, %s', auth_url, token_url,
-                     micropub_url)
+    current_app.logger.debug('Found endpoints %s, %s, %s', auth_url, token_url,
+                             micropub_url)
     state = request.args.get('next')
     session['endpoints'] = (auth_url, token_url, micropub_url)
 
     auth_params = {
         'me': me,
         'client_id': get_settings().site_url,
-        'redirect_uri': url_for('login_callback', _external=True),
+        'redirect_uri': url_for('.login_callback', _external=True),
         'state': state,
     }
 
@@ -328,12 +325,12 @@ def login():
         auth_url, urllib.parse.urlencode(auth_params)))
 
 
-@app.route('/login_callback')
+@views.route('/login_callback')
 def login_callback():
-    app.logger.debug('callback fields: %s', request.args)
+    current_app.logger.debug('callback fields: %s', request.args)
 
     state = request.args.get('state')
-    next_url = state or url_for('index')
+    next_url = state or url_for('.index')
     auth_url, token_url, micropub_url = session['endpoints']
 
     if not auth_url:
@@ -342,9 +339,9 @@ def login_callback():
 
     code = request.args.get('code')
     client_id = get_settings().site_url
-    redirect_uri = url_for('login_callback', _external=True)
+    redirect_uri = url_for('.login_callback', _external=True)
 
-    app.logger.debug('callback with auth endpoint %s', auth_url)
+    current_app.logger.debug('callback with auth endpoint %s', auth_url)
     response = requests.post(auth_url, data={
         'code': code,
         'client_id': client_id,
@@ -358,7 +355,7 @@ def login_callback():
                                            rdata.get('error_description')))
         return redirect(next_url)
 
-    app.logger.debug('verify response %s', response.text)
+    current_app.logger.debug('verify response %s', response.text)
     if 'me' not in rdata:
         flash('Verify response missing required "me" field {}'.format(
             response.text))
@@ -414,35 +411,35 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
         'Authorization': 'Bearer ' + access_token,
     })
     if actions_response.status_code != 200:
-        app.logger.debug(
+        current_app.logger.debug(
             'Bad response to action handler query %s', actions_response)
         return False
 
-    app.logger.debug('Successful action handler query %s',
-                     actions_response.text)
+    current_app.logger.debug('Successful action handler query %s',
+                             actions_response.text)
     actions_content_type = actions_response.headers.get('content-type', '')
     if 'application/json' in actions_content_type:
-        adata = json.loads(action_response.text)
-        app.logger.debug('action handlers (json): %s', adata)
+        adata = json.loads(actions_response.text)
+        current_app.logger.debug('action handlers (json): %s', adata)
         session['action-handlers'] = adata
     else:
         adata = urllib.parse.parse_qs(actions_response.text)
-        app.logger.debug('action handlers: %s', adata)
+        current_app.logger.debug('action handlers: %s', adata)
         session['action-handlers'] = {
             key: value[0] for key, value in adata.items()}
     return True
 
 
-@app.route('/logout')
+@views.route('/logout')
 def logout():
     logout_user()
     for key in ('action-handlers', 'endpoints', 'micropub'):
         if key in session:
             del session[key]
-    return redirect(request.args.get('next', url_for('index')))
+    return redirect(request.args.get('next', url_for('.index')))
 
 
-@app.route('/settings', methods=['GET', 'POST'])
+@views.route('/settings', methods=['GET', 'POST'])
 @login_required
 def edit_settings():
     if request.method == 'GET':
@@ -452,10 +449,10 @@ def edit_settings():
         Setting.query.get(key).value = value
     db.session.commit()
 
-    return redirect(url_for('edit_settings'))
+    return redirect(url_for('.edit_settings'))
 
 
-@app.route('/delete')
+@views.route('/delete')
 @login_required
 def delete_by_id():
     id = request.args.get('id')
@@ -465,8 +462,8 @@ def delete_by_id():
     post.deleted = True
     db.session.commit()
 
-    redirect_url = request.args.get('redirect') or url_for('index')
-    app.logger.debug('redirecting to {}'.format(redirect_url))
+    redirect_url = request.args.get('redirect') or url_for('.index')
+    current_app.logger.debug('redirecting to {}'.format(redirect_url))
     return redirect(redirect_url)
 
 
@@ -500,8 +497,8 @@ def get_top_tags(n=10):
     return [key for key, _ in ordered[:n]]
 
 
-@app.route('/new/<type>')
-@app.route('/new', defaults={'type': 'note'})
+@views.route('/new/<type>')
+@views.route('/new', defaults={'type': 'note'})
 def new_post(type):
     post = Post(type)
     post.published = datetime.datetime.utcnow()
@@ -536,7 +533,7 @@ def new_post(type):
                            post=post, top_tags=get_top_tags(20))
 
 
-@app.route('/edit')
+@views.route('/edit')
 def edit_by_id():
     id = request.args.get('id')
     post = Post.load_by_id(id)
@@ -549,25 +546,25 @@ def edit_by_id():
                            post=post, top_tags=get_top_tags(20))
 
 
-@app.route('/uploads')
+@views.route('/uploads')
 def uploads_popup():
     return render_template('uploads_popup.html')
 
 
-@app.template_filter('approximate_latitude')
+@views.app_template_filter('approximate_latitude')
 def approximate_latitude(loc):
     latitude = loc.get('latitude')
     if latitude:
         return '{:.3f}'.format(latitude)
 
 
-@app.template_filter('approximate_longitude')
+@views.app_template_filter('approximate_longitude')
 def approximate_longitude(loc):
     longitude = loc.get('longitude')
     return longitude and '{:.3f}'.format(longitude)
 
 
-@app.template_filter('geo_name')
+@views.app_template_filter('geo_name')
 def geo_name(loc):
     name = loc.get('name')
     if name:
@@ -586,7 +583,7 @@ def geo_name(loc):
     return "Unknown Location"
 
 
-@app.template_filter('isotime')
+@views.app_template_filter('isotime')
 def isotime_filter(thedate):
     if not thedate:
         thedate = datetime.date(1982, 11, 24)
@@ -600,7 +597,7 @@ def isotime_filter(thedate):
     return thedate.isoformat()
 
 
-@app.template_filter('human_time')
+@views.app_template_filter('human_time')
 def human_time(thedate, alternate=None):
     if not thedate:
         return alternate
@@ -609,7 +606,7 @@ def human_time(thedate, alternate=None):
         tz = pytz.timezone(get_settings().timezone)
         thedate = pytz.utc.localize(thedate).astimezone(tz)
 
-    #return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
+    # return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
 
     if (isinstance(thedate, datetime.datetime)
             and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
@@ -618,7 +615,7 @@ def human_time(thedate, alternate=None):
         return thedate.strftime('%B %-d, %Y')
 
 
-@app.template_filter('pluralize')
+@views.app_template_filter('pluralize')
 def pluralize(number, singular='', plural='s'):
     if number == 1:
         return singular
@@ -626,42 +623,41 @@ def pluralize(number, singular='', plural='s'):
         return plural
 
 
-@app.template_filter('month_shortname')
+@views.app_template_filter('month_shortname')
 def month_shortname(month):
     return datetime.date(1990, month, 1).strftime('%b')
 
 
-@app.template_filter('month_name')
+@views.app_template_filter('month_name')
 def month_name(month):
     return datetime.date(1990, month, 1).strftime('%B')
 
 
+@views.app_template_global('url_for_other_page')
 def url_for_other_page(page):
     args = request.view_args.copy()
     args['page'] = page
     return url_for(request.endpoint, **args)
 
-app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
-
-@app.template_filter('atom_sanitize')
+@views.app_template_filter('atom_sanitize')
 def atom_sanitize(content):
     return Markup.escape(str(content))
 
 
-@app.template_filter('prettify_url')
+@views.app_template_filter('prettify_url')
 def prettify_url(*args, **kwargs):
     return util.prettify_url(*args, **kwargs)
 
 
-@app.template_filter('domain_from_url')
+@views.app_template_filter('domain_from_url')
 def domain_from_url(url):
     if not url:
         return url
     return urllib.parse.urlparse(url).netloc
 
 
-@app.template_filter('format_syndication_url')
+@views.app_template_filter('format_syndication_url')
 def format_syndication_url(url, include_rel=True):
     fmt = '<a class="u-syndication" '
     if include_rel:
@@ -678,25 +674,25 @@ def format_syndication_url(url, include_rel=True):
     return Markup(fmt.format(url, 'fa-paper-plane', domain_from_url(url)))
 
 
-@app.template_filter('mirror_image')
+@views.app_template_filter('mirror_image')
 def mirror_image(src, side=None):
     return util.mirror_image(src, side)
 
 
-@app.route('/save_edit', methods=['POST'])
+@views.route('/save_edit', methods=['POST'])
 @login_required
 def save_edit():
     id = request.form.get('post_id')
-    app.logger.debug('saving post %s', id)
+    current_app.logger.debug('saving post %s', id)
     post = Post.load_by_id(id)
     return save_post(post)
 
 
-@app.route('/save_new', methods=['POST'])
+@views.route('/save_new', methods=['POST'])
 @login_required
 def save_new():
     post_type = request.form.get('post_type', 'note')
-    app.logger.debug('saving new post of type %s', post_type)
+    current_app.logger.debug('saving new post of type %s', post_type)
     post = Post(post_type)
     return save_post(post)
 
@@ -799,7 +795,7 @@ def save_post(post):
     # TODO accept multiple photos and captions
     inphoto = request.files.get('photo')
     if inphoto and inphoto.filename:
-        app.logger.debug('receiving uploaded file %s', inphoto)
+        current_app.logger.debug('receiving uploaded file %s', inphoto)
         relpath, photo_url, fullpath \
             = generate_upload_path(post, inphoto)
         if not os.path.exists(os.path.dirname(fullpath)):
@@ -813,10 +809,10 @@ def save_post(post):
 
     file_to_url = {}
     infiles = request.files.getlist('files')
-    app.logger.debug('infiles: %s', infiles)
+    current_app.logger.debug('infiles: %s', infiles)
     for infile in infiles:
         if infile and infile.filename:
-            app.logger.debug('receiving uploaded file %s', infile)
+            current_app.logger.debug('receiving uploaded file %s', infile)
             relpath, photo_url, fullpath \
                 = generate_upload_path(post, infile)
             if not os.path.exists(os.path.dirname(fullpath)):
@@ -824,7 +820,7 @@ def save_post(post):
             infile.save(fullpath)
             file_to_url[infile] = photo_url
 
-    app.logger.debug('uploaded files map %s', file_to_url)
+    current_app.logger.debug('uploaded files map %s', file_to_url)
 
     # pre-render the post html
     post.content_html = util.markdown_filter(
@@ -834,7 +830,7 @@ def save_post(post):
         db.session.add(post)
     db.session.commit()
 
-    app.logger.debug('saved post %d %s', post.id, post.permalink)
+    current_app.logger.debug('saved post %d %s', post.id, post.permalink)
     redirect_url = post.permalink
 
     hooks.fire('post-saved', post, request.form)
@@ -847,10 +843,10 @@ def generate_upload_path(post, f, default_ext=None):
     basename, ext = os.path.splitext(filename)
 
     if ext:
-        app.logger.debug('file has extension: %s, %s', basename, ext)
+        current_app.logger.debug('file has extension: %s, %s', basename, ext)
     else:
-        app.logger.debug('no file extension, checking mime_type: %s',
-                         f.mimetype)
+        current_app.logger.debug('no file extension, checking mime_type: %s',
+                                 f.mimetype)
         if f.mimetype == 'image/png':
             ext = '.png'
         elif f.mimetype == 'image/jpeg':
@@ -870,7 +866,7 @@ def generate_upload_path(post, f, default_ext=None):
         else:
             filename = '{}-{}{}'.format(basename, idx, ext)
         relpath = '{}/files/{}'.format(post.path, filename)
-        fullpath = os.path.join(app.root_path, '_data', relpath)
+        fullpath = os.path.join(current_app.root_path, '_data', relpath)
         if not os.path.exists(fullpath):
             break
         idx += 1
@@ -878,18 +874,18 @@ def generate_upload_path(post, f, default_ext=None):
     return relpath, '/' + relpath, fullpath
 
 
-@app.route('/addressbook')
+@views.route('/addressbook')
 def addressbook():
-    return redirect(url_for('contacts'))
+    return redirect(url_for('.contacts'))
 
 
-@app.route('/contacts')
+@views.route('/contacts')
 def contacts():
     contacts = Contact.query.order_by(Contact.name).all()
     return render_template('contacts.html', contacts=contacts)
 
 
-@app.route('/contacts/<name>')
+@views.route('/contacts/<name>')
 def contact_by_name(name):
     nick = Nick.query.filter_by(name=name).first()
     contact = nick and nick.contact
@@ -898,17 +894,17 @@ def contact_by_name(name):
     return render_template('contact.html', contact=contact)
 
 
-@app.route('/delete/contact')
+@views.route('/delete/contact')
 @login_required
 def delete_contact():
     id = request.args.get('id')
     contact = Contact.query.get(id)
     db.session.delete(contact)
     db.session.commit()
-    return redirect(url_for('contacts'))
+    return redirect(url_for('.contacts'))
 
 
-@app.route('/new/contact', methods=['GET', 'POST'])
+@views.route('/new/contact', methods=['GET', 'POST'])
 def new_contact():
     if request.method == 'GET':
         contact = Contact()
@@ -922,7 +918,7 @@ def new_contact():
     return save_contact(contact)
 
 
-@app.route('/edit/contact', methods=['GET', 'POST'])
+@views.route('/edit/contact', methods=['GET', 'POST'])
 def edit_contact():
     if request.method == 'GET':
         id = request.args.get('id')
@@ -957,27 +953,27 @@ def save_contact(contact):
     db.session.commit()
 
     if contact.nicks:
-        return redirect(url_for('contact_by_name', name=contact.nicks[0].name))
+        return redirect(url_for('.contact_by_name', name=contact.nicks[0].name))
     else:
-        return redirect(url_for('contacts'))
+        return redirect(url_for('.contacts'))
 
 
-@app.route('/venue/<slug>')
+@views.route('/venue/<slug>')
 def venue_by_slug(slug):
     venue = Venue.query.filter_by(slug=slug).first()
-    app.logger.debug('rendering venue, location. {}, {}',
-                     venue, venue.location)
+    current_app.logger.debug('rendering venue, location. %s, %s',
+                             venue, venue.location)
     posts = Post.query.filter_by(venue_id=venue.id).all()
     return render_template('venue.html', venue=venue, posts=posts)
 
 
-@app.route('/venues')
+@views.route('/venues')
 def all_venues():
     venues = Venue.query.all()
     return render_template('all_venues.html', venues=venues)
 
 
-@app.route('/new/venue', methods=['GET', 'POST'])
+@views.route('/new/venue', methods=['GET', 'POST'])
 def new_venue():
     venue = Venue()
     if request.method == 'GET':
@@ -985,7 +981,7 @@ def new_venue():
     return save_venue(venue)
 
 
-@app.route('/edit/venue', methods=['GET', 'POST'])
+@views.route('/edit/venue', methods=['GET', 'POST'])
 def edit_venue():
     id = request.args.get('id')
     venue = Venue.query.get(id)
@@ -994,14 +990,14 @@ def edit_venue():
     return save_venue(venue)
 
 
-@app.route('/delete/venue')
+@views.route('/delete/venue')
 @login_required
 def delete_venue():
     id = request.args.get('id')
     venue = Venue.query.get(id)
     db.session.delete(venue)
     db.session.commit()
-    return redirect(url_for('all_venues'))
+    return redirect(url_for('.all_venues'))
 
 
 def save_venue(venue):
@@ -1018,4 +1014,4 @@ def save_venue(venue):
     db.session.commit()
 
     hooks.fire('venue-saved', venue, request.form)
-    return redirect(url_for('venue_by_slug', slug=venue.slug))
+    return redirect(url_for('.venue_by_slug', slug=venue.slug))

@@ -1,16 +1,22 @@
 import requests
 import json
-from .. import app
-from .. import db
 from .. import hooks
 from .. import models
-from .. import queue
-from flask import request, jsonify
+from ..extensions import db, queue
+from flask import request, jsonify, current_app
 
 
-def register():
+def register(app):
+    app.add_url_rule('/services/geocode', 'reverse_geocode_service',
+                     reverse_geocode_service)
     hooks.register('post-saved', reverse_geocode)
     hooks.register('venue-saved', reverse_geocode_venue)
+
+
+def reverse_geocode_service():
+    lat = request.args.get('latitude')
+    lng = request.args.get('longitude')
+    return jsonify(do_reverse_geocode(lat, lng))
 
 
 def reverse_geocode(post, args):
@@ -22,7 +28,7 @@ def reverse_geocode_venue(venue, args):
 
 
 def do_reverse_geocode_post(postid):
-    with app.app_context():
+    with current_app.app_context():
         post = models.Post.load_by_id(postid)
         if post.location and 'latitude' in post.location \
            and 'longitude' in post.location:
@@ -33,7 +39,7 @@ def do_reverse_geocode_post(postid):
 
 
 def do_reverse_geocode_venue(venueid):
-    with app.app_context():
+    with current_app.app_context():
         venue = models.Venue.query.get(venueid)
         if venue.location and 'latitude' in venue.location \
            and 'longitude' in venue.location:
@@ -52,7 +58,7 @@ def do_reverse_geocode(lat, lng):
         else:
             return adr.get('county') or adr.get('state')
 
-    app.logger.debug('reverse geocoding with nominatum')
+    current_app.logger.debug('reverse geocoding with nominatum')
     r = requests.get('http://nominatim.openstreetmap.org/reverse',
                      params={
                          'lat': lat,
@@ -62,7 +68,7 @@ def do_reverse_geocode(lat, lng):
     r.raise_for_status()
 
     data = json.loads(r.text)
-    app.logger.debug('received response %s',
+    current_app.logger.debug('received response %s',
                      json.dumps(data, indent=True))
 
     adr = data.get('address', {})
@@ -81,10 +87,3 @@ def do_reverse_geocode(lat, lng):
         'postal_code': adr.get('postcode'),
         'country_code': adr.get('country_code'),
     }
-
-
-@app.route('/services/geocode')
-def reverse_geocode_service():
-    lat = request.args.get('latitude')
-    lng = request.args.get('longitude')
-    return jsonify(do_reverse_geocode(lat, lng))

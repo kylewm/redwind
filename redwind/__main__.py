@@ -4,6 +4,6 @@ import sys
 print(os.getcwd())
 print(sys.path)
 
-from . import app
+from . import create_app
 
 app.run(debug=True)

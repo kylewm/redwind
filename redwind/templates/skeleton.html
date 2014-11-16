@@ -10,12 +10,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
     {% if atom_url and atom_title %}<link rel="feed alternate" type="application/atom+xml" href="{{atom_url}}" title="{{atom_title}}" />{% endif %}
-    <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
+    <link rel="feed" type="text/html" href="{{ url_for('views.everything') }}" />
 
     {% if request.endpoint == 'index' %}
     <!-- PubSubHubbub Discovery -->
     <link rel="hub" href="http://kylewm.superfeedr.com/" />
-    <link rel="self" href="{{url_for('index', _external=True)}}"/>
+    <link rel="self" href="{{url_for('views.index', _external=True)}}"/>
     <!-- End Of PubSubHubbub Discovery -->
     {% endif %}
 

@@ -1,22 +1,23 @@
-from .. import app
-from .. import db
 from .. import util
 from ..models import Post, Setting, get_settings
+from ..extensions import db
 
 from flask.ext.login import login_required
 from flask import request, redirect, url_for, render_template, flash,\
-    has_request_context
+    has_request_context, current_app
 
 import requests
 import json
 import urllib
 
 
-def register():
-    pass
+def register(app):
+    app.add_url_rule('/authorize_facebook', 'authorize_facebook',
+                     authorize_facebook)
+    app.add_url_rule('/share_on_facebook', 'share_on_facebook',
+                     share_on_facebook, methods=['GET', 'POST'])
 
 
-@app.route('/authorize_facebook')
 @login_required
 def authorize_facebook():
     import urllib.parse
@@ -41,13 +42,12 @@ def authorize_facebook():
         access_token = payload[b'access_token'][0].decode('ascii')
         Setting.query.get('facebook_access_token').value = access_token
         db.session.commit()
-        return redirect(url_for('edit_settings'))
+        return redirect(url_for('views.edit_settings'))
     else:
         return redirect('https://graph.facebook.com/oauth/authorize?'
                         + urllib.parse.urlencode(params))
 
 
-@app.route('/share_on_facebook', methods=['GET', 'POST'])
 @login_required
 def share_on_facebook():
     from .twitter import collect_images
@@ -62,12 +62,12 @@ def share_on_facebook():
 
         albums = []
         if imgs:
-            app.logger.debug('fetching user albums')
+            current_app.logger.debug('fetching user albums')
             resp = requests.get(
                 'https://graph.facebook.com/v2.0/me/albums',
                 params={'access_token': get_settings().facebook_access_token})
             resp.raise_for_status()
-            app.logger.debug('user albums response %s: %s', resp, resp.text)
+            current_app.logger.debug('user albums response %s: %s', resp, resp.text)
             albums = resp.json().get('data', [])
 
         return render_template('share_on_facebook.html', post=post,
@@ -97,9 +97,9 @@ def share_on_facebook():
 
     except Exception as e:
         if has_request_context():
-            app.logger.exception('posting to facebook')
+            current_app.logger.exception('posting to facebook')
             flash('Share on Facebook Failed! Exception: {}'.format(e))
-        return redirect(url_for('index'))
+        return redirect(url_for('views.index'))
 
 
 class PersonTagger:
@@ -127,7 +127,7 @@ class PersonTagger:
 
 
 def create_album(name, msg):
-    app.logger.debug('creating new facebook album %s', name)
+    current_app.logger.debug('creating new facebook album %s', name)
     resp = requests.post(
         'https://graph.facebook.com/v2.0/me/albums', data={
             'access_token': get_settings().facebook_access_token,
@@ -136,13 +136,13 @@ def create_album(name, msg):
             'privacy': json.dumps({'value': 'EVERYONE'}),
         })
     resp.raise_for_status()
-    app.logger.debug('new facebook album response: %s, %s', resp, resp.text)
+    current_app.logger.debug('new facebook album response: %s, %s', resp, resp.text)
     return resp.json()['id']
 
 
 def handle_new_or_edit(post, preview, img_url, post_type,
                        album_id):
-    app.logger.debug('publishing to facebook')
+    current_app.logger.debug('publishing to facebook')
 
     tagger = PersonTagger()
     preview = util.process_people(preview, tagger)
@@ -176,22 +176,22 @@ def handle_new_or_edit(post, preview, img_url, post_type,
             post_args['picture'] = img_url
 
     if is_photo:
-        app.logger.debug('Sending photo %s to album %s', post_args, album_id)
+        current_app.logger.debug('Sending photo %s to album %s', post_args, album_id)
         response = requests.post(
             'https://graph.facebook.com/v2.0/{}/photos'.format(
                 album_id if album_id else 'me'),
             data=post_args)
     else:
-        app.logger.debug('Sending post %s', post_args)
+        current_app.logger.debug('Sending post %s', post_args)
         response = requests.post('https://graph.facebook.com/v2.0/me/feed',
                                  data=post_args)
     response.raise_for_status()
-    app.logger.debug("Got response from facebook %s", response)
+    current_app.logger.debug("Got response from facebook %s", response)
 
     if 'json' in response.headers['content-type']:
         result = response.json()
 
-    app.logger.debug('published to facebook. response {}'.format(result))
+    current_app.logger.debug('published to facebook. response {}'.format(result))
     if result:
         if is_photo:
             facebook_photo_id = result['id']

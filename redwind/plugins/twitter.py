@@ -1,13 +1,11 @@
-from .. import app
-from .. import db
+from ..extensions import db, queue
 from .. import hooks
-from .. import queue
 from .. import util
 from ..models import Post, Context, Setting, get_settings
 
 from flask.ext.login import login_required
 from flask import request, redirect, url_for, make_response,\
-    render_template, flash, abort, has_request_context
+    render_template, flash, abort, has_request_context, current_app
 
 import collections
 import requests
@@ -41,12 +39,18 @@ TweetComponent = collections.namedtuple('TweetComponent', [
 PERMALINK_RE = util.TWITTER_RE
 
 
-def register():
+def register(app):
+    app.add_url_rule(
+        '/authorize_twitter', 'authorize_twitter', authorize_twitter)
+    app.add_url_rule(
+        '/twitter_callback', 'twitter_callback', twitter_callback)
+    app.add_url_rule(
+        '/share_on_twitter', 'share_on_twitter', share_on_twitter, methods=['GET', 'POST'])
+
     hooks.register('create-context', create_context)
     hooks.register('post-saved', send_to_twitter)
 
 
-@app.route('/authorize_twitter')
 @login_required
 def authorize_twitter():
     """Get an access token from Twitter and redirect to the
@@ -65,7 +69,6 @@ def authorize_twitter():
         return make_response(str(e))
 
 
-@app.route('/twitter_callback')
 def twitter_callback():
     """Receive the request token from Twitter and convert it to an
        access token"""
@@ -83,7 +86,7 @@ def twitter_callback():
         Setting.query.get('twitter_oauth_token_secret').value = access_token_secret
 
         db.session.commit()
-        return redirect(url_for('edit_settings'))
+        return redirect(url_for('views.edit_settings'))
     except requests.RequestException as e:
         return make_response(str(e))
 
@@ -94,7 +97,7 @@ def collect_images(post):
 
     if post.photos:
         for photo in post.photos:
-            yield photo.url
+            yield post.photo_url(photo)
 
     else:
         html = util.markdown_filter(
@@ -117,18 +120,18 @@ def send_to_twitter(post, args):
             return False, 'Current user is not authorized to tweets'
 
         try:
-            app.logger.debug("auto-posting to twitter {}".format(post.id))
+            current_app.logger.debug("auto-posting to twitter {}".format(post.id))
             queue.enqueue(do_send_to_twitter, post.id)
             return True, 'Success'
 
         except Exception as e:
-            app.logger.exception('auto-posting to twitter')
+            current_app.logger.exception('auto-posting to twitter')
             return False, 'Exception while auto-posting to twitter: {}'.format(e)
 
 
 def do_send_to_twitter(post_id):
-    with app.app_context():
-        app.logger.debug("auto-posting to twitter for {}".format(post_id))
+    with current_app.app_context():
+        current_app.logger.debug("auto-posting to twitter for {}".format(post_id))
         post = Post.load_by_id(post_id)
 
         in_reply_to, repost_of, like_of = posse_post_discovery(post)
@@ -138,7 +141,6 @@ def do_send_to_twitter(post_id):
         return str(response)
 
 
-@app.route('/share_on_twitter', methods=['GET', 'POST'])
 @login_required
 def share_on_twitter():
     if request.method == 'GET':
@@ -150,19 +152,19 @@ def share_on_twitter():
         if not post:
             abort(404)
 
-        app.logger.debug('sharing on twitter. post: %s', post)
+        current_app.logger.debug('sharing on twitter. post: %s', post)
 
         in_reply_to, repost_of, like_of \
             = posse_post_discovery(post)
 
-        app.logger.debug(
+        current_app.logger.debug(
             'discovered in-reply-to: %s, repost-of: %s, like-of: %s',
             in_reply_to, repost_of, like_of)
 
         preview, _ = guess_tweet_content(post, in_reply_to)
 
         imgs = list(collect_images(post))
-        app.logger.debug('twitter post has images: %s', imgs)
+        current_app.logger.debug('twitter post has images: %s', imgs)
 
         return render_template('share_on_twitter.html', preview=preview,
                                post=post, in_reply_to=in_reply_to,
@@ -198,7 +200,7 @@ def get_auth():
 
 def repost_preview(url):
     if not is_twitter_authorized():
-        app.logger.warn('current user is not authorized for twitter')
+        current_app.logger.warn('current user is not authorized for twitter')
         return
 
     match = PERMALINK_RE.match(url)
@@ -216,26 +218,26 @@ def repost_preview(url):
 def create_context(url):
     match = PERMALINK_RE.match(url)
     if not match:
-        app.logger.debug('url is not a twitter permalink %s', url)
+        current_app.logger.debug('url is not a twitter permalink %s', url)
         return
 
-    app.logger.debug('url is a twitter permalink')
+    current_app.logger.debug('url is a twitter permalink')
     tweet_id = match.group(2)
     status_response = requests.get(
         'https://api.twitter.com/1.1/statuses/show/{}.json'.format(tweet_id),
         auth=get_auth())
 
     if status_response.status_code // 2 != 100:
-        app.logger.warn("failed to fetch tweet %s %s", status_response,
-                        status_response.content)
+        current_app.logger.warn("failed to fetch tweet %s %s", status_response,
+                                status_response.content)
         return
 
     status_data = status_response.json()
-    app.logger.debug('received response from twitter: %s', status_data)
+    current_app.logger.debug('received response from twitter: %s', status_data)
     pub_date = datetime.datetime.strptime(status_data['created_at'],
                                           '%a %b %d %H:%M:%S %z %Y')
-    #if pub_date and pub_date.tzinfo:
-    #    pub_date = pub_date.astimezone(datetime.timezone.utc)
+    # if pub_date and pub_date.tzinfo:
+    #     pub_date = pub_date.astimezone(datetime.timezone.utc)
     real_name = status_data['user']['name']
     screen_name = status_data['user']['screen_name']
     author_name = real_name
@@ -274,14 +276,14 @@ def expand_links(text):
 
 
 def expand_link(url):
-    app.logger.debug('expanding %s', url)
+    current_app.logger.debug('expanding %s', url)
     try:
         r = requests.head(url, allow_redirects=True, timeout=30)
         if r and r.status_code // 100 == 2:
-            app.logger.debug('expanded to %s', r.url)
+            current_app.logger.debug('expanded to %s', r.url)
             url = r.url
     except requests.exceptions.Timeout:
-        app.logger.debug('request to %s timed out', url)
+        current_app.logger.debug('request to %s timed out', url)
     return url
 
 
@@ -299,7 +301,7 @@ def posse_post_discovery(post):
                 if PERMALINK_RE.match(url):
                     return url
         except HTTPError:
-            app.logger.exception('Could not fetch original')
+            current_app.logger.exception('Could not fetch original')
 
     def find_first_syndicated(originals):
         for original in originals:
@@ -356,12 +358,12 @@ def guess_tweet_content(post, in_reply_to):
     img_url = None
     if post.photos:
         photo = post.photos[0]
-        img_url = photo.url
+        img_url = post.photo_url(photo)
         target_length -= MEDIA_CHAR_LENGTH
-        if photo.caption:
+        if 'captions' in photo:
             components.append(TweetComponent(
-                length=len(photo.caption, can_shorten=True,
-                           can_drop=True, text=photo.caption)))
+                length=len(photo.get('caption'), can_shorten=True,
+                           can_drop=True, text=photo.get('caption'))))
 
     if post.title or sum(c.length for c in components) > target_length:
         components.append(TweetComponent(
@@ -377,7 +379,7 @@ def guess_tweet_content(post, in_reply_to):
         if delta <= 0 or not c.can_drop:
             shortened.append(c)
         elif c.can_shorten and c.length >= delta + 1:
-            text = c.text[:len(c.text)-(delta+1)] + '…'
+            text = c.text[:len(c.text) - (delta + 1)] + '…'
             delta -= (c.length - len(text))
             shortened.append(TweetComponent(
                 length=len(text), text=text, can_shorten=False, can_drop=True))
@@ -403,17 +405,17 @@ def do_tweet(post_id, preview, img_url, in_reply_to,
             return redirect(post.permalink)
 
     except Exception as e:
-        app.logger.exception('posting to twitter')
+        current_app.logger.exception('posting to twitter')
         if has_request_context():
             flash('Share on Twitter Failed!. Exception: {}'.format(e))
-            return redirect(url_for('index'))
+            return redirect(url_for('views.index'))
 
 
 def handle_new_or_edit(post, preview, img, in_reply_to,
                        repost_of, like_of):
 
     if not is_twitter_authorized():
-        app.logger.warn('current user is not authorized for twitter')
+        current_app.logger.warn('current user is not authorized for twitter')
         return
 
     # check for RT's
@@ -458,7 +460,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
 
         if img:
             tempfile = download_image_to_temp(img)
-            app.logger.debug(json.dumps(data, indent=True))
+            current_app.logger.debug(json.dumps(data, indent=True))
 
             result = requests.post(
                 'https://api.twitter.com/1.1/statuses/update_with_media.json',
@@ -477,13 +479,13 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
                                        result.content))
 
     result_json = result.json()
-    app.logger.debug("response from twitter {}".format(
+    current_app.logger.debug("response from twitter {}".format(
         json.dumps(result_json, indent=True)))
     twitter_url = 'https://twitter.com/{}/status/{}'.format(
         result_json.get('user', {}).get('screen_name'),
         result_json.get('id_str'))
 
-    #FIXME json objects aren't yet mutable
+    # FIXME json objects aren't yet mutable
     new_syndication = list(post.syndication)
     new_syndication.append(twitter_url)
     post.syndication = new_syndication

@@ -48,7 +48,7 @@
   {% if post.tags %}
     <div class="tags">
       {% for tag in post.tags %}
-        <a class="p-category" href="{{url_for('posts_by_tag', tag=tag)}}">{{tag}}</a>
+        <a class="p-category" href="{{url_for('views.posts_by_tag', tag=tag)}}">{{tag}}</a>
       {% endfor %}
     </div>
   {% endif %}

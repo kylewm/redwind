@@ -1,8 +1,7 @@
-from . import app
-from . import db
+from .extensions import db
 from . import util
 
-from flask import g, session
+from flask import g, session, current_app
 
 import os
 import os.path
@@ -212,10 +211,10 @@ class Post(db.Model):
 
     def get_image_path(self):
         site_url = get_settings().site_url or 'http://localhost'
-        return '/'.join(site_url, self.path, 'files')
+        return '/'.join((site_url, self.path, 'files'))
 
     def photo_url(self, photo):
-        return os.path.join(self.get_image_path(), photo.get('filename'))
+        return '/'.join((self.get_image_path(), photo.get('filename')))
 
     def photo_thumbnail(self, photo):
         return self.photo_url(photo) + '?size=medium'
@@ -433,27 +432,3 @@ class Contact(db.Model):
         self.name = kwargs.get('name')
         self.url = kwargs.get('url')
         self.image = kwargs.get('image')
-
-
-class AddressBook:
-    """Address book contains entries like
-    {
-      'Kyle Mahan': {
-        'url': 'http://kylewm.com',
-        'photo': 'http://kylewm.com/static/images/kyle_large.jpg',
-        'twitter': 'kyle_wm',
-        'facebook': '0123456789'
-      }
-    }
-    """
-
-    PATH = os.path.join(app.root_path, '_data', 'addressbook.json')
-
-    def __init__(self):
-        if os.path.exists(self.PATH):
-            self.entries = json.load(open(self.PATH, 'r'))
-        else:
-            self.entries = {}
-
-    def save(self):
-        json.dump(self.entries, open(self.PATH, 'w'), indent=True)

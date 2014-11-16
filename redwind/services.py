@@ -1,18 +1,14 @@
-from . import app
 from .models import Venue
 from .views import geo_name
-from flask import request, jsonify, redirect, url_for
+from flask import request, jsonify, Blueprint
 import datetime
 import mf2py
 import mf2util
 
-
-@app.route('/api/mf2')
-def old_convert_mf2():
-    return redirect(url_for('convert_mf2'))
+services = Blueprint('services', __name__, url_prefix='/services')
 
 
-@app.route('/services/mf2')
+@services.route('/mf2')
 def convert_mf2():
     url = request.args.get('url')
     if url:
@@ -27,12 +23,7 @@ def convert_mf2():
 </form></body></html> """
 
 
-@app.route('/api/mf2util')
-def old_convert_mf2util():
-    return redirect(url_for('convert_mf2util'))
-
-
-@app.route('/services/mf2util')
+@services.route('/mf2util')
 def convert_mf2util():
     def dates_to_string(json):
         if isinstance(json, dict):
@@ -59,7 +50,7 @@ def convert_mf2util():
 </form></body></html>"""
 
 
-@app.route('/services/fetch_profile')
+@services.route('/fetch_profile')
 def fetch_profile():
     url = request.args.get('url')
     if not url:
@@ -125,7 +116,7 @@ def fetch_profile():
         return resp
 
 
-@app.route('/services/nearby')
+@services.route('/nearby')
 def nearby_venues():
     lat = float(request.args.get('latitude'))
     lng = float(request.args.get('longitude'))

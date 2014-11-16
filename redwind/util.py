@@ -1,6 +1,5 @@
-from . import app
 from datetime import date
-from flask import url_for
+from flask import url_for, current_app
 from markdown import markdown
 from smartypants import smartyPants
 import bleach
@@ -52,7 +51,6 @@ def isoparse(s):
             return datetime.datetime.strptime(s, '%Y-%m-%d')
 
 
-
 def isoparse_with_tz(s):
     """Parse datetimes with a timezone in ISO8601 format"""
     return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S%z')
@@ -61,7 +59,7 @@ def isoparse_with_tz(s):
 def isoformat(date):
     if date:
         if (isinstance(date, datetime.date)
-            and not isinstance(date, datetime.datetime)):
+                and not isinstance(date, datetime.datetime)):
             return date.isoformat()
         if date.tzinfo:
             date = date.astimezone(datetime.timezone.utc)
@@ -94,7 +92,7 @@ def filter_empty_keys(data):
 
 def download_resource(url, path):
     from .models import get_settings
-    app.logger.debug("downloading {} to {}".format(url, path))
+    current_app.logger.debug("downloading {} to {}".format(url, path))
     response = requests.get(urllib.parse.urljoin(get_settings().site_url, url),
                             stream=True, timeout=10)
     response.raise_for_status()
@@ -133,7 +131,7 @@ def autolink(plain):
             ii = parent.contents.index(txt)
             txt.extract()
             for offset, node in enumerate(nodes):
-                parent.insert(ii+offset, node)
+                parent.insert(ii + offset, node)
 
     def link_repl(m):
         a = soup.new_tag('a', href=(m.group(1) or 'http://') + m.group(2))
@@ -175,7 +173,7 @@ def parse_date(tag):
         if ordinal:
             return date_from_ordinal(ordinal)
     except ValueError:
-        app.logger.warn("Could not parse base60 date %s", tag)
+        current_app.logger.warn("Could not parse base60 date %s", tag)
 
 
 def parse_index(tag):
@@ -195,7 +193,7 @@ def tag_for_post_type(post_type):
     return TYPE_TO_TAG.get(post_type)
 
 
-#use tantek's NewBase60 http://tantek.pbworks.com/w/page/19402946/NewBase60
+# use tantek's NewBase60 http://tantek.pbworks.com/w/page/19402946/NewBase60
 RADIX = list("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ_abcdefghijkmnopqrstuvwxyz")
 
 
@@ -279,7 +277,7 @@ def mirror_image(src, side=None):
         return src
 
     relpath = os.path.join("_mirror", o.netloc, o.path.strip('/'))
-    abspath = os.path.join(app.root_path, app.static_folder, relpath)
+    abspath = os.path.join(current_app.root_path, current_app.static_folder, relpath)
 
     if os.path.exists(abspath):
         pass
@@ -289,7 +287,7 @@ def mirror_image(src, side=None):
         try:
             download_resource(src, abspath)
         except BaseException as e:
-            app.logger.exception(
+            current_app.logger.exception(
                 "failed to download %s to %s for some reason", src, abspath)
             if not os.path.exists(os.path.dirname(abspath)):
                 os.makedirs(os.path.dirname(abspath))
@@ -308,7 +306,7 @@ def mirror_image(src, side=None):
                for ext in ['.gif', '.jpg', '.png']):
         rz_relpath += '.jpg'
 
-    rz_abspath = os.path.join(app.root_path, app.static_folder, rz_relpath)
+    rz_abspath = os.path.join(current_app.root_path, current_app.static_folder, rz_relpath)
 
     if not os.path.exists(rz_abspath):
         resize_image(abspath, rz_abspath, side)
@@ -318,7 +316,7 @@ def mirror_image(src, side=None):
 
 def person_to_microcard(contact, nick):
     if contact:
-        url = contact.url or url_for('contact_by_name', nick)
+        url = contact.url or url_for('views.contact_by_name', nick)
         image = contact.image
         if image:
             image = mirror_image(image, 26)
@@ -348,7 +346,7 @@ def markdown_filter(data, img_path=None, person_processor=person_to_microcard):
 
 
 def process_people(data, person_processor):
-    from . import db
+    from .extensions import db
     from .models import Contact, Nick
 
     def process_name(m):
@@ -370,11 +368,11 @@ def process_people(data, person_processor):
             return processed
         return m.group(0)
 
-    app.logger.debug('in data %s', data)
+    current_app.logger.debug('in data %s', data)
     data = PEOPLE_RE.sub(process_name, data)
-    app.logger.debug('processed names %s', data)
+    current_app.logger.debug('processed names %s', data)
     data = AT_USERNAME_RE.sub(process_nick, data)
-    app.logger.debug('processed nicks %s', data)
+    current_app.logger.debug('processed nicks %s', data)
     return data
 
     # while True:
@@ -451,8 +449,8 @@ def fetch_html(url):
             if encodings:
                 response.encoding = encodings[0]
     else:
-        app.logger.warn('failed to fetch url %s. got response %s.',
-                        url, response)
+        current_app.logger.warn('failed to fetch url %s. got response %s.',
+                                url, response)
     return response
 
 
@@ -462,8 +460,8 @@ def clean_foreign_html(html):
 
 def jwt_encode(obj):
     obj['nonce'] = random.randint(1000000, 2 ** 31)
-    return jwt.encode(obj, app.config['SECRET_KEY'])
+    return jwt.encode(obj, current_app.config['SECRET_KEY'])
 
 
 def jwt_decode(s):
-    return jwt.decode(s, app.config['SECRET_KEY'])
+    return jwt.decode(s, current_app.config['SECRET_KEY'])
