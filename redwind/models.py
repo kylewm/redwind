@@ -35,7 +35,7 @@ class JsonType(db.TypeDecorator):
 
 
 class Setting(db.Model):
-    key = db.Column(db.String(256), primary_key=True)
+    key = db.Column(db.String(128), primary_key=True)
     name = db.Column(db.String(256))
     value = db.Column(db.Text)
 
@@ -211,7 +211,8 @@ class Post(db.Model):
         self.content_html = None
 
     def get_image_path(self):
-        return '/' + self.path + '/files'
+        site_url = get_settings().site_url or 'http://localhost'
+        return '/'.join(site_url, self.path, 'files')
 
     def photo_url(self, photo):
         return os.path.join(self.get_image_path(), photo.get('filename'))
@@ -413,7 +414,7 @@ class Tag(db.Model):
 class Nick(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), index=True)
-    name = db.Column(db.String(256), unique=True)
+    name = db.Column(db.String(128), unique=True)
 
     def __init__(self, **kwargs):
         self.name = kwargs.get('name')

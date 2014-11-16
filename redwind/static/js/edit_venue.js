@@ -10,7 +10,7 @@
     }
 
     function fillGeocode(lat, lng) {
-        var xhr = Http.get('/services/geocode?latitude=' + lat + '&longitude=' + lng);
+        var xhr = Http.get(SITE_ROOT+'/services/geocode?latitude=' + lat + '&longitude=' + lng);
         Http.send(xhr).then(
             function (xhr) {
                 var addr = JSON.parse(xhr.responseText);

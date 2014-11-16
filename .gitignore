@@ -20,3 +20,4 @@ redwind/static/css/site.css
 logs
 .env
 redwind/static/js/main.js
+redwind/templates/custom_*
