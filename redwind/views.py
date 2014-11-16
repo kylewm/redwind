@@ -4,8 +4,8 @@ from . import contexts
 from . import db
 from . import hooks
 from . import util
-from .models import Post, Location, Photo, Tag, Mention, Contact,\
-    Nick, Setting, Venue, get_settings
+from .models import Post, Tag, Mention, Contact, Nick, Setting,\
+    Venue, get_settings
 
 from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory, session
@@ -61,8 +61,6 @@ def collect_posts(post_types, page, per_page, tag,
     query = query.options(
         sqlalchemy.orm.subqueryload(Post.tags),
         sqlalchemy.orm.subqueryload(Post.mentions),
-        sqlalchemy.orm.subqueryload(Post.photos),
-        sqlalchemy.orm.subqueryload(Post.location),
         sqlalchemy.orm.subqueryload(Post.reply_contexts),
         sqlalchemy.orm.subqueryload(Post.repost_contexts),
         sqlalchemy.orm.subqueryload(Post.like_contexts),
@@ -556,6 +554,38 @@ def uploads_popup():
     return render_template('uploads_popup.html')
 
 
+@app.template_filter('approximate_latitude')
+def approximate_latitude(loc):
+    latitude = loc.get('latitude')
+    if latitude:
+        return '{:.3f}'.format(latitude)
+
+
+@app.template_filter('approximate_longitude')
+def approximate_longitude(loc):
+    longitude = loc.get('longitude')
+    return longitude and '{:.3f}'.format(longitude)
+
+
+@app.template_filter('geo_name')
+def geo_name(loc):
+    name = loc.get('name')
+    if name:
+        return name
+
+    locality = loc.get('locality')
+    region = loc.get('region')
+    if locality and region:
+        return "{}, {}".format(locality, region)
+
+    latitude = loc.get('latitude')
+    longitude = loc.get('longitude')
+    if latitude and longitude:
+        return "{:.2f}, {:.2f}".format(latitude, longitude)
+
+    return "Unknown Location"
+
+
 @app.template_filter('isotime')
 def isotime_filter(thedate):
     if not thedate:
@@ -696,9 +726,10 @@ def save_post(post):
     if venue_name and venue_lat and venue_lng:
         venue = Venue()
         venue.name = venue_name
-        venue.location = Location()
-        venue.location.latitude = venue_lat
-        venue.location.longitude = venue_lng
+        venue.location = {
+            'latitude': venue_lat,
+            'longitude': venue_lng,
+        }
         venue.update_slug('{}-{}'.format(venue_lat, venue_lng))
         db.session.add(venue)
         db.session.commit()
@@ -713,19 +744,16 @@ def save_post(post):
     lat = request.form.get('latitude')
     lon = request.form.get('longitude')
     if lat and lon:
-        if not post.location:
-            post.location = Location()
+        if post.location is None:
+            post.location = {}
 
-        post.location.latitude = float(lat)
-        post.location.longitude = float(lon)
+        post.location['latitude'] = float(lat)
+        post.location['longitude'] = float(lon)
         loc_name = request.form.get('location_name')
         if loc_name is not None:
-            post.location.name = loc_name
+            post.location['name'] = loc_name
     else:
-        old_loc = post.location
         post.location = None
-        if old_loc:
-            db.session.delete(old_loc)
 
     for url_attr, context_attr in (('in_reply_to', 'reply_contexts'),
                                    ('repost_of', 'repost_contexts'),
@@ -778,9 +806,10 @@ def save_post(post):
             os.makedirs(os.path.dirname(fullpath))
         inphoto.save(fullpath)
         caption = request.form.get('caption')
-        post.photos = [Photo(post,
-                             filename=os.path.basename(relpath),
-                             caption=caption)]
+        post.photos = [{
+            'filename': os.path.basename(relpath),
+            'caption': caption,
+        }]
 
     file_to_url = {}
     infiles = request.files.getlist('files')
@@ -977,11 +1006,11 @@ def delete_venue():
 
 def save_venue(venue):
     venue.name = request.form.get('name')
-    if not venue.location:
-        venue.location = Location()
+    if venue.location is None:
+        venue.location = {}
 
-    venue.location.latitude = float(request.form.get('latitude'))
-    venue.location.longitude = float(request.form.get('longitude'))
+    venue.location['latitude'] = float(request.form.get('latitude'))
+    venue.location['longitude'] = float(request.form.get('longitude'))
     venue.update_slug(request.form.get('geocode'))
 
     if not venue.id:

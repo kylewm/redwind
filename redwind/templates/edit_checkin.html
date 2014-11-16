@@ -26,7 +26,7 @@
 {% block hidden_check %}
 <label><input type="checkbox" id="hidden" name="hidden" value="true" {% if post.hidden %}checked{% endif %} /> Hidden from Stream</label>
 {% endblock hidden_check %}
-  
+
 {% block other_resources %}
 
 <script type="text/javascript">
@@ -54,11 +54,11 @@ var prevLat, prevLng, prevVenue;
 
 {% if post.venue %}
   prevVenue = {{post.venue.id}};
-  prevLat = {{post.venue.location.latitude}};
-  prevLng = {{post.venue.location.longitude}};
+  prevLat = {{post.venue.location.get('latitude')}};
+  prevLng = {{post.venue.location.get('longitude')}};
 {% elif post.location %}
-  prevLat = {{post.location.latitude}};
-  prevLng = {{post.location.longitude}};
+  prevLat = {{post.location.get('latitude')}};
+  prevLng = {{post.location.get('longitude')}};
 {% endif %}
 
 first('#new_venue_holder').style.display = 'none';
