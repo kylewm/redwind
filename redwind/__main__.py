@@ -6,4 +6,4 @@ print(sys.path)
 
 from . import app
 
-app.run(debug=True)
+create_app().run(debug=True)

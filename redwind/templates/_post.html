@@ -22,8 +22,9 @@
           <a href="{{post.photo_url(photo)}}">
             <img class="u-photo" src="{{post.photo_thumbnail(photo)}}" />
           </a>
-          {% if 'caption' in photo %}
-            <div class="caption">{{ photo['caption'] | safe }}</div>
+          {% set caption = photo.get('caption') %}
+          {% if caption %}
+            <div class="caption">{{ caption | safe }}</div>
           {% endif %}
         </div>
       {% endfor %}

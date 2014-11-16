@@ -19,6 +19,7 @@ import bs4
 import collections
 import datetime
 import jinja2.filters
+import json
 import mf2util
 import operator
 import os
@@ -422,7 +423,7 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
                      actions_response.text)
     actions_content_type = actions_response.headers.get('content-type', '')
     if 'application/json' in actions_content_type:
-        adata = json.loads(action_response.text)
+        adata = json.loads(actions_response.text)
         app.logger.debug('action handlers (json): %s', adata)
         session['action-handlers'] = adata
     else:

@@ -358,10 +358,11 @@ def guess_tweet_content(post, in_reply_to):
         photo = post.photos[0]
         img_url = photo.url
         target_length -= MEDIA_CHAR_LENGTH
-        if photo.caption:
+        caption = photo.get('caption')
+        if caption:
             components.append(TweetComponent(
-                length=len(photo.caption, can_shorten=True,
-                           can_drop=True, text=photo.caption)))
+                length=len(caption), can_shorten=True,
+                can_drop=True, text=caption))
 
     if post.title or sum(c.length for c in components) > target_length:
         components.append(TweetComponent(
@@ -377,7 +378,7 @@ def guess_tweet_content(post, in_reply_to):
         if delta <= 0 or not c.can_drop:
             shortened.append(c)
         elif c.can_shorten and c.length >= delta + 1:
-            text = c.text[:len(c.text)-(delta+1)] + '…'
+            text = c.text[:len(c.text) - (delta + 1)] + '…'
             delta -= (c.length - len(text))
             shortened.append(TweetComponent(
                 length=len(text), text=text, can_shorten=False, can_drop=True))
