@@ -211,8 +211,15 @@ def find_target_post(target_url):
         return None
 
     try:
+        ## Ugly patch
+        parsed_site_root = urllib.parse.urlparse(get_settings().site_url)
+        site_prefix = parsed_site_root.path
+        if site_prefix.endswith('/'):
+            site_prefix = site_prefix[:-1]
+        if not parsed_url.path.startswith(parsed_site_root.path):
+            raise NotFound
         urls = app.url_map.bind(get_settings().site_url)
-        endpoint, args = urls.match(parsed_url.path)
+        endpoint, args = urls.match(parsed_url.path[len(site_prefix):])
     except NotFound:
         app.logger.warn("Webmention could not find target for %s",
                         parsed_url.path)
