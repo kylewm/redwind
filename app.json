@@ -5,7 +5,7 @@
     "website": "https://indiewebcamp.com/Red_Wind",
     "repository": "https://github.com/kylewm/redwind",
     "scripts": {
-        "postdeploy": "./init_db.py"
+        "postdeploy": "python install.py"
     },
     "env": {
         "SECRET_KEY": {

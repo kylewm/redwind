@@ -19,8 +19,8 @@
       </div>
       {% for photo in post.photos %}
         <div class="photo-holder">
-          <a href="{{photo.url}}">
-            <img class="u-photo" src="{{photo.thumbnail}}" />
+          <a href="{{settings.site_url}}{{photo.url}}">
+            <img class="u-photo" src="{{settings.site_url}}{{photo.thumbnail}}" />
           </a>
           {% if photo.caption %}
             <div class="caption">{{ photo.caption | safe }}</div>
