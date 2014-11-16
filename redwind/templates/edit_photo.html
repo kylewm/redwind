@@ -1,9 +1,9 @@
 {% extends "edit_note.html" %}
 
 {% block above_content %}
-{% for photo in post.photos %}
+{% for photo in post.photos or [] %}
 <div>
-  <img src="{{settings.site_url}}{{photo.thumbnail}}" />
+  <img src="{{post.photo_thumbnail(photo)}}" />
 </div>
 {% endfor %}
 {% endblock %}

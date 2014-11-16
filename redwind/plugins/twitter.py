@@ -94,7 +94,7 @@ def collect_images(post):
 
     if post.photos:
         for photo in post.photos:
-            yield photo.url
+            yield post.photo_url(photo)
 
     else:
         html = util.markdown_filter(
@@ -356,12 +356,13 @@ def guess_tweet_content(post, in_reply_to):
     img_url = None
     if post.photos:
         photo = post.photos[0]
-        img_url = photo.url
+        img_url = post.photo_url(photo)
         target_length -= MEDIA_CHAR_LENGTH
-        if photo.caption:
+        caption = photo.get('caption')
+        if caption:
             components.append(TweetComponent(
-                length=len(photo.caption, can_shorten=True,
-                           can_drop=True, text=photo.caption)))
+                    length=len(caption), can_shorten=True,
+                    can_drop=True, text=caption))
 
     if post.title or sum(c.length for c in components) > target_length:
         components.append(TweetComponent(
