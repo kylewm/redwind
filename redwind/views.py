@@ -585,7 +585,7 @@ def geo_name(loc):
     latitude = loc.get('latitude')
     longitude = loc.get('longitude')
     if latitude and longitude:
-        return "{:.2f}, {:.2f}".format(latitude, longitude)
+        return "{:.2f}, {:.2f}".format(float(latitude), float(longitude))
 
     return "Unknown Location"
 
@@ -731,8 +731,8 @@ def save_post(post):
         venue = Venue()
         venue.name = venue_name
         venue.location = {
-            'latitude': venue_lat,
-            'longitude': venue_lng,
+            'latitude': float(venue_lat),
+            'longitude': float(venue_lng),
         }
         venue.update_slug('{}-{}'.format(venue_lat, venue_lng))
         db.session.add(venue)

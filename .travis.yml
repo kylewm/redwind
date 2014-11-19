@@ -1,0 +1,6 @@
+language: python
+python:
+  - "3.4"
+install:
+  - "pip install -r requirements/base.txt"
+script: "python -m pytest tests"
