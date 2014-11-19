@@ -131,8 +131,8 @@ def nearby_venues():
     lng = float(request.args.get('longitude'))
     venues = Venue.query.all()
 
-    venues.sort(key=lambda venue: (venue.location['latitude'] - lat) ** 2
-                + (venue.location['longitude'] - lng) ** 2)
+    venues.sort(key=lambda venue: (float(venue.location['latitude']) - lat) ** 2
+                + (float(venue.location['longitude']) - lng) ** 2)
 
     return jsonify({
         'venues': [{

@@ -94,7 +94,7 @@ def collect_images(post):
 
     if post.photos:
         for photo in post.photos:
-            yield photo.url
+            yield post.photo_url(photo)
 
     else:
         html = util.markdown_filter(
@@ -356,7 +356,7 @@ def guess_tweet_content(post, in_reply_to):
     img_url = None
     if post.photos:
         photo = post.photos[0]
-        img_url = photo.url
+        img_url = post.photo_url(photo)
         target_length -= MEDIA_CHAR_LENGTH
         caption = photo.get('caption')
         if caption:
