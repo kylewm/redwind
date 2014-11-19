@@ -3,4 +3,4 @@ python:
   - "3.4"
 install:
   - "pip install -r requirements/base.txt"
-script: "py.test tests"
+script: "python -m pytest tests"
