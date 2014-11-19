@@ -71,15 +71,3 @@ def auth(request, app, client):
         client.get('/logout')
     request.addfinalizer(fin)
     return True
-
-
-@pytest.fixture
-def mox(request):
-    from mox import Mox
-    m = Mox()
-
-    def fin():
-        m.UnsetStubs()
-        m.VerifyAll()
-    request.addfinalizer(fin)
-    return m

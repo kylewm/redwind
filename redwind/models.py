@@ -108,6 +108,11 @@ class User:
     def get_id(self):
         return self.domain
 
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.domain == other.domain
+        return False
+
     def __repr__(self):
         return '<User:{}>'.format(self.domain)
 
