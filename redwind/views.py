@@ -8,9 +8,8 @@ from .models import Post, Tag, Mention, Contact, Nick, Setting,\
     Venue, get_settings
 
 from flask import request, redirect, url_for, render_template, flash,\
-    abort, make_response, Markup, send_from_directory, session
-from flask.ext.login import login_required, login_user, logout_user,\
-    current_user, current_app
+    abort, make_response, Markup, send_from_directory, session, current_app
+import flask.ext.login as flask_login
 from werkzeug import secure_filename
 import sqlalchemy.orm
 import sqlalchemy.sql
@@ -109,7 +108,7 @@ def index(page):
     # leave out hidden posts
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), None, include_hidden=False,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
     return render_posts(None, posts, page, is_first, is_last)
@@ -120,7 +119,7 @@ def index(page):
 def everything(page):
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), None, include_hidden=True,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Everything', 'everything.atom', posts)
@@ -135,7 +134,7 @@ def posts_by_type(plural_type, page):
     posts, is_first, is_last = collect_posts(
         (post_type,), page, int(get_settings().posts_per_page), None,
         include_hidden=True,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom(title, plural_type + '.atom', posts)
@@ -147,7 +146,7 @@ def posts_by_type(plural_type, page):
 def posts_by_tag(tag, page):
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), tag, include_hidden=True,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
     title = '#' + tag
 
     if request.args.get('feed') == 'atom':
@@ -181,18 +180,18 @@ def check_audience(post):
         # all posts public by default
         return True
 
-    if current_user.is_authenticated():
+    if flask_login.current_user.is_authenticated():
         # admin user can see everything
         return True
 
-    if current_user.is_anonymous():
+    if flask_login.current_user.is_anonymous():
         # anonymous users can't see stuff
         return False
 
     # check that their username is listed in the post's audience
     app.logger.debug('checking that logged in user %s is in post audience %s',
-                     current_user.get_id(), post.audience)
-    return current_user.get_id() in post.audience
+                     flask_login.current_user.get_id(), post.audience)
+    return flask_login.current_user.get_id() in post.audience
 
 
 def resize_associated_image(post, sourcepath, side):
@@ -251,7 +250,7 @@ def post_by_date(post_type, year, month, day, index, slug):
 def post_by_path(year, month, slug):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
 
-    if not post or (post.draft and not current_user.is_authenticated()):
+    if not post or (post.draft and not flask_login.current_user.is_authenticated()):
         abort(404)
 
     if post.deleted:
@@ -355,12 +354,14 @@ def login_callback():
 
     rdata = urllib.parse.parse_qs(response.text)
     if response.status_code != 200:
+        app.logger.debug('call to auth endpoint failed %s', response)
         flash('Login failed {}: {}'.format(rdata.get('error'),
                                            rdata.get('error_description')))
         return redirect(next_url)
 
     app.logger.debug('verify response %s', response.text)
     if 'me' not in rdata:
+        app.logger.debug('Verify response missing required "me" field')
         flash('Verify response missing required "me" field {}'.format(
             response.text))
         return redirect(next_url)
@@ -375,8 +376,10 @@ def login_callback():
     try_micropub_config(token_url, micropub_url, scopes, code, me,
                         redirect_uri, client_id, state)
 
-    login_user(user, remember=True)
+    app.logger.debug('Logging in user %s', user)
+    flask_login.login_user(user, remember=True)
     flash('Logged in with domain {}'.format(me))
+    app.logger.debug('Logged in with domain %s', me)
 
     return redirect(next_url)
 
@@ -436,7 +439,7 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
 
 @app.route('/logout')
 def logout():
-    logout_user()
+    flask_login.logout_user()
     for key in ('action-handlers', 'endpoints', 'micropub'):
         if key in session:
             del session[key]
@@ -444,7 +447,7 @@ def logout():
 
 
 @app.route('/settings', methods=['GET', 'POST'])
-@login_required
+@flask_login.login_required
 def edit_settings():
     if request.method == 'GET':
         return render_template('settings.html', raw_settings=sorted(
@@ -457,7 +460,7 @@ def edit_settings():
 
 
 @app.route('/delete')
-@login_required
+@flask_login.login_required
 def delete_by_id():
     id = request.args.get('id')
     post = Post.load_by_id(id)
@@ -685,7 +688,7 @@ def mirror_image(src, side=None):
 
 
 @app.route('/save_edit', methods=['POST'])
-@login_required
+@flask_login.login_required
 def save_edit():
     id = request.form.get('post_id')
     app.logger.debug('saving post %s', id)
@@ -694,7 +697,7 @@ def save_edit():
 
 
 @app.route('/save_new', methods=['POST'])
-@login_required
+@flask_login.login_required
 def save_new():
     post_type = request.form.get('post_type', 'note')
     app.logger.debug('saving new post of type %s', post_type)
@@ -900,7 +903,7 @@ def contact_by_name(name):
 
 
 @app.route('/delete/contact')
-@login_required
+@flask_login.login_required
 def delete_contact():
     id = request.args.get('id')
     contact = Contact.query.get(id)
@@ -915,7 +918,7 @@ def new_contact():
         contact = Contact()
         return render_template('edit_contact.html', contact=contact)
 
-    if not current_user.is_authenticated():
+    if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
 
     contact = Contact()
@@ -930,7 +933,7 @@ def edit_contact():
         contact = Contact.query.get(id)
         return render_template('edit_contact.html', contact=contact)
 
-    if not current_user.is_authenticated():
+    if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
 
     id = request.form.get('id')
@@ -996,7 +999,7 @@ def edit_venue():
 
 
 @app.route('/delete/venue')
-@login_required
+@flask_login.login_required
 def delete_venue():
     id = request.args.get('id')
     venue = Venue.query.get(id)

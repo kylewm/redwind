@@ -1,7 +1,9 @@
 import re
 import pytest
 import requests
-from mock import MagicMock
+import urllib
+import flask.ext.login as flask_login
+from redwind.models import User
 
 
 def test_empty_db(client):
@@ -106,17 +108,64 @@ def test_atom_redirects(client):
     assert rv.location.endswith('/articles?feed=atom')
 
 
-class FakeRequestsResponse:
-    def __init__(self, status_code=200, text=None, url=None):
-        self.status_code = status_code
+class FakeResponse:
+    def __init__(self, text=None, status_code=200, url=None):
         self.text = text
+        self.status_code = status_code
         self.content = text and bytes(text, 'utf8')
         self.url = url
 
+    def __repr__(self):
+        return 'FakeResponse(status={}, text={}, url={})'.format(
+            self.status_code, self.text, self.url)
 
-def test_indieauth_login(client):
-    requests.get == MagicMock(return_value=FakeRequestResponse())
-    client.get('/login?me=http://example.com')
 
-    # fetches example to look for endpoints
-    requests.get.assert_called_with('http://example.com')
+def assert_urls_match(u1, u2):
+    p1 = urllib.parse.urlparse(u1)
+    p2 = urllib.parse.urlparse(u2)
+    assert p1.scheme == p2.scheme
+    assert p1.netloc == p2.netloc
+    assert p1.path == p2.path
+    assert urllib.parse.parse_qs(p1.query) == urllib.parse.parse_qs(p2.query)
+
+
+def test_indieauth_login(app, client, mox):
+    mox.StubOutWithMock(requests, 'get')
+    mox.StubOutWithMock(requests, 'post')
+    mox.StubOutWithMock(flask_login, 'login_user')
+    mox.StubOutWithMock(flask_login, 'logout_user')
+
+    requests.get('http://example.com').AndReturn(
+        FakeResponse('<html></html>'))
+
+    requests.post('https://indieauth.com/auth', data={
+        'code': 'abc123',
+        'client_id': 'http://example.com',
+        'redirect_uri': 'http://localhost/login_callback',
+        'state': None,
+    }).AndReturn(FakeResponse(urllib.parse.urlencode({
+        'me': 'http://example.com',
+    })))
+
+    flask_login.login_user.__call__(User('example.com'), remember=True)
+    flask_login.logout_user.__call__()
+
+    mox.ReplayAll()
+
+    rv = client.get('/login?me=http://example.com')
+    assert rv.status_code == 302
+    assert_urls_match(rv.location,
+                      'https://indieauth.com/auth?' + urllib.parse.urlencode({
+                          'state': None,
+                          'me': 'http://example.com',
+                          'client_id': 'http://example.com',
+                          'redirect_uri': 'http://localhost/login_callback',
+                      }))
+
+    rv = client.get('/login_callback?' + urllib.parse.urlencode({
+        'code': 'abc123'
+    }))
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/'
+
+    client.get('/logout')
