@@ -5,7 +5,6 @@ from ..models import Post
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from urllib.request import urlopen, Request
-
 import re
 import requests
 

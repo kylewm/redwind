@@ -4,13 +4,12 @@ from . import contexts
 from . import db
 from . import hooks
 from . import util
-from .models import Post, Location, Photo, Tag, Mention, Contact,\
-    Nick, Setting, Venue, get_settings
+from .models import Post, Tag, Mention, Contact, Nick, Setting,\
+    Venue, get_settings
 
 from flask import request, redirect, url_for, render_template, flash,\
-    abort, make_response, Markup, send_from_directory, session
-from flask.ext.login import login_required, login_user, logout_user,\
-    current_user, current_app
+    abort, make_response, Markup, send_from_directory, session, current_app
+import flask.ext.login as flask_login
 from werkzeug import secure_filename
 import sqlalchemy.orm
 import sqlalchemy.sql
@@ -19,6 +18,7 @@ import bs4
 import collections
 import datetime
 import jinja2.filters
+import json
 import mf2util
 import operator
 import os
@@ -61,8 +61,6 @@ def collect_posts(post_types, page, per_page, tag,
     query = query.options(
         sqlalchemy.orm.subqueryload(Post.tags),
         sqlalchemy.orm.subqueryload(Post.mentions),
-        sqlalchemy.orm.subqueryload(Post.photos),
-        sqlalchemy.orm.subqueryload(Post.location),
         sqlalchemy.orm.subqueryload(Post.reply_contexts),
         sqlalchemy.orm.subqueryload(Post.repost_contexts),
         sqlalchemy.orm.subqueryload(Post.like_contexts),
@@ -110,7 +108,7 @@ def index(page):
     # leave out hidden posts
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), None, include_hidden=False,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
     return render_posts(None, posts, page, is_first, is_last)
@@ -121,7 +119,7 @@ def index(page):
 def everything(page):
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), None, include_hidden=True,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Everything', 'everything.atom', posts)
@@ -136,7 +134,7 @@ def posts_by_type(plural_type, page):
     posts, is_first, is_last = collect_posts(
         (post_type,), page, int(get_settings().posts_per_page), None,
         include_hidden=True,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom(title, plural_type + '.atom', posts)
@@ -148,7 +146,7 @@ def posts_by_type(plural_type, page):
 def posts_by_tag(tag, page):
     posts, is_first, is_last = collect_posts(
         None, page, int(get_settings().posts_per_page), tag, include_hidden=True,
-        include_drafts=current_user.is_authenticated())
+        include_drafts=flask_login.current_user.is_authenticated())
     title = '#' + tag
 
     if request.args.get('feed') == 'atom':
@@ -182,18 +180,18 @@ def check_audience(post):
         # all posts public by default
         return True
 
-    if current_user.is_authenticated():
+    if flask_login.current_user.is_authenticated():
         # admin user can see everything
         return True
 
-    if current_user.is_anonymous():
+    if flask_login.current_user.is_anonymous():
         # anonymous users can't see stuff
         return False
 
     # check that their username is listed in the post's audience
     app.logger.debug('checking that logged in user %s is in post audience %s',
-                     current_user.get_id(), post.audience)
-    return current_user.get_id() in post.audience
+                     flask_login.current_user.get_id(), post.audience)
+    return flask_login.current_user.get_id() in post.audience
 
 
 def resize_associated_image(post, sourcepath, side):
@@ -252,7 +250,7 @@ def post_by_date(post_type, year, month, day, index, slug):
 def post_by_path(year, month, slug):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
 
-    if not post or (post.draft and not current_user.is_authenticated()):
+    if not post or (post.draft and not flask_login.current_user.is_authenticated()):
         abort(404)
 
     if post.deleted:
@@ -356,12 +354,14 @@ def login_callback():
 
     rdata = urllib.parse.parse_qs(response.text)
     if response.status_code != 200:
+        app.logger.debug('call to auth endpoint failed %s', response)
         flash('Login failed {}: {}'.format(rdata.get('error'),
                                            rdata.get('error_description')))
         return redirect(next_url)
 
     app.logger.debug('verify response %s', response.text)
     if 'me' not in rdata:
+        app.logger.debug('Verify response missing required "me" field')
         flash('Verify response missing required "me" field {}'.format(
             response.text))
         return redirect(next_url)
@@ -376,8 +376,10 @@ def login_callback():
     try_micropub_config(token_url, micropub_url, scopes, code, me,
                         redirect_uri, client_id, state)
 
-    login_user(user, remember=True)
+    app.logger.debug('Logging in user %s', user)
+    flask_login.login_user(user, remember=True)
     flash('Logged in with domain {}'.format(me))
+    app.logger.debug('Logged in with domain %s', me)
 
     return redirect(next_url)
 
@@ -424,7 +426,7 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
                      actions_response.text)
     actions_content_type = actions_response.headers.get('content-type', '')
     if 'application/json' in actions_content_type:
-        adata = json.loads(action_response.text)
+        adata = json.loads(actions_response.text)
         app.logger.debug('action handlers (json): %s', adata)
         session['action-handlers'] = adata
     else:
@@ -437,7 +439,7 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
 
 @app.route('/logout')
 def logout():
-    logout_user()
+    flask_login.logout_user()
     for key in ('action-handlers', 'endpoints', 'micropub'):
         if key in session:
             del session[key]
@@ -445,7 +447,7 @@ def logout():
 
 
 @app.route('/settings', methods=['GET', 'POST'])
-@login_required
+@flask_login.login_required
 def edit_settings():
     if request.method == 'GET':
         return render_template('settings.html', raw_settings=sorted(
@@ -458,7 +460,7 @@ def edit_settings():
 
 
 @app.route('/delete')
-@login_required
+@flask_login.login_required
 def delete_by_id():
     id = request.args.get('id')
     post = Post.load_by_id(id)
@@ -554,6 +556,38 @@ def edit_by_id():
 @app.route('/uploads')
 def uploads_popup():
     return render_template('uploads_popup.html')
+
+
+@app.template_filter('approximate_latitude')
+def approximate_latitude(loc):
+    latitude = loc.get('latitude')
+    if latitude:
+        return '{:.3f}'.format(latitude)
+
+
+@app.template_filter('approximate_longitude')
+def approximate_longitude(loc):
+    longitude = loc.get('longitude')
+    return longitude and '{:.3f}'.format(longitude)
+
+
+@app.template_filter('geo_name')
+def geo_name(loc):
+    name = loc.get('name')
+    if name:
+        return name
+
+    locality = loc.get('locality')
+    region = loc.get('region')
+    if locality and region:
+        return "{}, {}".format(locality, region)
+
+    latitude = loc.get('latitude')
+    longitude = loc.get('longitude')
+    if latitude and longitude:
+        return "{:.2f}, {:.2f}".format(latitude, longitude)
+
+    return "Unknown Location"
 
 
 @app.template_filter('isotime')
@@ -654,7 +688,7 @@ def mirror_image(src, side=None):
 
 
 @app.route('/save_edit', methods=['POST'])
-@login_required
+@flask_login.login_required
 def save_edit():
     id = request.form.get('post_id')
     app.logger.debug('saving post %s', id)
@@ -663,7 +697,7 @@ def save_edit():
 
 
 @app.route('/save_new', methods=['POST'])
-@login_required
+@flask_login.login_required
 def save_new():
     post_type = request.form.get('post_type', 'note')
     app.logger.debug('saving new post of type %s', post_type)
@@ -696,9 +730,10 @@ def save_post(post):
     if venue_name and venue_lat and venue_lng:
         venue = Venue()
         venue.name = venue_name
-        venue.location = Location()
-        venue.location.latitude = venue_lat
-        venue.location.longitude = venue_lng
+        venue.location = {
+            'latitude': venue_lat,
+            'longitude': venue_lng,
+        }
         venue.update_slug('{}-{}'.format(venue_lat, venue_lng))
         db.session.add(venue)
         db.session.commit()
@@ -713,19 +748,16 @@ def save_post(post):
     lat = request.form.get('latitude')
     lon = request.form.get('longitude')
     if lat and lon:
-        if not post.location:
-            post.location = Location()
+        if post.location is None:
+            post.location = {}
 
-        post.location.latitude = float(lat)
-        post.location.longitude = float(lon)
+        post.location['latitude'] = float(lat)
+        post.location['longitude'] = float(lon)
         loc_name = request.form.get('location_name')
         if loc_name is not None:
-            post.location.name = loc_name
+            post.location['name'] = loc_name
     else:
-        old_loc = post.location
         post.location = None
-        if old_loc:
-            db.session.delete(old_loc)
 
     for url_attr, context_attr in (('in_reply_to', 'reply_contexts'),
                                    ('repost_of', 'repost_contexts'),
@@ -778,9 +810,10 @@ def save_post(post):
             os.makedirs(os.path.dirname(fullpath))
         inphoto.save(fullpath)
         caption = request.form.get('caption')
-        post.photos = [Photo(post,
-                             filename=os.path.basename(relpath),
-                             caption=caption)]
+        post.photos = [{
+            'filename': os.path.basename(relpath),
+            'caption': caption,
+        }]
 
     file_to_url = {}
     infiles = request.files.getlist('files')
@@ -870,7 +903,7 @@ def contact_by_name(name):
 
 
 @app.route('/delete/contact')
-@login_required
+@flask_login.login_required
 def delete_contact():
     id = request.args.get('id')
     contact = Contact.query.get(id)
@@ -885,7 +918,7 @@ def new_contact():
         contact = Contact()
         return render_template('edit_contact.html', contact=contact)
 
-    if not current_user.is_authenticated():
+    if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
 
     contact = Contact()
@@ -900,7 +933,7 @@ def edit_contact():
         contact = Contact.query.get(id)
         return render_template('edit_contact.html', contact=contact)
 
-    if not current_user.is_authenticated():
+    if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
 
     id = request.form.get('id')
@@ -966,7 +999,7 @@ def edit_venue():
 
 
 @app.route('/delete/venue')
-@login_required
+@flask_login.login_required
 def delete_venue():
     id = request.args.get('id')
     venue = Venue.query.get(id)
@@ -977,11 +1010,11 @@ def delete_venue():
 
 def save_venue(venue):
     venue.name = request.form.get('name')
-    if not venue.location:
-        venue.location = Location()
+    if venue.location is None:
+        venue.location = {}
 
-    venue.location.latitude = float(request.form.get('latitude'))
-    venue.location.longitude = float(request.form.get('longitude'))
+    venue.location['latitude'] = float(request.form.get('latitude'))
+    venue.location['longitude'] = float(request.form.get('longitude'))
     venue.update_slug(request.form.get('geocode'))
 
     if not venue.id:

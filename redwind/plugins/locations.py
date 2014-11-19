@@ -24,28 +24,23 @@ def reverse_geocode_venue(venue, args):
 def do_reverse_geocode_post(postid):
     with app.app_context():
         post = models.Post.load_by_id(postid)
-        if post.location and post.location.latitude \
-           and post.location.longitude:
-
-            adr = do_reverse_geocode(post.location.latitude,
-                                     post.location.longitude)
-
-            for key, value in adr.items():
-                setattr(post.location, key, value)
-
+        if post.location and 'latitude' in post.location \
+           and 'longitude' in post.location:
+            adr = do_reverse_geocode(post.location['latitude'],
+                                     post.location['longitude'])
+            post.location.update(adr)
             db.session.commit()
 
 
 def do_reverse_geocode_venue(venueid):
     with app.app_context():
         venue = models.Venue.query.get(venueid)
-        if venue.location and venue.location.latitude \
-           and venue.location.longitude:
+        if venue.location and 'latitude' in venue.location \
+           and 'longitude' in venue.location:
 
-            adr = do_reverse_geocode(venue.location.latitude,
-                                     venue.location.longitude)
-            for key, value in adr.items():
-                setattr(venue.location, key, value)
+            adr = do_reverse_geocode(venue.location['latitude'],
+                                     venue.location['longitude'])
+            venue.location.update(adr)
             venue.update_slug(venue.location.geo_name)
             db.session.commit()
 

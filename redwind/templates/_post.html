@@ -17,13 +17,14 @@
         {% endif %}
         {{post.content_html | safe}}
       </div>
-      {% for photo in post.photos %}
+      {% for photo in (post.photos or []) %}
         <div class="photo-holder">
-          <a href="{{settings.site_url}}{{photo.url}}">
-            <img class="u-photo" src="{{settings.site_url}}{{photo.thumbnail}}" />
+          <a href="{{post.photo_url(photo)}}">
+            <img class="u-photo" src="{{post.photo_thumbnail(photo)}}" />
           </a>
-          {% if photo.caption %}
-            <div class="caption">{{ photo.caption | safe }}</div>
+          {% set caption = photo.get('caption') %}
+          {% if caption %}
+            <div class="caption">{{ caption | safe }}</div>
           {% endif %}
         </div>
       {% endfor %}
@@ -53,14 +54,15 @@
     </div>
   {% endif %}
   <div class="post-metadata">
+
     {% if post.location %}
       <div class="location metadata-component">
         <i class="fa fa-map-marker"></i>
-        <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.latitude}},{{post.location.longitude}}">
-          <data class="p-latitude" value="{{post.location.latitude}}"></data>
-          <data class="p-longitude" value="{{post.location.longitude}}"></data>
+        <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.get('latitude')}},{{post.location.get('longitude')}}">
+          <data class="p-latitude" value="{{post.location.get('latitude')}}"></data>
+          <data class="p-longitude" value="{{post.location.get('longitude')}}"></data>
           <span class="p-name">
-            {{post.location.geo_name}}
+            {{post.location | geo_name}}
           </span>
         </a>
       </div>
@@ -69,7 +71,7 @@
     {% if post.venue %}
       <div class="venue metadata-component">
         <i class="fa fa-map-marker"></i>
-        <a class="p-location h-card" href="{{ post.venue.permalink }}">{{ post.venue.name }} &ndash; {{ post.venue.location.geo_name }}</a>
+        <a class="p-location h-card" href="{{ post.venue.permalink }}">{{ post.venue.name }} &ndash; {{ post.venue.location | geo_name }}</a>
       </div>
     {% endif %}
 

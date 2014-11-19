@@ -112,78 +112,10 @@ class User:
         return '<User:{}>'.format(self.domain)
 
 
-class Photo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(256))
-    caption = db.Column(db.Text)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), index=True)
-
-    def __init__(self, post, **kwargs):
-        self.filename = kwargs.get('filename')
-        self.caption = kwargs.get('caption')
-        self.post = post
-
-    @property
-    def url(self):
-        return os.path.join(self.post.get_image_path(), self.filename)
-
-    @property
-    def thumbnail(self):
-        return self.url + '?size=medium'
-
-
-class Location(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    name = db.Column(db.String(256))
-    street_address = db.Column(db.String(256))
-    extended_address = db.Column(db.String(256))
-    locality = db.Column(db.String(128))
-    region = db.Column(db.String(128))
-    country_name = db.Column(db.String(128))
-    postal_code = db.Column(db.String(32))
-    country_code = db.Column(db.String(8))
-
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), index=True)
-    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), index=True)
-
-    def __init__(self, **kwargs):
-        self.latitude = kwargs.get('latitude')
-        self.longitude = kwargs.get('longitude')
-        self.name = kwargs.get('name')
-        self.street_address = kwargs.get('street_address')
-        self.extended_address = kwargs.get('extended_address')
-        self.locality = kwargs.get('locality')
-        self.region = kwargs.get('region')
-        self.country_name = kwargs.get('country_name')
-        self.postal_code = kwargs.get('postal_code')
-        self.country_code = kwargs.get('country_code')
-
-    @property
-    def approximate_latitude(self):
-        return self.latitude and '{:.3f}'.format(self.latitude)
-
-    @property
-    def approximate_longitude(self):
-        return self.longitude and '{:.3f}'.format(self.longitude)
-
-    @property
-    def geo_name(self):
-        if self.name:
-            return self.name
-        elif self.locality and self.region:
-            return "{}, {}".format(self.locality, self.region)
-        elif self.latitude and self.longitude:
-            return "{:.2f}, {:.2f}".format(self.latitude, self.longitude)
-        else:
-            return "Unknown Location"
-
-
 class Venue(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
-    location = db.relationship('Location', uselist=False)
+    location = db.Column(JsonType)
     slug = db.Column(db.String(256))
 
     def update_slug(self, geocode):
@@ -231,8 +163,8 @@ class Post(db.Model):
 
     syndication = db.Column(JsonType)
 
-    location = db.relationship('Location', uselist=False, backref='post')
-    photos = db.relationship('Photo', backref='post')
+    location = db.Column(JsonType)
+    photos = db.Column(JsonType)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'))
     venue = db.relationship('Venue', uselist=False)
 
@@ -274,12 +206,19 @@ class Post(db.Model):
         self.tags = []
         self.audience = []  # public
         self.mention_urls = []
-        self.photos = []
+        self.photos = None
         self.content = None
         self.content_html = None
 
     def get_image_path(self):
-        return '/' + self.path + '/files'
+        site_url = get_settings().site_url or 'http://localhost'
+        return '/'.join((site_url, self.path, 'files'))
+
+    def photo_url(self, photo):
+        return '/'.join((self.get_image_path(), photo.get('filename')))
+
+    def photo_thumbnail(self, photo):
+        return self.photo_url(photo) + '?size=medium'
 
     @property
     def permalink(self):
@@ -347,9 +286,10 @@ class Post(db.Model):
 
     @property
     def location_url(self):
-        if self.location:
-            return OPEN_STREET_MAP_URL.format(self.location.latitude,
-                                              self.location.longitude)
+        if (self.location and 'latitude' in self.location
+                and 'longitude' in self.location):
+            return OPEN_STREET_MAP_URL.format(self.location['latitude'],
+                                              self.location['longitude'])
 
     def generate_slug(self):
         if self.title:
@@ -493,27 +433,3 @@ class Contact(db.Model):
         self.name = kwargs.get('name')
         self.url = kwargs.get('url')
         self.image = kwargs.get('image')
-
-
-class AddressBook:
-    """Address book contains entries like
-    {
-      'Kyle Mahan': {
-        'url': 'http://kylewm.com',
-        'photo': 'http://kylewm.com/static/images/kyle_large.jpg',
-        'twitter': 'kyle_wm',
-        'facebook': '0123456789'
-      }
-    }
-    """
-
-    PATH = os.path.join(app.root_path, '_data', 'addressbook.json')
-
-    def __init__(self):
-        if os.path.exists(self.PATH):
-            self.entries = json.load(open(self.PATH, 'r'))
-        else:
-            self.entries = {}
-
-    def save(self):
-        json.dump(self.entries, open(self.PATH, 'w'), indent=True)

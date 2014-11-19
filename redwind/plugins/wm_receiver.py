@@ -4,19 +4,19 @@ from .. import queue
 from .. import redis
 from .. import util
 from ..models import Post, Mention, get_settings
-
+from bs4 import BeautifulSoup
 from flask import request, make_response, render_template, url_for
 from werkzeug.exceptions import NotFound
 from rq.job import Job
-
-import urllib.parse
-import urllib.request
-import requests
+from werkzeug.exceptions import NotFound
+import datetime
 import mf2py
 import mf2util
-import datetime
+import requests
+import urllib.parse
+import urllib.request
 
-from bs4 import BeautifulSoup
+_app = None
 
 
 def register():

@@ -50,15 +50,15 @@
 
         {{ post.content_html | atom_sanitize }}
 
-        {% for photo in post.photos %}
-          &lt;a href="{{settings.site_url}}{{photo.url}}">
-            &lt;img src="{{settings.site_url}}{{photo.thumbnail}}" />
+        {% for photo in (post.photos or []) %}
+          &lt;a href="{{ post.photo_url(photo) }}">
+            &lt;img src="{{ post.photo_thumbnail(photo) }}" />
           &lt;/a>
           {% if photo.caption %}
             {{ photo.caption | atom_sanitize }}
           {% endif %}
         {% endfor %}
-        
+
     </content>
     <object-type xmlns="http://activitystrea.ms/spec/1.0/">http://activitystrea.ms/schema/1.0/{{ post.post_type }}</object-type>
   </entry>
