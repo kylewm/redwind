@@ -45,6 +45,7 @@ def app(request):
 
     def fin():
         app_context.pop()
+        assert str(db.engine.url)  == 'sqlite:///:memory:'
         db.session.remove()
         db.drop_all()
     request.addfinalizer(fin)
