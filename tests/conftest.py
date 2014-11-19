@@ -3,6 +3,9 @@ from redwind.models import User, Setting
 from flask import redirect
 from flask.ext.login import login_user
 import pytest
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 @pytest.fixture(scope='module')
@@ -17,7 +20,6 @@ def app(request):
             s.key = key
             redwind.db.session.add(s)
         s.value = value
-        redwind.db.session.commit()
 
     app = redwind.app
     db = redwind.db
@@ -32,6 +34,7 @@ def app(request):
     set_setting('author_domain', 'example.com')
     set_setting('site_url', 'http://example.com')
     set_setting('timezone', 'America/Los_Angeles')
+    db.session.commit()
 
     def fin():
         app_context.pop()
@@ -67,3 +70,15 @@ def auth(request, app, client):
         client.get('/logout')
     request.addfinalizer(fin)
     return True
+
+
+@pytest.fixture
+def mox(request):
+    from mox import Mox
+    m = Mox()
+
+    def fin():
+        m.UnsetStubs()
+        m.VerifyAll()
+    request.addfinalizer(fin)
+    return m
