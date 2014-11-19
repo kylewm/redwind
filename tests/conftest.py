@@ -23,6 +23,7 @@ def app(request):
 
     app = redwind.app
     db = redwind.db
+    app.config['SECRET_KEY'] = 'lmnop8765309'
     app.config['DEBUG'] = False
     app.config['DEBUG_TB_ENABLED'] = False
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
