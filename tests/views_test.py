@@ -147,8 +147,8 @@ def test_indieauth_login(app, client, mox):
         'me': 'http://example.com',
     })))
 
-    flask_login.login_user.__call__(User('example.com'), remember=True)
-    flask_login.logout_user.__call__()
+    flask_login.login_user(User('example.com'), remember=True)
+    flask_login.logout_user()
 
     mox.ReplayAll()
 
