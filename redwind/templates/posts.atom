@@ -13,7 +13,7 @@
   <id>{{request.url}}</id>
   <author>
     <name>{{ settings.author_name }}</name>
-    <uri>{{url_for('views.index', _external=True)}}</uri>
+    <uri>{{url_for('index', _external=True)}}</uri>
   </author>
   <updated>{{ posts | first | attr('published') | isotime }}</updated>
 
