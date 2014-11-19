@@ -3,6 +3,7 @@ python:
   - "3.4"
 install:
   - pip install -r requirements/base.txt
+  - pip install python-coveralls
 script: 
   -  python -m pytest tests --cov=redwind --cov-report term-missing
 after_success:
