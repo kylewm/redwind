@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kylewm/redwind.svg?branch=master)](https://travis-ci.org/kylewm/redwind)
+
 # Intro
 
 Red Wind is a (micro)-blogging engine used on my personal website,
