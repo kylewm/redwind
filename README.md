@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/kylewm/redwind.svg?branch=master)](https://travis-ci.org/kylewm/redwind)
+[![Coverage Status](https://img.shields.io/coveralls/kylewm/redwind.svg)](https://coveralls.io/r/kylewm/redwind?branch=master)
 
 # Intro
 
