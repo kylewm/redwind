@@ -1,5 +1,12 @@
+from config import Configuration
+Configuration.SECRET_KEY = 'lmnop8765309'
+Configuration.DEBUG = False
+Configuration.DEBUG_TB_ENABLED = False
+Configuration.SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+Configuration.TESTING = True
+Configuration.REDIS_URL = 'redis://localhost:911'
+
 import redwind
-from redwind.models import User, Setting
 from flask import redirect
 from flask.ext.login import login_user
 import pytest
@@ -8,28 +15,27 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def app(request):
     """The redwind flask app, set up with an empty database and
     some sane defaults
     """
+    app = redwind.app
+    db = redwind.db
     def set_setting(key, value):
-        s = Setting.query.get('key')
+        from redwind.models import Setting
+        s = Setting.query.get(key)
         if not s:
             s = Setting()
             s.key = key
-            redwind.db.session.add(s)
+            db.session.add(s)
         s.value = value
+        db.session.commit()
 
-    app = redwind.app
-    db = redwind.db
-    app.config['SECRET_KEY'] = 'lmnop8765309'
-    app.config['DEBUG'] = False
-    app.config['DEBUG_TB_ENABLED'] = False
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['TESTING'] = True
+    assert str(db.engine.url)  == 'sqlite:///:memory:'
     app_context = app.app_context()
     app_context.push()
+    
     db.create_all()
     set_setting('posts_per_page', '15')
     set_setting('author_domain', 'example.com')
@@ -46,18 +52,19 @@ def app(request):
     return app
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def client(app):
     """Client that can be used to send mock requests
     """
     return app.test_client()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def auth(request, app, client):
     """Logs into the application as an administrator.
     """
     def bypass_login():
+        from redwind.models import User
         user = User('example.com')
         login_user(user)
         return redirect('/')

@@ -3,9 +3,25 @@ import pytest
 import requests
 import urllib
 import flask.ext.login as flask_login
-from redwind.models import User
 from unittest.mock import Mock, patch
+from redwind.models import User
+import redwind
 
+
+class FakeResponse:
+    def __init__(self, text='', status_code=200, url=None):
+        self.text = text
+        self.status_code = status_code
+        self.content = text and bytes(text, 'utf8')
+        self.url = url
+        self.headers = {'content-type': 'text/html'}
+
+    def __repr__(self):
+        return 'FakeResponse(status={}, text={}, url={})'.format(
+            self.status_code, self.text, self.url)
+
+    def raise_for_status(self):
+        pass
 
 def test_empty_db(client):
     """Make sure there are no articles when the database is empty"""
@@ -13,8 +29,10 @@ def test_empty_db(client):
     assert '<article' not in rv.get_data(as_text=True)
 
 
-def test_create_post(client, auth):
+def test_create_post(client, auth, mocker):
     """Create a simple post as the current user"""
+    mocker.patch('requests.get').return_value = FakeResponse()
+    mocker.patch('redwind.queue.enqueue')
     rv = client.post('/save_new', data={
         'post_type': 'note',
         'content': 'This is a test note'})
@@ -25,8 +43,11 @@ def test_create_post(client, auth):
     assert 'This is a test note' in rv.get_data(as_text=True)
 
 
-@pytest.fixture(scope='module')
-def silly_posts(client, auth):
+@pytest.fixture
+def silly_posts(client, auth, mocker):
+    mocker.patch('requests.get').return_value = FakeResponse()
+    mocker.patch('redwind.queue.enqueue')
+    
     data = [
         {
             'post_type': 'note',
@@ -107,18 +128,6 @@ def test_atom_redirects(client):
     rv = client.get('/articles.atom')
     assert 302 == rv.status_code
     assert rv.location.endswith('/articles?feed=atom')
-
-
-class FakeResponse:
-    def __init__(self, text=None, status_code=200, url=None):
-        self.text = text
-        self.status_code = status_code
-        self.content = text and bytes(text, 'utf8')
-        self.url = url
-
-    def __repr__(self):
-        return 'FakeResponse(status={}, text={}, url={})'.format(
-            self.status_code, self.text, self.url)
 
 
 def assert_urls_match(u1, u2):
