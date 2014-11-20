@@ -211,7 +211,8 @@ def find_target_post(target_url):
         return None
 
     try:
-        ## Ugly patch
+        # FIXME this is a less-than-perfect fix for hosting from a
+        # subdirectory. The url_map may have some clever work-around.
         parsed_site_root = urllib.parse.urlparse(get_settings().site_url)
         site_prefix = parsed_site_root.path
         if site_prefix.endswith('/'):

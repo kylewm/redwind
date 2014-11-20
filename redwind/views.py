@@ -198,8 +198,8 @@ def resize_associated_image(post, sourcepath, side):
     targetdir = os.path.join('_resized', post.path, 'files', str(side))
     targetpath = os.path.join(targetdir, os.path.basename(sourcepath))
     util.resize_image(
-        os.path.join(app.root_path, sourcepath),
-        os.path.join(app.root_path, targetpath), side)
+        os.path.join(util.image_root_path(), sourcepath),
+        os.path.join(util.image_root_path(), targetpath), side)
     return targetpath
 
 
@@ -228,7 +228,7 @@ def post_associated_file(year, month, slug, filename):
     if app.debug:
         _, ext = os.path.splitext(sourcepath)
         return send_from_directory(
-            os.path.join(app.root_path, os.path.dirname(sourcepath)),
+            os.path.join(util.image_root_path(), os.path.dirname(sourcepath)),
             os.path.basename(sourcepath), mimetype=None)
 
     resp = make_response('')
@@ -808,6 +808,7 @@ def save_post(post):
             = generate_upload_path(post, inphoto)
         if not os.path.exists(os.path.dirname(fullpath)):
             os.makedirs(os.path.dirname(fullpath))
+        app.logger.debug('uploading photo to %s', fullpath)
         inphoto.save(fullpath)
         caption = request.form.get('caption')
         post.photos = [{
@@ -874,7 +875,7 @@ def generate_upload_path(post, f, default_ext=None):
         else:
             filename = '{}-{}{}'.format(basename, idx, ext)
         relpath = '{}/files/{}'.format(post.path, filename)
-        fullpath = os.path.join(app.root_path, '_data', relpath)
+        fullpath = os.path.join(util.image_root_path(), '_data', relpath)
         if not os.path.exists(fullpath):
             break
         idx += 1
