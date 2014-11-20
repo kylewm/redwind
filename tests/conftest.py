@@ -10,18 +10,18 @@ import redwind
 from flask import redirect
 from flask.ext.login import login_user
 import pytest
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def app(request):
     """The redwind flask app, set up with an empty database and
     some sane defaults
     """
+    import tempfile
+    import shutil
     app = redwind.app
     db = redwind.db
+
     def set_setting(key, value):
         from redwind.models import Setting
         s = Setting.query.get(key)
@@ -32,25 +32,26 @@ def app(request):
         s.value = value
         db.session.commit()
 
-    assert str(db.engine.url)  == 'sqlite:///:memory:'
+    assert str(db.engine.url) == 'sqlite:///:memory:'
     app_context = app.app_context()
     app_context.push()
-    
     db.create_all()
+    temp_image_path = tempfile.mkdtemp()
+    app.config['IMAGE_ROOT_PATH'] = temp_image_path
+
     set_setting('posts_per_page', '15')
     set_setting('author_domain', 'example.com')
     set_setting('site_url', 'http://example.com')
     set_setting('timezone', 'America/Los_Angeles')
     db.session.commit()
 
-    def fin():
-        app_context.pop()
-        assert str(db.engine.url)  == 'sqlite:///:memory:'
-        db.session.remove()
-        db.drop_all()
-    request.addfinalizer(fin)
+    yield app
 
-    return app
+    app_context.pop()
+    shutil.rmtree(temp_image_path)
+    assert str(db.engine.url) == 'sqlite:///:memory:'
+    db.session.remove()
+    db.drop_all()
 
 
 @pytest.fixture
@@ -60,7 +61,7 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def auth(request, app, client):
     """Logs into the application as an administrator.
     """
@@ -74,8 +75,5 @@ def auth(request, app, client):
         app.add_url_rule('/bypass_login', 'bypass_login', bypass_login)
 
     client.get('/bypass_login')
-
-    def fin():
-        client.get('/logout')
-    request.addfinalizer(fin)
-    return True
+    yield
+    client.get('/logout')

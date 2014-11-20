@@ -267,6 +267,10 @@ def multiline_string_to_list(s):
     return [l.strip() for l in s.split('\n') if l.strip()]
 
 
+def image_root_path():
+    return app.config.get('IMAGE_ROOT_PATH', app.root_path)
+
+
 def mirror_image(src, side=None):
     """Downloads a remote resource schema://domain/path to
     static/_mirror/domain/path and optionally resizes it to
@@ -279,7 +283,7 @@ def mirror_image(src, side=None):
         return src
 
     relpath = os.path.join("_mirror", o.netloc, o.path.strip('/'))
-    abspath = os.path.join(app.root_path, app.static_folder, relpath)
+    abspath = os.path.join(image_root_path(), app.static_folder, relpath)
 
     if os.path.exists(abspath):
         pass
@@ -308,7 +312,7 @@ def mirror_image(src, side=None):
                for ext in ['.gif', '.jpg', '.png']):
         rz_relpath += '.jpg'
 
-    rz_abspath = os.path.join(app.root_path, app.static_folder, rz_relpath)
+    rz_abspath = os.path.join(image_root_path(), app.static_folder, rz_relpath)
 
     if not os.path.exists(rz_abspath):
         resize_image(abspath, rz_abspath, side)
