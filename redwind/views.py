@@ -486,6 +486,9 @@ def get_top_tags(n=10):
     for published, tag in entries:
         weight = 0
         if published:
+            if published.tzinfo:
+                published = published.astimezone(datetime.timezone.utc)
+                published = published.replace(tzinfo=None)
             delta = now - published
             if delta < datetime.timedelta(days=4):
                 weight = 1.0
