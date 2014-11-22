@@ -383,9 +383,8 @@ class Mention(db.Model):
     reftype = db.Column(db.String(32))
     posts = db.relationship('Post', secondary=posts_to_mentions)
 
-    def __init__(self, post_path):
+    def __init__(self):
         self.index = None
-        self.post_path = post_path
         self.url = None
         self.permalink = None
         self.author_name = None

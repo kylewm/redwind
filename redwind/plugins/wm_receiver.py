@@ -290,7 +290,7 @@ def create_mention(post, url, source_response):
     mention = next((m for m in post.mentions if m.url == url), None)
     # or create a new one
     if not mention:
-        mention = Mention(post.path)
+        mention = Mention()
     mention.url = url
     mention.permalink = entry.get('url') or url
     mention.reftype = comment_type[0] if comment_type else 'reference'
