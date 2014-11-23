@@ -16,7 +16,7 @@
       </span>
       <a class="u-url" href="{{context.permalink}}">
         {% if context.title %}
-          {{context.title}}
+          <span class="p-name">{{context.title}}</span>
         {% else %}
           {{context.permalink | domain_from_url}}
         {% endif %}

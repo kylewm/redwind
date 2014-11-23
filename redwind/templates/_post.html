@@ -10,7 +10,7 @@
   {% endif %}
 
   {% if post.photos or post.content or post.post_type == 'checkin' %}
-    <div class="{% if not title %}p-name {% endif %}e-content">
+    <div class="{% if not post.title %}p-name {% endif %}e-content">
       <div class="primary-content">
         {% if post.post_type == 'checkin' and post.venue %}
           <p>Checked into {{ post.venue.name }}</p>
