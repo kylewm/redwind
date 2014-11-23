@@ -191,9 +191,8 @@ class Post(db.Model):
     def load_by_historic_path(cls, path):
         return cls.query.filter_by(historic_path=path).first()
 
-    def __init__(self, post_type, date_index=None):
+    def __init__(self, post_type):
         self.post_type = post_type
-        self.date_index = date_index
         self.draft = False
         self.deleted = False
         self.hidden = False

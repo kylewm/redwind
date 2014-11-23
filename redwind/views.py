@@ -195,7 +195,8 @@ def check_audience(post):
 
 
 def resize_associated_image(post, sourcepath, side):
-    targetdir = os.path.join('_resized', post.path, 'files', str(side))
+    targetdir = os.path.join(
+        util.image_root_path(), '_resized', post.path, 'files', str(side))
     targetpath = os.path.join(targetdir, os.path.basename(sourcepath))
     util.resize_image(
         os.path.join(util.image_root_path(), sourcepath),
@@ -215,7 +216,13 @@ def post_associated_file(year, month, slug, filename):
     if not check_audience(post):
         abort(401)  # not authorized TODO a nicer page
 
-    sourcepath = os.path.join('_data', post.path, 'files', filename)
+    sourcepath = os.path.join(
+        util.image_root_path(), '_data', post.path, 'files', filename)
+
+    app.logger.debug('image source path: %s. request args: %s', sourcepath, request.args)
+
+    if not os.path.exists(sourcepath):
+        abort(404)
 
     size = request.args.get('size')
     if size == 'small':
@@ -224,6 +231,9 @@ def post_associated_file(year, month, slug, filename):
         sourcepath = resize_associated_image(post, sourcepath, 800)
     elif size == 'large':
         sourcepath = resize_associated_image(post, sourcepath, 1024)
+
+    if size:
+        app.logger.debug('resized: %s, new path: %s', size, sourcepath)
 
     if app.debug:
         _, ext = os.path.splitext(sourcepath)
