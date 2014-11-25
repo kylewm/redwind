@@ -3,31 +3,8 @@ import pytest
 import urllib
 import datetime
 from redwind.models import User
-
-
-def assert_urls_match(u1, u2):
-    p1 = urllib.parse.urlparse(u1)
-    p2 = urllib.parse.urlparse(u2)
-    assert p1.scheme == p2.scheme
-    assert p1.netloc == p2.netloc
-    assert p1.path == p2.path
-    assert urllib.parse.parse_qs(p1.query) == urllib.parse.parse_qs(p2.query)
-
-
-class FakeResponse:
-    def __init__(self, text='', status_code=200, url=None):
-        self.text = text
-        self.status_code = status_code
-        self.content = text and bytes(text, 'utf8')
-        self.url = url
-        self.headers = {'content-type': 'text/html'}
-
-    def __repr__(self):
-        return 'FakeResponse(status={}, text={}, url={})'.format(
-            self.status_code, self.text, self.url)
-
-    def raise_for_status(self):
-        pass
+from testutil import FakeResponse
+import testutil
 
 
 def test_empty_db(client):
@@ -42,7 +19,9 @@ def test_create_post(client, auth, mocker):
     mocker.patch('redwind.queue.enqueue')
     rv = client.post('/save_new', data={
         'post_type': 'note',
-        'content': 'This is a test note'})
+        'content': 'This is a test note',
+        'action': 'Publish Quietly',
+    })
     assert 302 == rv.status_code
     assert re.match('.*/\d+/\d+/this-is-a-test-note$', rv.location)
     # follow the redirect
@@ -66,6 +45,7 @@ def silly_posts(client, auth, mocker):
             'title': 'First interesting article',
             'content': 'Something really thoughtful and interesting',
             'tags': 'thoughtful,interesting',
+            'syndication': 'https://twitter.com/kylewm2/status/123456\nhttps://facebook.com/kyle.mahan/status/123456',
         },
         {
             'post_type': 'reply',
@@ -93,6 +73,7 @@ def silly_posts(client, auth, mocker):
     ]
 
     for datum in data:
+        datum['action'] = 'Publish Quietly'
         rv = client.post('/save_new', data=datum)
         assert 302 == rv.status_code
 
@@ -113,6 +94,17 @@ def test_posts_everything(client, silly_posts):
     text = client.get('/everything').get_data(as_text=True)
     assert 'https://mal.colm/reynolds' in text
     assert 'https://buf.fy/summers' in text
+
+
+def test_post_permalink(client, silly_posts):
+    today = datetime.date.today()
+    rv = client.get('/{}/{:02d}/{}'.format(today.year, today.month,
+                                           'first-interesting-article'))
+    assert 200 == rv.status_code
+    content = rv.get_data(as_text=True)
+    assert 'fa-twitter' in content
+    assert 'Something really thoughtful and interesting' in content
+    assert re.search('<a[^>]*class="p-category"[^>]*>thoughtful', content)
 
 
 def test_posts_atom(client, silly_posts):
@@ -154,14 +146,17 @@ def test_atom_redirects(client):
 
 
 def test_upload_image(client, mocker):
+    import io
+    from PIL import Image
     today = datetime.date.today()
     mocker.patch('requests.get')
     mocker.patch('redwind.queue.enqueue')
 
     rv = client.post('/save_new', data={
-        'photo': open('tests/image.jpg', 'rb'),
+        'photo': (open('tests/image.jpg', 'rb'), 'image.jpg', 'image/jpeg'),
         'post_type': 'photo',
         'content': 'High score',
+        'action': 'Publish Quietly',
     })
 
     assert rv.status_code == 302
@@ -178,8 +173,14 @@ def test_upload_image(client, mocker):
 
     rv = client.get(permalink + '/files/image.jpg')
     assert rv.status_code == 200
-    rv = client.get(permalink + '/files/image.jpg?size=small')
+    im = Image.open(io.BytesIO(rv.data))
+    assert im.size[0] > 300 or im.size[1] > 300
+
+    rv = client.get(permalink + '/files/image.jpg',
+                    query_string={'size': 'small'})
     assert rv.status_code == 200
+    im = Image.open(io.BytesIO(rv.data))
+    assert im.size[0] <= 300 and im.size[1] <= 300
 
 
 def test_indieauth_login(app, client, mocker):
@@ -192,13 +193,14 @@ def test_indieauth_login(app, client, mocker):
     rv = client.get('/login?me=http://example.com')
 
     assert rv.status_code == 302
-    assert_urls_match(rv.location,
-                      'https://indieauth.com/auth?' + urllib.parse.urlencode({
-                          'state': None,
-                          'me': 'http://example.com',
-                          'client_id': 'http://example.com',
-                          'redirect_uri': 'http://localhost/login_callback',
-                      }))
+    testutil.assert_urls_match(
+        rv.location,
+        'https://indieauth.com/auth?' + urllib.parse.urlencode({
+            'state': None,
+            'me': 'http://example.com',
+            'client_id': 'http://example.com',
+            'redirect_uri': 'http://localhost/login_callback',
+        }))
     mock_get.assert_called_once_with('http://example.com')
     mock_get.reset_mock()
 
