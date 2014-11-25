@@ -111,7 +111,7 @@ def index(page):
         include_drafts=flask_login.current_user.is_authenticated())
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
-    return render_posts(None, posts, page, is_first, is_last)
+    return render_posts('Stream', posts, page, is_first, is_last)
 
 
 @app.route('/everything', defaults={'page': 1})
@@ -950,6 +950,10 @@ def save_contact(contact):
     contact.image = request.form.get('image')
     contact.url = request.form.get('url')
 
+    for nick in contact.nicks:
+        db.session.delete(nick)
+    db.session.commit()
+    
     contact.nicks = [Nick(name=nick.strip())
                      for nick
                      in request.form.get('nicks', '').split(',')

@@ -64,7 +64,7 @@ def import_post(blob, tags, venues):
     p.path = blob['path']
     p.historic_path = blob['historic_path']
     p.draft = blob['draft']
-    p.delete = blob['deleted']
+    p.deleted = blob['deleted']
     p.hidden = blob['hidden']
     p.redirect = blob['redirect']
     p.tags = [import_tag(t) for t in blob['tags']]

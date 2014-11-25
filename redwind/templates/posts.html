@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <data class="p-name" value="{{ settings.author_name }}{% if title %}: {{ title }}{% endif %}"></data>
+
   {% for post in posts %}
       {% include "_post.html" %}
   {% endfor %}
@@ -21,6 +23,5 @@
   <div style="text-align: center">
     <a onclick="(function(btn){var z=document.createElement('script');document.subtomeBtn=btn;z.src='https://www.subtome.com/load.js';document.body.appendChild(z);})(this)" href="#"><i class="fa fa-rss"></i> Subscribe</a>
   </div>
-
 
 {% endblock content %}
