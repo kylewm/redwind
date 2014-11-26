@@ -5,7 +5,10 @@
     "website": "https://indiewebcamp.com/Red_Wind",
     "repository": "https://github.com/kylewm/redwind",
     "scripts": {
-        "postdeploy": "python install.py"
+        "postdeploy": [
+            "cp config.py.heroku config.py",
+            "python install.py"
+        ]
     },
     "env": {
         "SECRET_KEY": {

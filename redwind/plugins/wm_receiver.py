@@ -148,7 +148,7 @@ def do_process_webmention(source, target):
 
     if source_response.status_code == 410:
         app.logger.debug("Webmention indicates original was deleted")
-        return target_post, source, True, None
+        return target_post, None, True, None
 
     if source_response.status_code // 100 != 2:
         app.logger.warn(
@@ -220,7 +220,10 @@ def find_target_post(target_url):
         if not parsed_url.path.startswith(parsed_site_root.path):
             raise NotFound
         urls = app.url_map.bind(get_settings().site_url)
-        endpoint, args = urls.match(parsed_url.path[len(site_prefix):])
+        path = parsed_url.path[len(site_prefix):]
+        app.logger.debug('target path with no prefix %s', path)
+        endpoint, args = urls.match(path)
+        app.logger.debug('found match for target url %r: %r', endpoint, args)
     except NotFound:
         app.logger.warn("Webmention could not find target for %s",
                         parsed_url.path)
@@ -273,9 +276,11 @@ def create_mention(post, url, source_response):
 
     blob = mf2py.Parser(doc=source_response.text, url=url).to_dict()
     if not blob:
+        app.logger.debug('create_mention: no mf2 in source_response')
         return
     entry = mf2util.interpret_comment(blob, url, target_urls)
     if not entry:
+        app.logger.debug('create_mention: mf2util found no comment entry')
         return
     comment_type = entry.get('comment_type')
 

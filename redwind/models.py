@@ -317,10 +317,9 @@ class Post(db.Model):
 
     def __repr__(self):
         if self.title:
-            return 'post:{}'.format(self.title)
+            return 'post:{}'.format(self.path)
         else:
-            return 'post:{}'.format(
-                self.content[:140] if self.content else 'BLANK')
+            return 'post:{}'.format(self.path)
 
 
 class Context(db.Model):

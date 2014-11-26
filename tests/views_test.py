@@ -3,8 +3,7 @@ import pytest
 import urllib
 import datetime
 from redwind.models import User
-from testutil import FakeResponse
-import testutil
+from testutil import FakeResponse, assert_urls_match
 
 
 def test_empty_db(client):
@@ -193,7 +192,7 @@ def test_indieauth_login(app, client, mocker):
     rv = client.get('/login?me=http://example.com')
 
     assert rv.status_code == 302
-    testutil.assert_urls_match(
+    assert_urls_match(
         rv.location,
         'https://indieauth.com/auth?' + urllib.parse.urlencode({
             'state': None,

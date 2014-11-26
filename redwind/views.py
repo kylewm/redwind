@@ -283,15 +283,6 @@ def post_by_path(year, month, slug):
                            body_class='h-entry', article_class=None)
 
 
-# for testing -- allows arbitrary logins as any user
-# @app.route('/fakeauth')
-# def fakeauth():
-#     domain = request.args.get('url')
-#     user = auth.load_user(domain)
-#     login_user(user, remember=True)
-#     return redirect(url_for('index'))
-
-
 def discover_endpoints(me):
     me_response = requests.get(me)
     if me_response.status_code != 200:
@@ -310,6 +301,14 @@ def discover_endpoints(me):
 @app.route('/login')
 def login():
     me = request.args.get('me')
+    if app.config.get('BYPASS_INDIEAUTH'):
+        user = auth.load_user(urllib.parse.urlparse(me).netloc)
+        app.logger.debug('Logging in user %s', user)
+        flask_login.login_user(user, remember=True)
+        flash('logged in as {}'.format(me))
+        app.logger.debug('Logged in with domain %s', me)
+        return redirect(request.args.get('next') or url_for('index'))
+
     if not me:
         return make_response('Missing "me" parameter', 400)
     if not me.startswith('http://') and not me.startswith('https://'):

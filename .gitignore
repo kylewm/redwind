@@ -21,3 +21,6 @@ logs
 .env
 redwind/static/js/main.js
 redwind/templates/custom_*
+config.py
+.coverage
+htmlcov

@@ -5,6 +5,7 @@ Configuration.DEBUG_TB_ENABLED = False
 Configuration.SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
 Configuration.TESTING = True
 Configuration.REDIS_URL = 'redis://localhost:911'
+Configuration.BYPASS_INDIEAUTH = False
 
 from redwind import app as rw_app, db as rw_db
 import pytest

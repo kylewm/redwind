@@ -24,3 +24,14 @@ class FakeResponse:
 
     def raise_for_status(self):
         pass
+
+
+class FakeUrlOpen:
+    def __init__(self, url=None):
+        self.url = url
+
+    def __repr__(self):
+        return 'FakeUrlOpenResponse(url={})'.format(self.url)
+
+    def geturl(self):
+        return self.url

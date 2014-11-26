@@ -1,1 +1,1 @@
-web: uwsgi heroku.ini
+web: uwsgi uwsgi-heroku.ini
