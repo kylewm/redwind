@@ -1,5 +1,5 @@
 import pytest
-from testutil import FakeResponse, FakeUrlOpen, assert_urls_match
+from testutil import FakeResponse, FakeUrlOpen
 from redwind.plugins import wm_receiver
 from flask.ext.login import current_user
 
