@@ -27,11 +27,30 @@ class FakeResponse:
 
 
 class FakeUrlOpen:
-    def __init__(self, url=None):
-        self.url = url
+    def __init__(self, url=None, info=None):
+        self.url_ = url
+        self.info_ = info
 
     def __repr__(self):
         return 'FakeUrlOpenResponse(url={})'.format(self.url)
 
     def geturl(self):
-        return self.url
+        return self.url_
+
+    def info(self):
+        return self.info_
+
+
+class FakeUrlMetadata:
+    def __init__(self, content_type, content_length):
+        self.content_type = content_type
+        self.content_length = content_length
+
+    def get(self, prop):
+        if prop.lower() == 'content-length':
+            return self.content_length
+        if prop.lower() == 'content-type':
+            return self.content_type
+
+    def get_content_maintype(self):
+        return self.content_type.split('/')[0]
