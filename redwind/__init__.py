@@ -12,7 +12,6 @@ from flask.ext.login import LoginManager
 from werkzeug.datastructures import ImmutableDict
 from redis import Redis
 from rq import Queue
-from config import Configuration
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 
@@ -21,7 +20,14 @@ import logging
 
 
 app = Flask(__name__)
-app.config.from_object(Configuration)
+
+try:
+    from config import Configuration
+    app.config.from_object(Configuration)
+except NameError:
+    app.logger.warn(
+        'Could not find config.Configuration. '
+        'This is OK when running unit tests but probably bad otherwise.')
 
 redis = Redis.from_url(app.config['REDIS_URL'])
 
