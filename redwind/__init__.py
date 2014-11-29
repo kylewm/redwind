@@ -14,20 +14,14 @@ from redis import Redis
 from rq import Queue
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
+from config import Configuration
 
 import os
 import logging
 
 
 app = Flask(__name__)
-
-try:
-    from config import Configuration
-    app.config.from_object(Configuration)
-except NameError:
-    app.logger.warn(
-        'Could not find config.Configuration. '
-        'This is OK when running unit tests but probably bad otherwise.')
+app.config.from_object(Configuration)
 
 redis = Redis.from_url(app.config['REDIS_URL'])
 
