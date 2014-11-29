@@ -3,7 +3,7 @@
 
   <article>
   <b>Venue:</b> {{ venue.name or '' }}<br />
-  <b>Geo:</b> {{ venue.location.geo_name if venue.location else '??' }}<br />
+  <b>Geo:</b> {{ (venue.location | geo_name) if venue.location else '??' }}<br />
 
   <div class="map"
        data-latitude="{{venue.location.latitude}}"

@@ -195,19 +195,22 @@ def check_audience(post):
 
 
 def resize_associated_image(post, sourcepath, side):
-    targetdir = os.path.join(
-        util.image_root_path(), '_resized', post.path, 'files', str(side))
-    targetpath = os.path.join(targetdir, os.path.basename(sourcepath))
+    targetpath = os.path.join(
+        util.image_root_path(), '_resized', post.path, 'files', str(side), os.path.basename(sourcepath))
+    # nginx is configured to serve internal resources directly
+    targetpath_internal = os.path.join(
+        '/internal_resized', post.path, 'files', str(side), os.path.basename(sourcepath))
     util.resize_image(
         os.path.join(util.image_root_path(), sourcepath),
         os.path.join(util.image_root_path(), targetpath), side)
-    return targetpath
+    return targetpath, targetpath_internal
 
 
 @app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
 def post_associated_file(year, month, slug, filename):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
     if not post:
+        app.logger.debug('could not find post for path %s %s %s', year, month, slug)
         abort(404)
 
     if post.deleted:
@@ -219,18 +222,23 @@ def post_associated_file(year, month, slug, filename):
     sourcepath = os.path.join(
         util.image_root_path(), '_data', post.path, 'files', filename)
 
+    # nginx is configured to serve internal resources directly
+    sourcepath_internal = os.path.join(
+        '/internal_data', post.path, 'files', filename)
+
     app.logger.debug('image source path: %s. request args: %s', sourcepath, request.args)
 
     if not os.path.exists(sourcepath):
+        app.logger.debug('source path does not exist %s', sourcepath)
         abort(404)
 
     size = request.args.get('size')
     if size == 'small':
-        sourcepath = resize_associated_image(post, sourcepath, 300)
+        sourcepath, sourcepath_internal = resize_associated_image(post, sourcepath, 300)
     elif size == 'medium':
-        sourcepath = resize_associated_image(post, sourcepath, 800)
+        sourcepath, sourcepath_internal = resize_associated_image(post, sourcepath, 800)
     elif size == 'large':
-        sourcepath = resize_associated_image(post, sourcepath, 1024)
+        sourcepath, sourcepath_internal = resize_associated_image(post, sourcepath, 1024)
 
     if size:
         app.logger.debug('resized: %s, new path: %s', size, sourcepath)
@@ -242,8 +250,9 @@ def post_associated_file(year, month, slug, filename):
             os.path.basename(sourcepath), mimetype=None)
 
     resp = make_response('')
-    resp.headers['X-Accel-Redirect'] = '/internal' + sourcepath
+    resp.headers['X-Accel-Redirect'] = sourcepath_internal
     del resp.headers['Content-Type']
+    app.logger.debug('response with X-Accel-Redirect %s', resp.headers)
     return resp
 
 
@@ -986,6 +995,8 @@ def save_contact(contact):
 @app.route('/venue/<slug>')
 def venue_by_slug(slug):
     venue = Venue.query.filter_by(slug=slug).first()
+    if not venue:
+        abort(404)
     app.logger.debug('rendering venue, location. {}, {}',
                      venue, venue.location)
     posts = Post.query.filter_by(venue_id=venue.id).all()

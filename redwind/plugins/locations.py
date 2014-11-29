@@ -5,6 +5,7 @@ from .. import db
 from .. import hooks
 from .. import models
 from .. import queue
+from .. import views
 from flask import request, jsonify
 
 
@@ -28,6 +29,9 @@ def do_reverse_geocode_post(postid):
            and 'longitude' in post.location:
             adr = do_reverse_geocode(post.location['latitude'],
                                      post.location['longitude'])
+            # copy the dict so that the ORM recognizes
+            # that it changed
+            post.location = dict(post.location)
             post.location.update(adr)
             db.session.commit()
 
@@ -37,11 +41,13 @@ def do_reverse_geocode_venue(venueid):
         venue = models.Venue.query.get(venueid)
         if venue.location and 'latitude' in venue.location \
            and 'longitude' in venue.location:
-
             adr = do_reverse_geocode(venue.location['latitude'],
                                      venue.location['longitude'])
+            # copy the dict so the ORM actually recognizes
+            # that it changed
+            venue.location = dict(venue.location)
             venue.location.update(adr)
-            venue.update_slug(venue.location.geo_name)
+            venue.update_slug(views.geo_name(venue.location))
             db.session.commit()
 
 

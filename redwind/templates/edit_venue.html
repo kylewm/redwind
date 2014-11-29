@@ -13,7 +13,7 @@
     <input readonly="readonly" type="text" id="longitude" name="longitude" value="{{ venue.location.longitude if venue.location else ''}}" style="display:inline" />
 
     <label>Geocode</label>
-    <input type="text" id="geocode" name="geocode" value="{{ venue.location.geo_name if venue.location else ''}}" />
+    <input type="text" id="geocode" name="geocode" value="{{ (venue.location | geo_name) if venue.location else ''}}" />
 
   </form>
 
