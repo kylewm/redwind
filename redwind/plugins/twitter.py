@@ -234,8 +234,8 @@ def create_context(url):
     app.logger.debug('received response from twitter: %s', status_data)
     pub_date = datetime.datetime.strptime(status_data['created_at'],
                                           '%a %b %d %H:%M:%S %z %Y')
-    #if pub_date and pub_date.tzinfo:
-    #    pub_date = pub_date.astimezone(datetime.timezone.utc)
+    # if pub_date and pub_date.tzinfo:
+    #     pub_date = pub_date.astimezone(datetime.timezone.utc)
     real_name = status_data['user']['name']
     screen_name = status_data['user']['screen_name']
     author_name = real_name

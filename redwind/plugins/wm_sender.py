@@ -3,8 +3,7 @@ from .. import queue
 from .. import hooks
 from ..models import Post
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-from urllib.request import urlopen, Request
+import urllib
 import re
 import requests
 
@@ -106,8 +105,9 @@ def send_mention(post, target_url):
 
 
 def check_content_type_and_size(target_url):
-    request = Request(target_url, headers={'User-Agent': 'kylewm.com'})
-    metadata = urlopen(request).info()
+    request = urllib.request.Request(
+        target_url, headers={'User-Agent': 'kylewm.com'})
+    metadata = urllib.request.urlopen(request).info()
     if not metadata:
         return False, "Could not retrieve metadata for url {}".format(
             target_url)
@@ -137,7 +137,8 @@ def find_webmention_endpoint(target_url):
     endpoint = (find_webmention_endpoint_in_headers(response.headers)
                 or find_webmention_endpoint_in_html(response.text))
     app.logger.debug("webmention endpoint %s %s", response.url, endpoint)
-    return endpoint and urljoin(response.url, endpoint)
+    return endpoint and urllib.parse.urljoin(response.url, endpoint)
+
 
 def find_webmention_endpoint_in_headers(headers):
     if 'link' in headers:
