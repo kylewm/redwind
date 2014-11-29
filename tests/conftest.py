@@ -1,4 +1,14 @@
-from config import Configuration
+import imp
+import sys
+
+
+class Configuration:
+    pass
+
+config = imp.new_module('config')
+config.Configuration = Configuration
+sys.modules['config'] = config
+
 Configuration.SECRET_KEY = 'lmnop8765309'
 Configuration.DEBUG = True
 Configuration.DEBUG_TB_ENABLED = False
