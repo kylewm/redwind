@@ -29,7 +29,7 @@ def pull():
 def restart():
     with cd("~/redwind"):
         with prefix("source venv/bin/activate"):
-            run("pip install -r requirements/base.txt")
+            run("pip install -r requirements.txt")
             run("uwsgi --reload /tmp/redwind.pid")
 
 
