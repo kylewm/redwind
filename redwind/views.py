@@ -802,7 +802,8 @@ def save_post(post):
 
     tags = request.form.get('tags', '').split(',')
     tags = list(filter(None, map(util.normalize_tag, tags)))
-    post.tags = [Tag(tag) for tag in tags]
+    post.tags = [Tag.query.filter_by(name=tag).first() or Tag(tag)
+                 for tag in tags]
 
     slug = request.form.get('slug')
     if slug:
@@ -971,7 +972,7 @@ def save_contact(contact):
     for nick in contact.nicks:
         db.session.delete(nick)
     db.session.commit()
-    
+
     contact.nicks = [Nick(name=nick.strip())
                      for nick
                      in request.form.get('nicks', '').split(',')
