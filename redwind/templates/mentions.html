@@ -9,8 +9,10 @@
         on <a href="{{ post.permalink }}">
         {% if post.title %}
           {{ post.title }}
-        {% else %}
+        {% elif post.content %}
           {{post.content | truncate(50) }}
+        {% else %}
+          <em>this</em>
         {% endif %}
         </a>
       </div>
