@@ -85,7 +85,7 @@ def collect_posts(post_types, page, per_page, tag,
 # Font sizes in em. Maybe should be configurable,
 # but worse case we can use % in CSS to fine-tune :)
 MIN_TAG_SIZE = 1.0
-MAX_TAG_SIZE = 3.0
+MAX_TAG_SIZE = 4.0
 def render_tags(title, tags):
     counts = [tag['count'] for tag in tags]
     mincount,maxcount = min(counts),max(counts)
@@ -165,7 +165,7 @@ def tag_cloud():
     # This is probably a daft way to get the dict I want
     # I need to learn me some sqlalchemy
     tags = [{"name":tag.name,"count":len(tag.posts)}
-        for tag in query.all()]
+        for tag in query.all() if len(tag.posts)>1] # Should be configurable?!?
     return render_tags("Tags", tags)
 
 @app.route('/tag/<tag>', defaults={'page': 1})

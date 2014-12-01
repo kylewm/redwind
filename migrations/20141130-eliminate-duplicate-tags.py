@@ -5,6 +5,7 @@ import json
 from sqlalchemy import (create_engine, Table, Column, String, Integer,
                         Float, Text, MetaData, select, ForeignKey,
                         bindparam, delete, and_)
+import config
 from config import Configuration
 
 engine = create_engine(Configuration.SQLALCHEMY_DATABASE_URI, echo=True)
