@@ -82,6 +82,24 @@ def collect_posts(post_types, page, per_page, tag,
     posts = [post for post in posts if check_audience(post)]
     return posts, is_first, is_last
 
+# Font sizes in em. Maybe should be configurable,
+# but worse case we can use % in CSS to fine-tune :)
+MIN_TAG_SIZE = 1.0
+MAX_TAG_SIZE = 3.0
+def render_tags(title, tags):
+    counts = [tag['count'] for tag in tags]
+    mincount,maxcount = min(counts),max(counts)
+    for tag in tags:
+        if maxcount>mincount:
+            tag['size'] = (MIN_TAG_SIZE+
+                (MAX_TAG_SIZE-MIN_TAG_SIZE)*
+                (tag['count']-mincount)/
+                (maxcount-mincount))
+        else:
+            tag['size'] = MIN_TAG_SIZE
+    return render_template('tags.html', tags=tags, title=title, max_tag_size=MAX_TAG_SIZE,
+                           ###@@@ this is probably wrong. What should I write here?
+                           body_class='h-feed', article_class='h-entry')
 
 def render_posts(title, posts, page, is_first, is_last):
     atom_args = request.view_args.copy()
@@ -140,6 +158,15 @@ def posts_by_type(plural_type, page):
         return render_posts_atom(title, plural_type + '.atom', posts)
     return render_posts(title, posts, page, is_first, is_last)
 
+@app.route('/tag/')
+def tag_cloud():
+    query = Tag.query
+    query = query.order_by(Tag.name)
+    # This is probably a daft way to get the dict I want
+    # I need to learn me some sqlalchemy
+    tags = [{"name":tag.name,"count":len(tag.posts)}
+        for tag in query.all()]
+    return render_tags("Tags", tags)
 
 @app.route('/tag/<tag>', defaults={'page': 1})
 @app.route('/tag/<tag>/page/<int:page>')

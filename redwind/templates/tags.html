@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <p style="line-height:{{max_tag_size}}em">
+    {% for tag in tags %}
+      {% if not loop.first %}<i class="fa fa-tag"></i>{% endif %} 
+      <a class="p-category" style="font-size: {{tag.size}}em"
+        title="{{tag.count}}"
+        href="{{url_for('posts_by_tag', tag=tag.name)}}">{{tag.name}}</a>
+    {% endfor %}
+  </p>
+{% endblock content %}
