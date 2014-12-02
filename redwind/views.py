@@ -82,10 +82,11 @@ def collect_posts(post_types, page, per_page, tag,
     posts = [post for post in posts if check_audience(post)]
     return posts, is_first, is_last
 
-# Font sizes in em. Maybe should be configurable,
-# but worse case we can use % in CSS to fine-tune :)
+# Font sizes in em. Maybe should be configurable
 MIN_TAG_SIZE = 1.0
 MAX_TAG_SIZE = 4.0
+MIN_TAG_COUNT = 2
+
 def render_tags(title, tags):
     counts = [tag['count'] for tag in tags]
     mincount,maxcount = min(counts),max(counts)
@@ -158,14 +159,19 @@ def posts_by_type(plural_type, page):
         return render_posts_atom(title, plural_type + '.atom', posts)
     return render_posts(title, posts, page, is_first, is_last)
 
+
 @app.route('/tag/')
 def tag_cloud():
     query = Tag.query
     query = query.order_by(Tag.name)
     # This is probably a daft way to get the dict I want
     # I need to learn me some sqlalchemy
-    tags = [{"name":tag.name,"count":len(tag.posts)}
-        for tag in query.all() if len(tag.posts)>1] # Should be configurable?!?
+    tags = []
+    for tag in query.all():
+        posts, is_first, is_last = collect_posts(None, 1, 9999, tag.name, include_hidden=False,
+                  include_drafts=flask_login.current_user.is_authenticated())
+        if len(posts)>=MIN_TAG_COUNT:
+            tags.append({"name":tag.name,"count":len(posts)})
     return render_tags("Tags", tags)
 
 @app.route('/tag/<tag>', defaults={'page': 1})
