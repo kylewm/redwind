@@ -98,9 +98,7 @@ def render_tags(title, tags):
                 (maxcount-mincount))
         else:
             tag['size'] = MIN_TAG_SIZE
-    return render_template('tags.html', tags=tags, title=title, max_tag_size=MAX_TAG_SIZE,
-                           ###@@@ this is probably wrong. What should I write here?
-                           body_class='h-feed', article_class='h-entry')
+    return render_template('tags.html', tags=tags, title=title, max_tag_size=MAX_TAG_SIZE)
 
 def render_posts(title, posts, page, is_first, is_last):
     atom_args = request.view_args.copy()
