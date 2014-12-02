@@ -159,19 +159,19 @@ def posts_by_type(plural_type, page):
         return render_posts_atom(title, plural_type + '.atom', posts)
     return render_posts(title, posts, page, is_first, is_last)
 
+from sqlalchemy import func,and_
 
 @app.route('/tag/')
 def tag_cloud():
-    query = Tag.query
-    query = query.order_by(Tag.name)
-    # This is probably a daft way to get the dict I want
-    # I need to learn me some sqlalchemy
-    tags = []
-    for tag in query.all():
-        posts, is_first, is_last = collect_posts(None, 1, 9999, tag.name, include_hidden=False,
-                  include_drafts=flask_login.current_user.is_authenticated())
-        if len(posts)>=MIN_TAG_COUNT:
-            tags.append({"name":tag.name,"count":len(posts)})
+    query = db.session.query(Tag.name,func.count(Post.id)).join(Tag.posts)
+    query = query.filter(and_(Post.deleted==False,Post.hidden==False))
+    if not flask_login.current_user.is_authenticated():
+        query = query.filter(Post.draft==False)
+    query = query.group_by(Tag.id).order_by(Tag.name)
+    tags = [
+        {"name":name,"count":count}
+        for name,count in query.all()
+    ]
     return render_tags("Tags", tags)
 
 @app.route('/tag/<tag>', defaults={'page': 1})
