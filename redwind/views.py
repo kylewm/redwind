@@ -168,6 +168,7 @@ def tag_cloud():
     if not flask_login.current_user.is_authenticated():
         query = query.filter(Post.draft==False)
     query = query.group_by(Tag.id).order_by(Tag.name)
+    query = query.having(func.count(Post.id)>=MIN_TAG_COUNT)
     tags = [
         {"name":name,"count":count}
         for name,count in query.all()
