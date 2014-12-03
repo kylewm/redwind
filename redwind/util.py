@@ -195,7 +195,7 @@ def tag_for_post_type(post_type):
     return TYPE_TO_TAG.get(post_type)
 
 
-#use tantek's NewBase60 http://tantek.pbworks.com/w/page/19402946/NewBase60
+# use tantek's NewBase60 http://tantek.pbworks.com/w/page/19402946/NewBase60
 RADIX = list("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ_abcdefghijkmnopqrstuvwxyz")
 
 

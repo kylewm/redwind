@@ -1004,7 +1004,7 @@ def venue_by_slug(slug):
     return render_template('venue.html', venue=venue, posts=posts)
 
 
-@app.route('/venues')
+@app.route('/venue/')
 def all_venues():
     venues = Venue.query.all()
     return render_template('all_venues.html', venues=venues)
