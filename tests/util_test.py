@@ -89,3 +89,53 @@ def test_autolink_at_names(contacts, mocker):
 
     result = util.autolink("@luke this is @leia tell @obiwan he\'s our only help!")
     assert result == """<a class="microcard h-card" href="http://tatooine.com/moseisley"><img src="http://tatooine.com/luke.jpg"/>Luke Skywalker</a> this is <a class="microcard h-card" href="http://aldera.an"><img src="http://aldera.an/leia.png"/>Princess Leia</a> tell <a href="https://twitter.com/obiwan">@obiwan</a> he's our only help!"""
+
+
+def test_autolink_urls():
+    """Exercise the URL matching regex
+    """
+    def simple_url_marker(url, soup):
+        return '<' + url + '>'
+
+    test_cases = [
+        ('this should be link.ed', 'this should be <http://link.ed>'),
+        ('this should not be link.linked', 'this should not be link.linked'),
+        ('a link to is.gd/supplies, should end at the comma',
+         'a link to <http://is.gd/supplies>, should end at the comma'),
+        ('A link to example.com/q?u=a75$qrst&v should not terminate early',
+         'A link to <http://example.com/q?u=a75$qrst&v> should not terminate early'),
+        ('HTML links <a href="http://google.com">google.com</a> should not be affected',
+         'HTML links <a href="http://google.com">google.com</a> should not be affected'),
+        ('Neither should <code><pre>http://fenced.code/blocks</pre></code>',
+         'Neither should <code><pre>http://fenced.code/blocks</pre></code>')
+    ]
+
+    for inp, out in test_cases:
+        assert out == util.autolink(
+            inp, person_processor=None, url_processor=simple_url_marker)
+
+
+def test_autolink_people(db):
+    """Exercise the @-name matching regex, without contacts
+    """
+    def simple_name_marker(contact, name, soup):
+        return '<' + name + '>'
+
+    test_cases = [
+        ('@han should be linked', '<han> should be linked'),
+        ('chewbacca@chewie.com should not be',
+         'chewbacca@chewie.com should not be'),
+        ('@leia @luke @han', '<leia> <luke> <han>'),
+        ('@leia@luke@han', '@leia@luke@han'),
+        ('match a name at the end @kylewm',
+         'match a name at the end <kylewm>'),
+        ('match a name followed by a period @kylewm.',
+         'match a name followed by a period <kylewm>.'),
+        ('followed by a @comma, right?',
+         'followed by a <comma>, right?'),
+    ]
+
+    for inp, out in test_cases:
+        assert out == util.autolink(
+            inp, person_processor=simple_name_marker,
+            url_processor=None)

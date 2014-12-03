@@ -71,6 +71,11 @@ def app(request):
 
 
 @pytest.fixture
+def db(app):
+    return rw_db
+
+
+@pytest.fixture
 def client(app):
     """Client that can be used to send mock requests
     """
