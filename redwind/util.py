@@ -52,7 +52,6 @@ def isoparse(s):
             return datetime.datetime.strptime(s, '%Y-%m-%d')
 
 
-
 def isoparse_with_tz(s):
     """Parse datetimes with a timezone in ISO8601 format"""
     return s and datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S%z')
@@ -114,9 +113,55 @@ def urls_match(url1, url2):
     return p1.netloc == p2.netloc and p1.path == p2.path
 
 
-def autolink(plain):
+def url_to_link(url, soup):
+    a = soup.new_tag('a', href=url)
+    a.string = prettify_url(url)
+    return a
+
+
+def person_to_microcard(contact, nick, soup):
+    if contact:
+        url = contact.url or url_for('contact_by_name', nick)
+        a_tag = soup.new_tag('a', href=url)
+        a_tag['class'] = ['microcard', 'h-card']
+
+        image = contact.image
+        if image:
+            image = mirror_image(image, 26)
+            image_tag = soup.new_tag('img', src=image)
+            a_tag.append(image_tag)
+            a_tag.append(contact.name)
+        else:
+            a_tag.append('@' + contact.name)
+
+    else:
+        a_tag = soup.new_tag('a', href='https://twitter.com/' + nick)
+        a_tag.string = '@' + nick
+
+    return a_tag
+
+
+def autolink(plain, url_processor=url_to_link,
+             person_processor=person_to_microcard):
+    """Replace bare URLs in a document with an HTML <a> representation
+    """
+    blacklist = ('a', 'script', 'pre', 'code', 'embed', 'object',
+                      'audio', 'video')
+    soup = bs4.BeautifulSoup(plain)
 
     def bs4_sub(regex, repl):
+        """Process text elements in a BeautifulSoup document with a regex and
+        replacement string.
+
+        :param BeautifulSoup soup: the BeautifulSoup document to be
+         edited in place
+        :param string regex: a regular expression whose matches will
+         be replaced
+        :param function repl: a function that a Match object, and
+         returns text or a new HTML node
+        :param list blacklist: a list of tags whose children should
+         not be modified (<pre> for example)
+        """
         for txt in soup.find_all(text=True):
             if any(p.name in blacklist for p in txt.parents):
                 continue
@@ -133,17 +178,30 @@ def autolink(plain):
             ii = parent.contents.index(txt)
             txt.extract()
             for offset, node in enumerate(nodes):
-                parent.insert(ii+offset, node)
+                parent.insert(ii + offset, node)
 
     def link_repl(m):
-        a = soup.new_tag('a', href=(m.group(1) or 'http://') + m.group(2))
-        a.string = m.group(2)
-        return a
+        url = (m.group(1) or 'http://') + m.group(2)
+        return url_processor(url, soup)
 
-    blacklist = ('a', 'script', 'pre', 'code', 'embed', 'object',
-                 'audio', 'video')
-    soup = bs4.BeautifulSoup(plain)
-    bs4_sub(LINK_RE, link_repl)
+    def process_nick(m):
+        from . import db
+        from .models import Nick
+        name = m.group(1)
+        nick = Nick.query.filter(
+            db.func.lower(Nick.name) == db.func.lower(name)).first()
+        contact = nick and nick.contact
+        processed = person_processor(contact, name, soup)
+        if processed:
+            return processed
+        return m.group(0)
+
+    if url_processor:
+        bs4_sub(LINK_RE, link_repl)
+
+    if person_processor:
+        bs4_sub(AT_USERNAME_RE, process_nick)
+
     return ''.join(str(t) for t in soup.body.contents) if soup.body else ''
 
 
@@ -320,21 +378,8 @@ def mirror_image(src, side=None):
     return url_for('static', filename=rz_relpath)
 
 
-def person_to_microcard(contact, nick):
-    if contact:
-        url = contact.url or url_for('contact_by_name', nick)
-        image = contact.image
-        if image:
-            image = mirror_image(image, 26)
-            return '<a class="microcard h-card" href="{}"><img src="{}" />{}</a>'.format(
-                url, image, contact.name)
-        return '<a class="microcard h-card" href="{}">@{}</a>'.format(
-            url, contact.name)
-    url = 'https://twitter.com/' + nick
-    return '<a href="{}">@{}</a>'.format(url, nick)
-
-
-def markdown_filter(data, img_path=None, person_processor=person_to_microcard):
+def markdown_filter(data, img_path=None, url_processor=url_to_link,
+                    person_processor=person_to_microcard):
     if data is None:
         return ''
 
@@ -342,59 +387,27 @@ def markdown_filter(data, img_path=None, person_processor=person_to_microcard):
         # replace relative paths to images with absolute
         data = RELATIVE_PATH_RE.sub('[\g<1>](' + img_path + '/\g<2>)', data)
 
-    if person_processor:
-        data = process_people(data, person_processor)
-
+    data = convert_legacy_people_to_at_names(data)
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
-    result = autolink(result)
+    if url_processor or person_processor:
+        result = autolink(result, url_processor, person_processor)
     result = smartyPants(result)
     return result
 
 
-def process_people(data, person_processor):
-    from . import db
-    from .models import Contact, Nick
+def convert_legacy_people_to_at_names(data):
+    from .models import Contact
 
     def process_name(m):
         fullname = m.group(1)
         displayname = m.group(2)
         contact = Contact.query.filter_by(name=fullname).first()
-        processed = person_processor(contact, displayname)
-        if processed:
-            return processed
-        return displayname
+        if contact and contact.nicks:
+            return '@' + contact.nicks[0].name
+        return '@' + displayname
 
-    def process_nick(m):
-        name = m.group(1)
-        nick = Nick.query.filter(
-            db.func.lower(Nick.name) == db.func.lower(name)).first()
-        contact = nick and nick.contact
-        processed = person_processor(contact, name)
-        if processed:
-            return processed
-        return m.group(0)
-
-    app.logger.debug('in data %s', data)
     data = PEOPLE_RE.sub(process_name, data)
-    app.logger.debug('processed names %s', data)
-    data = AT_USERNAME_RE.sub(process_nick, data)
-    app.logger.debug('processed nicks %s', data)
     return data
-
-    # while True:
-    #     m = PEOPLE_RE.search(data, start)
-    #     if not m:
-    #         break
-    #     if not book:
-    #         book = AddressBook()
-    #     fullname = m.group(1)
-    #     displayname = m.group(2) or fullname
-    #     replacement = person_processor(fullname, displayname,
-    #                                    book.entries.get(fullname, {}),
-    #                                    m.start())
-    #     data = data[:m.start()] + replacement + data[m.end():]
-    #     start = m.start() + len(replacement)
-    # return data
 
 
 def format_as_text(html, link_fn=None):

@@ -99,7 +99,7 @@ def collect_images(post):
     else:
         html = util.markdown_filter(
             post.content, img_path=post.get_image_path(),
-            person_processor=None)
+            url_processor=None, person_processor=None)
         soup = BeautifulSoup(html)
         for img in soup.find_all('img'):
             if not img.find_parent(class_='h-card'):
@@ -180,12 +180,16 @@ def share_on_twitter():
 
 
 def format_markdown_as_tweet(data):
-    def person_to_twitter_handle(contact, nick):
+    def person_to_twitter_handle(contact, nick, soup):
+        """Attempt to replace friendly @name with the official @twitter username
+        """
         if contact and contact.social:
             nick = contact.social.get('twitter') or nick
         return '@' + nick
     return util.format_as_text(
-        util.markdown_filter(data, person_processor=person_to_twitter_handle))
+        util.markdown_filter(
+            data, url_processor=None,
+            person_processor=person_to_twitter_handle))
 
 
 def get_auth():

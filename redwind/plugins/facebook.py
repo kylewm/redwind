@@ -222,4 +222,5 @@ def handle_new_or_edit(post, preview, img_url, post_type,
 
 def format_markdown_as_facebook(data):
     return util.format_as_text(
-        util.markdown_filter(data, person_processor=None))
+        util.markdown_filter(
+            data, url_processor=None, person_processor=None))

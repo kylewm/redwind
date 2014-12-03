@@ -418,8 +418,8 @@ class Nick(db.Model):
     contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), index=True)
     name = db.Column(db.String(128), unique=True)
 
-    def __init__(self, **kwargs):
-        self.name = kwargs.get('name')
+    def __init__(self, name):
+        self.name = name
 
 
 class Contact(db.Model):
