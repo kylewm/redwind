@@ -81,7 +81,9 @@ def do_reverse_geocode(lat, lng):
                      or adr.get('village')
                      or adr.get('town')
                      or adr.get('city')
-                     or adr.get('locality')),
+                     or adr.get('locality')
+                     or adr.get('suburb')
+                     or adr.get('county')),
         'region': region(adr),
         'country_name': adr.get('country'),
         'postal_code': adr.get('postcode'),
