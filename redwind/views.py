@@ -82,6 +82,23 @@ def collect_posts(post_types, page, per_page, tag,
     posts = [post for post in posts if check_audience(post)]
     return posts, is_first, is_last
 
+# Font sizes in em. Maybe should be configurable
+MIN_TAG_SIZE = 1.0
+MAX_TAG_SIZE = 4.0
+MIN_TAG_COUNT = 2
+
+def render_tags(title, tags):
+    counts = [tag['count'] for tag in tags]
+    mincount,maxcount = min(counts),max(counts)
+    for tag in tags:
+        if maxcount>mincount:
+            tag['size'] = (MIN_TAG_SIZE+
+                (MAX_TAG_SIZE-MIN_TAG_SIZE)*
+                (tag['count']-mincount)/
+                (maxcount-mincount))
+        else:
+            tag['size'] = MIN_TAG_SIZE
+    return render_template('tags.html', tags=tags, title=title, max_tag_size=MAX_TAG_SIZE)
 
 def render_posts(title, posts, page, is_first, is_last):
     atom_args = request.view_args.copy()
@@ -140,6 +157,21 @@ def posts_by_type(plural_type, page):
         return render_posts_atom(title, plural_type + '.atom', posts)
     return render_posts(title, posts, page, is_first, is_last)
 
+from sqlalchemy import func,and_
+
+@app.route('/tag')
+def tag_cloud():
+    query = db.session.query(Tag.name,func.count(Post.id)).join(Tag.posts)
+    query = query.filter(Post.deleted==False)
+    if not flask_login.current_user.is_authenticated():
+        query = query.filter(Post.draft==False)
+    query = query.group_by(Tag.id).order_by(Tag.name)
+    query = query.having(func.count(Post.id)>=MIN_TAG_COUNT)
+    tags = [
+        {"name":name,"count":count}
+        for name,count in query.all()
+    ]
+    return render_tags("Tags", tags)
 
 @app.route('/tag/<tag>', defaults={'page': 1})
 @app.route('/tag/<tag>/page/<int:page>')
