@@ -138,8 +138,6 @@ def test_tag_cloud(client, silly_posts):
     content = rv.get_data(as_text=True)
     print(content)
     assert re.search('<a[^>]*title="2"[^>]*>good', content)
-    # strange. I thought the firefly one wouldn't get counted
-    # because hidden??????????
     assert re.search('<a[^>]*title="3"[^>]*>interesting', content)
 
 def test_atom_redirects(client):
