@@ -162,7 +162,7 @@ from sqlalchemy import func,and_
 @app.route('/tag')
 def tag_cloud():
     query = db.session.query(Tag.name,func.count(Post.id)).join(Tag.posts)
-    query = query.filter(and_(Post.deleted==False,Post.hidden==False))
+    query = query.filter(Post.deleted==False)
     if not flask_login.current_user.is_authenticated():
         query = query.filter(Post.draft==False)
     query = query.group_by(Tag.id).order_by(Tag.name)
