@@ -1,4 +1,4 @@
-<article class="{%if article_class%}{{article_class}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}">
+<article class="{%if article_class%}{{article_class}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}{% if post.draft %} draft{% endif %}">
 
   {% include "_reply_contexts.html" %}
   {% include "_like_contexts.html" %}

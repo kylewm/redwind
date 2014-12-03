@@ -10,7 +10,7 @@ def target_url(client, auth, mocker):
     rv = client.post('/save_new', data={
         'post_type': 'note',
         'content': 'This post serves as the webmention target',
-        'action': 'Publish Quietly',
+        'action': 'publish_quietly',
     })
     assert 302 == rv.status_code
     return rv.location

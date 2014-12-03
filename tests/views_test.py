@@ -19,7 +19,7 @@ def test_create_post(client, auth, mocker):
     rv = client.post('/save_new', data={
         'post_type': 'note',
         'content': 'This is a test note',
-        'action': 'Publish Quietly',
+        'action': 'publish_quietly',
     })
     assert 302 == rv.status_code
     assert re.match('.*/\d+/\d+/this-is-a-test-note$', rv.location)
@@ -72,7 +72,7 @@ def silly_posts(client, auth, mocker):
     ]
 
     for datum in data:
-        datum['action'] = 'Publish Quietly'
+        datum['action'] = 'publish_quietly'
         rv = client.post('/save_new', data=datum)
         assert 302 == rv.status_code
 
@@ -155,7 +155,7 @@ def test_upload_image(client, mocker):
         'photo': (open('tests/image.jpg', 'rb'), 'image.jpg', 'image/jpeg'),
         'post_type': 'photo',
         'content': 'High score',
-        'action': 'Publish Quietly',
+        'action': 'publish_quietly',
     })
 
     assert rv.status_code == 302

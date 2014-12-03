@@ -13,7 +13,7 @@ def register():
 
 
 def send_webmentions(post, args):
-    if args.get('action') in ('Save Draft', 'Publish Quietly'):
+    if args.get('action') in ('save_draft', 'publish_quietly'):
         app.logger.debug('skipping webmentions for {}'.format(post.id))
         return
 

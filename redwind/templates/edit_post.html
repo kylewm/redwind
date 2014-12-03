@@ -13,10 +13,9 @@
 
 <form id="edit_form" method="POST" action="{{ settings.site_url }}/save_{{edit_type}}" enctype="multipart/form-data">
 
-  <input type="submit" name="action" value="Publish"/>
-  <input type="submit" name="action" value="Publish + Tweet"/>
-  <input type="submit" name="action" value="Publish Quietly"/>
-  <input type="submit" name="action" value="Save Draft"/>
+  {% for action in ['publish', 'publish+tweet', 'publish_quietly', 'save_draft'] %}
+    <button type="submit" name="action" value="{{action}}">{{button_text[action]}}</button>
+  {% endfor %}
 
   {% block above_content %}{% endblock above_content %}
 
