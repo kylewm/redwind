@@ -159,7 +159,7 @@ def posts_by_type(plural_type, page):
 
 from sqlalchemy import func,and_
 
-@app.route('/tag/')
+@app.route('/tag')
 def tag_cloud():
     query = db.session.query(Tag.name,func.count(Post.id)).join(Tag.posts)
     query = query.filter(and_(Post.deleted==False,Post.hidden==False))
