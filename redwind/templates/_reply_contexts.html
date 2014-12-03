@@ -26,7 +26,7 @@
     <div class="reply-body">
       {% if context.content %}
 
-        <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">
+        <div class="{% if not context.title %}p-name {% endif %}e-content">
           {% if context.content_plain and (context.content_plain|length) > 256 %}
             {{context.content_plain | truncate(256)}}
           {% else %}
