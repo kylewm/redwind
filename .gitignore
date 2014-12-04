@@ -1,7 +1,9 @@
 *.pyc
 test.db
 test.json
-static/uploads
+redwind/static/uploads
+redwind/static/img/users/*
+!redwind/static/img/users/nobody*.png
 *~
 build
 src
