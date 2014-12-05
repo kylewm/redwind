@@ -13,10 +13,10 @@
     <div class="{% if not post.title %}p-name {% endif %}e-content">
       <div class="primary-content">
         {% if post.post_type == 'checkin' and post.venue %}
-          <p>Checked into {{ post.venue.name }}</p>
+          <p>Checked in to {{ post.venue.name }}</p>
         {% endif %}
         {{post.content_html | safe}}
-        
+
         {% if post.post_type == 'checkin' and not no_map %}
           {% set map_image = post.map_image(600, 400) %}
           {% if map_image %}
