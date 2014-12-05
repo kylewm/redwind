@@ -16,6 +16,14 @@
           <p>Checked into {{ post.venue.name }}</p>
         {% endif %}
         {{post.content_html | safe}}
+        
+        {% if post.post_type == 'checkin' and not no_map %}
+          {% set map_image = post.map_image(600, 400) %}
+          {% if map_image %}
+            <img src="{{ map_image }}"/>
+          {% endif %}
+        {% endif %}
+
       </div>
       {% for photo in (post.photos or []) %}
         <div class="photo-holder">
@@ -31,14 +39,8 @@
     </div>
   {% endif %}
 
-  {% if post.post_type == 'checkin' and not no_map %}
-
-    {% set map_image = post.map_image(600, 400) %}
-    {% if map_image %}
-      <img src="{{ map_image }}"/>
-    {% endif %}
-
     <!--
+  {% if post.post_type == 'checkin' and not no_map %}
     {% if post.location %}
       <div class="map"
            data-latitude="{{post.location.latitude}}"
@@ -53,9 +55,10 @@
            data-location="{{post.venue.name}}">
       </div>
     {% endif %}
-    -->
-
   {% endif %}
+      -->
+
+
   {% if post.tags %}
     <div class="tags">
       {% for tag in post.tags %}
