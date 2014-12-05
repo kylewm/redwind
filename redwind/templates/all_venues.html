@@ -9,16 +9,33 @@
 <img src="{{map_image}}"/>
 
 <ul id="all-venues">
-  {% for venue in venues %}
-  <li data-latitude="{{venue.location.latitude}}"
-      data-longitude="{{venue.location.longitude}}">
-    <a href="{{venue.permalink}}">
-      {{venue.name}}
-    </a>
-<a href="{{url_for('edit_venue', id=venue.id)}}"><i class="fa fa-edit"></i> Edit</a>
-<a href="{{url_for('delete_venue', id=venue.id)}}"><i class="fa fa-trash-o"></i> Delete</a>
-  </li>
-  {% endfor %}
+
+  {% for region, localities in organized|dictsort %}
+
+    <li>{{ region }}
+      <ul>
+
+        {% for locality, venues in localities|dictsort %}
+          <li>{{ locality }}
+            <ul>
+              {% for venue in venues | sort(attribute='name') %}
+                <li data-latitude="{{venue.location.latitude}}" data-longitude="{{venue.location.longitude}}">
+                  <a href="{{venue.permalink}}">
+                    {{venue.name}}
+                  </a>
+                  {% if current_user.is_authenticated() %}
+                    <a href="{{url_for('edit_venue', id=venue.id)}}"><i class="fa fa-edit"></i> Edit</a>
+                    <a href="{{url_for('delete_venue', id=venue.id)}}"><i class="fa fa-trash-o"></i> Delete</a>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    </li>
+
+{% endfor %}
 </ul>
 </article>
 
