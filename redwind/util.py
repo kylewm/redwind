@@ -331,8 +331,8 @@ def image_root_path():
 
 def mirror_image(src, side=None):
     """Downloads a remote resource schema://domain/path to
-    static/_mirror/domain/path and optionally resizes it to
-    static/_mirro/domain/dirname(path)/resized-64/basename(path)
+    static/mirror/domain/path and optionally resizes it to
+    static/mirro/domain/dirname(path)/resized-64/basename(path)
     """
     from .models import get_settings
     site_netloc = urllib.parse.urlparse(get_settings().site_url).netloc
@@ -340,7 +340,7 @@ def mirror_image(src, side=None):
     if not o.netloc or o.netloc == site_netloc and not side:
         return src
 
-    relpath = os.path.join("_mirror", o.netloc, o.path.strip('/'))
+    relpath = os.path.join("mirror", o.netloc, o.path.strip('/'))
     abspath = os.path.join(image_root_path(), app.static_folder, relpath)
 
     if os.path.exists(abspath):

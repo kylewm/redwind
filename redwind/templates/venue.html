@@ -5,11 +5,16 @@
   <b>Venue:</b> {{ venue.name or '' }}<br />
   <b>Geo:</b> {{ (venue.location | geo_name) if venue.location else '??' }}<br />
 
+  <!--
   <div class="map"
        data-latitude="{{venue.location.latitude}}"
        data-longitude="{{venue.location.longitude}}"
        data-location="{{venue.name}}">
   </div>
+  -->
+
+  <img src="{{ venue.map_image(600, 400) }}"/>
+
   </article>
 
   {% set no_map = true %}

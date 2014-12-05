@@ -3,6 +3,7 @@ from . import auth
 from . import contexts
 from . import db
 from . import hooks
+from . import maps
 from . import util
 from .models import Post, Tag, Mention, Contact, Nick, Setting,\
     Venue, get_settings
@@ -228,10 +229,12 @@ def check_audience(post):
 
 def resize_associated_image(post, sourcepath, side):
     targetpath = os.path.join(
-        util.image_root_path(), '_resized', post.path, 'files', str(side), os.path.basename(sourcepath))
+        util.image_root_path(), '_resized', post.path,
+        'files', str(side), os.path.basename(sourcepath))
     # nginx is configured to serve internal resources directly
     targetpath_internal = os.path.join(
-        '/internal_resized', post.path, 'files', str(side), os.path.basename(sourcepath))
+        '/internal_resized', post.path, 'files', str(side),
+        os.path.basename(sourcepath))
     util.resize_image(
         os.path.join(util.image_root_path(), sourcepath),
         os.path.join(util.image_root_path(), targetpath), side)
@@ -1061,10 +1064,18 @@ def venue_by_slug(slug):
     return render_template('venue.html', venue=venue, posts=posts)
 
 
-@app.route('/venue/')
+@app.route('/venue')
 def all_venues():
-    venues = Venue.query.all()
-    return render_template('all_venues.html', venues=venues)
+    venues = Venue.query.order_by(Venue.name).all()
+
+    markers = [maps.Marker(v.location.get('latitude'),
+                           v.location.get('longitude'),
+                           'dot-small-pink')
+               for v in venues]
+
+    map_image = maps.get_map_image(600, 400, 13, markers)
+    return render_template('all_venues.html', venues=venues,
+                           map_image=map_image)
 
 
 @app.route('/new/venue', methods=['GET', 'POST'])
