@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 
+<!--
 <div id="all-venues-map" style="height: 500px; max-width: 100%">
 </div>
+-->
+<article>
+<img src="{{map_image}}"/>
 
 <ul id="all-venues">
   {% for venue in venues %}
@@ -16,13 +20,14 @@
   </li>
   {% endfor %}
 </ul>
-
+</article>
 
 {% endblock %}
 
 
 {% block other_resources %}
 
+<1--
 <script type="text/javascript">
 
 loadLeaflet(function () {
@@ -50,5 +55,6 @@ loadLeaflet(function () {
 });
 
 </script>
+-->
 
 {% endblock %}

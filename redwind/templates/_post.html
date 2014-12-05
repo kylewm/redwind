@@ -30,7 +30,15 @@
       {% endfor %}
     </div>
   {% endif %}
+
   {% if post.post_type == 'checkin' and not no_map %}
+
+    {% set map_image = post.map_image(600, 400) %}
+    {% if map_image %}
+      <img src="{{ map_image }}"/>
+    {% endif %}
+
+    <!--
     {% if post.location %}
       <div class="map"
            data-latitude="{{post.location.latitude}}"
@@ -45,6 +53,8 @@
            data-location="{{post.venue.name}}">
       </div>
     {% endif %}
+    -->
+
   {% endif %}
   {% if post.tags %}
     <div class="tags">

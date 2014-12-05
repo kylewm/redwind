@@ -1,6 +1,7 @@
 from . import app
 from . import db
 from . import util
+from . import maps
 
 from flask import g, session
 
@@ -135,6 +136,12 @@ class Venue(db.Model):
         site_url = get_settings().site_url or 'http://localhost'
         return '/'.join((site_url, self.path))
 
+    def map_image(self, width, height):
+        lat = self.location.get('latitude')
+        lng = self.location.get('longitude')
+        return maps.get_map_image(width, height, 13,
+                                  [maps.Marker(lat, lng, 'dot-small-pink')])
+
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -217,6 +224,14 @@ class Post(db.Model):
     def get_image_path(self):
         site_url = get_settings().site_url or 'http://localhost'
         return '/'.join((site_url, self.path, 'files'))
+
+    def map_image(self, width, height):
+        location = self.location or (self.venue and self.venue.location)
+        if location:
+            lat = location.get('latitude')
+            lng = location.get('longitude')
+            return maps.get_map_image(width, height, 13,
+                                      [maps.Marker(lat, lng, 'dot-small-blue')])
 
     def photo_url(self, photo):
         return '/'.join((self.get_image_path(), photo.get('filename')))
