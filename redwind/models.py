@@ -129,7 +129,7 @@ class Venue(db.Model):
 
     @property
     def path(self):
-        return 'venue/{}'.format(self.slug)
+        return 'venues/{}'.format(self.slug)
 
     @property
     def permalink(self):

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+  <table>
+
+    <thead>
+      <td>Saved</td>
+      <td>Post</td>
+      <td width="40"></td>
+    </thead>
+
+  {% for post in posts %}
+    <tr>
+
+      <td>{{ post.published | human_time }}</td>
+      <td>{% if post.title %}<i>{{ post.title }}</i>: {% endif %}{{ (post.content or '~ no content ~') | truncate(140) }}</td>
+      <td>
+        <a href="{{ post.permalink }}"><i class="fa fa-link"></i></a>
+        <a href="{{ url_for('edit_by_id', id=post.id) }}"><i class="fa fa-edit"></i></a>
+      </td>
+    </tr>
+
+
+  {% endfor %}
+
+  </table>
+
+{% endblock %}

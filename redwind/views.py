@@ -12,12 +12,15 @@ from flask import request, redirect, url_for, render_template, flash,\
     abort, make_response, Markup, send_from_directory, session, current_app
 import flask.ext.login as flask_login
 from werkzeug import secure_filename
+
 import sqlalchemy.orm
 import sqlalchemy.sql
+import sqlalchemy
 
 import bs4
 import collections
 import datetime
+import hashlib
 import jinja2.filters
 import json
 import mf2util
@@ -55,9 +58,7 @@ def inject_settings_variable():
     }
 
 
-def collect_posts(post_types, page, per_page, tag,
-                  include_hidden=False, include_drafts=False):
-
+def collect_posts(post_types, page, per_page, tag, include_hidden=False):
     query = Post.query
     query = query.options(
         sqlalchemy.orm.subqueryload(Post.tags),
@@ -67,12 +68,10 @@ def collect_posts(post_types, page, per_page, tag,
         sqlalchemy.orm.subqueryload(Post.like_contexts),
         sqlalchemy.orm.subqueryload(Post.bookmark_contexts))
     if tag:
-        query = query.filter(Post.tags.any(Tag.name==tag))
+        query = query.filter(Post.tags.any(Tag.name == tag))
     if not include_hidden:
         query = query.filter_by(hidden=False)
-    if not include_drafts:
-        query = query.filter_by(draft=False)
-    query = query.filter_by(deleted=False)
+    query = query.filter_by(deleted=False, draft=False)
     if post_types:
         query = query.filter(Post.post_type.in_(post_types))
     query = query.order_by(Post.published.desc())
@@ -88,18 +87,21 @@ MIN_TAG_SIZE = 1.0
 MAX_TAG_SIZE = 4.0
 MIN_TAG_COUNT = 2
 
+
 def render_tags(title, tags):
     counts = [tag['count'] for tag in tags]
-    mincount,maxcount = min(counts),max(counts)
+    mincount, maxcount = min(counts), max(counts)
     for tag in tags:
-        if maxcount>mincount:
-            tag['size'] = (MIN_TAG_SIZE+
-                (MAX_TAG_SIZE-MIN_TAG_SIZE)*
-                (tag['count']-mincount)/
-                (maxcount-mincount))
+        if maxcount > mincount:
+            tag['size'] = (MIN_TAG_SIZE +
+                           (MAX_TAG_SIZE - MIN_TAG_SIZE) *
+                           (tag['count'] - mincount) /
+                           (maxcount - mincount))
         else:
             tag['size'] = MIN_TAG_SIZE
-    return render_template('tags.html', tags=tags, title=title, max_tag_size=MAX_TAG_SIZE)
+    return render_template('tags.html', tags=tags, title=title,
+                           max_tag_size=MAX_TAG_SIZE)
+
 
 def render_posts(title, posts, page, is_first, is_last):
     atom_args = request.view_args.copy()
@@ -107,8 +109,8 @@ def render_posts(title, posts, page, is_first, is_last):
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
     return render_template('posts.html', posts=posts, title=title,
-                           prev_page=None if is_first else page-1,
-                           next_page=None if is_last else page+1,
+                           prev_page=None if is_first else page - 1,
+                           next_page=None if is_last else page + 1,
                            body_class='h-feed', article_class='h-entry',
                            atom_url=atom_url, atom_title=atom_title)
 
@@ -125,8 +127,7 @@ def render_posts_atom(title, feed_id, posts):
 def index(page):
     # leave out hidden posts
     posts, is_first, is_last = collect_posts(
-        None, page, int(get_settings().posts_per_page), None, include_hidden=False,
-        include_drafts=flask_login.current_user.is_authenticated())
+        None, page, int(get_settings().posts_per_page), None, include_hidden=False)
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
     return render_posts('Stream', posts, page, is_first, is_last)
@@ -136,8 +137,8 @@ def index(page):
 @app.route('/everything/page/<int:page>')
 def everything(page):
     posts, is_first, is_last = collect_posts(
-        None, page, int(get_settings().posts_per_page), None, include_hidden=True,
-        include_drafts=flask_login.current_user.is_authenticated())
+        None, page, int(get_settings().posts_per_page), None,
+        include_hidden=True)
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Everything', 'everything.atom', posts)
@@ -151,35 +152,36 @@ def posts_by_type(plural_type, page):
                                if tup[1] == plural_type)
     posts, is_first, is_last = collect_posts(
         (post_type,), page, int(get_settings().posts_per_page), None,
-        include_hidden=True,
-        include_drafts=flask_login.current_user.is_authenticated())
+        include_hidden=True)
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom(title, plural_type + '.atom', posts)
     return render_posts(title, posts, page, is_first, is_last)
 
-from sqlalchemy import func,and_
 
-@app.route('/tag')
+@app.route('/tags')
 def tag_cloud():
-    query = db.session.query(Tag.name,func.count(Post.id)).join(Tag.posts)
-    query = query.filter(Post.deleted==False)
+    query = db.session.query(
+        Tag.name, sqlalchemy.func.count(Post.id)
+    ).join(Tag.posts)
+    query = query.filter(sqlalchemy.sql.expression.not_(Post.deleted))
     if not flask_login.current_user.is_authenticated():
-        query = query.filter(Post.draft==False)
+        query = query.filter(sqlalchemy.sql.expression.not_(Post.draft))
     query = query.group_by(Tag.id).order_by(Tag.name)
-    query = query.having(func.count(Post.id)>=MIN_TAG_COUNT)
+    query = query.having(sqlalchemy.func.count(Post.id) >= MIN_TAG_COUNT)
     tags = [
-        {"name":name,"count":count}
-        for name,count in query.all()
+        {"name": name, "count": count}
+        for name, count in query.all()
     ]
     return render_tags("Tags", tags)
 
-@app.route('/tag/<tag>', defaults={'page': 1})
-@app.route('/tag/<tag>/page/<int:page>')
+
+@app.route('/tags/<tag>', defaults={'page': 1})
+@app.route('/tags/<tag>/page/<int:page>')
 def posts_by_tag(tag, page):
     posts, is_first, is_last = collect_posts(
-        None, page, int(get_settings().posts_per_page), tag, include_hidden=True,
-        include_drafts=flask_login.current_user.is_authenticated())
+        None, page, int(get_settings().posts_per_page), tag,
+        include_hidden=True)
     title = '#' + tag
 
     if request.args.get('feed') == 'atom':
@@ -303,8 +305,24 @@ def post_by_date(post_type, year, month, day, index, slug):
 @app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>')
 def post_by_path(year, month, slug):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
+    return render_post(post)
 
-    if not post or (post.draft and not flask_login.current_user.is_authenticated()):
+
+@app.route('/drafts')
+@flask_login.login_required
+def all_drafts():
+    posts = Post.query.filter_by(deleted=False, draft=True).all()
+    return render_template('all_drafts.html', posts=posts)
+
+
+@app.route('/drafts/<hash>')
+def draft_by_hash(hash):
+    post = Post.load_by_path('drafts/{}'.format(hash))
+    return render_post(post)
+
+
+def render_post(post):
+    if not post:
         abort(404)
 
     if post.deleted:
@@ -787,6 +805,8 @@ def save_new():
 
 
 def save_post(post):
+    was_draft = post.draft
+
     pub_str = request.form.get('published')
     if pub_str:
         pub = mf2util.parse_dt(pub_str)
@@ -795,7 +815,7 @@ def save_post(post):
             pub = pub.replace(tzinfo=None)
         post.published = pub
 
-    if not post.published or post.draft:
+    if not post.published or was_draft:
         post.published = datetime.datetime.utcnow()
 
     # populate the Post object and save it to the database,
@@ -868,10 +888,16 @@ def save_post(post):
     slug = request.form.get('slug')
     if slug:
         post.slug = util.slugify(slug)
-    elif not post.slug:
+    elif not post.slug or was_draft:
         post.slug = post.generate_slug()
 
-    if not post.path:
+    if post.draft:
+        m = hashlib.md5()
+        m.update(bytes(post.published.isoformat() + '|' + post.slug,
+                       'utf-8'))
+        post.path = 'drafts/{}'.format(m.hexdigest())
+
+    elif not post.path or was_draft:
         base_path = '{}/{:02d}/{}'.format(
             post.published.year, post.published.month, post.slug)
         # generate a unique path
@@ -1053,7 +1079,7 @@ def save_contact(contact):
         return redirect(url_for('contacts'))
 
 
-@app.route('/venue/<slug>')
+@app.route('/venues/<slug>')
 def venue_by_slug(slug):
     venue = Venue.query.filter_by(slug=slug).first()
     if not venue:
@@ -1064,7 +1090,7 @@ def venue_by_slug(slug):
     return render_template('venue.html', venue=venue, posts=posts)
 
 
-@app.route('/venue')
+@app.route('/venues')
 def all_venues():
     venues = Venue.query.order_by(Venue.name).all()
     markers = [maps.Marker(v.location.get('latitude'),

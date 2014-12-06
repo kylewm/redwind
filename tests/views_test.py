@@ -79,7 +79,7 @@ def silly_posts(client, auth, mocker):
 
 
 def test_tagged_posts(client, silly_posts):
-    text = client.get('/tag/interesting').get_data(as_text=True)
+    text = client.get('/tags/interesting').get_data(as_text=True)
     assert 'First interesting article' in text
     assert 'Second interesting article' in text
 
@@ -131,14 +131,16 @@ def test_posts_atom(client, silly_posts):
     assert 'Probably a &lt;i&gt;dumb&lt;/i&gt; joke' in content
     assert 'First interesting article' not in content
 
+
 def test_tag_cloud(client, silly_posts):
     # check the tag cloud
-    rv = client.get('/tag')
+    rv = client.get('/tags')
     assert 200 == rv.status_code
     content = rv.get_data(as_text=True)
     print(content)
     assert re.search('<a[^>]*title="2"[^>]*>good', content)
     assert re.search('<a[^>]*title="3"[^>]*>interesting', content)
+
 
 def test_atom_redirects(client):
     rv = client.get('/all.atom')
