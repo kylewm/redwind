@@ -32,7 +32,7 @@ INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
 RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
 
-AT_USERNAME_RE = re.compile(r'(?<!\w)@([a-zA-Z0-9_]+)(?=($|[\s,:;.]))')
+AT_USERNAME_RE = re.compile(r"""(?<!\w)@([a-zA-Z0-9_]+)(?=($|[\s,:;.'"]))""")
 LINK_RE = re.compile(
     # optional schema
     r'\b([a-z]{3,9}://)?'
