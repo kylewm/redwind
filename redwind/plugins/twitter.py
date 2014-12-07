@@ -251,8 +251,7 @@ def create_context(url):
         return
 
     status_data = status_response.json()
-    # This seems to fail sometimes, so out it goes
-    # app.logger.debug('received response from twitter: %s', status_data)
+    app.logger.debug('received response from twitter: %s', status_data)
     pub_date = datetime.datetime.strptime(status_data['created_at'],
                                           '%a %b %d %H:%M:%S %z %Y')
     # if pub_date and pub_date.tzinfo:
@@ -294,8 +293,7 @@ def expand_links(status_data):
     urls = sorted(
         urls, key=lambda url_data: url_data['indices'][0], reverse=True)
     for url_data in urls:
-        # This seems to fail sometimes, so out it goes
-        # app.logger.debug('expanding url: %r', url_data)
+        app.logger.debug('expanding url: %r', url_data)
         start_idx = url_data['indices'][0]
         end_idx = url_data['indices'][1]
         text = (text[:start_idx]
