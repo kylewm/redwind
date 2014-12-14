@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from mf2py.parser import Parser as Mf2Parser
 
 from requests_oauthlib import OAuth1Session, OAuth1
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError,SSLError
 
 REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
@@ -330,6 +330,8 @@ def posse_post_discovery(post):
                     return url
         except HTTPError:
             app.logger.exception('Could not fetch original')
+        except SSLError:
+            app.logger.exception('SSL Error')
 
     def find_first_syndicated(originals):
         for original in originals:
