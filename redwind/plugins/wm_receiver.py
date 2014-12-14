@@ -313,4 +313,5 @@ def create_mention(post, url, source_response):
     mention.published = published
     mention.title = entry.get('name')
     mention.syndication = entry.get('syndication', [])
+    mention.rsvp = entry.get('rsvp')
     return mention

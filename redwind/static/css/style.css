@@ -195,6 +195,22 @@ article.share .repost-entry + .repost-entry {
     color: #999;
 }
 
+.p-comment .rsvp {
+    font-weight: bold;
+}
+
+.p-comment .rsvp.yes {
+    color: #11A411;
+}
+
+.p-comment .rsvp.no {
+    color: #D20000;
+}
+
+.p-comment .rsvp.maybe {
+    color: #E7AA19;
+}
+
 /* ----------- Forms ----------- */
 
 .new-post-bar {

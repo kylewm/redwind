@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block body_class %}{{ post.mf2_type }}{% endblock body_class %}
+
 {% block content %}
   {% with is_single = True %}
       {% include "_post.html" %}

@@ -310,6 +310,13 @@ class Post(db.Model):
             return OPEN_STREET_MAP_URL.format(self.location['latitude'],
                                               self.location['longitude'])
 
+    @property
+    def mf2_type(self):
+        if self.post_type == 'event':
+            return 'h-event'
+        else:
+            return 'h-entry'
+
     def generate_slug(self):
         if self.title:
             return util.slugify(self.title)
@@ -394,6 +401,7 @@ class Mention(db.Model):
     title = db.Column(db.String(512))
     syndication = db.Column(JsonType)
     reftype = db.Column(db.String(32))
+    rsvp = db.Column(db.String(32))
     posts = db.relationship('Post', secondary=posts_to_mentions)
 
     def __init__(self):
@@ -408,6 +416,7 @@ class Mention(db.Model):
         self.published = None
         self.title = None
         self.reftype = None
+        self.rsvp = None
         self.syndication = []
         self._children = []
 

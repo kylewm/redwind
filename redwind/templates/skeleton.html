@@ -44,7 +44,7 @@
     {% endassets %}
     {% include "custom_head_bottom.html" ignore missing with context %}
   </head>
-  <body class="container{%if body_class%} {{body_class}}{% endif %}">
+  <body class="container {%block body_class%}{% endblock %}">
     {% include "custom_body_top.html" ignore missing with context %}
     {% block body %}
     {% endblock body %}

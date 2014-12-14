@@ -111,7 +111,6 @@ def render_posts(title, posts, page, is_first, is_last):
     return render_template('posts.html', posts=posts, title=title,
                            prev_page=None if is_first else page - 1,
                            next_page=None if is_last else page + 1,
-                           body_class='h-feed', article_class='h-entry',
                            atom_url=atom_url, atom_title=atom_title)
 
 
@@ -345,8 +344,7 @@ def render_post(post):
     if not title:
         title = 'A {} from {}'.format(post.post_type, post.published)
 
-    return render_template('post.html', post=post, title=title,
-                           body_class='h-entry', article_class=None)
+    return render_template('post.html', post=post, title=title)
 
 
 def discover_endpoints(me):

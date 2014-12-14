@@ -1,0 +1,7 @@
+{% extends "edit_post.html" %}
+{% block content_fields %}
+<label>Title</label>
+<input type="text" name="title" value="{{ post.title or '' }}"/>
+<label>Content</label>
+<textarea name="content" id="content" rows="8">{{ post.content or '' }}</textarea>
+{% endblock content_fields %}

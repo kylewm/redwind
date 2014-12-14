@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block body_class %}h-feed{% endblock body_class %}
+
 {% block content %}
   <data class="p-name" value="{{ settings.author_name }}{% if title %}: {{ title }}{% endif %}"></data>
 

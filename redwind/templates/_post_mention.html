@@ -32,6 +32,19 @@
       {{ mention.content | safe }}
       <!-- end of foreign content -->
     </div>
+  {% elif mention.reftype == 'rsvp' %}
+    <span class="rsvp {{mention.rsvp}}">
+      {% if mention.rsvp == 'yes' %}
+        is going
+      {% elif mention.rsvp == 'maybe' %}
+        might go
+      {% elif mention.rsvp == 'no' %}
+        is not going
+      {% endif %}
+    </span>
+    <div class="e-content">
+      {{ mention.content | safe }}
+    </div>
 
   {% elif mention.reftype == 'like' %}
     <span class="e-content">
