@@ -119,6 +119,9 @@
         {% if post.replies %}
           <a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ post.replies | count }} Repl{{ post.replies | count | pluralize('y', 'ies') }}</a>
         {% endif %}
+        {% if post.rsvps %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-calendar"></i> {{ post.rsvps | count }} RSVP{{ post.rsvps | count | pluralize }}</a>
+        {% endif %}
         {% if post.likes %}
           <a href="{{ post.permalink }}#mentions"><i class="fa fa-star-o"></i> {{ post.likes | count }} Like{{ post.likes | count | pluralize }}</a>
         {% endif %}

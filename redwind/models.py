@@ -257,6 +257,10 @@ class Post(db.Model):
         return [m for m in self.mentions if m.reftype == 'reply']
 
     @property
+    def rsvps(self):
+        return [m for m in self.mentions if m.reftype == 'rsvp']
+
+    @property
     def references(self):
         return [m for m in self.mentions if m.reftype == 'reference']
 
