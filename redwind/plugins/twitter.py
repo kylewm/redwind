@@ -127,31 +127,30 @@ def send_to_twitter(post, args):
 
 
 def do_send_to_twitter(post_id):
-    with app.app_context():
-        app.logger.debug('auto-posting to twitter for %s', post_id)
-        post = Post.load_by_id(post_id)
+    app.logger.debug('auto-posting to twitter for %s', post_id)
+    post = Post.load_by_id(post_id)
 
-        in_reply_to, repost_of, like_of = posse_post_discovery(post)
+    in_reply_to, repost_of, like_of = posse_post_discovery(post)
 
-        # cowardly refuse to auto-POSSE a reply/repost/like when the
-        # target tweet is not found.
-        if post.in_reply_to and not in_reply_to:
-            app.logger.warn('could not find tweet to reply to for %s',
-                            post.in_reply_to)
-            return None
-        if post.repost_of and not repost_of:
-            app.logger.warn('could not find tweet to repost for %s',
-                            post.repost_of)
-            return None
-        if post.like_of and not like_of:
-            app.logger.warn('could not find tweet to like for %s',
-                            post.like_of)
-            return None
+    # cowardly refuse to auto-POSSE a reply/repost/like when the
+    # target tweet is not found.
+    if post.in_reply_to and not in_reply_to:
+        app.logger.warn('could not find tweet to reply to for %s',
+                        post.in_reply_to)
+        return None
+    if post.repost_of and not repost_of:
+        app.logger.warn('could not find tweet to repost for %s',
+                        post.repost_of)
+        return None
+    if post.like_of and not like_of:
+        app.logger.warn('could not find tweet to like for %s',
+                        post.like_of)
+        return None
 
-        preview, img_url = guess_tweet_content(post, in_reply_to)
-        response = do_tweet(
-            post_id, preview, img_url, in_reply_to, repost_of, like_of)
-        return str(response)
+    preview, img_url = guess_tweet_content(post, in_reply_to)
+    response = do_tweet(
+        post_id, preview, img_url, in_reply_to, repost_of, like_of)
+    return str(response)
 
 
 @app.route('/share_on_twitter', methods=['GET', 'POST'])

@@ -27,12 +27,19 @@ def enqueue(func, *args, **kwargs):
 def run():
     with app.app_context():
         while True:
-            jobs = Job.query.filter_by(complete=False).all()
-            for job in jobs:
+            for job in Job.query.filter_by(complete=False):
                 try:
                     func, args, kwargs = job.params
-                    job.result = func(*args, **kwargs)
+                    result = func(*args, **kwargs)
+                except:
+                    app.logger.exception('error while processing task')
                 finally:
+                    # I don't totally understand why, but in some
+                    # cases, the queued job mangles the session, so it
+                    # seems safest to refetch the job before modifying
+                    # it
+                    job = Job.query.get(job.id)
+                    job.result = result
                     job.complete = True
                     db.session.commit()
             time.sleep(10)

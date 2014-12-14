@@ -23,32 +23,30 @@ def reverse_geocode_venue(venue, args):
 
 
 def do_reverse_geocode_post(postid):
-    with app.app_context():
-        post = models.Post.load_by_id(postid)
-        if post.location and 'latitude' in post.location \
-           and 'longitude' in post.location:
-            adr = do_reverse_geocode(post.location['latitude'],
-                                     post.location['longitude'])
-            # copy the dict so that the ORM recognizes
-            # that it changed
-            post.location = dict(post.location)
-            post.location.update(adr)
-            db.session.commit()
+    post = models.Post.load_by_id(postid)
+    if post.location and 'latitude' in post.location \
+       and 'longitude' in post.location:
+        adr = do_reverse_geocode(post.location['latitude'],
+                                 post.location['longitude'])
+        # copy the dict so that the ORM recognizes
+        # that it changed
+        post.location = dict(post.location)
+        post.location.update(adr)
+        db.session.commit()
 
 
 def do_reverse_geocode_venue(venueid):
-    with app.app_context():
-        venue = models.Venue.query.get(venueid)
-        if venue.location and 'latitude' in venue.location \
-           and 'longitude' in venue.location:
-            adr = do_reverse_geocode(venue.location['latitude'],
-                                     venue.location['longitude'])
-            # copy the dict so the ORM actually recognizes
-            # that it changed
-            venue.location = dict(venue.location)
-            venue.location.update(adr)
-            venue.update_slug(views.geo_name(venue.location))
-            db.session.commit()
+    venue = models.Venue.query.get(venueid)
+    if venue.location and 'latitude' in venue.location \
+       and 'longitude' in venue.location:
+        adr = do_reverse_geocode(venue.location['latitude'],
+                                 venue.location['longitude'])
+        # copy the dict so the ORM actually recognizes
+        # that it changed
+        venue.location = dict(venue.location)
+        venue.location.update(adr)
+        venue.update_slug(views.geo_name(venue.location))
+        db.session.commit()
 
 
 def do_reverse_geocode(lat, lng):
