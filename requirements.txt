@@ -31,10 +31,8 @@ pytest-cov==1.8.1
 pytest-mock==0.4.0
 python-mimeparse==0.1.4
 pytz==2013.9
-redis==2.9.1
 requests==2.2.1
 requests-oauthlib==0.4.0
-rq==0.4.6
 six==1.6.1
 uWSGI==2.0.4
 webassets==0.10.1

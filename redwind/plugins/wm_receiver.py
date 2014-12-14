@@ -1,13 +1,10 @@
 from .. import app
 from .. import db
 from .. import queue
-from .. import redis
 from .. import util
 from ..models import Post, Mention, get_settings
 from bs4 import BeautifulSoup
-from flask import request, make_response, render_template, url_for
-from werkzeug.exceptions import NotFound
-from rq.job import Job
+from flask import request, make_response, render_template, url_for, abort
 from werkzeug.exceptions import NotFound
 import datetime
 import mf2py
@@ -51,17 +48,26 @@ def receive_webmention():
 
 @app.route('/webmention/status/<key>')
 def webmention_status(key):
-    job = Job.fetch(key, connection=redis)
-    rv = job.result
-    if not rv:
+    job = queue.Job.query.filter_by(key=key).first()
+
+    if job:
+        rv = job.result
+        if not rv:
+            rv = {
+                'response_code': 202,
+                'status': 'queued',
+                'reason': 'Mention has been queued for processing',
+            }
+    else:
         rv = {
-            'response_code': 202,
-            'status': 'queued',
-            'reason': 'Mention has not been processed or status has expired'
+            'response_code': 400,
+            'status': 'unknown',
+            'reason': 'Job does not exist or its status has expired',
         }
+
     return make_response(
-        render_template('wm_status.html', **rv),
-        rv.get('response_code', 400))
+       render_template('wm_status.html', **rv),
+       rv.get('response_code', 400))
 
 
 def process_webmention(source, target, callback):
