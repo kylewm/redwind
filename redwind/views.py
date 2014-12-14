@@ -298,8 +298,9 @@ def post_associated_file(year, month, slug, filename):
 def post_by_date(post_type, year, month, day, index, slug):
     post = Post.load_by_historic_path('{}/{}/{:02d}/{:02d}/{}'.format(
         post_type, year, month, day, index))
-    if post:
-        return redirect(post.permalink)
+    if not post:
+        abort(404)
+    return redirect(post.permalink)
 
 
 @app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>')

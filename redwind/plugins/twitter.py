@@ -479,8 +479,8 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
         data['status'] = preview
 
         if post.location:
-            data['lat'] = str(post.location.latitude)
-            data['long'] = str(post.location.longitude)
+            data['lat'] = str(post.location.get('latitude'))
+            data['long'] = str(post.location.get('longitude'))
 
         if in_reply_to:
             reply_match = PERMALINK_RE.match(in_reply_to)
