@@ -169,9 +169,12 @@ def tag_cloud():
         query = query.filter(sqlalchemy.sql.expression.not_(Post.draft))
     query = query.group_by(Tag.id).order_by(Tag.name)
     query = query.having(sqlalchemy.func.count(Post.id) >= MIN_TAG_COUNT)
+    tagdict = {}
+    for name, count in query.all():
+        tagdict[name] = tagdict.get(name,0)+count
     tags = [
-        {"name": name, "count": count}
-        for name, count in query.all()
+        {"name": name, "count": tagdict[name]}
+        for name in sorted(tagdict)
     ]
     return render_tags("Tags", tags)
 
