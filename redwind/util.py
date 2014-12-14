@@ -39,7 +39,7 @@ LINK_RE = re.compile(
     # hostname and port
     r'((?:[a-z0-9\-]+\.)+[a-z]{2,4}(?::\d{2,6})?'
     # path
-    r'(?:/(?:[a-zA-Z0-9\-_~.;:$?&%#@()/=]*[a-zA-Z0-9\-_$?#/])?)?)\b'
+    r'(?:(?:/(?:[a-zA-Z0-9\-_~.;:$?&%#@()/=]*[a-zA-Z0-9\-_$?#/])?)|\b))'
 )
 
 
@@ -447,7 +447,7 @@ def prettify_url(url):
         schema, path = split
     else:
         path = url
-    return path.strip('/')
+    return path
 
 
 def fetch_html(url):

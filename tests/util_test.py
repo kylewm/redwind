@@ -67,6 +67,11 @@ def test_autolink_word_boundaries():
     assert '<a' not in result
 
 
+def test_autolink_trailing_slash():
+    result = util.autolink('http://hel.lo/world/')
+    assert result == '<a href="http://hel.lo/world/">hel.lo/world/</a>'
+
+
 def test_no_autolink_in_code_block():
     result = util.markdown_filter("""
 Don't autolink @-names or URLs inside a fenced code block.
