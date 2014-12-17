@@ -337,14 +337,7 @@ def render_post(post):
     if post.redirect:
         return redirect(post.redirect)
 
-    title = post.title
-    if not title and post.content:
-        title = jinja2.filters.do_truncate(
-            util.format_as_text(post.content), 50)
-    if not title:
-        title = 'A {} from {}'.format(post.post_type, post.published)
-
-    return render_template('post.html', post=post, title=title)
+    return render_template('post.html', post=post, title=post.title_or_fallback)
 
 
 def discover_endpoints(me):

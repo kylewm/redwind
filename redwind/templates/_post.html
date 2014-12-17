@@ -144,9 +144,17 @@
 
   {% if is_single and post.mentions %}
     <div class="mentions replies">
+
       <a name="mentions"></a>
-      {% for mention in post.mentions %}
+
+      {% for mention in post.rsvps %}
         {% include "_post_mention.html" %}
+      {% endfor %}
+
+      {% for mention in post.mentions %}
+        {% if mention.reftype != 'rsvp' %}
+          {% include "_post_mention.html" %}
+        {% endif %}
       {% endfor %}
     </div>
   {% endif %}

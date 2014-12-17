@@ -4,7 +4,7 @@
     {% include "custom_head_top.html" ignore missing with context %}
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>{{ settings.author_name }}{% if title %}: {{ title }}{% endif %}</title>
+    <title>{{ settings.author_name }}{% if title %}: {{ title | truncate(50) }}{% endif %}</title>
 
     <meta name="description" content=""/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>

@@ -25,17 +25,7 @@
     <link href="{{ post.permalink }}" rel="alternate" type="text/html"/>
     <id>{{ post.permalink }}</id>
     <title type="html">
-	{% if post.share_contexts %}
-	  {% for share in post.share_contexts %}
-	    Shared {{share.permalink|prettify_url}}
-	  {% endfor %}
-        {% elif post.like_contexts %}
-	  {% for like in post.like_contexts %}
-	    Liked {{like.permalink|prettify_url}}
-	  {% endfor %}
-	{% else %}
-  	  {{ (post.title or post.content) | atom_sanitize }}
-	{% endif %}
+      {{ post.title_or_fallback | truncate(140) | atom_sanitize }}
     </title>
     <content type="html" xml:base="{{ settings.site_url }}" xml:space="preserve">
 	{% for reply in post.reply_contexts %}
@@ -47,9 +37,19 @@
 	{% for like in post.like_contexts %}
 	  &lt;p>Liked &lt;a href="{{like.permalink}}">{{like.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
+	{% for bmark in post.bookmark_contexts %}
+	  &lt;p>Bookmarked &lt;a href="{{bmark.permalink}}">{{bmark.permalink|prettify_url}}&lt;/a>&lt;/p>
+	{% endfor %}
 
         {{ post.content_html | atom_sanitize }}
 
+        {% if post.post_type == 'checkin' %}
+        {% set map_image = post.map_image(600, 400) %}
+          {% if map_image %}
+            &lt;img src="{{ map_image }}"/>
+          {% endif %}
+        {% endif %}
+        
         {% for photo in (post.photos or []) %}
           &lt;a href="{{ post.photo_url(photo) }}">
             &lt;img src="{{ post.photo_thumbnail(photo) }}" />
