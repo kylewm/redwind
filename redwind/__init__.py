@@ -76,6 +76,11 @@ for handler in ['views', 'services', 'micropub']:
     importlib.import_module('redwind.' + handler)
 
 
+# register blueprints
+from .imageproxy import imageproxy
+app.register_blueprint(imageproxy, url_prefix='/imageproxy')
+
+
 for plugin in [
         'facebook',
         'locations',

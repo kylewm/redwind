@@ -5,6 +5,7 @@ from markdown import markdown
 from smartypants import smartyPants
 import bleach
 import bs4
+import codecs
 import datetime
 import jwt
 import os
@@ -15,6 +16,8 @@ import requests
 import shutil
 import unicodedata
 import urllib
+import hmac
+import hashlib
 
 bleach.ALLOWED_TAGS += ['img', 'p', 'br', 'marquee', 'blink']
 bleach.ALLOWED_ATTRIBUTES.update({
@@ -330,52 +333,14 @@ def image_root_path():
 
 
 def mirror_image(src, side=None):
-    """Downloads a remote resource schema://domain/path to
-    static/mirror/domain/path and optionally resizes it to
-    static/mirro/domain/dirname(path)/resized-64/basename(path)
-    """
-    from .models import get_settings
-    site_netloc = urllib.parse.urlparse(get_settings().site_url).netloc
-    o = urllib.parse.urlparse(src)
-    if not o.netloc or o.netloc == site_netloc and not side:
-        return src
-
-    relpath = os.path.join("mirror", o.netloc, o.path.strip('/'))
-    abspath = os.path.join(image_root_path(), app.static_folder, relpath)
-
-    if os.path.exists(abspath):
-        pass
-    elif os.path.exists(abspath + '.error'):
-        return src
-    else:
-        try:
-            download_resource(src, abspath)
-        except BaseException as e:
-            app.logger.exception(
-                "failed to download %s to %s for some reason", src, abspath)
-            if not os.path.exists(os.path.dirname(abspath)):
-                os.makedirs(os.path.dirname(abspath))
-            with open(abspath + '.error', 'w') as f:
-                f.write(str(e))
-            return src
-
-    if not side:
-        return url_for('static', relpath)
-
-    rz_relpath = os.path.join(
-        os.path.dirname(relpath), 'resized-' + str(side),
-        os.path.basename(relpath))
-
-    if not any(rz_relpath.lower().endswith(ext)
-               for ext in ['.gif', '.jpg', '.png']):
-        rz_relpath += '.jpg'
-
-    rz_abspath = os.path.join(image_root_path(), app.static_folder, rz_relpath)
-
-    if not os.path.exists(rz_abspath):
-        resize_image(abspath, rz_abspath, side)
-
-    return url_for('static', filename=rz_relpath)
+    size = str(side) if side else 'n'
+    h = hmac.new(app.config['SECRET_KEY'].encode(), digestmod=hashlib.sha1)
+    h.update(size.encode())
+    h.update(src.encode())
+    digest = h.hexdigest()
+    return url_for('imageproxy.image', digest=digest,
+                   size=size,
+                   encoded_url=codecs.encode(src.encode(), 'hex'))
 
 
 def markdown_filter(data, img_path=None, url_processor=url_to_link,
