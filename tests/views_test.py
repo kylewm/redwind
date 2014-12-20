@@ -156,7 +156,6 @@ def test_atom_redirects(client):
 
 def test_upload_image(client, mocker):
     import io
-    from PIL import Image
     today = datetime.date.today()
     mocker.patch('requests.get')
     mocker.patch('redwind.queue.enqueue')
@@ -182,8 +181,9 @@ def test_upload_image(client, mocker):
 
     rv = client.get(permalink + '/files/image.jpg')
     assert rv.status_code == 200
-    im = Image.open(io.BytesIO(rv.data))
-    assert im.size[0] > 300 or im.size[1] > 300
+    # Removed depndency on PIL
+    # im = Image.open(io.BytesIO(rv.data))
+    # assert im.size[0] > 300 or im.size[1] > 300
 
     # FIXME resizing depends on an external service now;
     #       we can only test that the proper url is constructed

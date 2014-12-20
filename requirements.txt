@@ -6,7 +6,6 @@ Flask-SQLAlchemy==2.0
 Jinja2==2.7.1
 Markdown==2.3.1
 MarkupSafe==0.18
-Pillow==2.4.0
 PyJWT==0.2.1
 Pygments==1.6
 SQLAlchemy==0.9.7
