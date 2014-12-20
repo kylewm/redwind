@@ -5,7 +5,7 @@
       <div>
         <span class="p-author h-card">
           {% if context.author_image %}
-            <img class="u-photo" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
+            <img class="u-photo" src="{{ context.author_image | imageproxy(64) }}" alt="{{context.author_name}}" />
           {% else %}
             <img class="u-photo" src="{{ url_for('static', filename='img/users/placeholder.png') }}" alt="{{context.author_name}}" />
           {% endif %}
@@ -25,7 +25,7 @@
       </div>
       <div class="repost-body">
         {% if context.content %}
-          <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">{{context.content | safe}}</div>
+          <div class="{% if not context.title %}p-name {% endif %}e-content primary-content">{{context.content | proxy_all | safe}}</div>
         {% endif %}
       </div> <!-- .repost-body -->
     </div> <!-- .repost-entry -->

@@ -130,7 +130,7 @@ def person_to_microcard(contact, nick, soup):
 
         image = contact.image
         if image:
-            image = mirror_image(image, 26)
+            image = construct_imageproxy_url(image, 26)
             image_tag = soup.new_tag('img', src=image)
             a_tag.append(image_tag)
             a_tag.append(contact.name)
@@ -281,37 +281,6 @@ def base60_decode(s):
     return n
 
 
-def resize_image(source, target, side):
-    from PIL import Image, ExifTags
-    if not os.path.exists(target):
-        if not os.path.exists(os.path.dirname(target)):
-            os.makedirs(os.path.dirname(target))
-
-        im = Image.open(source)
-        orientation = next((k for k, v in ExifTags.TAGS.items()
-                            if v == 'Orientation'), None)
-
-        if hasattr(im, '_getexif') and im._getexif():
-            exif = dict(im._getexif().items())
-            if orientation in exif:
-                if exif[orientation] == 3:
-                    im = im.transpose(Image.ROTATE_180)
-                elif exif[orientation] == 6:
-                    im = im.transpose(Image.ROTATE_270)
-                elif exif[orientation] == 8:
-                    im = im.transpose(Image.ROTATE_90)
-
-        origw, origh = im.size
-        ratio = side / max(origw, origh)
-        # scale down, not up
-        if ratio >= 1:
-            shutil.copyfile(source, target)
-        else:
-            im = im.resize((int(origw * ratio), int(origh * ratio)),
-                           Image.ANTIALIAS)
-            im.save(target)
-
-
 def slugify(s, limit=256):
     slug = unicodedata.normalize('NFKD', s).lower()
     slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
@@ -332,7 +301,15 @@ def image_root_path():
     return app.config.get('IMAGE_ROOT_PATH', app.root_path)
 
 
-def mirror_image(src, side=None):
+def proxy_all_images(html):
+    def repl(m):
+        return m.group(1) + construct_imageproxy_url(m.group(2)) + m.group(3)
+
+    regex = re.compile(r'(<img[^>]+src=")([^">]+)(")')
+    return regex.sub(repl, html)
+
+
+def construct_imageproxy_url(src, side=None):
     size = str(side) if side else 'n'
     h = hmac.new(app.config['SECRET_KEY'].encode(), digestmod=hashlib.sha1)
     h.update(size.encode())

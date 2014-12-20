@@ -3,7 +3,7 @@
     <div>
       <span class="p-author h-card">
         {% if context.author_image %}
-          <img class="u-photo" src="{{ context.author_image | mirror_image(64) }}" alt="{{context.author_name}}" />
+          <img class="u-photo" src="{{ context.author_image | imageproxy(64) }}" alt="{{context.author_name}}" />
         {% else %}
           <img class="u-photo" src="{{ url_for('static', filename='img/users/placeholder.png') }}" alt="{{context.author_name}}" />
         {% endif %}
@@ -30,7 +30,7 @@
           {% if context.content_plain and (context.content_plain|length) > 256 %}
             {{context.content_plain | truncate(256)}}
           {% else %}
-            {{context.content | safe}}
+            {{context.content | proxy_all | safe}}
           {% endif %}
         </div>
       {% endif %}

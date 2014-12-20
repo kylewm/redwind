@@ -18,7 +18,7 @@
       </a>
       {% if context.author_name %}
         by <a class="p-author h-card" href="{{context.author_url}}">
-        <img class="u-photo" src="{{ context.author_image | mirror_image(24) }}" alt="{{context.author_name}}" />
+        <img class="u-photo" src="{{ context.author_image | imageproxy(24) }}" alt="{{context.author_name}}" />
         <span class="p-name">{{context.author_name}}</span>
       </a>
       {% endif %}

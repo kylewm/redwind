@@ -230,8 +230,9 @@ class Post(db.Model):
         if location:
             lat = location.get('latitude')
             lng = location.get('longitude')
-            return maps.get_map_image(width, height, 13,
-                                      [maps.Marker(lat, lng, 'dot-small-blue')])
+            return maps.get_map_image(
+                width, height, 13,
+                [maps.Marker(lat, lng, 'dot-small-blue')])
 
     def photo_url(self, photo):
         return '/'.join((self.get_image_path(), photo.get('filename')))
@@ -335,7 +336,7 @@ class Post(db.Model):
             if ctx.author_name:
                 return 'a post by {}'.format(ctx.author_name)
             return util.prettify_url(ctx.permalink)
-        
+
         if self.title:
             return self.title
         if self.post_type == 'checkin' and self.venue:
@@ -349,7 +350,7 @@ class Post(db.Model):
         if self.content:
             return util.format_as_text(self.content)
         return 'A {} from {}'.format(self.post_type, self.published)
-        
+
     def generate_slug(self):
         if self.title:
             return util.slugify(self.title)

@@ -21,12 +21,12 @@ import bs4
 import collections
 import datetime
 import hashlib
-import jinja2.filters
 import json
 import mf2util
 import operator
 import os
 import pytz
+import re
 import requests
 import urllib.parse
 
@@ -231,25 +231,12 @@ def check_audience(post):
     return flask_login.current_user.get_id() in post.audience
 
 
-def resize_associated_image(post, sourcepath, side):
-    targetpath = os.path.join(
-        util.image_root_path(), '_resized', post.path,
-        'files', str(side), os.path.basename(sourcepath))
-    # nginx is configured to serve internal resources directly
-    targetpath_internal = os.path.join(
-        '/internal_resized', post.path, 'files', str(side),
-        os.path.basename(sourcepath))
-    util.resize_image(
-        os.path.join(util.image_root_path(), sourcepath),
-        os.path.join(util.image_root_path(), targetpath), side)
-    return targetpath, targetpath_internal
-
-
 @app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
 def post_associated_file(year, month, slug, filename):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
     if not post:
-        app.logger.debug('could not find post for path %s %s %s', year, month, slug)
+        app.logger.debug('could not find post for path %s %s %s',
+                         year, month, slug)
         abort(404)
 
     if post.deleted:
@@ -261,34 +248,24 @@ def post_associated_file(year, month, slug, filename):
     sourcepath = os.path.join(
         util.image_root_path(), '_data', post.path, 'files', filename)
 
-    # nginx is configured to serve internal resources directly
-    sourcepath_internal = os.path.join(
-        '/internal_data', post.path, 'files', filename)
-
-    app.logger.debug('image source path: %s. request args: %s', sourcepath, request.args)
+    app.logger.debug('image source path: %s. request args: %s',
+                     sourcepath, request.args)
 
     if not os.path.exists(sourcepath):
         app.logger.debug('source path does not exist %s', sourcepath)
         abort(404)
 
-    size = request.args.get('size')
-    if size == 'small':
-        sourcepath, sourcepath_internal = resize_associated_image(post, sourcepath, 300)
-    elif size == 'medium':
-        sourcepath, sourcepath_internal = resize_associated_image(post, sourcepath, 800)
-    elif size == 'large':
-        sourcepath, sourcepath_internal = resize_associated_image(post, sourcepath, 1024)
-
-    if size:
-        app.logger.debug('resized: %s, new path: %s', size, sourcepath)
-
     if app.debug:
         _, ext = os.path.splitext(sourcepath)
         return send_from_directory(
-            os.path.join(util.image_root_path(), os.path.dirname(sourcepath)),
+            os.path.join(util.image_root_path(),
+                         os.path.dirname(sourcepath)),
             os.path.basename(sourcepath), mimetype=None)
 
     resp = make_response('')
+    # nginx is configured to serve internal resources directly
+    sourcepath_internal = os.path.join(
+        '/internal_data', post.path, 'files', filename)
     resp.headers['X-Accel-Redirect'] = sourcepath_internal
     del resp.headers['Content-Type']
     app.logger.debug('response with X-Accel-Redirect %s', resp.headers)
@@ -707,8 +684,6 @@ def human_time(thedate, alternate=None):
         tz = pytz.timezone(get_settings().timezone)
         thedate = pytz.utc.localize(thedate).astimezone(tz)
 
-    #return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
-
     if (isinstance(thedate, datetime.datetime)
             and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
         return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
@@ -776,9 +751,23 @@ def format_syndication_url(url, include_rel=True):
     return Markup(fmt.format(url, 'fa-paper-plane', domain_from_url(url)))
 
 
-@app.template_filter('mirror_image')
-def mirror_image(src, side=None):
-    return util.mirror_image(src, side)
+IMAGE_TAG_RE = re.compile(r'<img([^>]*) src="(https?://[^">]+)"')
+
+
+@app.template_filter('proxy_all')
+def proxy_all_images(html):
+    def repl(m):
+        url = m.group(2)
+        # don't proxy images that come from this site
+        if url.startswith(get_settings().site_url):
+            return m.group(0)
+        return '<img{} src="{}"'.format(m.group(1), imageproxy(m.group(2)))
+    return IMAGE_TAG_RE.sub(repl, html)
+
+
+@app.template_filter('imageproxy')
+def imageproxy(src, side=None):
+    return util.construct_imageproxy_url(src, side)
 
 
 @app.route('/save_edit', methods=['POST'])
