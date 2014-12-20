@@ -10,11 +10,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from config import Configuration
 
-Base = declarative_base()
+metadata = MetaData()
+Base = declarative_base(metadata=metadata)
 
 engine = create_engine(Configuration.SQLALCHEMY_DATABASE_URI, echo=True)
 
-metadata = MetaData()
 
 
 class Job(Base):
