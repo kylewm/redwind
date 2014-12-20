@@ -1,6 +1,6 @@
 <div class="contact h-card">
   {% if contact.image %}
-  <img class="u-photo" src="{{contact.image}}"/>
+  <img class="u-photo" src="{{contact.image|imageproxy}}"/>
   {% endif %}
 
   <div class="text">

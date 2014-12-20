@@ -18,7 +18,7 @@ def image(digest, size, encoded_url):
     flask.current_app.logger.debug('fetching image from %s', url)
 
     if not sign(size, url) == digest:
-        return flask.abort(403)
+        flask.abort(403)
 
     _, ext = os.path.splitext(url)
 
@@ -32,7 +32,7 @@ def image(digest, size, encoded_url):
     try:
         size = int(size)
     except:
-        return flask.abort(400)
+        flask.abort(400)
 
     resized = tempfile.NamedTemporaryFile(suffix=ext)
     success = resize_image(original, resized, size)
@@ -53,11 +53,15 @@ def sign(size, url):
 
 def download_resource(url, target):
     flask.current_app.logger.debug("downloading {} to {}".format(url, target))
-    response = requests.get(url, stream=True, timeout=10)
-    response.raise_for_status()
-    for chunk in response.iter_content(512):
-        target.write(chunk)
 
+    try:
+        response = requests.get(url, stream=True, timeout=10)
+        response.raise_for_status()
+        for chunk in response.iter_content(512):
+            target.write(chunk)
+    except:
+        flask.abort(404)
+        
     content_type = response.headers.get('Content-Type', 'image/jpeg')
     mimetype = content_type.split(';', 1)[0]
     return mimetype
