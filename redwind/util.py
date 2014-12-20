@@ -310,6 +310,12 @@ def proxy_all_images(html):
 
 
 def construct_imageproxy_url(src, side=None):
+    pilbox_url = app.config.get('PILBOX_URL')
+    if not pilbox_url:
+        # cannot resize without pilbox
+        app.logger.warn('No pilbox server configured')
+        return src
+
     query = {}
     query['url'] = src
     if side:
@@ -318,13 +324,15 @@ def construct_imageproxy_url(src, side=None):
     else:
         query['op'] = 'noop'
 
-    qs = urllib.parse.urlencode(query)
-    h = hmac.new(app.config['PILBOX_KEY'].encode(), qs.encode(), hashlib.sha1)
-    sig = h.hexdigest()
+    pilbox_key = app.config.get('PILBOX_KEY')
+    if pilbox_key:
+        qs = urllib.parse.urlencode(query)
+        h = hmac.new(pilbox_key.encode(), qs.encode(), hashlib.sha1)
+        qs += '&sig=' + h.hexdigest()
 
-    return '{}?{}&sig={}'.format(app.config['PILBOX_URL'], qs, sig)
+    return pilbox_url + '?' + qs
 
-    
+
 def markdown_filter(data, img_path=None, url_processor=url_to_link,
                     person_processor=person_to_microcard):
     if data is None:

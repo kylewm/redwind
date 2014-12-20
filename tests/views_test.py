@@ -185,11 +185,13 @@ def test_upload_image(client, mocker):
     im = Image.open(io.BytesIO(rv.data))
     assert im.size[0] > 300 or im.size[1] > 300
 
-    rv = client.get(permalink + '/files/image.jpg',
-                    query_string={'size': 'small'})
-    assert rv.status_code == 200
-    im = Image.open(io.BytesIO(rv.data))
-    assert im.size[0] <= 300 and im.size[1] <= 300
+    # FIXME resizing depends on an external service now;
+    #       we can only test that the proper url is constructed
+    # rv = client.get(permalink + '/files/image.jpg',
+    #                 query_string={'size': 'small'})
+    # assert rv.status_code == 200
+    # im = Image.open(io.BytesIO(rv.data))
+    # assert im.size[0] <= 300 and im.size[1] <= 300
 
 
 def test_indieauth_login(app, client, mocker):

@@ -89,9 +89,6 @@ def asdf():
 
 
 def test_autolink_at_names(contacts, mocker):
-    mirror = mocker.patch('redwind.util.mirror_image')
-    mirror.side_effect = lambda src, side: src
-
     result = util.autolink("@luke this is @leia tell @obiwan he\'s our only help!")
     assert result == """<a class="microcard h-card" href="http://tatooine.com/moseisley"><img src="http://tatooine.com/luke.jpg"/>Luke Skywalker</a> this is <a class="microcard h-card" href="http://aldera.an"><img src="http://aldera.an/leia.png"/>Princess Leia</a> tell <a href="https://twitter.com/obiwan">@obiwan</a> he's our only help!"""
 
