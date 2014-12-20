@@ -18,4 +18,8 @@ class Configuration(object):
     SQLALCHEMY_DATABASE_URI = 'postgres:///redwind'
     # SQLALCHEMY_DATABASE_URI = 'sqlite:////home/kmahan/kylewm.com.db'
 
-    REDIS_URL = 'redis://localhost:6379'
+    # base url for pilbox requests (handles image proxy/resize)
+    PILBOX_URL = '/imageproxy'
+
+    # sign requests to prevent unauthorized use of pilbox service
+    PILBOX_KEY = 'a key used to sign pilbox requests'
