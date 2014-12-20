@@ -317,7 +317,7 @@ def construct_imageproxy_url(src, side=None):
     digest = h.hexdigest()
     return url_for('imageproxy.image', digest=digest,
                    size=size,
-                   encoded_url=codecs.encode(src.encode(), 'hex'))
+                   encoded_url=codecs.encode(src.encode(), 'hex_codec'))
 
 
 def markdown_filter(data, img_path=None, url_processor=url_to_link,

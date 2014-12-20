@@ -14,7 +14,7 @@ imageproxy = flask.Blueprint('imageproxy', __name__)
 
 @imageproxy.route('/<digest>/<size>/<encoded_url>')
 def image(digest, size, encoded_url):
-    url = codecs.decode(encoded_url, 'hex').decode()
+    url = codecs.decode(encoded_url, 'hex_codec').decode()
     flask.current_app.logger.debug('fetching image from %s', url)
 
     if not sign(size, url) == digest:
@@ -35,10 +35,12 @@ def image(digest, size, encoded_url):
         return flask.abort(400)
 
     resized = tempfile.NamedTemporaryFile(suffix=ext)
-    resize_image(original, resized, size)
+    success = resize_image(original, resized, size)
     resized.seek(0)
-
-    return flask.send_file(resized, mimetype=mimetype)
+        
+    return flask.send_file(resized if success else original,
+                           mimetype=mimetype)
+        
 
 
 def sign(size, url):
@@ -84,8 +86,10 @@ def resize_image(source, target, side):
 
     # scale down, not up
     if ratio >= 1:
-        shutil.copyfileobj(source, target)
-    else:
-        im = im.resize((int(w * ratio), int(h * ratio)),
-                       Image.ANTIALIAS)
-        im.save(target, original_format)
+        return False
+
+    flask.current_app.logger.debug('resizing image file from %s to %s', source.name, target.name)
+    im = im.resize((int(w * ratio), int(h * ratio)),
+                   Image.ANTIALIAS)
+    im.save(target, original_format)
+    return True
