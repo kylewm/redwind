@@ -311,8 +311,9 @@ def proxy_all_images(html):
 
 def construct_imageproxy_url(src, side=None):
     pilbox_url = app.config.get('PILBOX_URL')
-    if not pilbox_url:
+    if not pilbox_url or src.lower().startswith('data:'):
         # cannot resize without pilbox
+        # pilbox cannot resize "data:" urls
         app.logger.warn('No pilbox server configured')
         return src
 
