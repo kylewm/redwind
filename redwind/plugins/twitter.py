@@ -331,6 +331,8 @@ def posse_post_discovery(post):
             app.logger.exception('Could not fetch original')
         except SSLError:
             app.logger.exception('SSL Error')
+        except Exception as e:
+            app.logger.exception('MF2 Parser error: %s',e)
 
     def find_first_syndicated(originals):
         for original in originals:
