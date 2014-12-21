@@ -3,6 +3,7 @@ import datetime
 
 env.hosts = ['orin.kylewm.com']
 
+REMOTE_PATH = '/srv/www/kylewm.com/redwind'
 
 def backup():
     backup_dir = '~/Backups/kylewm.com/{}/'.format(
@@ -21,17 +22,18 @@ def push():
 
 
 def pull():
-    with cd("~/redwind"):
+    with cd(REMOTE_PATH):
         run("git pull origin master")
         run("git submodule update")
 
 
 def restart():
-    with cd("~/redwind"):
+    with cd(REMOTE_PATH):
         with prefix("source venv/bin/activate"):
             run("pip install -r requirements.txt")
-            run("uwsgi --reload /tmp/redwind.pid")
-
+            # run("uwsgi --reload /tmp/redwind.pid")
+            run("supervisorctl restart redwind")
+            
 
 def deploy():
     commit()
