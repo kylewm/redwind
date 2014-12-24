@@ -144,8 +144,9 @@ def handle_new_or_edit(post, preview, img_url, post_type,
                        album_id):
     app.logger.debug('publishing to facebook')
 
-    tagger = PersonTagger()
-    preview = util.process_people(preview, tagger)
+    #TODO I cannot figure out how to tag people via the FB API
+    #tagger = PersonTagger()
+    #preview = util.autolink(preview, url_processor=None, person_processor=tagger)
 
     post_args = {
         'access_token': get_settings().facebook_access_token,
