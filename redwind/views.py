@@ -875,7 +875,7 @@ def save_post(post):
     if audience is not None:
         post.audience = util.multiline_string_to_list(audience)
 
-    tags = request.form.getlist('tags', [])
+    tags = request.form.getlist('tags')
     tags = list(filter(None, map(util.normalize_tag, tags)))
     post.tags = [Tag.query.filter_by(name=tag).first() or Tag(tag)
                  for tag in tags]

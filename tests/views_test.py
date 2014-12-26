@@ -4,6 +4,8 @@ import urllib
 import datetime
 from redwind.models import User
 from testutil import FakeResponse, assert_urls_match
+from werkzeug.datastructures import MultiDict
+
 
 
 def test_empty_db(client):
@@ -37,38 +39,38 @@ def silly_posts(client, auth, mocker):
         {
             'post_type': 'note',
             'content': 'Probably a <i>dumb</i> joke',
-            'tags': 'dumbjoke',
+            'tags': ['dumbjoke'],
         },
         {
             'post_type': 'article',
             'title': 'First interesting article',
             'content': 'Something really thoughtful and interesting',
-            'tags': 'thoughtful,interesting',
+            'tags': ['thoughtful', 'interesting'],
             'syndication': 'https://twitter.com/kylewm2/status/123456\nhttps://facebook.com/kyle.mahan/status/123456',
         },
         {
             'post_type': 'reply',
             'in_reply_to': 'http://foo.com/bar',
             'content': 'This foo article on bar is really great',
-            'tags': 'good',
+            'tags': ['good'],
         },
         {
             'post_type': 'like',
             'like_of': 'https://mal.colm/reynolds',
-            'tags': 'firefly,interesting',
+            'tags': ['firefly', 'interesting'],
             'hidden': True,
         },
         {
             'post_type': 'like',
             'like_of': 'https://buf.fy/summers/',
-            'tags': 'buffy',
+            'tags': ['buffy'],
             'hidden': True,
         },
         {
             'post_type': 'article',
             'title': 'Second interesting article',
             'content': 'With lots of interesting and good content',
-            'tags': 'interesting,good',
+            'tags': ['interesting', 'good'],
         },
     ]
 
