@@ -292,7 +292,7 @@ def post_by_path(year, month, slug):
 @flask_login.login_required
 def all_drafts():
     posts = Post.query.filter_by(deleted=False, draft=True).all()
-    return render_template('all_drafts.html', posts=posts)
+    return render_template('admin/drafts.jinja2', posts=posts)
 
 
 @app.route('/drafts/<hash>')
@@ -493,7 +493,7 @@ def logout():
 @flask_login.login_required
 def edit_settings():
     if request.method == 'GET':
-        return render_template('settings.html', raw_settings=sorted(
+        return render_template('admin/settings.html', raw_settings=sorted(
             Setting.query.all(), key=operator.attrgetter('name')))
     for key, value in request.form.items():
         Setting.query.get(key).value = value
@@ -515,6 +515,10 @@ def delete_by_id():
     redirect_url = request.args.get('redirect') or url_for('index')
     app.logger.debug('redirecting to {}'.format(redirect_url))
     return redirect(redirect_url)
+
+
+def get_tags():
+    return [t.name for t in Tag.query.all()]
 
 
 def get_top_tags(n=10):
@@ -589,8 +593,9 @@ def new_post(type):
         'save_draft': 'Save as Draft',
     }
 
-    return render_template('edit_' + type + '.html', edit_type='new',
-                           post=post, top_tags=get_top_tags(20),
+    return render_template('admin/edit_' + type + '.html',
+                           edit_type='new', post=post,
+                           tags=get_tags(), top_tags=get_top_tags(20),
                            button_text=button_text)
 
 
@@ -619,14 +624,20 @@ def edit_by_id():
             'save_draft': 'Unpublish, Save as Draft',
         }
 
-    return render_template('edit_' + type + '.html', edit_type='edit',
-                           post=post, top_tags=get_top_tags(20),
+    return render_template('admin/edit_' + type + '.html',
+                           edit_type='edit', post=post,
+                           tags=get_tags(), top_tags=get_top_tags(20),
                            button_text=button_text)
 
 
 @app.route('/uploads')
 def uploads_popup():
     return render_template('uploads_popup.html')
+
+
+@app.template_filter('json')
+def to_json(obj):
+    return Markup(json.dumps(obj))
 
 
 @app.template_filter('approximate_latitude')
@@ -864,7 +875,7 @@ def save_post(post):
     if audience is not None:
         post.audience = util.multiline_string_to_list(audience)
 
-    tags = request.form.get('tags', '').split(',')
+    tags = request.form.getlist('tags', [])
     tags = list(filter(None, map(util.normalize_tag, tags)))
     post.tags = [Tag.query.filter_by(name=tag).first() or Tag(tag)
                  for tag in tags]
@@ -983,7 +994,7 @@ def addressbook():
 @app.route('/contacts')
 def contacts():
     contacts = Contact.query.order_by(Contact.name).all()
-    return render_template('contacts.html', contacts=contacts)
+    return render_template('admin/contacts.html', contacts=contacts)
 
 
 @app.route('/contacts/<name>')
@@ -992,7 +1003,7 @@ def contact_by_name(name):
     contact = nick and nick.contact
     if not contact:
         abort(404)
-    return render_template('contact.html', contact=contact)
+    return render_template('admin/contact.html', contact=contact)
 
 
 @app.route('/delete/contact')
@@ -1009,7 +1020,7 @@ def delete_contact():
 def new_contact():
     if request.method == 'GET':
         contact = Contact()
-        return render_template('edit_contact.html', contact=contact)
+        return render_template('admin/edit_contact.html', contact=contact)
 
     if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
@@ -1024,7 +1035,7 @@ def edit_contact():
     if request.method == 'GET':
         id = request.args.get('id')
         contact = Contact.query.get(id)
-        return render_template('edit_contact.html', contact=contact)
+        return render_template('admin/edit_contact.html', contact=contact)
 
     if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
@@ -1071,7 +1082,7 @@ def venue_by_slug(slug):
     app.logger.debug('rendering venue, location. {}, {}',
                      venue, venue.location)
     posts = Post.query.filter_by(venue_id=venue.id).all()
-    return render_template('venue.html', venue=venue, posts=posts)
+    return render_template('admin/venue.html', venue=venue, posts=posts)
 
 
 @app.route('/venues')
@@ -1092,7 +1103,7 @@ def all_venues():
                      .append(venue)
 
     map_image = maps.get_map_image(600, 400, 13, markers)
-    return render_template('all_venues.html', venues=venues,
+    return render_template('admin/venues.html', venues=venues,
                            organized=organized, map_image=map_image)
 
 
@@ -1100,7 +1111,7 @@ def all_venues():
 def new_venue():
     venue = Venue()
     if request.method == 'GET':
-        return render_template('edit_venue.html', venue=venue)
+        return render_template('admin/edit_venue.html', venue=venue)
     return save_venue(venue)
 
 
@@ -1109,7 +1120,7 @@ def edit_venue():
     id = request.args.get('id')
     venue = Venue.query.get(id)
     if request.method == 'GET':
-        return render_template('edit_venue.html', venue=venue)
+        return render_template('admin/edit_venue.html', venue=venue)
     return save_venue(venue)
 
 

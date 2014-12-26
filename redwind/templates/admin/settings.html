@@ -1,0 +1,25 @@
+{% extends "admin/base.jinja2" %}
+{% block content %}
+
+  <form method="POST">
+    <div class="form-group">
+      <input class="btn btn-primary" type="submit" value="Save Settings" />
+    </div>
+    {% for s in raw_settings %}
+      <div class="form-group">
+        <label>{{ s.name }}</label>
+        {% if s.key == 'author_bio' %}
+          <textarea class="form-control" name="{{ s.key }}">{{ s.value or '' }}</textarea>
+        {% else %}
+          <input class="form-control" type="text" name="{{ s.key }}" value="{{ s.value or '' }}"></input>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <div class="form-group">
+    <input class="btn btn-primary" type="submit" value="Save Settings" />
+    </div>
+  </form>
+
+  <a href="{{ url_for('authorize_facebook') }}">Authorize Facebook</a><br/>
+  <a href="{{ url_for('authorize_twitter') }}">Authorize Twitter</a>
+{% endblock %}

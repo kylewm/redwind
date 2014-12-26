@@ -1,5 +1,11 @@
 <article class="{%if not is_single %}{{post.mf2_type}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}{% if post.draft %} draft{% endif %}">
 
+  <div class="post-date">
+    <a class="u-url" href="{{post.permalink}}">
+      <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
+    </a>
+  </div>
+
   {% include "_reply_contexts.html" %}
   {% include "_like_contexts.html" %}
   {% include "_bookmark_contexts.html" %}
@@ -8,6 +14,7 @@
   {% if post.title %}
     <h1 class="p-name">{{post.title}}</h1>
   {% endif %}
+
 
   {% if post.photos or post.content or post.post_type == 'checkin' %}
     <div class="{% if not post.title %}p-name {% endif %}e-content">
@@ -39,26 +46,6 @@
     </div>
   {% endif %}
 
-    <!--
-  {% if post.post_type == 'checkin' and not no_map %}
-    {% if post.location %}
-      <div class="map"
-           data-latitude="{{post.location.latitude}}"
-           data-longitude="{{post.location.longitude}}"
-           data-location="{{post.location.name}}">
-      </div>
-    {% endif %}
-    {% if post.venue %}
-      <div class="map"
-           data-latitude="{{post.venue.location.latitude}}"
-           data-longitude="{{post.venue.location.longitude}}"
-           data-location="{{post.venue.name}}">
-      </div>
-    {% endif %}
-  {% endif %}
-      -->
-
-
   {% if post.tags %}
     <div class="tags">
       {% for tag in post.tags %}
@@ -88,11 +75,6 @@
       </div>
     {% endif %}
 
-    <div class="metadata-component">
-      <a class="u-url" href="{{post.permalink}}">
-        <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
-      </a>
-    </div>
     {% if is_single and post.syndication %}
       <div class="syndication-links metadata-component">
         Also on

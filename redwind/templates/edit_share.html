@@ -1,8 +1,0 @@
-{% extends "edit_note.html" %}
-
-{% block above_content %}
-<label>Repost (URLs)</label>
-<textarea style="width:100%" name="repost_of" cols="50" rows="1">{{post.repost_of | join('\n')}}</textarea>
-{% endblock above_content %}
-
-{% block content_fields %}{% endblock content_fields %}

@@ -11,7 +11,6 @@ from flask.ext.login import LoginManager
 
 from werkzeug.datastructures import ImmutableDict
 from logging import StreamHandler
-from logging.handlers import RotatingFileHandler
 from config import Configuration
 
 import os
@@ -69,7 +68,7 @@ if not app.debug:
 for handler in ['views', 'services', 'micropub']:
     importlib.import_module('redwind.' + handler)
 
-    
+
 for plugin in [
         'facebook',
         'locations',

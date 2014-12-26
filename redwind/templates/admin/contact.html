@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+{% extends "admin/base.jinja2" %}
 
 {% block content %}
-  {% include "_contact.html" %}
+  {% include "admin/_contact.html" %}
   <a href="{{ url_for('contacts')}}">All</a>
 {% endblock %}

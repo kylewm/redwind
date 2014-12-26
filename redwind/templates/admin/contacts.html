@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "admin/base.jinja2" %}
 
 {% block content %}
 
@@ -7,7 +7,7 @@
   {% endif %}
 
   {% for contact in contacts %}
-    {% include "_contact.html" %}
+    {% include "admin/_contact.html" %}
   {% endfor %}
 
   {% if current_user.is_authenticated() %}
