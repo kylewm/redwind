@@ -28,11 +28,6 @@
   </head>
   <body>
 
-    <div class="container">
-      {% block content %}
-      {% endblock content %}
-    </div>
-
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
@@ -62,27 +57,52 @@
             </li>
 
             <li><a href="{{ url_for('all_drafts') }}"><i class="glyphicon glyphicon-inbox"></i> Drafts</a></li>
+            <li><a href="{{url_for('mentions')}}"><i class="glyphicon glyphicon-comment"></i> Mentions</a></li>
+
             <li><a href="{{ url_for('contacts') }}"><i class="glyphicon glyphicon-user"></i> Contacts</a></li>
             <li><a href="{{ url_for('all_venues') }}"><i class="glyphicon glyphicon-map-marker"></i> Venues</a></li>
             <li><a href="{{ url_for('edit_settings') }}"><i class="glyphicon glyphicon-wrench"></i> Settings</a></li>
           </ul>
+
+          {% if current_user.is_authenticated() %}
+            <div class="navbar-text navbar-right">
+              {{ current_user.domain | prettify_url }} (<a class="navbar-link" href="{{ url_for('logout', next=request.path) }}">logout</a>)
+            </div>
+          {% else %}
+          <form class="navbar-form navbar-right" role="search" action="{{url_for('login')}}" method="get">
+            <div class="form-group">
+              <input type="text" name="me" class="form-control" placeholder="yourdomain.com">
+            </div>
+            <input type="hidden" name="next" value="{{ request.path }}" />
+            <button type="submit" class="btn btn-default">Sign In</button>
+          </form>
+          {% endif %}
+
         </div>
       </div>
     </nav>
+
+    <main class="container">
+
+      {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">{{ message | safe }}</div>
+      {% endfor %}
+
+      {% block content %}
+      {% endblock content %}
+    </main>
+
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="{{url_for('static', filename='tag-it/js/tag-it.js')}}" type="text/javascript" charset="utf-8"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
-    <script type="text/javascript">
-      window.SITE_ROOT = '{{ settings.site_url }}';
-    </script>
-    {% assets 'js_all' %}
-      <script src="{{ ASSET_URL }}"></script>
-    {% endassets %}
 
     {% block closing %}
+      <script type="text/javascript">
+        window.SITE_ROOT = '{{ settings.site_url }}';
+      </script>
     {% endblock closing %}
 
   </body>

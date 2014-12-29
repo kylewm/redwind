@@ -64,13 +64,13 @@ def share_on_facebook():
         if imgs:
             app.logger.debug('fetching user albums')
             resp = requests.get(
-                'https://graph.facebook.com/v2.0/me/albums',
+                'https://graph.facebook.com/v2.2/me/albums',
                 params={'access_token': get_settings().facebook_access_token})
             resp.raise_for_status()
             app.logger.debug('user albums response %s: %s', resp, resp.text)
             albums = resp.json().get('data', [])
 
-        return render_template('share_on_facebook.html', post=post,
+        return render_template('admin/share_on_facebook.jinja2', post=post,
                                preview=preview, imgs=imgs, albums=albums)
 
     try:

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <style>
+      .error {background-color: rgb(255, 199, 199);}
+      .queued {background-color: rgb(255,255,164);}
+      .success {background-color: rgb(199,255,199);}
+    </style>
+
+    <h1>Webmention processing status</h1>
+    {% if source and target %}
+      <p>Source: <a href="{{source}}">{{source}}</a></p>
+      <p>Target: <a href="{{target}}">{{target}}</a></p>
+    {% endif %}
+    <p class="{{status}}"><strong>{{status}}:</strong> {{reason}}</p>
+    <p>
+      <a href="/">Return to site</a>.
+    </p>
+  </body>
+</html>

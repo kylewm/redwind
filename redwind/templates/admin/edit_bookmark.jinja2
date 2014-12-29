@@ -1,0 +1,12 @@
+{% extends "admin/edit_post.jinja2" %}
+
+{% block above_content %}
+  {% set url = post.bookmark_of[0] if post.bookmark_of else '' %}
+  <div class="form-group">
+    <input placeholder="Bookmark Of" class="form-control" type="text" name="bookmark_of" value="{{url}}" />
+  </div>
+{% endblock above_content %}
+
+{% block additional_params %}
+<input type="hidden" id="hidden" name="hidden" value="true"/>
+{% endblock additional_params %}

@@ -4,39 +4,27 @@ import importlib
 sys.path.append('external')
 
 from flask import Flask
-# from flask_debugtoolbar import DebugToolbarExtension
-from flask.ext.assets import Environment, Bundle
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
+from flask.ext.themes2 import Themes
 
 from werkzeug.datastructures import ImmutableDict
 from logging import StreamHandler
 from config import Configuration
-
-import os
 import logging
 
 
 app = Flask(__name__)
 app.config.from_object(Configuration)
 
+
 db = SQLAlchemy(app)
 
 # toolbar = DebugToolbarExtension(app)
 login_mgr = LoginManager(app)
-login_mgr.login_view = 'index'
+login_mgr.login_view = 'login'
 
-assets = Environment(app)
-
-assets.register('css_all',
-                Bundle('css/style.css', 'css/pygments.css',
-                       filters='cssmin', output='css/site.css'))
-
-assets.register('js_all',
-                Bundle('js/util.js', 'js/http.js', 'js/posts.js',
-                       'js/twitter.js', 'js/edit_contact.js',
-                       'js/edit_post.js', 'js/edit_venue.js', filters='jsmin',
-                       output='js/main.js'))
+themes = Themes(app)
 
 app.jinja_options = ImmutableDict(
     trim_blocks=True,

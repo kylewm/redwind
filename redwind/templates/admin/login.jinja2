@@ -1,0 +1,16 @@
+{% extends "admin/base.jinja2" %}
+{% block content %}
+<form class="form-signin" role="form" method="GET" style="max-width: 330px; margin: 0 auto;">
+  <h2 class="form-signin-heading">Please sign in</h2>
+  <input type="text" name="me" class="form-control" placeholder="yourdomain.com" required autofocus />
+  {% if next %}
+    <input type="hidden" name="next" value="{{ next }}" />
+  {% endif %}
+  <div class="checkbox">
+    <label>
+        <input type="checkbox" value="remember-me"> Remember me
+    </label>
+  </div>
+  <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+</form>
+{% endblock content %}

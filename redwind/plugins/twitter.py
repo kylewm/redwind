@@ -179,7 +179,7 @@ def share_on_twitter():
         imgs = list(collect_images(post))
         app.logger.debug('twitter post has images: %s', imgs)
 
-        return render_template('share_on_twitter.html', preview=preview,
+        return render_template('admin/share_on_twitter.jinja2', preview=preview,
                                post=post, in_reply_to=in_reply_to,
                                repost_of=repost_of, like_of=like_of, imgs=imgs)
 

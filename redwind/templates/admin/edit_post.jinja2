@@ -1,0 +1,82 @@
+{% extends "admin/base.jinja2" %}
+{% block content %}
+  {% if not current_user.is_authenticated() %}
+    <div class="alert alert-danger" role="alert">
+      You are not currently logged in. Feel free to poke around, but you won't be able to post anything without first authenticating as the blog owner.
+    </div>
+  {% endif %}
+
+  <form id="edit_form" method="POST" action="{{ settings.site_url }}/save_{{edit_type}}" enctype="multipart/form-data">
+
+    <div class="form-group btn-group" role="group">
+      {% for action in ['publish', 'publish+tweet', 'publish_quietly', 'save_draft'] %}
+        <button class="btn btn-default" type="submit" name="action" value="{{action}}">{{button_text[action]}}</button>
+      {% endfor %}
+    </div>
+
+    {% with is_single = True %}
+      {% include "admin/_contexts.jinja2" %}
+    {% endwith %}
+
+    {% block above_content %}
+    {% endblock above_content %}
+
+    {% block content_fields %}
+      <div class="form-group">
+        <textarea class="form-control" name="content" id="content" rows="2" placeholder="Content">{{ post.content or '' }}</textarea>
+      </div>
+    {% endblock content_fields %}
+
+    {% block below_content %}
+    {% endblock below_content %}
+
+    <div class="form-group">
+      <ul id="tag-list">
+        {% for tag in post.tags %}
+          <li>{{ tag }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% block file_upload %}
+      <div class="form-group">
+        <input type="file" id="image_upload_button" name="files" multiple="multiple" accept="image/*" />
+        <ul id="uploads"></ul>
+      </div>
+    {% endblock %}
+
+    <data id="post_path" value="{{post.path}}"></data>
+    <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
+    <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
+
+    {% block hidden_check %}
+      <input type="hidden" id="hidden" name="hidden" value="false"/>
+    {% endblock hidden_check %}
+
+    {% block additional_params %}
+    {% endblock additional_params %}
+
+  </form>
+{% endblock  content %}
+
+
+{% block closing %}
+  {{ super() }}
+
+  <script src="{{url_for('static', filename='admin/util.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/edit_post.js')}}"></script>
+
+  <script>
+    $('#tag-list').tagit({
+      placeholderText: 'Tags',
+      availableTags: {{ tags | json }},
+      autocomplete: {
+        messages: {
+          noResults: '',
+          results: function() {}
+        }
+      }
+    });
+  </script>
+
+{% endblock closing %}

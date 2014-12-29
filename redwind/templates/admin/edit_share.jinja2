@@ -1,0 +1,9 @@
+{% extends "admin/edit_post.jinja2" %}
+
+{% block above_content %}
+<div class="form-group">
+<textarea class="form-control" placeholder="Repost Of" style="width:100%" name="repost_of" cols="50" rows="1">{{post.repost_of | join('\n')}}</textarea>
+</div>
+{% endblock above_content %}
+
+{% block content_fields %}{% endblock content_fields %}

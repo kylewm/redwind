@@ -1,0 +1,17 @@
+{% extends theme("base.jinja2") %}
+
+{% block body_class %}{{ post.mf2_type }}{% endblock body_class %}
+
+{% block content %}
+  {% with is_single = True %}
+      {% include theme("_post.jinja2") %}
+  {% endwith %}
+
+<form class="send_webmention" method="POST" action="{{ url_for('receive_webmention') }}">
+  Mentioned this post?
+  <input type="text" name="source" placeholder="Send me the URL" style="display:inline"/>
+  <input type="hidden" name="target" value="{{ post.permalink }}"/>
+  <input type="submit" value="Send"/>
+</form>
+
+{% endblock content %}

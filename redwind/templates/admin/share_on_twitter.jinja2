@@ -1,0 +1,59 @@
+{% extends "admin/base.jinja2" %}
+
+{% block content %}
+
+<form id="share_on_twitter" method="POST">
+  <input type="hidden" id="post_id" name="post_id" value="{{ post.id }}"/>
+
+  <div class="form-group">
+    <input type="submit" id="publish_button" value="Share on Twitter" class="btn btn-primary"/>
+  </div>
+
+  <div class="form-group">
+    <label> Reply To:</label>
+    <input id="in_reply_to" name="in_reply_to" class="form-control" value="{{in_reply_to or ''}}"/>
+  </div>
+
+
+  <div class="form-group">
+    <label> Retweet: </label>
+    <input id="repost_of" name="repost_of" class="form-control"  value="{{repost_of or ''}}"/>
+  </div>
+
+  <div class="form-group">
+  <label>Favorite:</label>
+    <input id="like_of" name="like_of" class="form-control" value="{{like_of or ''}}"/>
+  </div>
+
+
+  <div class="form-group">
+    <label>Content:</label>
+    <textarea  name="preview" id="preview" class="form-control">{{preview}}</textarea>
+    <span size="8" type="text" name="char_count" id="char_count">&nbsp;</span>
+  </div>
+
+  <div class="form-group">
+  <label>Permalink:</label>
+  <input id="permalink" class="form-control" value="{{post.permalink}}"/>
+  </div>
+
+  {% if imgs %}
+    <div class="form-group">
+      <label><input type="radio" name="img" value="">No Image</label>
+    {% for img in imgs %}
+      <label><input type="radio" name="img" value="{{img}}" {% if loop.first %} checked{% endif %}>
+          <img src="{{img}}" style="width:64px; vertical-align: middle"/>
+      </label>
+    {% endfor %}
+    </ul>
+  {% endif %}
+
+</form>
+{% endblock content %}
+{% block closing %}
+  {{ super() }}
+
+  <script src="{{url_for('static', filename='admin/util.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/http.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/twitter.js')}}"></script>
+{% endblock closing %}

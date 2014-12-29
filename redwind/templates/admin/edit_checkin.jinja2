@@ -1,0 +1,84 @@
+{% extends "admin/edit_note.jinja2" %}
+
+{% block above_content %}
+
+  <div id="select_venue_holder" class="form-group">
+    <span class="input-group">
+    <select class="form-control" id="venue" name="venue"></select>
+    <a href="#" class="input-group-addon" id="new_venue_expander">Create New</a>
+    </span>
+  </div>
+
+  <div id="new_venue_holder">
+    <div class="form-group">
+      <input class="form-control" placeholder="Venue Name" type="text" id="new_venue_name" name="new_venue_name" />
+    </div>
+    <div class="form-group">
+      <input class="form-control" placeholder="Latitude" type="text" name="new_venue_latitude" id="new_venue_latitude" />
+    </div>
+    <div class="form-group">
+      <input class="form-control" placeholder="Longitude" type="text" name="new_venue_longitude" id="new_venue_longitude" />
+    </div>
+  </div>
+
+{% endblock above_content %}
+
+{% block hidden_check %}
+  <label><input type="checkbox" id="hidden" name="hidden" value="true" {% if post.hidden %}checked{% endif %} /> Hidden from Stream</label>
+{% endblock hidden_check %}
+
+{% block closing %}
+  {{ super() }}
+  <script type="text/javascript">
+
+function updateVenueList(lat, lng) {
+    $.getJSON(
+        '/services/nearby?latitude=' + lat + '&longitude=' + lng,
+        function(blob) {
+            blob.venues.forEach(function (venue) {
+                $('<option value="' + venue.id + '">' + venue.name + ': ' + venue.geocode + '</option>').appendTo($('select#venue'));
+            });
+        });
+}
+
+var prevLat, prevLng, prevVenue;
+
+{% if post.venue %}
+  prevVenue = {{post.venue.id}};
+  prevLat = {{post.venue.location.get('latitude')}};
+  prevLng = {{post.venue.location.get('longitude')}};
+{% elif post.location %}
+  prevLat = {{post.location.get('latitude')}};
+  prevLng = {{post.location.get('longitude')}};
+{% endif %}
+
+$('#new_venue_holder').hide();
+$('#new_venue_expander').click(function(event) {
+    event.preventDefault();
+    $('#select_venue_holder').hide();
+    $('#new_venue_holder').show();
+
+    if (prevLat && prevLng) {
+        $('#new_venue_latitude').val(prevLat);
+        $('#new_venue_longitude').val(prevLng);
+    } else {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            $('#new_venue_latitude').val(position.coords.latitude);
+            $('#new_venue_longitude').val(position.coords.longitude);
+        });
+    }
+});
+
+
+if (prevLat && prevLng) {
+    updateVenueList(prevLat, prevLng);
+}
+else {
+    navigator.geolocation.getCurrentPosition(function (position) {
+        updateVenueList(position.coords.latitude, position.coords.longitude);
+    });
+}
+
+</script>
+
+{% endblock closing %}

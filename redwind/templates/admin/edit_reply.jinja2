@@ -1,0 +1,13 @@
+{% extends "admin/edit_note.jinja2" %}
+
+{% block above_content %}
+  <div class="form-group">
+    <textarea placeholder="In Reply To" class="form-control" name="in_reply_to" rows="1">{{post.in_reply_to | join('\n')}}</textarea>
+  </div>
+{% endblock above_content %}
+
+{% block hidden_check %}
+  <div class="form-group">
+    <label><input type="checkbox" id="hidden" name="hidden" value="true" {% if post.hidden %}checked{% endif %} /> Hidden from Stream</label>
+  </div>
+{% endblock hidden_check %}

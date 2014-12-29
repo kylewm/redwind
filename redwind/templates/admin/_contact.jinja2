@@ -1,0 +1,32 @@
+<div class="panel panel-default">
+
+  <div class="panel-body contact h-card">
+
+    {% if contact.image %}
+      <img class="pull-left img-rounded u-photo" style="max-width:64px; max-height: 64px; margin: 1em;" src="{{contact.image|imageproxy}}"/>
+    {% endif %}
+
+    <div class="pull-left text">
+      <span class="p-name">{{ contact.name }}</span>
+
+      {% for nick in contact.nicks %}
+        <a href="{{ url_for('contact_by_name', name=nick.name) }}">@{{ nick.name }}</a>
+      {% endfor %}
+
+      <br/>
+
+      <a class="u-url" href="{{ contact.url }}"><i class="glyphicon glyphicon-globe"></i> {{ contact.url | prettify_url }}</a><br/>
+
+      {% for silo, nick in contact.social.items() %}
+        <div>{{silo}}: {{nick}}</div>
+      {% endfor %}
+
+      {% if current_user.is_authenticated() %}
+        <a href="{{ url_for('edit_contact', id=contact.id) }}"><i class="glyphicon glyphicon-edit"></i> Edit</a> &bull;
+        <a href="{{ url_for('delete_contact', id=contact.id) }}"><i class="glyphicon glyphicon-trash"></i> Delete</a>
+      {% endif %}
+    </div>
+
+  </div>
+  <div class="clearfix"></div>
+</div>

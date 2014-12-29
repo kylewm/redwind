@@ -99,8 +99,8 @@ def render_tags(title, tags):
                            (maxcount - mincount))
         else:
             tag['size'] = MIN_TAG_SIZE
-    return render_template('tags.html', tags=tags, title=title,
-                           max_tag_size=MAX_TAG_SIZE)
+    return util.render_themed('tags.jinja2', tags=tags, title=title,
+                              max_tag_size=MAX_TAG_SIZE)
 
 
 def render_posts(title, posts, page, is_first, is_last):
@@ -108,10 +108,10 @@ def render_posts(title, posts, page, is_first, is_last):
     atom_args.update({'page': 1, 'feed': 'atom', '_external': True})
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
-    return render_template('posts.html', posts=posts, title=title,
-                           prev_page=None if is_first else page - 1,
-                           next_page=None if is_last else page + 1,
-                           atom_url=atom_url, atom_title=atom_title)
+    return util.render_themed('posts.jinja2', posts=posts, title=title,
+                              prev_page=None if is_first else page - 1,
+                              next_page=None if is_last else page + 1,
+                              atom_url=atom_url, atom_title=atom_title)
 
 
 def render_posts_atom(title, feed_id, posts):
@@ -194,7 +194,7 @@ def posts_by_tag(tag, page):
 @app.route('/mentions')
 def mentions():
     mentions = Mention.query.order_by(Mention.published.desc()).limit(30)
-    return render_template('mentions.html', mentions=mentions)
+    return render_template('admin/mentions.jinja2', mentions=mentions)
 
 
 @app.route('/all.atom')
@@ -314,7 +314,7 @@ def render_post(post):
     if post.redirect:
         return redirect(post.redirect)
 
-    return render_template('post.html', post=post, title=post.title_or_fallback)
+    return util.render_themed('post.jinja2', post=post, title=post.title_or_fallback)
 
 
 def discover_endpoints(me):
@@ -335,6 +335,10 @@ def discover_endpoints(me):
 @app.route('/login')
 def login():
     me = request.args.get('me')
+    if not me:
+        return render_template('admin/login.jinja2',
+                               next=request.args.get('next'))
+
     if app.config.get('BYPASS_INDIEAUTH'):
         user = auth.load_user(urllib.parse.urlparse(me).netloc)
         app.logger.debug('Logging in user %s', user)
@@ -493,7 +497,7 @@ def logout():
 @flask_login.login_required
 def edit_settings():
     if request.method == 'GET':
-        return render_template('admin/settings.html', raw_settings=sorted(
+        return render_template('admin/settings.jinja2', raw_settings=sorted(
             Setting.query.all(), key=operator.attrgetter('name')))
     for key, value in request.form.items():
         Setting.query.get(key).value = value
@@ -593,7 +597,7 @@ def new_post(type):
         'save_draft': 'Save as Draft',
     }
 
-    return render_template('admin/edit_' + type + '.html',
+    return render_template('admin/edit_' + type + '.jinja2',
                            edit_type='new', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
                            button_text=button_text)
@@ -624,7 +628,7 @@ def edit_by_id():
             'save_draft': 'Unpublish, Save as Draft',
         }
 
-    return render_template('admin/edit_' + type + '.html',
+    return render_template('admin/edit_' + type + '.jinja2',
                            edit_type='edit', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
                            button_text=button_text)
@@ -632,7 +636,7 @@ def edit_by_id():
 
 @app.route('/uploads')
 def uploads_popup():
-    return render_template('uploads_popup.html')
+    return render_template('uploads_popup.jinja2')
 
 
 @app.template_filter('json')
@@ -994,7 +998,7 @@ def addressbook():
 @app.route('/contacts')
 def contacts():
     contacts = Contact.query.order_by(Contact.name).all()
-    return render_template('admin/contacts.html', contacts=contacts)
+    return render_template('admin/contacts.jinja2', contacts=contacts)
 
 
 @app.route('/contacts/<name>')
@@ -1003,7 +1007,7 @@ def contact_by_name(name):
     contact = nick and nick.contact
     if not contact:
         abort(404)
-    return render_template('admin/contact.html', contact=contact)
+    return render_template('admin/contact.jinja2', contact=contact)
 
 
 @app.route('/delete/contact')
@@ -1020,7 +1024,7 @@ def delete_contact():
 def new_contact():
     if request.method == 'GET':
         contact = Contact()
-        return render_template('admin/edit_contact.html', contact=contact)
+        return render_template('admin/edit_contact.jinja2', contact=contact)
 
     if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
@@ -1035,7 +1039,7 @@ def edit_contact():
     if request.method == 'GET':
         id = request.args.get('id')
         contact = Contact.query.get(id)
-        return render_template('admin/edit_contact.html', contact=contact)
+        return render_template('admin/edit_contact.jinja2', contact=contact)
 
     if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
@@ -1082,7 +1086,7 @@ def venue_by_slug(slug):
     app.logger.debug('rendering venue, location. {}, {}',
                      venue, venue.location)
     posts = Post.query.filter_by(venue_id=venue.id).all()
-    return render_template('admin/venue.html', venue=venue, posts=posts)
+    return render_template('admin/venue.jinja2', venue=venue, posts=posts)
 
 
 @app.route('/venues')
@@ -1103,7 +1107,7 @@ def all_venues():
                      .append(venue)
 
     map_image = maps.get_map_image(600, 400, 13, markers)
-    return render_template('admin/venues.html', venues=venues,
+    return render_template('admin/venues.jinja2', venues=venues,
                            organized=organized, map_image=map_image)
 
 
@@ -1111,7 +1115,7 @@ def all_venues():
 def new_venue():
     venue = Venue()
     if request.method == 'GET':
-        return render_template('admin/edit_venue.html', venue=venue)
+        return render_template('admin/edit_venue.jinja2', venue=venue)
     return save_venue(venue)
 
 
@@ -1120,7 +1124,7 @@ def edit_venue():
     id = request.args.get('id')
     venue = Venue.query.get(id)
     if request.method == 'GET':
-        return render_template('admin/edit_venue.html', venue=venue)
+        return render_template('admin/edit_venue.jinja2', venue=venue)
     return save_venue(venue)
 
 

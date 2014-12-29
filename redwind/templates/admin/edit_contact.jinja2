@@ -1,0 +1,59 @@
+{% extends "admin/base.jinja2" %}
+{% block content %}
+
+<form id="contact_form" method="POST" action="">
+
+  <div class="form-group">
+    <input type="submit" class="btn btn-primary" value="Save Contact" />
+  </div>
+
+  {% if contact.id %}
+  <input name="id" type="hidden" value="{{contact.id}}"/>
+  {% endif %}
+
+
+  <div class="form-group">
+    <label>URL</label>
+    <input class="form-control" name="url" type="text" value="{{contact.url or ''}}" />
+    <button type="button" class="btn btn-default" id="fetch_profile">Fetch</button>
+  </div>
+
+  <div class="form-group">
+    <label>Name</label>
+    <input class="form-control" name="name" type="text" value="{{contact.name or ''}}" />
+  </div>
+
+  <div class="form-group">
+    <label>Image</label>
+    <input class="form-control"  name="image" type="text" value="{{contact.image or ''}}" />
+  </div>
+
+  <div class="form-group">
+    <label>Nicks</label>
+    <input class="form-control" name="nicks" type="text" value="{{ contact.nicks | map(attribute='name') | join(',') }}" />
+  </div>
+
+  <div class="form-group">
+    <label>Twitter</label>
+    <input class="form-control" name="twitter" type="text" value="{{ (contact.social or {}).get('twitter', '') }}" />
+  </div>
+
+  <div class="form-group">
+    <label>Facebook</label>
+    <input class="form-control" name="facebook" type="text" value="{{ (contact.social or {}).get('facebook', '') }}" />
+  </div>
+
+  <div class="form-group">
+    <input type="submit" class="btn btn-primary" value="Save Contact" />
+  </div>
+
+</form>
+
+{% endblock content %}
+{% block closing %}
+  {{ super() }}
+
+  <script src="{{url_for('static', filename='admin/util.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/http.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/edit_contact.js')}}"></script>
+{% endblock closing %}

@@ -1,0 +1,17 @@
+{% extends "admin/base.jinja2" %}
+
+{% block content %}
+
+  {% if current_user.is_authenticated() %}
+    <a href="{{ url_for('new_contact')}}">New</a>
+  {% endif %}
+
+  {% for contact in contacts %}
+    {% include "admin/_contact.jinja2" %}
+  {% endfor %}
+
+  {% if current_user.is_authenticated() %}
+    <a href="{{ url_for('new_contact')}}">New</a>
+  {% endif %}
+
+{% endblock %}

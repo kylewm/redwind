@@ -1,0 +1,77 @@
+{% extends "admin/base.jinja2" %}
+{% block content %}
+
+<!--
+<div id="all-venues-map" style="height: 500px; max-width: 100%">
+</div>
+-->
+<article>
+<img src="{{map_image}}"/>
+
+<ul id="all-venues">
+
+  {% for region, localities in organized|dictsort %}
+
+    <li>{{ region }}
+      <ul>
+
+        {% for locality, venues in localities|dictsort %}
+          <li>{{ locality }}
+            <ul>
+              {% for venue in venues | sort(attribute='name') %}
+                <li data-latitude="{{venue.location.latitude}}" data-longitude="{{venue.location.longitude}}">
+                  <a href="{{venue.permalink}}">
+                    {{venue.name}}
+                  </a>
+                  {% if current_user.is_authenticated() %}
+                    <a href="{{url_for('edit_venue', id=venue.id)}}"><i class="glyphicon glyphicon-edit"></i> Edit</a>
+                    <a href="{{url_for('delete_venue', id=venue.id)}}"><i class="glyphicon glyphicon-trash"></i> Delete</a>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    </li>
+
+{% endfor %}
+</ul>
+</article>
+
+{% endblock %}
+
+
+{% block other_resources %}
+
+<!--
+<script type="text/javascript">
+
+loadLeaflet(function () {
+
+    var count = 0, centerLat = 0, centerLng = 0;
+
+    each(all('#all-venues li'), function (li) {
+
+        centerLat += parseFloat(li.dataset.latitude);
+        centerLng += parseFloat(li.dataset.longitude);
+        count++;
+
+    });
+
+    centerLat /= count;
+    centerLng /= count;
+
+    var map = setupMap(first('#all-venues-map'), centerLat, centerLng, true, 10);
+    each(all('#all-venues li'), function (li) {
+        var marker = L.marker(
+            [li.dataset.latitude, li.dataset.longitude],
+            {'title': li.textContent}
+        ).addTo(map);
+    });
+});
+
+</script>
+-->
+
+{% endblock %}

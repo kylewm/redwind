@@ -23,7 +23,7 @@ def register():
 @app.route('/webmention', methods=['GET', 'POST'])
 def receive_webmention():
     if request.method == 'GET':
-        return render_template('webmention.html')
+        return render_template('webmention.jinja2')
 
     source = request.form.get('source')
     target = request.form.get('target')
@@ -43,7 +43,7 @@ def receive_webmention():
     status_url = url_for('webmention_status', key=key, _external=True)
 
     return make_response(
-        render_template('wm_received.html', status_url=status_url), 202)
+        render_template('wm_received.jinja2', status_url=status_url), 202)
 
 
 @app.route('/webmention/status/<key>')
@@ -66,7 +66,7 @@ def webmention_status(key):
         }
 
     return make_response(
-       render_template('wm_status.html', **rv),
+       render_template('wm_status.jinja2', **rv),
        rv.get('response_code', 400))
 
 

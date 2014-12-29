@@ -1,0 +1,24 @@
+{% extends "admin/base.jinja2" %}
+
+{% block content %}
+
+  {% for mention in mentions %}
+    <div style="margin-top: 20px;">
+      {% for post in mention.posts %}
+        <div class="mention-metadata">
+          on <a href="{{ post.permalink }}">
+          {% if post.title %}
+            {{ post.title }}
+          {% elif post.content %}
+            {{post.content | truncate(50) }}
+          {% else %}
+            <em>this</em>
+          {% endif %}
+          </a>
+        </div>
+      {% endfor %}
+      {% include "_post_mention.jinja2" %}
+    </div>
+  {% endfor %}
+
+{% endblock %}

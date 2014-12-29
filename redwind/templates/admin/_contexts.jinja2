@@ -1,0 +1,34 @@
+{% for type, contexts in [
+  ('Reply', post.reply_contexts),
+  ('Share', post.repost_contexts),
+  ('Like', post.like_contexts),
+  ('Bookmark', post.bookmark_contexts),
+  ] %}
+  {% for context in contexts %}
+
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        {{ type }}
+      </div>
+      <div class="panel-body">
+        <div class="col-sm-1">
+          {% if context.author_image %}
+          <img  src="{{ context.author_image | imageproxy(64) }}" />
+          {% endif %}
+          <a href="{{ context.author_url }}">{{ context.author_name }}</a>
+        </div>
+        <div class="col-sm-11">
+          {% if context.title %}
+          <h4>
+            {{ context.title }}
+          </h4>
+          {% endif %}
+          {{context.content | truncate(512) }}
+        </div>
+      </div>
+    </div>
+
+
+  {% endfor %}
+{% endfor %}

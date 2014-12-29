@@ -1,0 +1,39 @@
+{% extends "admin/base.jinja2" %}
+{% block content %}
+
+  <form id="venue_form" action="" method="POST">
+
+    <div class="form-group">
+      <input class="btn btn-primary" type="submit" value="Save Venue" />
+    </div>
+
+    <div class="form-group">
+    <label>Venue</label>
+    <input class="form-control" type="text" id="name" name="name" size="10" value="{{ venue.name or '' }}" />
+    </div>
+
+    <div class="form-group">
+    <label>Location</label>
+    <input class="form-control" readonly="readonly" type="text" id="latitude" name="latitude" value="{{ venue.location.latitude if venue.location else ''}}" style="display:inline" />
+    <input class="form-control" readonly="readonly" type="text" id="longitude" name="longitude" value="{{ venue.location.longitude if venue.location else ''}}" style="display:inline" />
+    </div>
+
+    <div class="form-group">
+    <label>Geocode</label>
+    <input class="form-control" type="text" id="geocode" name="geocode" value="{{ (venue.location | geo_name) if venue.location else ''}}" />
+    </div>
+
+  </form>
+
+  <div class="map" id="venue-map" style="height:400px;">
+  </div>
+
+{% endblock content %}
+
+{% block closing %}
+  {{ super() }}
+
+  <script src="{{url_for('static', filename='admin/util.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/http.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/edit_venue.js')}}"></script>
+{% endblock closing %}

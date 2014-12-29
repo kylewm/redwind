@@ -1,0 +1,15 @@
+{% extends "admin/edit_note.jinja2" %}
+
+{% block above_content %}
+{% for photo in post.photos or [] %}
+<div>
+  <img src="{{post.photo_thumbnail(photo)}}" />
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block file_upload %}
+  <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
+  <ul id="uploads">
+  </ul>
+{% endblock %}

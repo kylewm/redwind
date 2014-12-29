@@ -1,6 +1,7 @@
 from . import app
 from datetime import date
-from flask import url_for
+from flask import url_for, current_app
+from flask.ext.themes2 import render_theme_template, get_theme
 from markdown import markdown
 from smartypants import smartyPants
 import bleach
@@ -440,3 +441,8 @@ def jwt_encode(obj):
 
 def jwt_decode(s):
     return jwt.decode(s, app.config['SECRET_KEY'])
+
+
+def render_themed(template, **context):
+    ident = current_app.config.get('DEFAULT_THEME', 'plain')
+    return render_theme_template(get_theme(ident), template, **context)

@@ -1,0 +1,29 @@
+{% extends theme("base.jinja2") %}
+
+{% block body_class %}h-feed{% endblock body_class %}
+
+{% block content %}
+  <data class="p-name" value="{{ settings.author_name }}{% if title %}: {{ title }}{% endif %}"></data>
+
+  {% for post in posts %}
+      {% include theme("_post.jinja2") %}
+  {% endfor %}
+
+  <div class="page-arrows clearfix">
+    {% if prev_page %}
+      <div class="page-left">
+        <a href="{{ url_for_other_page( prev_page ) }}">&larr; Newer</a>
+      </div>
+    {% endif %}
+    {% if next_page %}
+      <div class="page-right">
+        <a href="{{ url_for_other_page( next_page ) }}">Older &rarr;</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div style="text-align: center">
+    <a onclick="(function(btn){var z=document.createElement('script');document.subtomeBtn=btn;z.src='https://www.subtome.com/load.js';document.body.appendChild(z);})(this)" href="#"><i class="fa fa-rss"></i> Subscribe</a>
+  </div>
+
+{% endblock content %}

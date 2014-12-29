@@ -1,0 +1,73 @@
+{% extends "admin/base.jinja2" %}
+
+{% block content %}
+  <form id="share_on_facebook" method="POST">
+    <input type="hidden" id="post_id" name="post_id" value="{{ post.id }}"/>
+
+    <div class="form-group">
+    <input type="submit" id="publish_button" class="btn btn-primary" value="Share on Facebook"/>
+    </div>
+
+    {% if imgs %}
+      <div class="form-group">
+        <label>Add to Album</label>
+        <select name="album" id="album" class="form-control">
+          <option value="">None</option>
+          <option value="new">Create...</option>
+          {% for album in albums %}
+            <option value="{{ album['id'] }}">{{ album['name'] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div id="new_album_container" class="form-group">
+        <label>New Album Name</label>
+        <input type="text" name="new_album_name" class="form-control"/>
+        <label>New Album Message</label>
+        <textarea name="new_album_message" class="form-control"></textarea>
+      </div>
+    {% endif %}
+
+    <div class="form-group">
+      <label>Text</label>
+      <textarea  name="preview" id="preview" class="form-control">{{preview}}</textarea>
+    </div>
+
+    {% if imgs %}
+      <div class="container">
+        <div class="col-sm-6">
+          <div class="form-group">
+            <label><input type="radio" name="img" value="">No Photo</label>
+          </div>
+          {% for img in imgs %}
+            <div class="form-group">
+              <label><input type="radio" name="img" value="{{img}}"{% if loop.first %} checked{% endif %}>
+                  <img src="{{img}}" style="width:64px; vertical-align: middle"/>
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div style="col-sm-6">
+          <div class="form-group">
+            <label><input type="radio" name="post_type" value="photo" checked><abbr title="create a facebook photo post">As Photo</abbr></label>
+          </div>
+          <div class="form-group">
+            <label><input type="radio" name="post_type" value="post"><abbr title="share a link to the original with this preview image">As Preview</abbr></label><br/>
+          </div>
+        </div>
+      </div>
+
+    {% endif %}
+  </form>
+{% endblock content %}
+
+{% block other_resources %}
+  <script>
+    $("#new_album_container").css({display: "none"});
+    $("select#album").change(function () {
+      var isNew = this.value == "new";
+      $("#new_album_container").css({display: isNew ? "block" : "none"});
+    });
+  </script>
+{% endblock other_resources %}

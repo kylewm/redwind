@@ -1,0 +1,144 @@
+<article class="{%if not is_single %}{{post.mf2_type}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}{% if post.draft %} draft{% endif %}">
+
+  <div class="post-date">
+    <a class="u-url" href="{{post.permalink}}">
+      <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
+    </a>
+  </div>
+
+  {% include theme("_reply_contexts.jinja2") %}
+  {% include theme("_like_contexts.jinja2") %}
+  {% include theme("_bookmark_contexts.jinja2") %}
+  {% include theme("_repost_contexts.jinja2") %}
+
+  {% if post.title %}
+    <h1 class="p-name">{{post.title}}</h1>
+  {% endif %}
+
+
+  {% if post.photos or post.content or post.post_type == 'checkin' %}
+    <div class="{% if not post.title %}p-name {% endif %}e-content">
+      <div class="primary-content">
+        {% if post.post_type == 'checkin' and post.venue %}
+          <p>Checked in to {{ post.venue.name }}</p>
+        {% endif %}
+        {{post.content_html | proxy_all | safe}}
+
+        {% if post.post_type == 'checkin' and not no_map %}
+          {% set map_image = post.map_image(600, 400) %}
+          {% if map_image %}
+            <img src="{{ map_image }}"/>
+          {% endif %}
+        {% endif %}
+
+      </div>
+      {% for photo in (post.photos or []) %}
+        <div class="photo-holder">
+          <a href="{{post.photo_url(photo)}}">
+            <img class="u-photo" src="{{post.photo_url(photo) | imageproxy(600)}}" />
+          </a>
+          {% set caption = photo.get('caption') %}
+          {% if caption %}
+            <div class="caption">{{ caption | safe }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if post.tags %}
+    <div class="tags">
+      {% for tag in post.tags %}
+        <a class="p-category" href="{{url_for('posts_by_tag', tag=tag)}}">{{tag}}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <div class="post-metadata">
+
+    {% if post.location %}
+      <div class="location metadata-component">
+        <i class="fa fa-map-marker"></i>
+        <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.get('latitude')}},{{post.location.get('longitude')}}">
+          <data class="p-latitude" value="{{post.location.get('latitude')}}"></data>
+          <data class="p-longitude" value="{{post.location.get('longitude')}}"></data>
+          <span class="p-name">
+            {{post.location | geo_name}}
+          </span>
+        </a>
+      </div>
+    {% endif %}
+
+    {% if post.venue %}
+      <div class="venue metadata-component">
+        <i class="fa fa-map-marker"></i>
+        <a class="p-location h-card" href="{{ post.venue.permalink }}">{{ post.venue.name }} &ndash; {{ post.venue.location | geo_name }}</a>
+      </div>
+    {% endif %}
+
+    {% if is_single and post.syndication %}
+      <div class="syndication-links metadata-component">
+        Also on
+        {% for s in post.syndication %}
+          {{ s | format_syndication_url }}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="webactions metadata-component">
+      <indie-action do="reply" with="{{post.permalink}}">
+        {% if post.reply_url %}<a href="{{post.reply_url}}">Reply</a>{% endif %}
+      </indie-action>
+      <indie-action do="repost" with="{{post.permalink}}">
+        {% if post.retweet_url %}<a href="{{post.retweet_url}}">Repost</a>{% endif %}
+      </indie-action>
+      <indie-action do="favorite" with="{{post.permalink}}">
+        {% if post.favorite_url %}<a href="{{post.favorite_url}}">Like</a>{% endif %}
+      </indie-action>
+    </div>
+
+    {% if not is_single %}
+      <div class="mention-counts metadata-component">
+        {% if post.replies %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-comment-o"></i> {{ post.replies | count }} Repl{{ post.replies | count | pluralize('y', 'ies') }}</a>
+        {% endif %}
+        {% if post.rsvps %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-calendar"></i> {{ post.rsvps | count }} RSVP{{ post.rsvps | count | pluralize }}</a>
+        {% endif %}
+        {% if post.likes %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-star-o"></i> {{ post.likes | count }} Like{{ post.likes | count | pluralize }}</a>
+        {% endif %}
+        {% if post.reposts %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-retweet"></i> {{ post.reposts | count }} Repost{{ post.reposts | count | pluralize }}</a>
+        {% endif %}
+        {% if post.references %}
+          <a href="{{ post.permalink }}#mentions"><i class="fa fa-ellipsis-h"></i> {{ post.references | count }} Reference{{ post.references | count | pluralize }}</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div> <!--  .post-metadata -->
+
+
+    {% if is_single %}
+      {% include theme("_admin_post_controls.jinja2") %}
+    {% endif %}
+
+
+  {% if is_single and post.mentions %}
+    <div class="mentions replies">
+
+      <a name="mentions"></a>
+
+      {% for mention in post.rsvps %}
+        {% include theme("_post_mention.jinja2") %}
+      {% endfor %}
+
+      {% for mention in post.mentions %}
+        {% if mention.reftype != 'rsvp' %}
+          {% include theme("_post_mention.jinja2") %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</article>

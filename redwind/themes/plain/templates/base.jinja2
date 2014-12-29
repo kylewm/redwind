@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% include theme("custom_head_top.jinja2") ignore missing with context %}
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{{ settings.author_name }}{% if title %}: {{ title | truncate(50) }}{% endif %}</title>
+
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    {% if atom_url and atom_title %}<link rel="feed alternate" type="application/atom+xml" href="{{atom_url}}" title="{{atom_title}}" />{% endif %}
+    <link rel="feed" type="text.jinja2" href="{{ url_for('everything') }}" />
+
+    {% if request.endpoint == 'index' %}
+    <!-- PubSubHubbub Discovery -->
+    <link rel="hub" href="http://kylewm.superfeedr.com/" />
+    <link rel="self" href="{{url_for('index', _external=True)}}"/>
+    <!-- End Of PubSubHubbub Discovery -->
+    {% endif %}
+
+    <link rel="webmention" href="{{ url_for('receive_webmention') }}"/>
+    <link rel="pingback" href="https://webmention.io/webmention?forward={{ url_for('receive_webmention', _external=True) }}" />
+
+    <link rel="openid.delegate" href="{{ settings.site_url }}" />
+    <link rel="openid.server" href="https://indieauth.com/openid" />
+
+    <link rel="authorization_endpoint" href="https://indieauth.com/auth" />
+    <link rel="token_endpoint" href="{{ settings.site_url }}/token" />
+    <link rel="micropub" href="{{ settings.site_url }}/micropub" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/users/') }}{{ settings.avatar_prefix }}.{{ settings.avatar_suffix}}"/>
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/users/') }}{{ settings.avatar_prefix }}.{{ settings.avatar_suffix}}"/>
+    <link rel="apple-touch-icon" sizes="60x60" href="{{ url_for('static', filename='img/users/') }}{{ settings.avatar_prefix }}60.{{ settings.avatar_suffix}}"/>
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/users/') }}{{ settings.avatar_prefix }}76.{{ settings.avatar_suffix}}"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/users/') }}{{ settings.avatar_prefix }}114.{{ settings.avatar_suffix}}"/>
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/users/') }}{{ settings.avatar_prefix }}152.{{ settings.avatar_suffix}}"/>
+
+    {% if settings.pgp_key_url %}
+        <link rel="pgpkey" type="application/pgp-keys" href="{{ settings.pgp_key_url }}" />
+    {% endif %}
+
+    <link rel="stylesheet" href="{{ theme_static('style.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}"/>
+    {% include theme("custom_head_bottom.jinja2") ignore missing with context %}
+  </head>
+  <body class="container {%block body_class%}{% endblock %}">
+    {% include theme("custom_body_top.jinja2") ignore missing with context %}
+
+    <nav>
+      <span class="site-title">{{ settings.site_title }}</span>
+      <a href="{{url_for('index')}}">Stream</a>
+      <a href="{{url_for('posts_by_type', plural_type='articles')}}">Articles</a>
+      <a href="{{url_for('posts_by_type', plural_type='photos')}}">Photos</a>
+      <a href="{{url_for('posts_by_type', plural_type='bookmarks')}}">Bookmarks</a>
+      <a href="{{url_for('posts_by_type', plural_type='checkins')}}">Check-ins</a>
+      <a rel="feed" href="{{url_for('everything')}}">Everything</a>
+      <a href="{{url_for('tag_cloud')}}">Tags</a>
+      {% if current_user.is_authenticated() %}
+        <a href="{{ url_for('new_post', type='note') }}" id="new-note">Admin</a>
+      {% endif %}
+    </nav>
+
+    <main class="main-content">
+      <div class="flashes">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flashes">
+              {% for message in messages %}
+                <li>{{ message | safe }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+      </div> <!-- .flashes -->
+
+      {% block content %}{% endblock content %}
+      <div style="clear:both"></div>
+    </main>
+
+    <footer>
+
+      <div class="social">
+        <div class="p-author h-card">
+          <img class="u-photo" alt="me" src="{{ settings.author_image }}"/>
+          <a class="u-url" href="{{ settings.site_url }}"><span class="p-name">{{ settings.author_name }}</span></a>
+        </div> <!-- .h-card -->
+        {{ settings.author_bio | safe }}
+      </div> <!-- .social -->
+
+      <div style="clear:both"></div>
+
+      <div class="site-info">
+        <div class="login widget">
+          {% if current_user.is_anonymous() %}
+            <form id="indie_auth_form" action="{{url_for('login')}}" method="get">
+              <input id="indie_auth_url" type="text" name="me" placeholder="yourdomain.com" />
+              <input type="hidden" name="next" value="{{ request.path }}" />
+              <button id="sign_in_button" type="submit">Sign In</button>
+            </form>
+          {% else %}
+            {{ current_user.domain | prettify_url }} (<a href="{{ url_for('logout', next=request.path) }}">logout</a>)
+          {% endif %}
+        </div> <!-- .login -->
+        <div>
+          This site is powered by <a href="https://github.com/kylewm/redwind">Red Wind</a> and <a href="http://flask.pocoo.org/">Flask</a>. Proudly part of the <a href="http://indiewebcamp.com">#indieweb</a>. Want to leave a comment? Send me a <a href="{{url_for('receive_webmention')}}" rel="webmention">webmention</a>!
+        </div>
+        <div>
+          <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="{{ url_for('static', filename='img/cc-by.png') }}" /></a>
+        </div>
+      </div>
+    </footer>
+
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/>
+
+    {% block other_resources %}{% endblock other_resources %}
+
+    {% include theme("custom_body_bottom.jinja2") ignore missing with context %}
+  </body>
+</html>

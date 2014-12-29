@@ -1,0 +1,13 @@
+{% extends "admin/edit_post.jinja2" %}
+
+{% block above_content %}
+<div class="form-group">
+  <textarea placeholder="Like Of" class="form-control" name="like_of" cols="50" rows="2">{{post.like_of | join('\n')}}</textarea>
+</div>
+{% endblock above_content %}
+
+{% block content_fields %}{% endblock content_fields %}
+
+{% block hidden_check %}
+  <input type="hidden" id="hidden" name="hidden" value="true"/>
+{% endblock hidden_check %}
