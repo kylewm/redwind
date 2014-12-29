@@ -4,9 +4,22 @@
 
   {% for mention in mentions %}
     <div style="margin-top: 20px;">
+
+
       {% for post in mention.posts %}
         <div class="mention-metadata">
-          on <a href="{{ post.permalink }}">
+
+        {% if mention.reftype == 'reply' %}
+          <i class="glyphicon glyphicon-comment"></i>
+        {% elif mention.reftype == 'like' %}
+          <i class="glyphicon glyphicon-star"></i>
+        {% elif mention.reftype == 'repost' %}
+          <i class="glyphicon glyphicon-retweet"></i>
+        {% elif mention.reftype == 'reference' %}
+          <i class="glyphicon glyphicon-link"></i>
+        {% endif %}
+
+        <a href="{{ post.permalink }}">
           {% if post.title %}
             {{ post.title }}
           {% elif post.content %}
@@ -17,7 +30,27 @@
           </a>
         </div>
       {% endfor %}
-      {% include "_post_mention.jinja2" %}
+
+      <div>
+        {% if mention.author_image %}
+          <img  src="{{ mention.author_image | imageproxy(16) }}" />
+        {% endif %}
+        <a href="{{ mention.author_url }}">{{ mention.author_name }}</a>
+
+        {% if mention.title %}
+          <h4>
+            {{ mention.title }}
+          </h4>
+        {% endif %}
+        {{mention.content | truncate(512) }}
+        <div>
+          at <a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a>
+        </div>
+      </div>
+
+
+
+
     </div>
   {% endfor %}
 
