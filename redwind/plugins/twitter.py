@@ -282,7 +282,7 @@ def create_context(url):
     context.author_url = author_url
     context.published = pub_date
     context.title = None
-    context.content = tweet_text
+    context.content = context.content_plain = tweet_text
     return context
 
 
