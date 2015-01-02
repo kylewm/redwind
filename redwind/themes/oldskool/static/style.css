@@ -1,0 +1,113 @@
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline; }
+
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+  display: block; }
+
+body {
+  line-height: 1; }
+
+ol, ul {
+  list-style: none; }
+
+blockquote, q {
+  quotes: none; }
+
+blockquote:before, blockquote:after {
+  content: "";
+  content: none; }
+
+q:before, q:after {
+  content: "";
+  content: none; }
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0; }
+
+/*$body-font: Georgia, Times New Roman, serif;*/
+/* Subtlety of Hue */
+body {
+  font: 10pt/1.5em Helvetica, Arial, sans-serif;
+  max-width: 600px;
+  padding: 0 1em;
+  background-color: #C1CE96; }
+
+main {
+  width: 68%;
+  float: left;
+  background-color: white;
+  box-shadow: 0 0 2px #687D77; }
+  main header {
+    margin: 1em 0; }
+    main header h1 {
+      color: black;
+      font-size: 2em; }
+
+aside {
+  width: 28%;
+  padding: 1%;
+  float: right;
+  background-color: white;
+  box-shadow: 0 0 2px #687D77; }
+
+a {
+  color: #687D77; }
+  a:hover {
+    text-decoration: none; }
+  a:visited {
+    color: #687D77; }
+
+p {
+  padding: 1em 0px 0.5em; }
+
+img {
+  max-width: 100%; }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: bold;
+  color: black;
+  padding: 0; }
+  h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    text-decoration: none; }
+
+h1, h2, h3, h4, h5, h6, b, strong {
+  font-weight: bold; }
+
+h1 {
+  font-size: 1.1em; }
+
+h2 {
+  font-size: 1.075em; }
+
+h3 {
+  font-size: 1.05em; }
+
+h4 {
+  font-size: 1em; }
+
+h5 {
+  font-size: 0.9em; }
+
+h6 {
+  font-size: 0.8em; }
+
+article {
+  margin-bottom: 2.5em;
+  padding: 0 1%; }
+
+blockquote {
+  background-color: #ECEBF0;
+  color: #353129;
+  padding: 0em 0.5em 0.5em 0.5em; }
+
+article footer {
+  font-size: 0.9em; }
+
+/*# sourceMappingURL=style.css.map */

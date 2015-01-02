@@ -1,6 +1,6 @@
 <article class="{%if not is_single %}{{post.mf2_type}} {%endif%}{{post.post_type}}{%if post.post_type != 'article'%} note-like{%endif%}{% if post.draft %} draft{% endif %}">
 
-  <div class="post-date">
+  <div class="post-metadata post-date">
     <a class="u-url" href="{{post.permalink}}">
       <time class="dt-published" datetime="{{post.published | isotime}}">{{post.published | human_time}}</time>
     </a>

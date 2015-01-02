@@ -8,7 +8,7 @@ from . import util
 from .models import Post, Tag, Mention, Contact, Nick, Setting,\
     Venue, get_settings
 
-from flask import request, redirect, url_for, render_template, flash,\
+from flask import request, redirect, url_for, render_template, flash, g,\
     abort, make_response, Markup, send_from_directory, session, current_app
 import flask.ext.login as flask_login
 from werkzeug import secure_filename
@@ -103,12 +103,13 @@ def render_tags(title, tags):
                               max_tag_size=MAX_TAG_SIZE)
 
 
-def render_posts(title, posts, page, is_first, is_last):
+def render_posts(title, posts, page, is_first, is_last,
+                 template='posts.jinja2'):
     atom_args = request.view_args.copy()
     atom_args.update({'page': 1, 'feed': 'atom', '_external': True})
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
-    return util.render_themed('posts.jinja2', posts=posts, title=title,
+    return util.render_themed(template, posts=posts, title=title,
                               prev_page=None if is_first else page - 1,
                               next_page=None if is_last else page + 1,
                               atom_url=atom_url, atom_title=atom_title)
@@ -129,7 +130,8 @@ def index(page):
         None, page, int(get_settings().posts_per_page), None, include_hidden=False)
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
-    return render_posts('Stream', posts, page, is_first, is_last)
+    return render_posts('Stream', posts, page, is_first, is_last,
+                        template='home.jinja2')
 
 
 @app.route('/everything', defaults={'page': 1})
@@ -706,6 +708,30 @@ def human_time(thedate, alternate=None):
         return thedate.strftime('%B %-d, %Y')
 
 
+@app.template_filter('date')
+def date_filter(thedate, first_only=False):
+    if thedate:
+        if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
+            tz = pytz.timezone(get_settings().timezone)
+            thedate = pytz.utc.localize(thedate).astimezone(tz)
+
+        previous = getattr(g, 'previous date', None)
+        formatted = thedate.strftime('%B %-d, %Y')
+        setattr(g, 'previous date', formatted)
+        if not first_only or not previous or previous != formatted:
+            return formatted
+
+
+@app.template_filter('time')
+def time_filter(thedate):
+    if thedate:
+        if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
+            tz = pytz.timezone(get_settings().timezone)
+            thedate = pytz.utc.localize(thedate).astimezone(tz)
+        if isinstance(thedate, datetime.datetime):
+            return thedate.strftime('%-I:%M%P %Z')
+
+
 @app.template_filter('pluralize')
 def pluralize(number, singular='', plural='s'):
     if number == 1:
@@ -782,6 +808,9 @@ def proxy_all_images(html):
 
 @app.template_filter('imageproxy')
 def imageproxy(src, side=None):
+    parsed = urllib.parse.urlparse(src)
+    if parsed.netloc and parsed.netloc.startswith('localhost'):
+        return src
     return util.construct_imageproxy_url(src, side)
 
 

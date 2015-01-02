@@ -1,0 +1,116 @@
+@import "_meyer-reset";
+
+$title-font: Helvetica, Arial, sans-serif;
+/*$body-font: Georgia, Times New Roman, serif;*/
+$body-font: $title-font;
+
+/* Subtlety of Hue */
+$lunar-green: #484A47;
+$pine-glade: #C1CE96;
+$athens-gray: #ECEBF0;
+$sirocco: #687D77;
+$armadillo: #353129;
+$light-gray: #ccc;
+
+body {
+    font: 10pt/1.5em $body-font;
+    max-width: 600px;
+    padding: 0 1em;
+    background-color: $pine-glade;
+}
+
+main {
+    width: 68%;
+    float: left;
+    background-color: white;
+    box-shadow: 0 0 2px $sirocco;
+
+    header {
+        h1 {
+            color: black;
+            font-size: 2em;
+        }
+        margin: 1em 0;
+    }
+}
+
+aside {
+    width: 28%;
+    padding: 1%;
+    float: right;
+    background-color: white;
+    box-shadow: 0 0 2px $sirocco;
+}
+
+a {
+    color: $sirocco;
+    &:hover {
+        text-decoration: none;
+    }
+    &:visited {
+        color: $sirocco;
+    }
+}
+
+p {
+    padding: 1em 0px 0.5em;
+}
+
+img {
+    max-width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: $title-font;
+    font-weight: bold;
+    color: black;
+    padding: 0;
+    a {
+        text-decoration: none;
+    }
+}
+
+h1, h2, h3, h4, h5, h6, b, strong {
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 1.1em;
+}
+
+h2 {
+    font-size: 1.075em;
+}
+
+h3 {
+    font-size: 1.05em;
+}
+
+h4 {
+    font-size: 1em;
+}
+
+h5 {
+    font-size: 0.9em;
+}
+
+h6 {
+    font-size: 0.8em;
+}
+
+article {
+    margin-bottom: 2.5em;
+    padding: 0 1%;
+}
+
+blockquote {
+    background-color: $athens-gray;
+    color: $armadillo;
+    padding: 0em 0.5em 0.5em 0.5em;
+}
+
+article {
+    footer {
+        font-size: 0.9em;
+    }
+}
