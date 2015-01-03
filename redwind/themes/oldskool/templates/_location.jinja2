@@ -1,0 +1,17 @@
+{% if post.location %}
+  <div class="meta">
+    <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.get('latitude')}},{{post.location.get('longitude')}}">
+      <data class="p-latitude" value="{{post.location.get('latitude')}}"></data>
+      <data class="p-longitude" value="{{post.location.get('longitude')}}"></data>
+      <span class="p-name">
+        {{post.location | geo_name}}
+      </span>
+    </a>
+  </div>
+{% endif %}
+
+{% if post.venue %}
+  <div class="meta">
+    <a class="p-location h-card" href="{{ post.venue.permalink }}">{{ post.venue.name }} &ndash; {{ post.venue.location | geo_name }}</a>
+  </div>
+{% endif %}

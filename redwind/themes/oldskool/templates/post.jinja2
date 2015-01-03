@@ -41,6 +41,9 @@
         {% endfor %}
       </div>
 
+      {% include theme("_location.jinja2") %}
+      {% include theme("_syndication.jinja2") %}
+
       <div class="meta">
         <a class="u-url" href="{{ post.permalink }}">{{ post.published | time }}</a>
       </div>
