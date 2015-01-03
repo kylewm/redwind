@@ -1,6 +1,5 @@
 {% extends "admin/base.jinja2" %}
 {% block content %}
-
   <form method="POST">
     <div class="form-group">
       <input class="btn btn-primary" type="submit" value="Save Settings" />
@@ -19,7 +18,13 @@
     <input class="btn btn-primary" type="submit" value="Save Settings" />
     </div>
   </form>
-
-  <a href="{{ url_for('authorize_facebook') }}">Authorize Facebook</a><br/>
-  <a href="{{ url_for('authorize_twitter') }}">Authorize Twitter</a>
+  <p>
+    <a href="{{ url_for('authorize_facebook') }}">Authorize Facebook</a>
+  </p>
+  <p>
+    <a href="{{ url_for('authorize_twitter') }}">Authorize Twitter</a>
+  </p>
+  <p>
+    <a href="{{ url_for('authorize_instagram') }}">Authorize Instagram</a>
+  </p>
 {% endblock %}

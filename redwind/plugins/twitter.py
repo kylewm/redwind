@@ -18,10 +18,7 @@ import datetime
 from tempfile import mkstemp
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
-from mf2py.parser import Parser as Mf2Parser
-
 from requests_oauthlib import OAuth1Session, OAuth1
-from requests.exceptions import HTTPError,SSLError
 
 REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
@@ -130,7 +127,8 @@ def do_send_to_twitter(post_id):
     app.logger.debug('auto-posting to twitter for %s', post_id)
     post = Post.load_by_id(post_id)
 
-    in_reply_to, repost_of, like_of = posse_post_discovery(post)
+    in_reply_to, repost_of, like_of = util.posse_post_discovery(
+        post, PERMALINK_RE)
 
     # cowardly refuse to auto-POSSE a reply/repost/like when the
     # target tweet is not found.
@@ -168,7 +166,7 @@ def share_on_twitter():
         app.logger.debug('sharing on twitter. post: %s', post)
 
         in_reply_to, repost_of, like_of \
-            = posse_post_discovery(post)
+            = util.posse_post_discovery(post, PERMALINK_RE)
 
         app.logger.debug(
             'discovered in-reply-to: %s, repost-of: %s, like-of: %s',
@@ -317,39 +315,6 @@ def expand_link(url):
     except Exception as e:
         app.logger.debug('request to %s failed: %s', url, e)
     return url
-
-
-def posse_post_discovery(post):
-    def find_syndicated(original):
-        if PERMALINK_RE.match(original):
-            return original
-        try:
-            d = Mf2Parser(url=original).to_dict()
-            urls = d['rels'].get('syndication', [])
-            for item in d['items']:
-                if 'h-entry' in item['type']:
-                    urls += item['properties'].get('syndication', [])
-            for url in urls:
-                if PERMALINK_RE.match(url):
-                    return url
-        except HTTPError:
-            app.logger.exception('Could not fetch original')
-        except SSLError:
-            app.logger.exception('SSL Error')
-        except Exception as e:
-            app.logger.exception('MF2 Parser error: %s',e)
-
-    def find_first_syndicated(originals):
-        for original in originals:
-            syndicated = find_syndicated(original)
-            if syndicated:
-                return syndicated
-
-    return (
-        find_first_syndicated(post.in_reply_to),
-        find_first_syndicated(post.repost_of),
-        find_first_syndicated(post.like_of),
-    )
 
 
 def guess_tweet_content(post, in_reply_to):
@@ -522,7 +487,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
         result_json.get('user', {}).get('screen_name'),
         result_json.get('id_str'))
 
-    #FIXME json objects aren't yet mutable
+    # FIXME json objects aren't yet mutable
     new_syndication = list(post.syndication)
     new_syndication.append(twitter_url)
     post.syndication = new_syndication

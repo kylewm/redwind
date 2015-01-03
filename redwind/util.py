@@ -19,6 +19,9 @@ import unicodedata
 import urllib
 import hmac
 import hashlib
+import mf2py
+from requests.exceptions import HTTPError, SSLError
+
 
 bleach.ALLOWED_TAGS += ['img', 'p', 'br', 'marquee', 'blink']
 bleach.ALLOWED_ATTRIBUTES.update({
@@ -447,3 +450,44 @@ def jwt_decode(s):
 def render_themed(template, **context):
     ident = current_app.config.get('DEFAULT_THEME', 'plain')
     return render_theme_template(get_theme(ident), template, **context)
+
+
+def posse_post_discovery(post, regex):
+    """Given a post object and a permalink regex, looks for silo-specific
+    in-reply-to, repost-of, like-of URLs. If the post.like_of is a silo url,
+    that url is returned; otherwise we fetch the source and attempt to
+    look for u-syndication URLs.
+
+    Return:
+      a tuple of the first match for (in-reply-to, repost-of, like-of)
+    """
+    def find_syndicated(original):
+        if regex.match(original):
+            return original
+        try:
+            d = mf2py.Parser(url=original).to_dict()
+            urls = d['rels'].get('syndication', [])
+            for item in d['items']:
+                if 'h-entry' in item['type']:
+                    urls += item['properties'].get('syndication', [])
+            for url in urls:
+                if regex.match(url):
+                    return url
+        except HTTPError:
+            app.logger.exception('Could not fetch original')
+        except SSLError:
+            app.logger.exception('SSL Error')
+        except Exception as e:
+            app.logger.exception('MF2 Parser error: %s', e)
+
+    def find_first_syndicated(originals):
+        for original in originals:
+            syndicated = find_syndicated(original)
+            if syndicated:
+                return syndicated
+
+    return (
+        find_first_syndicated(post.in_reply_to),
+        find_first_syndicated(post.repost_of),
+        find_first_syndicated(post.like_of),
+    )

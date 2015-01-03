@@ -3,10 +3,10 @@
   <body class="h-feed">
     <main>
       {% for post in posts %}
-
         {% set date = post.published | date(first_only=True) %}
-        {% if date %}<h1>{{ date }}</h1>{% endif %}
-
+        {% if date %}
+          <h1>{{ date }}</h1>
+        {% endif %}
         <article class="post {{post.mf2_type}}">
           {% for reply in post.reply_contexts %}
             re: <a href="{{reply.permalink}}">{{ reply.permalink | prettify_url }}</a>
@@ -17,17 +17,13 @@
           {% for bookmark in post.bookmark_contexts %}
             bookmark: <a href="{{bookmark.permalink}}">{{ bookmark.permalink | prettify_url }}</a>
           {% endfor %}
-
           {% if post.title %}
             <h2><a class="u-url p-name" href="{{post.permalink}}">{{ post.title }}</a></h2>
           {% endif %}
-
           <div class="e-content{% if not post.title %} p-name{% endif %}">
             {% include theme("_repost_contexts.jinja2") %}
             {% include theme("_checkin.jinja2") %}
-
             {{ post.content_html | proxy_all | safe }}
-
             {% include theme("_photos.jinja2") %}
           </div>
           <footer>
