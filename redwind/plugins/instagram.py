@@ -172,5 +172,7 @@ def ig_post(url):
         'access_token': get_settings().instagram_access_token,
     })
 
+
 def is_instagram_authorized():
-    return get_settings().instagram_access_token
+    return (hasattr(get_settings(), 'instagram_access_token')
+            and get_settings().instagram_access_token)
