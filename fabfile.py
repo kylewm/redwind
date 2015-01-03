@@ -32,8 +32,8 @@ def restart():
         with prefix("source venv/bin/activate"):
             run("pip install -r requirements.txt")
             # run("uwsgi --reload /tmp/redwind.pid")
-            run("supervisorctl restart redwind")
-            
+            run("supervisorctl restart redwind redwind-qworker")
+
 
 def deploy():
     commit()
