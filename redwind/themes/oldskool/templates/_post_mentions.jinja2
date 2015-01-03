@@ -1,0 +1,29 @@
+{% if post.likes %}
+  <strong>likes</strong>
+  {% for mention in post.likes %}
+    <a href="{{mention.author_url}}">
+      <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
+    </a>
+  {% endfor %}
+{% endif %}
+
+{% if post.reposts %}
+  <strong>reposts</strong>
+  {% for mention in post.reposts %}
+    <a href="{{mention.author_url}}">
+      <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
+    </a>
+  {% endfor %}
+{% endif %}
+
+{% if post.replies %}
+  {% for mention in post.replies %}
+    <div class="p-comment h-cite">
+      <a href="{{mention.author_url}}">
+        <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
+      </a>
+      {{ mention.content | proxy_all | safe }}
+      <a href="{{ mention.permalink }}">#</a>
+    </div>
+  {% endfor %}
+{% endif %}

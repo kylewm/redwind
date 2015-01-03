@@ -47,8 +47,12 @@
       <div class="meta">
         <a class="u-url" href="{{ post.permalink }}">{{ post.published | time }}</a>
       </div>
-
     </article>
+
+    <div>
+      {% include theme("_post_mentions.jinja2") %}
+    </div>
+
   </main>
 </body>
 {% endblock body %}

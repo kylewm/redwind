@@ -131,7 +131,8 @@ def person_to_microcard(contact, nick, soup):
 
         image = contact.image
         if image:
-            image = construct_imageproxy_url(image, 26)
+            mcard_size = app.config.get('MICROCARD_SIZE', 24)
+            image = construct_imageproxy_url(image, mcard_size)
             image_tag = soup.new_tag('img', src=image)
             a_tag.append(image_tag)
             a_tag.append(contact.name)
