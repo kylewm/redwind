@@ -10,20 +10,21 @@ $pine-glade: #C1CE96;
 $athens-gray: #ECEBF0;
 $sirocco: #687D77;
 $armadillo: #353129;
-$light-gray: #ccc;
+
+$box-shadow: 0 0 2px $sirocco;
 
 body {
     font: 10pt/1.5em $body-font;
     max-width: 600px;
     padding: 0 1em;
-    background-color: $pine-glade;
+    background-color: $athens-gray;
 }
 
 main {
-    width: 68%;
+    width: 100%;
     float: left;
     background-color: white;
-    box-shadow: 0 0 2px $sirocco;
+    box-shadow: $box-shadow;
 
     header {
         h1 {
@@ -32,14 +33,24 @@ main {
         }
         margin: 1em 0;
     }
+
+    > * {
+        padding-left: 1% !important;
+        padding-right: 1% !important;
+    }
 }
 
-aside {
-    width: 28%;
-    padding: 1%;
-    float: right;
-    background-color: white;
-    box-shadow: 0 0 2px $sirocco;
+.h-feed {
+    &>main {
+        width: 68%;
+    }
+    &>aside {
+        width: 28%;
+        padding: 1%;
+        float: right;
+        background-color: white;
+        box-shadow: $box-shadow;
+    }
 }
 
 a {
@@ -64,7 +75,6 @@ h1, h2, h3, h4, h5, h6 {
     font-family: $title-font;
     font-weight: bold;
     color: black;
-    padding: 0;
     a {
         text-decoration: none;
     }
@@ -100,7 +110,6 @@ h6 {
 
 article {
     margin-bottom: 2.5em;
-    padding: 0 1%;
 }
 
 blockquote {
@@ -112,5 +121,23 @@ blockquote {
 article {
     footer {
         font-size: 0.9em;
+    }
+}
+
+pre, code {
+    overflow: hidden;
+}
+
+.p-repost-of {
+    overflow: auto;
+    .p-author {
+        img {
+            display: block;
+            float: left;
+            margin: 0.5em 0.5em 0 0;
+        }
+    }
+    .e-content {
+        overflow: auto;
     }
 }

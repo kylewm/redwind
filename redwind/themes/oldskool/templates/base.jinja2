@@ -46,8 +46,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}"/>
 
   </head>
-  <body>
-    {% block content %}
-    {% endblock content %}
-  </body>
+  {% block body %}
+  {% endblock body %}
 </html>

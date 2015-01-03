@@ -1,0 +1,51 @@
+{% extends theme("base.jinja2") %}
+{% block body %}
+<body class="b{{post.mf2_type}}">
+  <main>
+    <a href="{{url_for('index')}}">&lt; home</a>
+    <article>
+      {% if post.title %}
+        <h1 class="p-name">{{ post.title }}</h1>
+      {% endif %}
+      <h2>
+        <time class="dt-published" value="{{ post.published | isotime }}">
+          {{ post.published | date }}
+        </time>
+      </h2>
+
+      {% for reply in post.reply_contexts %}
+        re: <a href="{{reply.permalink}}">{{ reply.permalink | prettify_url }}</a>
+      {% endfor %}
+      {% for like in post.like_contexts %}
+        like: <a href="{{like.permalink}}">{{ like.permalink | prettify_url }}</a>
+      {% endfor %}
+      {% for bookmark in post.bookmark_contexts %}
+        bookmark: <a href="{{bookmark.permalink}}">{{ bookmark.permalink | prettify_url }}</a>
+      {% endfor %}
+
+      <div class="e-content{% if not post.title %} p-name{% endif %}">
+
+        {% include theme("_repost_contexts.jinja2") %}
+
+        {% include theme("_checkin.jinja2")%}
+
+        {{ post.content_html | proxy_all | safe }}
+        {% include theme("_photos.jinja2") %}
+      </div>
+
+      <div class="meta">
+        {% for tag in post.tags %}
+          <a class="p-category" href="{{url_for('posts_by_tag', tag=tag.name)}}">
+            #{{tag.name}}
+          </a>
+        {% endfor %}
+      </div>
+
+      <div class="meta">
+        <a class="u-url" href="{{ post.permalink }}">{{ post.published | time }}</a>
+      </div>
+
+    </article>
+  </main>
+</body>
+{% endblock body %}
