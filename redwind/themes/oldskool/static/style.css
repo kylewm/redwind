@@ -125,4 +125,7 @@ pre, code {
   .p-repost-of .e-content {
     overflow: auto; }
 
+.microcard img {
+    width: 1em;}
+
 /*# sourceMappingURL=style.css.map */

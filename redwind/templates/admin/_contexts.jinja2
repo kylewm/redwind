@@ -24,7 +24,9 @@
             {{ context.title }}
           </h4>
           {% endif %}
-          {{context.content | truncate(512) }}
+          {% if context.content %}
+            {{context.content | truncate(512) }}
+          {% endif %}
         </div>
       </div>
     </div>
