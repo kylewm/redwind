@@ -157,6 +157,7 @@ def do_send_to_instagram(post_id):
         new_synd = list(post.syndication)
         new_synd.append(like_url)
         post.syndication = new_synd
+        db.session.commit()
         return like_url
 
 

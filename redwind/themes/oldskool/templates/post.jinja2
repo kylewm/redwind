@@ -44,8 +44,13 @@
       {% include theme("_location.jinja2") %}
       {% include theme("_syndication.jinja2") %}
 
-      <div class="meta">
+      <div class="meta byline">
         <a class="u-url" href="{{ post.permalink }}">{{ post.published | time }}</a>
+        by
+        <a class="p-author h-card" href="{{ settings.site_url }}">
+          {{ settings.author_name }}
+          <data class="p-photo" value="{{settings.author_image}}"/>
+        </a>
       </div>
     </article>
 
