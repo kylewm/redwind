@@ -128,4 +128,7 @@ pre, code {
 .microcard img {
   width: 1em; }
 
+.byline img {
+  display: none; }
+
 /*# sourceMappingURL=style.css.map */
