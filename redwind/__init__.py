@@ -17,6 +17,11 @@ import logging
 app = Flask(__name__)
 app.config.from_object(Configuration)
 
+app.jinja_env.trim_blocks = True
+app.jinja_env.lstrip_blocks = True
+app.jinja_env.add_extension('jinja2.ext.autoescape')
+app.jinja_env.add_extension('jinja2.ext.with_')
+app.jinja_env.add_extension('jinja2.ext.i18n')
 
 db = SQLAlchemy(app)
 
@@ -25,16 +30,6 @@ login_mgr = LoginManager(app)
 login_mgr.login_view = 'login'
 
 themes = Themes(app)
-
-app.jinja_options = ImmutableDict(
-    trim_blocks=True,
-    lstrip_blocks=True,
-    extensions=[
-        'jinja2.ext.autoescape',
-        'jinja2.ext.with_',
-        'jinja2.ext.i18n',
-    ]
-)
 
 if app.config.get('PROFILE'):
     from werkzeug.contrib.profiler import ProfilerMiddleware
@@ -59,6 +54,7 @@ for handler in ['views', 'services', 'micropub']:
 
 for plugin in [
         'facebook',
+        'instagram',
         'locations',
         'push',
         'twitter',
