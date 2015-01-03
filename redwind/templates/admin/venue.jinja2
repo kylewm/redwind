@@ -18,9 +18,14 @@
   </article>
 
   {% set no_map = true %}
-  {% for post in posts %}
-      {% include "_post.jinja2" %}
-  {% endfor %}
-
+  <ul>
+    {% for post in posts %}
+      <li>
+        <a href="{{post.permalink}}">
+          {{ post.published | date }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
 
 {% endblock content %}
