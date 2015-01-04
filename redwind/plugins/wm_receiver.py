@@ -48,21 +48,19 @@ def receive_webmention():
 
 @app.route('/webmention/status/<key>')
 def webmention_status(key):
-    job = queue.Job.query.filter_by(key=key).first()
+    rv = queue.query(key)
 
-    if job:
-        rv = job.result
-        if not rv:
-            rv = {
-                'response_code': 202,
-                'status': 'queued',
-                'reason': 'Mention has been queued for processing',
-            }
-    else:
+    if not rv:
         rv = {
             'response_code': 400,
             'status': 'unknown',
             'reason': 'Job does not exist or its status has expired',
+        }
+    elif rv == 'queued':
+        rv = {
+            'response_code': 202,
+            'status': 'queued',
+            'reason': 'Mention has been queued for processing',
         }
 
     return make_response(

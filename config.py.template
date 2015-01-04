@@ -23,3 +23,8 @@ class Configuration(object):
 
     # sign requests to prevent unauthorized use of pilbox service
     PILBOX_KEY = 'a key used to sign pilbox requests'
+
+    # optionally, use Redis for async task queue. if this is disabled,
+    # jobs will be stored in the database and qworker will poll for new
+    # jobs.
+    # REDIS_URL = 'redis://localhost:6379'
