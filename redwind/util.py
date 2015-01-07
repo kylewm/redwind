@@ -39,7 +39,7 @@ INSTAGRAM_RE = re.compile(r'https?://instagram\.com/p/(\w+)')
 PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
 RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
 
-AT_USERNAME_RE = re.compile(r"""(?<!\w)@([a-zA-Z0-9_]+)(?=($|[\s,:;.'"]))""")
+AT_USERNAME_RE = re.compile(r"""(?<!\w)@([a-zA-Z0-9_]+)(?=($|[\s,:;.?'")]))""")
 LINK_RE = re.compile(
     # optional schema
     r'\b([a-z]{3,9}://)?'
@@ -315,13 +315,19 @@ def proxy_all_images(html):
 
 
 def construct_imageproxy_url(src, side=None):
+    if not src:
+        return None
+    
     pilbox_url = app.config.get('PILBOX_URL')
-    if not pilbox_url or src.lower().startswith('data:'):
+    if not pilbox_url:
         # cannot resize without pilbox
         # pilbox cannot resize "data:" urls
         app.logger.warn('No pilbox server configured')
         return src
 
+    if src.lower().startswith('data:'):
+        app.logger.debug('cannot mirror data url: %s', src[:100])
+    
     query = {}
     query['url'] = src
     if side:

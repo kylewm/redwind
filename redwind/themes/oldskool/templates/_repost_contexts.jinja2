@@ -1,6 +1,5 @@
 {% for context in post.repost_contexts %}
   <blockquote class="p-repost-of h-cite">
-
     {% if context.author_url and context.author_image and context.author_name %}
       <a class="p-author h-card" href="{{ context.author_url }}">
         <img class="u-photo" src="{{ context.author_image | imageproxy(64) }}" />
@@ -16,13 +15,12 @@
     {% elif context.author_name %}
       <span href="p-author">{{context.author_name}}</span>
     {% endif %}
-
     {% if post.title %}
       <h2>{{ context.title }}</h2>
     {% endif %}
     <div class="e-content{% if not post.title %} p-name{% endif %}">
       {{ context.content | proxy_all | safe }}
     </div>
-    <a href="{{context.permalink}}">{{ context.published | date}}</a>
+    <a class="u-url" href="{{context.permalink}}">{{ context.published | date}}</a>
   </blockquote>
 {% endfor %}

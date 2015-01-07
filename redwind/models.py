@@ -356,7 +356,7 @@ class Post(db.Model):
             return util.slugify(self.title)
 
         if self.content:
-            return util.slugify(self.content, 48)
+            return util.slugify(self.content, 48) or 'untitled'
 
         if self.post_type == 'checkin' and self.venue:
             return util.slugify('checked into ' + self.venue.name + ' '

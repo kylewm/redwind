@@ -34,9 +34,16 @@ main {
         margin: 1em 0;
     }
 
-    > * {
+    & > * {
         padding-left: 1% !important;
         padding-right: 1% !important;
+    }
+
+    &:first-child {
+        padding-top: 1% !important;
+    }
+    &:last-child {
+        padding-bottom: 1% !important;
     }
 }
 

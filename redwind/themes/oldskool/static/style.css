@@ -51,6 +51,10 @@ main {
   main > * {
     padding-left: 1% !important;
     padding-right: 1% !important; }
+  main:first-child {
+    padding-top: 1% !important; }
+  main:last-child {
+    padding-bottom: 1% !important; }
 
 .h-feed > main {
   width: 68%; }
