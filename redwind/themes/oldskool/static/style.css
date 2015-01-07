@@ -135,4 +135,13 @@ pre, code {
 .byline img {
   display: none; }
 
+.p-comment .rsvp {
+  font-weight: bold; }
+  .p-comment .rsvp.yes {
+    color: #11A411; }
+  .p-comment .rsvp.no {
+    color: #D20000; }
+  .p-comment .rsvp.maybe {
+    color: #E7AA19; }
+
 /*# sourceMappingURL=style.css.map */

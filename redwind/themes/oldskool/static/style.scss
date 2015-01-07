@@ -160,3 +160,18 @@ pre, code {
         display: none;
     }
 }
+
+.p-comment {
+    .rsvp {
+        font-weight: bold;
+        &.yes {
+            color: #11A411;
+        }
+        &.no {
+            color: #D20000;
+        }
+        &.maybe {
+            color: #E7AA19;
+        }
+    }
+}

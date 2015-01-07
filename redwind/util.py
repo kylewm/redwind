@@ -317,7 +317,7 @@ def proxy_all_images(html):
 def construct_imageproxy_url(src, side=None):
     if not src:
         return None
-    
+
     pilbox_url = app.config.get('PILBOX_URL')
     if not pilbox_url:
         # cannot resize without pilbox
@@ -327,7 +327,7 @@ def construct_imageproxy_url(src, side=None):
 
     if src.lower().startswith('data:'):
         app.logger.debug('cannot mirror data url: %s', src[:100])
-    
+
     query = {}
     query['url'] = src
     if side:

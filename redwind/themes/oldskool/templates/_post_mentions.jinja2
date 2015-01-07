@@ -1,5 +1,5 @@
 {% if post.likes %}
-  <strong>likes</strong>
+  <h3>likes</h3>
   {% for mention in post.likes %}
     <a href="{{mention.author_url}}">
       <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
@@ -8,7 +8,7 @@
 {% endif %}
 
 {% if post.reposts %}
-  <strong>reposts</strong>
+  <h3>reposts</h3>
   {% for mention in post.reposts %}
     <a href="{{mention.author_url}}">
       <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
@@ -16,14 +16,62 @@
   {% endfor %}
 {% endif %}
 
-{% if post.replies %}
-  {% for mention in post.replies %}
+{% if post.rsvps %}
+  <h3>rsvps</h3>
+  {% for mention in post.rsvps %}
     <div class="p-comment h-cite">
-      <a href="{{mention.author_url}}">
-        <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
-      </a>
-      {{ mention.content | proxy_all | safe }}
-      <a href="{{ mention.permalink }}">#</a>
+      <div>
+        <span class="p-author h-card">
+          {% if mention.author_image %}<img class="u-photo" src="{{ mention.author_image | imageproxy(24) }}"/>{% endif %}
+          <a class="u-url" href="{{mention.author_url}}">
+            <span class="p-name">{{ mention.author_name}}</span>
+          </a>
+        </span>
+        (<a class="u-url" href="{{ mention.permalink }}">{{mention.permalink | domain_from_url }}</a>)
+        <span class="rsvp {{mention.rsvp}}">
+          {% if mention.rsvp == 'yes' %}
+            is going
+          {% elif mention.rsvp == 'maybe' %}
+            might go
+          {% elif mention.rsvp == 'no' %}
+            is not going
+          {% endif %}
+        </span>
+      </div>
+      {% if mention.content %}
+        <div class="e-content">
+          {{ mention.content | safe }}
+        </div>
+      {% endif %}
     </div>
   {% endfor %}
+{% endif %}
+
+{% if post.replies %}
+  <h3>replies</h3>
+  {% for mention in post.replies %}
+    <div class="p-comment h-cite">
+      <div>
+        {% if mention.author_name and mention.author_url %}
+          <span class="p-author h-card">
+            {% if mention.author_image %}<img class="u-photo" src="{{ mention.author_image | imageproxy(24) }}"/>{% endif %}
+            <a class="u-url" href="{{mention.author_url}}">
+              <span class="p-name">{{ mention.author_name}}</span>
+            </a>
+          </span>
+        {% endif %}
+        (<a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>)
+      </div>
+      {{ mention.content | proxy_all | safe }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if post.references %}
+  <h3>other references</h3>
+  <ul>
+  {% for mention in post.references %}
+    <li><a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a></li>
+  {% endfor %}
+  </ul>
 {% endif %}
