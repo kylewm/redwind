@@ -60,6 +60,7 @@ for plugin in [
         'twitter',
         'wm_receiver',
         'wm_sender',
+        'wordpress',
 ]:
     # app.logger.info('loading plugin module %s', plugin)
     module = importlib.import_module('redwind.plugins.' + plugin)

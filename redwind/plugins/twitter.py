@@ -109,7 +109,7 @@ def send_to_twitter(post, args):
     """Share a note to twitter without user-input. Makes a best-effort
     attempt to guess the appropriate parameters and content
     """
-    if args.get('action') == 'publish+tweet':
+    if 'twitter' in args.getlist('syndication'):
         if not is_twitter_authorized():
             return False, 'Current user is not authorized to tweets'
 
@@ -487,11 +487,7 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
         result_json.get('user', {}).get('screen_name'),
         result_json.get('id_str'))
 
-    # FIXME json objects aren't yet mutable
-    new_syndication = list(post.syndication)
-    new_syndication.append(twitter_url)
-    post.syndication = new_syndication
-
+    post.add_syndication_url(twitter_url)
     return twitter_url
 
 

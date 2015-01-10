@@ -108,12 +108,13 @@ def create_context(url):
 def send_to_instagram(post, args):
     """Share a like to Instagram without user-input.
     """
-    if not is_instagram_authorized():
-        return False, 'Current user is not authorized for instagram'
+    if 'instagram' in args.getlist('syndication'):
+        if not is_instagram_authorized():
+            return False, 'Current user is not authorized for instagram'
 
-    app.logger.debug("queueing post to instagram {}".format(post.id))
-    queue.enqueue(do_send_to_instagram, post.id)
-    return True, 'Success'
+        app.logger.debug("queueing post to instagram {}".format(post.id))
+        queue.enqueue(do_send_to_instagram, post.id)
+        return True, 'Success'
 
 
 def do_send_to_instagram(post_id):
@@ -154,9 +155,7 @@ def do_send_to_instagram(post_id):
             return None
 
         like_url = like_of + '#liked-by-' + my_username
-        new_synd = list(post.syndication)
-        new_synd.append(like_url)
-        post.syndication = new_synd
+        post.add_syndication_url(like_url)
         db.session.commit()
         return like_url
 

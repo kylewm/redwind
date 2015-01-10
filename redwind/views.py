@@ -599,14 +599,10 @@ def new_post(type):
         'save_draft': 'Save as Draft',
     }
 
-    return make_response(
-        render_template('admin/edit_' + type + '.jinja2',
-                        edit_type='new', post=post,
-                        tags=get_tags(), top_tags=get_top_tags(20),
-                        button_text=button_text),
-        200, {'Cache-Control': 'private, max-age=86400'})
-        
-    
+    return render_template('admin/edit_' + type + '.jinja2',
+                           edit_type='new', post=post,
+                           tags=get_tags(), top_tags=get_top_tags(20),
+                           button_text=button_text)
 
 
 @app.route('/edit')

@@ -9,9 +9,32 @@
   <form id="edit_form" method="POST" action="{{ settings.site_url }}/save_{{edit_type}}" enctype="multipart/form-data">
 
     <div class="form-group btn-group" role="group">
-      {% for action in ['publish', 'publish+tweet', 'publish_quietly', 'save_draft'] %}
-        <button class="btn btn-default" type="submit" name="action" value="{{action}}">{{button_text[action]}}</button>
+      {% for action in ['publish', 'publish_quietly', 'save_draft'] %}
+        <button
+           class="btn {% if loop.first %}btn-primary{%else%}btn-default{% endif %}"
+           type="submit" name="action" value="{{action}}">
+           {{button_text[action]}}
+        </button>
       {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <span class="toggle">
+        <input id="syndication-twitter" name="syndication" type="checkbox" value="twitter" />
+        <label for="syndication-twitter">Twitter</label>
+      </span>
+      <span class="toggle">
+        <input id="syndication-facebook" name="syndication" type="checkbox" value="facebook" />
+        <label for="syndication-facebook">Facebook</label>
+      </span>
+      <span class="toggle">
+        <input id="syndication-instagram" name="syndication" type="checkbox" value="instagram" />
+        <label for="syndication-instagram">Instagram</label>
+      </span>
+      <span class="toggle">
+        <input id="syndication-wordpress" name="syndication" type="checkbox" value="wordpress" />
+        <label for="syndication-wordpress">WordPress</label>
+      </span>
     </div>
 
     {% with is_single = True %}

@@ -371,6 +371,17 @@ class Post(db.Model):
 
         return 'untitled'
 
+    def add_syndication_url(self, url):
+        """Add a new URL to the list of syndicated posts. We cannot do this
+        directly because syndication is a JsonType that cannot detect
+        modifications to itself.
+        """
+        # JsonType cannot detect changes to itself. Have to create a new list
+        # to modify it
+        new_synd = list(self.syndication)
+        new_synd.append(url)
+        self.syndication = new_synd
+
     def __repr__(self):
         if self.title:
             return 'post:{}'.format(self.path)
