@@ -684,16 +684,14 @@ def geo_name(loc):
 
 @app.template_filter('isotime')
 def isotime_filter(thedate):
-    if not thedate:
-        thedate = datetime.date(1982, 11, 24)
-
-    if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
-        tz = pytz.timezone(get_settings().timezone)
-        thedate = pytz.utc.localize(thedate).astimezone(tz)
-
-    if isinstance(thedate, datetime.datetime):
-        return thedate.isoformat('T')
-    return thedate.isoformat()
+    if thedate:
+        thedate = thedate.replace(microsecond=0)
+        if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
+            tz = pytz.timezone(get_settings().timezone)
+            thedate = pytz.utc.localize(thedate).astimezone(tz)
+        if isinstance(thedate, datetime.datetime):
+            return thedate.isoformat('T')
+        return thedate.isoformat()
 
 
 @app.template_filter('human_time')
@@ -800,14 +798,14 @@ IMAGE_TAG_RE = re.compile(r'<img([^>]*) src="(https?://[^">]+)"')
 
 
 @app.template_filter('proxy_all')
-def proxy_all_images(html):
+def proxy_all_images(html, side=None):
     def repl(m):
         url = m.group(2)
         # don't proxy images that come from this site
         if url.startswith(get_settings().site_url):
             return m.group(0)
-        return '<img{} src="{}"'.format(m.group(1), imageproxy(m.group(2)))
-    return IMAGE_TAG_RE.sub(repl, html)
+        return '<img{} src="{}"'.format(m.group(1), imageproxy(m.group(2), side=side))
+    return IMAGE_TAG_RE.sub(repl, html) if html else html
 
 
 @app.template_filter('imageproxy')

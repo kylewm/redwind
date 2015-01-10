@@ -9,13 +9,24 @@
         {% endif %}
         <article class="post {{post.mf2_type}}">
           {% for reply in post.reply_contexts %}
-            re: <a class="u-in-reply-to" href="{{reply.permalink}}">{{ reply.permalink | prettify_url }}</a>
+            in reply to <a class="u-in-reply-to" href="{{reply.permalink}}">
+            {% if reply.author_name %}
+              {{ reply.author_name }}
+            {% else %}
+              a post
+            {% endif %}
+            {% if reply.title %}
+              - {{ reply.title }}
+            {% else %}
+              on {{ reply.permalink | domain_from_url }}
+            {% endif %}
+          </a>
           {% endfor %}
           {% for like in post.like_contexts %}
-            like: <a class="u-like-of" href="{{like.permalink}}">{{ like.permalink | prettify_url }}</a>
+            liked <a class="u-like-of" href="{{like.permalink}}">{{ like.permalink | prettify_url }}</a>
           {% endfor %}
           {% for bookmark in post.bookmark_contexts %}
-            bookmark: <a class="u-bookmark-of" href="{{bookmark.permalink}}">{{ bookmark.permalink | prettify_url }}</a>
+            bookmarked <a class="u-bookmark-of" href="{{bookmark.permalink}}">{{ bookmark.permalink | prettify_url }}</a>
           {% endfor %}
           {% if post.title %}
             <h2><a class="u-url p-name" href="{{post.permalink}}">{{ post.title }}</a></h2>

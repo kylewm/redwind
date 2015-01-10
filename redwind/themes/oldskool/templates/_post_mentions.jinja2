@@ -62,7 +62,7 @@
         {% endif %}
         (<a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>)
       </div>
-      {{ mention.content | proxy_all | safe }}
+      {{ mention.content | proxy_all(24) | safe }}
     </div>
   {% endfor %}
 {% endif %}

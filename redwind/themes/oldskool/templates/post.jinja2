@@ -8,14 +8,12 @@
         <h1 class="p-name">{{ post.title }}</h1>
       {% endif %}
       <h2>
-        <time class="dt-published" value="{{ post.published | isotime }}">
+        <time class="dt-published" datetime="{{ post.published | isotime }}">
           {{ post.published | date }}
         </time>
       </h2>
 
-      {% for reply in post.reply_contexts %}
-        re: <a class="u-in-reply-to" href="{{reply.permalink}}">{{ reply.permalink | prettify_url }}</a>
-      {% endfor %}
+      {% include theme("_reply_contexts.jinja2") %}
       {% for like in post.like_contexts %}
         like: <a class="u-like-of" href="{{like.permalink}}">{{ like.permalink | prettify_url }}</a>
       {% endfor %}
@@ -24,11 +22,8 @@
       {% endfor %}
 
       <div class="e-content{% if not post.title %} p-name{% endif %}">
-
         {% include theme("_repost_contexts.jinja2") %}
-
         {% include theme("_checkin.jinja2")%}
-
         {{ post.content_html | proxy_all | safe }}
         {% include theme("_photos.jinja2") %}
       </div>
@@ -45,7 +40,7 @@
       {% include theme("_syndication.jinja2") %}
 
       <div class="meta">
-        <a class="u-url" href="{{ post.permalink }}">{{ post.published | time }}</a>
+        <a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.published | isotime }}">{{ post.published | time }}</time></a>
         <span class="byline">
           by
           <a class="p-author h-card" href="{{ settings.site_url }}">
