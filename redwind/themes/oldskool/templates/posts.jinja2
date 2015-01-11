@@ -34,6 +34,15 @@
           </footer>
         </article>
       {% endfor %}
+
+      {% if older %}
+        <div class="pager">
+          <a rel="previous" class="older" href="{{older}}">
+            Older &rarr;
+          </a>
+        </div>
+      {% endif %}
+
     </main>
     <aside>
       <h1>.:{{settings.site_title}}:.</h1>

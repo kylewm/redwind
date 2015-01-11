@@ -47,6 +47,7 @@ POST_TYPES = [
 POST_TYPE_RULE = '<any({}):post_type>'.format(','.join(tup[0] for tup in POST_TYPES))
 PLURAL_TYPE_RULE = '<any({}):plural_type>'.format(','.join(tup[1] for tup in POST_TYPES))
 DATE_RULE = ('<int:year>/<int(fixed_digits=2):month>/<int(fixed_digits=2):day>/<index>')
+BEFORE_TS_FORMAT = '%Y%m%d%H%M%S'
 
 AUTHOR_PLACEHOLDER = 'img/users/placeholder.png'
 
@@ -58,7 +59,7 @@ def inject_settings_variable():
     }
 
 
-def collect_posts(post_types, page, per_page, tag, include_hidden=False):
+def collect_posts(post_types, before_ts, per_page, tag, include_hidden=False):
     query = Post.query
     query = query.options(
         sqlalchemy.orm.subqueryload(Post.tags),
@@ -74,13 +75,34 @@ def collect_posts(post_types, page, per_page, tag, include_hidden=False):
     query = query.filter_by(deleted=False, draft=False)
     if post_types:
         query = query.filter(Post.post_type.in_(post_types))
+    try:
+        if before_ts:
+            # convert ts in local timezone to utc and re-remove the timezone
+            before_dt = datetime.datetime.strptime(before_ts, BEFORE_TS_FORMAT)\
+                                         .replace(tzinfo=TIMEZONE)\
+                                         .astimezone(datetime.timezone.utc)\
+                                         .replace(tzinfo=None)
+            query = query.filter(Post.published < before_dt)
+    except ValueError:
+        app.logger.warn('Could not parse before timestamp: %s', before_ts)
+
     query = query.order_by(Post.published.desc())
-    pagination = query.paginate(page=page, per_page=per_page)
-    posts = pagination.items
-    is_first = not pagination.has_prev
-    is_last = not pagination.has_next
+    query = query.limit(per_page)
+    posts = query.all()
+
     posts = [post for post in posts if check_audience(post)]
-    return posts, is_first, is_last
+    if posts:
+        last_ts = posts[-1].published\
+                           .replace(tzinfo=datetime.timezone.utc)\
+                           .astimezone(TIMEZONE)\
+                           .strftime(BEFORE_TS_FORMAT)
+        view_args = request.view_args.copy()
+        view_args['before_ts'] = last_ts
+        older = url_for(request.endpoint, **view_args)
+    else:
+        older = None
+
+    return posts, older
 
 # Font sizes in em. Maybe should be configurable
 MIN_TAG_SIZE = 1.0
@@ -103,16 +125,14 @@ def render_tags(title, tags):
                               max_tag_size=MAX_TAG_SIZE)
 
 
-def render_posts(title, posts, page, is_first, is_last,
-                 template='posts.jinja2'):
+def render_posts(title, posts, older, template='posts.jinja2'):
     atom_args = request.view_args.copy()
     atom_args.update({'page': 1, 'feed': 'atom', '_external': True})
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
     return util.render_themed(template, posts=posts, title=title,
-                              prev_page=None if is_first else page - 1,
-                              next_page=None if is_last else page + 1,
-                              atom_url=atom_url, atom_title=atom_title)
+                              older=older, atom_url=atom_url,
+                              atom_title=atom_title)
 
 
 def render_posts_atom(title, feed_id, posts):
@@ -122,42 +142,41 @@ def render_posts_atom(title, feed_id, posts):
         200, {'Content-Type': 'application/atom+xml; charset=utf-8'})
 
 
-@app.route('/', defaults={'page': 1})
-@app.route('/page/<int:page>')
-def index(page):
-    # leave out hidden posts
-    posts, is_first, is_last = collect_posts(
-        None, page, int(get_settings().posts_per_page), None, include_hidden=False)
+@app.route('/')
+@app.route('/before-<before_ts>')
+def index(before_ts=None):
+    posts, older = collect_posts(
+        None, before_ts, int(get_settings().posts_per_page),
+        None, include_hidden=False)
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
-    return render_posts('Stream', posts, page, is_first, is_last,
-                        template='home.jinja2')
+    return render_posts('Stream', posts, older, template='home.jinja2')
 
 
-@app.route('/everything', defaults={'page': 1})
-@app.route('/everything/page/<int:page>')
-def everything(page):
-    posts, is_first, is_last = collect_posts(
-        None, page, int(get_settings().posts_per_page), None,
+@app.route('/everything')
+@app.route('/everything/before-<before_ts>')
+def everything(before_ts=None):
+    posts, older = collect_posts(
+        None, before_ts, int(get_settings().posts_per_page), None,
         include_hidden=True)
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Everything', 'everything.atom', posts)
-    return render_posts('Everything', posts, page, is_first, is_last)
+    return render_posts('Everything', posts, older)
 
 
-@app.route('/' + PLURAL_TYPE_RULE, defaults={'page': 1})
-@app.route('/' + PLURAL_TYPE_RULE + '/page/<int:page>')
-def posts_by_type(plural_type, page):
+@app.route('/' + PLURAL_TYPE_RULE)
+@app.route('/' + PLURAL_TYPE_RULE + '/before-<before_ts>')
+def posts_by_type(plural_type, before_ts=None):
     post_type, _, title = next(tup for tup in POST_TYPES
                                if tup[1] == plural_type)
-    posts, is_first, is_last = collect_posts(
-        (post_type,), page, int(get_settings().posts_per_page), None,
+    posts, older = collect_posts(
+        (post_type,), before_ts, int(get_settings().posts_per_page), None,
         include_hidden=True)
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom(title, plural_type + '.atom', posts)
-    return render_posts(title, posts, page, is_first, is_last)
+    return render_posts(title, posts, older)
 
 
 @app.route('/tags')
@@ -172,7 +191,7 @@ def tag_cloud():
     query = query.having(sqlalchemy.func.count(Post.id) >= MIN_TAG_COUNT)
     tagdict = {}
     for name, count in query.all():
-        tagdict[name] = tagdict.get(name,0)+count
+        tagdict[name] = tagdict.get(name, 0) + count
     tags = [
         {"name": name, "count": tagdict[name]}
         for name in sorted(tagdict)
@@ -180,17 +199,17 @@ def tag_cloud():
     return render_tags("Tags", tags)
 
 
-@app.route('/tags/<tag>', defaults={'page': 1})
-@app.route('/tags/<tag>/page/<int:page>')
-def posts_by_tag(tag, page):
-    posts, is_first, is_last = collect_posts(
-        None, page, int(get_settings().posts_per_page), tag,
+@app.route('/tags/<tag>')
+@app.route('/tags/<tag>/before-<before_ts>')
+def posts_by_tag(tag, before_ts=None):
+    posts, older = collect_posts(
+        None, before_ts, int(get_settings().posts_per_page), tag,
         include_hidden=True)
     title = '#' + tag
 
     if request.args.get('feed') == 'atom':
         return render_posts_atom(title, 'tag-' + tag + '.atom', posts)
-    return render_posts(title, posts, page, is_first, is_last)
+    return render_posts(title, posts, older)
 
 
 @app.route('/mentions')
@@ -746,14 +765,6 @@ def month_shortname(month):
 @app.template_filter('month_name')
 def month_name(month):
     return datetime.date(1990, month, 1).strftime('%B')
-
-
-def url_for_other_page(page):
-    args = request.view_args.copy()
-    args['page'] = page
-    return url_for(request.endpoint, **args)
-
-app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 
 @app.template_filter('atom_sanitize')

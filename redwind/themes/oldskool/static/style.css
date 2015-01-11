@@ -42,7 +42,9 @@ main {
   width: 100%;
   float: left;
   background-color: white;
-  box-shadow: 0 0 2px #687D77; }
+  box-shadow: 0 0 2px #687D77;
+  margin-bottom: 1em;
+  padding-bottom: 0.5em; }
   main header {
     margin: 1em 0; }
     main header h1 {
@@ -53,8 +55,6 @@ main {
     padding-right: 1% !important; }
   main:first-child {
     padding-top: 1% !important; }
-  main:last-child {
-    padding-bottom: 1% !important; }
 
 .h-feed > main {
   width: 68%; }
@@ -130,7 +130,7 @@ pre, code {
     overflow: auto; }
 
 .microcard img {
-  width: 1em; }
+  height: 1em; }
 
 .byline img {
   display: none; }
@@ -143,5 +143,15 @@ pre, code {
     color: #D20000; }
   .p-comment .rsvp.maybe {
     color: #E7AA19; }
+
+.pager {
+  text-align: center; }
+  .pager a {
+    display: inline-block;
+    padding: 0.2em;
+    border: 1px solid #687D77;
+    border-radius: 4px;
+    background-color: #ECEBF0;
+    text-decoration: none; }
 
 /*# sourceMappingURL=style.css.map */

@@ -25,6 +25,8 @@ main {
     float: left;
     background-color: white;
     box-shadow: $box-shadow;
+    margin-bottom: 1em;
+    padding-bottom: 0.5em;
 
     header {
         h1 {
@@ -41,9 +43,6 @@ main {
 
     &:first-child {
         padding-top: 1% !important;
-    }
-    &:last-child {
-        padding-bottom: 1% !important;
     }
 }
 
@@ -151,7 +150,7 @@ pre, code {
 
 .microcard {
     img {
-        width: 1em;
+        height: 1em;
     }
 }
 
@@ -173,5 +172,17 @@ pre, code {
         &.maybe {
             color: #E7AA19;
         }
+    }
+}
+
+.pager {
+    text-align: center;
+    a {
+        display: inline-block;
+        padding: 0.2em;
+        border: 1px solid $sirocco;
+        border-radius: 4px;
+        background-color: $athens-gray;
+        text-decoration: none;
     }
 }
