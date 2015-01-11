@@ -120,13 +120,13 @@ article footer {
 pre, code {
   overflow: hidden; }
 
-.p-in-reply-to, .p-repost-of {
+.context {
   overflow: auto; }
-  .p-in-reply-to .p-author img, .p-repost-of .p-author img {
+  .context .author img {
     display: block;
     float: left;
     margin: 0.5em 0.5em 0 0; }
-  .p-in-reply-to .e-content, .p-repost-of .e-content {
+  .context .e-content {
     overflow: auto; }
 
 .microcard img {

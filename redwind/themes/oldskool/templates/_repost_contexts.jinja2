@@ -1,19 +1,19 @@
 {% for context in post.repost_contexts %}
-  <blockquote class="p-repost-of h-cite">
+  <blockquote class="context p-repost-of h-cite">
     {% if context.author_url and context.author_image and context.author_name %}
-      <a class="p-author h-card" href="{{ context.author_url }}">
+      <a class="author p-author h-card" href="{{ context.author_url }}">
         <img class="u-photo" src="{{ context.author_image | imageproxy(64) }}" />
         {{ context.author_name }}
       </a>
     {% elif context.author_name and context.author_image %}
-      <span class="p-author h-card">
+      <span class="author p-author h-card">
         <img class="u-photo" src="{{ context.author_image | imageproxy(64) }}" />
         {{ context.author_name }}
       </span>
     {% elif context.author_name and context.author_url %}
-      <a href="p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
+      <a href="author p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
     {% elif context.author_name %}
-      <span href="p-author">{{context.author_name}}</span>
+      <span href="author p-author">{{context.author_name}}</span>
     {% endif %}
     {% if post.title %}
       <h2>{{ context.title }}</h2>

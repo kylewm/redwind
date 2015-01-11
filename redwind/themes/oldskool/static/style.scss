@@ -135,9 +135,9 @@ pre, code {
     overflow: hidden;
 }
 
-.p-in-reply-to, .p-repost-of {
+.context {
     overflow: auto;
-    .p-author {
+    .author {
         img {
             display: block;
             float: left;

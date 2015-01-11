@@ -13,12 +13,15 @@
         </time>
       </h2>
 
-      {% include theme("_reply_contexts.jinja2") %}
-      {% for like in post.like_contexts %}
-        liked <a class="u-like-of" href="{{like.permalink}}">{{ like.permalink | prettify_url }}</a>
+      {% from theme("_contexts.jinja2") import full_context %}
+      {% for reply_context in post.reply_contexts %}
+        {{ full_context(post, reply_context, 'u-in-reply-to h-cite', 'in reply to') }}
       {% endfor %}
-      {% for bookmark in post.bookmark_contexts %}
-        bookmarked <a class="u-bookmark-of" href="{{bookmark.permalink}}">{{ bookmark.permalink | prettify_url }}</a>
+      {% for like_context in post.like_contexts %}
+        {{ full_context(post, like_context, 'u-like-of h-cite', 'liked') }}
+      {% endfor %}
+      {% for bookmark_context in post.bookmark_contexts %}
+        {{ full_context(post, bookmark_context, 'u-bookmark-of h-cite', 'bookmarked') }}
       {% endfor %}
 
       <div class="e-content{% if not post.title %} p-name{% endif %}">
