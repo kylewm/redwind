@@ -30,8 +30,8 @@ def register():
 
 
 @app.route('/install_wordpress')
+@login_required
 def install():
-
     settings = [
         Setting(key='wordpress_client_id', name='WordPress Client ID'),
         Setting(key='wordpress_client_secret', name='WordPress Client Secret'),
@@ -82,7 +82,7 @@ def authorize_wordpress():
 
 
 def send_to_wordpress(post, args):
-    if 'wordpress' in args.getlist('syndication'):
+    if 'wordpress' in args.getlist('syndicate-to'):
         queue.enqueue(do_send_to_wordpress, post.id)
 
 
