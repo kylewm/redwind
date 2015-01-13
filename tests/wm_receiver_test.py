@@ -49,14 +49,14 @@ def test_process_wm(client, target_url, mocker):
     """.format(target_url, source_url))
 
     assert not current_user.is_authenticated()
-    target_post, mention, delete, error \
-        = wm_receiver.do_process_webmention(source_url, target_url)
+    result = wm_receiver.do_process_webmention(source_url, target_url)
 
-    assert target_post.permalink == target_url
-    assert mention is not None
-    assert mention.reftype == 'reply'
-    assert not delete
-    assert not error
+    assert result.post.permalink == target_url
+    assert result.mention is not None
+    assert result.mention.reftype == 'reply'
+    assert result.create
+    assert not result.delete
+    assert not result.error
     getter.assert_called_once_with('http://foreign/permalink/url', timeout=30)
 
 
@@ -68,13 +68,13 @@ def test_process_wm_no_target_post(client, mocker):
     urlopen.return_value = FakeUrlOpen(target_url)  # follows redirects
 
     assert not current_user.is_authenticated()
-    target_post, mention, delete, error \
-        = wm_receiver.do_process_webmention(source_url, target_url)
+    result = wm_receiver.do_process_webmention(source_url, target_url)
 
-    assert target_post is None
-    assert mention is None
-    assert not delete
-    assert error.startswith('Webmention could not find target')
+    assert result.post is None
+    assert result.mention is None
+    assert not result.create
+    assert not result.delete
+    assert result.error.startswith('Webmention could not find target')
 
 
 def test_process_wm_deleted(client, target_url, mocker):
@@ -87,11 +87,11 @@ def test_process_wm_deleted(client, target_url, mocker):
     getter.return_value = FakeResponse(status_code=410)
 
     assert not current_user.is_authenticated()
-    target_post, mention, delete, error \
-        = wm_receiver.do_process_webmention(source_url, target_url)
+    result = wm_receiver.do_process_webmention(source_url, target_url)
 
-    assert target_post.permalink == target_url
-    assert not mention
-    assert delete is True
-    assert error is None
+    assert result.post.permalink == target_url
+    assert not result.mention
+    assert result.create is False
+    assert result.delete is True
+    assert result.error is None
     getter.assert_called_once_with('http://foreign/permalink/url', timeout=30)
