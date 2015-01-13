@@ -6,6 +6,7 @@ from ..models import Post, Mention, get_settings
 from bs4 import BeautifulSoup
 from flask import request, make_response, render_template, url_for, abort
 from werkzeug.exceptions import NotFound
+import collections
 import datetime
 import mf2py
 import mf2util
@@ -13,8 +14,8 @@ import requests
 import urllib.parse
 import urllib.request
 
-_app = None
-
+ProcessResult = collections.namedtuple(
+    'ProcessResult', 'post mention create delete error')
 
 def register():
     pass
@@ -74,54 +75,72 @@ def process_webmention(source, target, callback):
             requests.post(callback, data=result)
 
     try:
-        target_post, mention, delete, error = do_process_webmention(
-            source, target)
+        result = do_process_webmention(source, target)
 
-        if error or not target_post or not mention:
-            app.logger.warn("Failed to process webmention: %s", error)
-            result = {
+        if result.error:
+            app.logger.warn("Failed to process webmention: %s", result.error)
+            response = {
                 'source': source,
                 'target': target,
                 'response_code': 400,
                 'status': 'error',
-                'reason': error
+                'reason': result.error
             }
-            call_callback(result)
-            return result
+            call_callback(response)
+            return response
 
-        if delete:
-            target_post.mentions = [m for m in target_post.mentions if
+        if result.post and result.delete:
+            result.post.mentions = [m for m in result.post.mentions if
                                     m.url != source]
-
-        if not delete:
-            target_post.mentions.append(mention)
+        elif result.post and result.mention:
+            result.post.mentions.append(result.mention)
 
         db.session.commit()
-        app.logger.debug("saved mentions to %s", target_post.path)
+        app.logger.debug("saved mentions to %s", result.post.path)
 
-        result = {
+        if result.post and result.mention and result.create:
+            send_push_notification(result.post, result.mention)
+        
+        response = {
             'source': source,
             'target': target,
             'response_code': 200,
             'status': 'success',
-            'reason': 'Deleted' if delete else 'Created'
+            'reason': 'Deleted' if result.delete 
+            else 'Created' if result.create
+            else 'Updated'
         }
 
-        call_callback(result)
-        return result
+        call_callback(response)
+        return response
 
     except Exception as e:
         app.logger.exception("exception while processing webmention")
-        result = {
+        response = {
             'source': source,
             'target': target,
             'response_code': 400,
             'status': 'error',
             'reason': "exception while processing webmention {}".format(e)
         }
-        call_callback(result)
-        return result
+        call_callback(response)
+        return response
 
+    
+def send_push_notification(post, mention):
+    token = app.config.get('PUSHOVER_TOKEN')
+    user = app.config.get('PUSHOVER_USER')
+    if token and user:
+        message = '{} from {} on {}{}'.format(
+            mention.reftype, mention.author_name, post.title_or_fallback,
+            (': ' + mention.content_plain[:256]) if mention.content_plain else '')
+
+        requests.post('https://api.pushover.net/1/messages.json', data={
+                'token': token,
+                'user': user,
+                'message': message,
+                })
+    
 
 def do_process_webmention(source, target):
     app.logger.debug("processing webmention from %s to %s", source, target)
@@ -138,13 +157,15 @@ def do_process_webmention(source, target):
         if not target_post:
             app.logger.warn(
                 "Webmention could not find target post: %s. Giving up", target)
-            return (None, None, False,
-                    "Webmention could not find target post: {}".format(target))
+            return ProcessResult(
+                post=None, mention=None, create=False, delete=False,
+                error="Webmention could not find target post: {}".format(target))
         target_urls = (target, target_post.permalink,)
 
     if source in target_urls:
-        return (None, None, False,
-                '{} and {} refer to the same post'.format(source, target))
+        return ProcessResult(
+            post=None, mention=None, create=False, delete=False,
+            error='{} and {} refer to the same post'.format(source, target))
 
     # confirm that source actually refers to the post
     source_response = util.fetch_html(source)
@@ -152,22 +173,23 @@ def do_process_webmention(source, target):
 
     if source_response.status_code == 410:
         app.logger.debug("Webmention indicates original was deleted")
-        return target_post, None, True, None
+        return ProcessResult(
+            post=target_post, mention=None, create=False, delete=True, error=None)
 
     if source_response.status_code // 100 != 2:
         app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
-        return target_post, None, False, \
-            "Bad response when reading source post: {}, {}"\
-            .format(source, source_response)
+        return ProcessResult(
+            post=target_post, mention=None, create=False, delete=False,
+            error="Bad response when reading source post: {}, {}".format(source, source_response))
 
     source_length = source_response.headers.get('Content-Length')
 
     if source_length and int(source_length) > 2097152:
         app.logger.warn("Very large source. length=%s", source_length)
-        return target_post, None, False,\
-            "Source is very large. Length={}"\
-            .format(source_length)
+        return ProcessResult(
+            post=target_post, mention=None, create=False, delete=False,
+            error="Source is very large. Length={}".format(source_length))
 
     link_to_target = find_link_to_target(source, source_response, target_urls)
     if not link_to_target:
@@ -178,7 +200,9 @@ def do_process_webmention(source, target):
             "Could not find any links from source to target"
 
     mention = create_mention(target_post, source, source_response)
-    return target_post, mention, False, None
+    return ProcessResult(
+        post=target_post, mention=mention, create=not mention.id,
+        delete=False, error=None)
 
 
 def find_link_to_target(source_url, source_response, target_urls):
