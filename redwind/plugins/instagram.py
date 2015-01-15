@@ -15,7 +15,7 @@ import re
 import datetime
 
 
-PERMALINK_RE = re.compile(r'https?://(?:www\.|mobile\.)?instagram\.com/p/(\w+)/?')
+PERMALINK_RE = re.compile(r'https?://(?:www\.|mobile\.)?instagram\.com/p/([a-zA-Z0-9_\-]+)/?')
 
 
 def register():
@@ -68,7 +68,7 @@ def create_context(url):
     r = ig_get('https://api.instagram.com/v1/media/shortcode/' + m.group(1))
 
     if r.status_code // 2 != 100:
-        app.logger.warn("failed to fetch instagram media %s %s", r, r.content)
+        app.logger.warn("failed to fetch instagram media with shortcode %s %s %s", m.group(1), r, r.content)
         return
 
     blob = r.json()

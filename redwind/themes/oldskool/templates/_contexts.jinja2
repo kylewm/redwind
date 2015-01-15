@@ -7,9 +7,9 @@
       <a class="u-url" href="{{context.permalink}}">a post on {{ context.permalink | domain_from_url }}</a>
     {% endif %}
     {% if context.author_name and context.author_url %}
-      by <a href="author p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
+      by <a class="author p-author h-card" href="{{context.author_url}}">{{context.author_name}}</a>
     {% elif context.author_name %}
-      by <span href="author p-author">{{context.author_name}}</span>
+      by <span class="author p-author">{{context.author_name}}</span>
     {% endif %}
   </div>
 {% endmacro %}

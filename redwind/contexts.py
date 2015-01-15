@@ -58,6 +58,8 @@ def create_context(url):
                     content, link_fn=lambda a: a)
 
                 title = entry.get('name')
+                if title and len(title) > 512:
+                    title = title[:512] # FIXME is there a db setting to do this automatically?
                 author_name = entry.get('author', {}).get('name', '')
                 author_image = entry.get('author', {}).get('photo')
 

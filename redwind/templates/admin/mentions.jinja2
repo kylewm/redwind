@@ -44,7 +44,7 @@
         {% endif %}
         {{mention.content | truncate(512) }}
         <div>
-          at <a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a>
+          at <a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a> <a href="{{ mention.url }}">#</a>
         </div>
       </div>
 
