@@ -59,7 +59,8 @@ def inject_settings_variable():
     }
 
 
-def collect_posts(post_types, before_ts, per_page, tag, include_hidden=False):
+def collect_posts(post_types, before_ts, per_page, tag, search=None,
+                  include_hidden=False):
     query = Post.query
     query = query.options(
         sqlalchemy.orm.subqueryload(Post.tags),
@@ -75,6 +76,11 @@ def collect_posts(post_types, before_ts, per_page, tag, include_hidden=False):
     query = query.filter_by(deleted=False, draft=False)
     if post_types:
         query = query.filter(Post.post_type.in_(post_types))
+    if search:
+        query = query.filter(
+            sqlalchemy.func.concat(Post.title, ' ', Post.content)
+            .op('@@')(sqlalchemy.func.plainto_tsquery(search)))
+
     try:
         if before_ts:
             # convert ts in local timezone to utc and re-remove the timezone
@@ -98,6 +104,8 @@ def collect_posts(post_types, before_ts, per_page, tag, include_hidden=False):
                            .strftime(BEFORE_TS_FORMAT)
         view_args = request.view_args.copy()
         view_args['before_ts'] = last_ts
+        for k, v in request.args.items():
+            view_args[k] = v
         older = url_for(request.endpoint, **view_args)
     else:
         older = None
@@ -210,6 +218,19 @@ def posts_by_tag(tag, before_ts=None):
     if request.args.get('feed') == 'atom':
         return render_posts_atom(title, 'tag-' + tag + '.atom', posts)
     return render_posts(title, posts, older)
+
+
+@app.route('/search')
+@app.route('/search/before-<before_ts>')
+def search(before_ts=None):
+    q = request.args.get('q')
+    if not q:
+        abort(404)
+
+    posts, older = collect_posts(
+        None, before_ts, int(get_settings().posts_per_page), None,
+        include_hidden=True, search=q)
+    return render_posts('Search: ' + q, posts, older)
 
 
 @app.route('/mentions')

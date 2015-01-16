@@ -54,6 +54,12 @@
       </ul><br/>
       <h1>.:bio:.</h1>
       {{ settings.author_bio }}
+      <br/>
+      <h1>.:search:.</h1>
+      <form method="GET" action="{{url_for('search')}}">
+        <input name="q" style="width:65%"/>
+        <button type="submit" style="width:25%">Go</button>
+      </form>
 
     </aside>
   </body>

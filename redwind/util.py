@@ -306,14 +306,6 @@ def image_root_path():
     return app.config.get('IMAGE_ROOT_PATH', app.root_path)
 
 
-def proxy_all_images(html):
-    def repl(m):
-        return m.group(1) + construct_imageproxy_url(m.group(2)) + m.group(3)
-
-    regex = re.compile(r'(<img[^>]+src=")([^">]+)(")')
-    return regex.sub(repl, html)
-
-
 def construct_imageproxy_url(src, side=None):
     if not src:
         return None
@@ -328,13 +320,13 @@ def construct_imageproxy_url(src, side=None):
     if src.lower().startswith('data:'):
         app.logger.debug('cannot mirror data url: %s', src[:100])
 
-    query = {}
-    query['url'] = src
+    query = []
+    query.append(('url', src))
     if side:
-        query['w'] = side
-        query['h'] = side
+        query.append(('w', side))
+        query.append(('h', side))
     else:
-        query['op'] = 'noop'
+        query.append(('op', 'noop'))
 
     pilbox_key = app.config.get('PILBOX_KEY')
     if pilbox_key:
