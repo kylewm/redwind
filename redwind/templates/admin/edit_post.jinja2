@@ -80,6 +80,8 @@
     {% endblock additional_params %}
 
   </form>
+
+  <a href="{{ url_for('edit_by_id', id=post.id, full=True) }}">Edit all fields</a>
 {% endblock  content %}
 
 

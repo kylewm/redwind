@@ -670,8 +670,11 @@ def edit_by_id():
             'save_draft': 'Unpublish, Save as Draft',
         }
 
-    return render_template('admin/edit_' + type + '.jinja2',
-                           edit_type='edit', post=post,
+    template = 'admin/edit_' + type + '.jinja2'
+    if request.args.get('full'):
+        template = 'admin/edit_post_all.jinja2'
+
+    return render_template(template, edit_type='edit', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
                            button_text=button_text)
 

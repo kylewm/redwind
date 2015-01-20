@@ -1,0 +1,112 @@
+{% extends "admin/base.jinja2" %}
+{% block content %}
+  {% if not current_user.is_authenticated() %}
+    <div class="alert alert-danger" role="alert">
+      You are not currently logged in. Feel free to poke around, but you won't be able to post anything without first authenticating as the blog owner.
+    </div>
+  {% endif %}
+
+  <form id="edit_form" method="POST" action="{{ settings.site_url }}/save_{{edit_type}}" enctype="multipart/form-data">
+
+    <div class="form-group btn-group" role="group">
+      {% for action in ['publish', 'publish_quietly', 'save_draft'] %}
+        <button
+           class="btn {% if loop.first %}btn-primary{%else%}btn-default{% endif %}"
+           type="submit" name="action" value="{{action}}">
+           {{button_text[action]}}
+        </button>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label>In Reply To</label>
+      <textarea class="form-control" name="in_reply_to">{{ post.in_reply_to | join('\n') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Like Of</label>
+      <textarea class="form-control" name="like_of">{{ post.like_of | join('\n') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Repost Of</label>
+      <textarea class="form-control" name="repost_of">{{ post.repost_of | join('\n') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Bookmark Of</label>
+      <textarea class="form-control" name="bookmark_of">{{ post.bookmark_of | join('\n') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Post Type</label>
+      <input class="form-control" type="text" id="post_type" name="post_type" value="{{ post.post_type }}"/>
+    </div>
+
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" class="form-control" name="title" id="title"
+             value="{{ post.title or '' }}" />
+    </div>
+
+    <div class="form-group">
+      <label>Published</label>
+      <input type="text" class="form-control" name="published" id="published"
+             value="{{ post.published | isotime() }}" />
+    </div>
+
+    <div class="form-group">
+      <label>Content</label>
+      <textarea class="form-control" name="content" id="content" rows="2">{{ post.content or '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Tags</label>
+      <ul id="tag-list">
+        {% for tag in post.tags %}
+          <li>{{ tag }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="form-group">
+      <label>Syndication</label>
+      <textarea class="form-control" name="syndication" id="syndication" rows="2">{{ post.syndication | join('\n') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Audience</label>
+      <textarea class="form-control" name="audience" id="audience" rows="2">{{ post.audience | join('\n') }}</textarea>
+    </div>
+
+    <data id="post_path" value="{{post.path}}"></data>
+    <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
+
+    <div class="form-group">
+      <input type="checkbox" id="hidden" name="hidden" value="false"/>
+      <label for="hidden">Hidden from stream</label>
+    </div>
+  </form>
+{% endblock  content %}
+
+
+{% block closing %}
+  {{ super() }}
+
+  <script src="{{url_for('static', filename='admin/util.js')}}"></script>
+  <script src="{{url_for('static', filename='admin/edit_post.js')}}"></script>
+
+  <script>
+    $('#tag-list').tagit({
+      placeholderText: 'Tags',
+      availableTags: {{ tags | json }},
+      autocomplete: {
+        messages: {
+          noResults: '',
+          results: function() {}
+        }
+      }
+    });
+  </script>
+
+{% endblock closing %}
