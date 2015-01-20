@@ -31,6 +31,25 @@
         )
     }
 
+
+    function setupMap(element, lat, lon, wheelZoom, zoom) {
+        var tileset = L.tileLayer(
+            'http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri',
+                noWrap: true,
+            });
+
+        var map = L.map(element, {
+            center: [lat, lon],
+            zoom: zoom || 16,
+            layers: [tileset],
+            touchZoom: wheelZoom,
+            scrollWheelZoom: wheelZoom,
+        });
+
+        return map;
+    }
+
     function setupMapClickPosition(map, latField, lonField) {
         map.on('click', function (e) {
             placeLocationMarker(map, e.latlng.lat, e.latlng.lng);
