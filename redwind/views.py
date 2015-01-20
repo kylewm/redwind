@@ -135,7 +135,7 @@ def render_tags(title, tags):
 
 def render_posts(title, posts, older, template='posts.jinja2'):
     atom_args = request.view_args.copy()
-    atom_args.update({'page': 1, 'feed': 'atom', '_external': True})
+    atom_args.update({'feed': 'atom', '_external': True})
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
     return util.render_themed(template, posts=posts, title=title,
