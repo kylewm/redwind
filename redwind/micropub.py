@@ -140,10 +140,12 @@ def micropub_endpoint():
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
     photo_file = request.files.get('photo')
-    bookmark = request.form.get('bookmark')
+    bookmark = request.form.get('bookmark') or request.form.get('bookmark-of')
+    repost_of = request.form.get('repost-of')
+
     post_type = ('photo' if photo_file else 'reply' if in_reply_to
                  else 'like' if like_of else 'bookmark' if bookmark
-                 else 'note')
+                 else 'share' if repost_of else 'note')
 
     latitude = None
     longitude = None
@@ -168,11 +170,12 @@ def micropub_endpoint():
         'longitude': longitude,
         'location_name': location_name,
         'syndication': request.form.get('syndication'),
-        'in_reply_to': request.form.get('in-reply-to'),
-        'like_of': request.form.get('like-of'),
-        'repost_of': request.form.get('repost-of'),
-        'bookmark_of': request.form.get('bookmark'),
+        'in_reply_to': in_reply_to,
+        'like_of': like_of,
+        'repost_of': repost_of,
+        'bookmark_of': bookmark,
         'photo': photo_file,
+        'hidden': 'true' if in_reply_to or like_of or bookmark else 'false',
     })
     with app.test_request_context(base_url=get_settings().site_url, path='/save_new',
                                   method='POST', data=translated):

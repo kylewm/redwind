@@ -15,7 +15,7 @@ import re
 import datetime
 
 
-PERMALINK_RE = re.compile(r'https?://(?:www\.|mobile\.)?instagram\.com/p/([a-zA-Z0-9_\-]+)/?')
+PERMALINK_RE = util.INSTAGRAM_RE
 
 
 def register():

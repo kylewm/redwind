@@ -131,14 +131,15 @@ def send_push_notification(post, mention):
     token = app.config.get('PUSHOVER_TOKEN')
     user = app.config.get('PUSHOVER_USER')
     if token and user:
-        message = '{} from {} on {}{}'.format(
-            mention.reftype, mention.author_name, post.title_or_fallback,
+        message = '{} from {}{}'.format(
+            mention.reftype, mention.author_name, 
             (': ' + mention.content_plain[:256]) if mention.content_plain else '')
 
         requests.post('https://api.pushover.net/1/messages.json', data={
                 'token': token,
                 'user': user,
                 'message': message,
+                'url': post.permalink,
                 })
     
 
