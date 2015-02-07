@@ -56,10 +56,10 @@
           <a href="{{url_for('delete_by_id', id=post.id)}}">Delete</a>
         {% endif %}
         <indie-action do="reply" with="{{ post.permalink }}">
-          <a href="#">Reply</a>
+          <a href="{{ post.reply_url }}">Reply</a>
         </indie-action>
         <indie-action do="like" with="{{ post.permalink }}">
-          <a href="#">Like</a>
+          <a href="{{ post.favorite_url }}">Like</a>
         </indie-action>
       </div>
     </article>
@@ -72,6 +72,6 @@
 
   <script src="{{ theme_static('indieconfig.js') }}"></script>
   <script src="{{ theme_static('webaction.js') }}"></script>
-  
+
 </body>
 {% endblock body %}
