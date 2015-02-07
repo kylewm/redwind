@@ -118,7 +118,7 @@ article footer {
   font-size: 0.9em; }
 
 pre, code {
-  overflow: hidden; }
+  overflow: auto; }
 
 .context {
   overflow: auto; }

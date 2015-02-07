@@ -324,6 +324,7 @@ def construct_imageproxy_url(src, side=None):
     if side:
         query.append(('w', side))
         query.append(('h', side))
+        query.append(('mode', 'clip'))
     else:
         query.append(('op', 'noop'))
 

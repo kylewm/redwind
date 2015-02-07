@@ -47,6 +47,7 @@
     {% block content_fields %}
       <div class="form-group">
         <textarea class="form-control" name="content" id="content" rows="2" placeholder="Content">{{ post.content or '' }}</textarea>
+        <span id="character-count">?</span>
       </div>
     {% endblock content_fields %}
 
@@ -90,7 +91,8 @@
 
   <script src="{{url_for('static', filename='admin/util.js')}}"></script>
   <script src="{{url_for('static', filename='admin/edit_post.js')}}"></script>
-
+  <script src="{{url_for('static', filename='js/cassis.js')}}"></script>
+  
   <script>
     $('#tag-list').tagit({
       placeholderText: 'Tags',
@@ -101,6 +103,11 @@
           results: function() {}
         }
       }
+    });
+
+    $('#content').bind('input propertychange', function() {
+      var textProxy = tw_text_proxy(this.value);
+      $('#character-count').text(textProxy.length);
     });
   </script>
 

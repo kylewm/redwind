@@ -44,9 +44,10 @@ def convert_mf2util():
         return json
 
     url = request.args.get('url')
+    as_feed = request.args.get('as-feed')
     if url:
         d = mf2py.Parser(url=url).to_dict()
-        if mf2util.find_first_entry(d, ['h-feed']):
+        if as_feed == 'true' or mf2util.find_first_entry(d, ['h-feed']):
             json = mf2util.interpret_feed(d, url)
         else:
             json = mf2util.interpret(d, url)
@@ -54,8 +55,9 @@ def convert_mf2util():
     return """
 <html><body>
 <h1>mf2util</h1>
-<form><label>URL to parse: <input name="url"></label>
-<input type="Submit">
+<form><p><label>URL to parse: <input name="url"></label>
+<input type="Submit"/></p>
+<p><label><input type="checkbox" value="true" name="as-feed"/>Parse as h-feed</label></p>
 </form></body></html>"""
 
 
