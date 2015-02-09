@@ -331,7 +331,7 @@ def guess_tweet_content(post, in_reply_to):
         reply_match = PERMALINK_RE.match(in_reply_to)
         if reply_match:
             reply_name = '@' + reply_match.group(1)
-            if reply_name not in preview:
+            if reply_name.lower() not in preview.lower():
                 preview = reply_name + ' ' + preview
 
     # add location url if it's a checkin
