@@ -91,8 +91,7 @@ def micropub_endpoint():
         if q == 'syndicate-to':
             app.logger.debug('returning syndication targets')
             response = make_response(urllib.parse.urlencode([
-                ('syndicate-to[]', target)
-                for target in SYNDICATION_TARGETS.values()]))
+                ('syndicate-to[]', target) for target in SYNDICATION_TARGETS]))
             response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
             return response
 
