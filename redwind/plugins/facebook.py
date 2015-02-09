@@ -1,7 +1,10 @@
 from .. import app
 from .. import db
 from .. import util
+from .. import hooks
+from .. import queue
 from ..models import Post, Setting, get_settings
+
 
 from flask.ext.login import login_required
 from flask import request, redirect, url_for, render_template, flash,\
@@ -13,7 +16,7 @@ import urllib
 
 
 def register():
-    pass
+    hooks.register('post-saved', send_to_facebook)
 
 
 @app.route('/authorize_facebook')
@@ -47,6 +50,43 @@ def authorize_facebook():
                         + urllib.parse.urlencode(params))
 
 
+def send_to_facebook(post, args):
+    if 'facebook' in args.getlist('syndicate-to'):
+        if not is_facebook_authorized():
+            return False, 'Current user is not authorized to post to Facebook'
+
+        try:
+            app.logger.debug('auto-posting to Facebook %s', post.id)
+            queue.enqueue(do_send_to_facebook, post.id)
+            return True, 'Success'
+
+        except Exception as e:
+            app.logger.exception('auto-posting to facebook')
+            return False, 'Exception while auto-posting to FB: {}'.format(e)
+
+
+def do_send_to_facebook(post_id):
+    app.logger.debug('auto-posting to facebook for %s', post_id)
+    post = Post.load_by_id(post_id)
+
+    preview = guess_content(post)
+    post_type = 'post'
+    img_url = None
+
+    if post.post_type == 'photo' and post.photos:
+        img_url = post.photo_url(post.photos[0])
+        post_type = 'photo'
+
+    facebook_url = handle_new_or_edit(post, preview, img_url,
+                                      post_type, album_id=None)
+    db.session.commit()
+    if has_request_context():
+        flash('Shared on Facebook: <a href="{}">Original</a>, '
+              '<a href="{}">On Facebook</a><br/>'
+              .format(post.permalink, facebook_url))
+        return redirect(post.permalink)
+
+
 @app.route('/share_on_facebook', methods=['GET', 'POST'])
 @login_required
 def share_on_facebook():
@@ -55,8 +95,7 @@ def share_on_facebook():
     if request.method == 'GET':
         post = Post.load_by_id(request.args.get('id'))
 
-        preview = post.title + '\n\n' if post.title else ''
-        preview += format_markdown_as_facebook(post.content)
+        preview = guess_content(post)
         imgs = [urllib.parse.urljoin(get_settings().site_url, img)
                 for img in collect_images(post)]
 
@@ -217,7 +256,19 @@ def handle_new_or_edit(post, preview, img_url, post_type,
                 return fb_url
 
 
+def guess_content(post):
+    preview = ''
+    if post.title:
+        preview += post.title + '\n\n'
+    preview += format_markdown_as_facebook(post.content)
+    return preview
+
+
 def format_markdown_as_facebook(data):
     return util.format_as_text(
         util.markdown_filter(
             data, url_processor=None, person_processor=None))
+
+
+def is_facebook_authorized():
+    return get_settings().facebook_access_token
