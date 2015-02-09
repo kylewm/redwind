@@ -9,6 +9,13 @@ import jwt
 import requests
 import urllib
 
+SYNDICATION_TARGETS = {
+    'https://twitter.com/kylewm2': 'twitter',
+    'https://facebook.com/kyle.mahan': 'facebook',
+    'http://instagram.com/kylewm2': 'instagram',
+    'https://kylewm.wordpress.com': 'wordpress',
+}
+
 
 @app.route('/token', methods=['POST'])
 def token_endpoint():
@@ -83,10 +90,9 @@ def micropub_endpoint():
         q = request.args.get('q')
         if q == 'syndicate-to':
             app.logger.debug('returning syndication targets')
-            response = make_response(urllib.parse.urlencode({
-                'syndicate-to': ','.join(['twitter.com/kyle_wm',
-                                          'facebook.com/kyle.mahan'])
-            }))
+            response = make_response(urllib.parse.urlencode([
+                ('syndicate-to[]', target)
+                for target in SYNDICATION_TARGETS.values()]))
             response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
             return response
 
@@ -136,7 +142,6 @@ def micropub_endpoint():
         app.logger.warn('received valid access token for invalid user: %s', me)
         abort(401)
 
-
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
     photo_file = request.files.get('photo')
@@ -160,6 +165,8 @@ def micropub_endpoint():
             latitude, longitude = loc_params[0].split(',', 1)
             location_name = request.form.get('place_name')
 
+    syndicate_to = request.form.getlist('syndicate-to[]')
+
     # translate from micropub's verbage.TODO unify
     translated = util.filter_empty_keys({
         'post_type': post_type,
@@ -175,6 +182,7 @@ def micropub_endpoint():
         'repost_of': repost_of,
         'bookmark_of': bookmark,
         'photo': photo_file,
+        'syndicate-to[]': [SYNDICATION_TARGETS.get(to) for to in syndicate_to],
         'hidden': 'true' if in_reply_to or like_of or bookmark else 'false',
     })
     with app.test_request_context(base_url=get_settings().site_url, path='/save_new',
