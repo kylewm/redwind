@@ -77,7 +77,7 @@ def create_context(url):
     author_image = author.get('profile_picture')
     author_url = author.get('website')
     created_time = blob.get('data', {}).get('created_time')
-    caption_text = blob.get('data', {}).get('caption', {}).get('text')
+    caption_text = (blob.get('data', {}).get('caption') or {}).get('text')
     images = blob.get('data', {}).get('images', {})
     image = images.get('standard_resolution').get('url')
 
