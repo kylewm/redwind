@@ -1,4 +1,4 @@
-@import "_meyer-reset";
+@import "normalize";
 
 $title-font: Helvetica, Arial, sans-serif;
 /*$body-font: Georgia, Times New Roman, serif;*/
@@ -67,10 +67,6 @@ a {
     &:visited {
         color: $sirocco;
     }
-}
-
-p {
-    padding: 1em 0px 0.5em;
 }
 
 img {

@@ -125,6 +125,18 @@ def url_to_link(url, soup):
     return a
 
 
+def person_to_at_name(contact, nick, soup):
+    if contact:
+        url = contact.url or url_for('contact_by_name', nick)
+    else:
+        url = 'https://twitter.com/' + nick
+        
+    a_tag = soup.new_tag('a', href=url)
+    a_tag['class'] = ['microcard', 'h-card']
+    a_tag.append('@' + nick)
+    return a_tag
+
+
 def person_to_microcard(contact, nick, soup):
     if contact:
         url = contact.url or url_for('contact_by_name', nick)

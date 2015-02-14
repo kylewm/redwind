@@ -1002,7 +1002,9 @@ def save_post(post):
 
     # pre-render the post html
     post.content_html = util.markdown_filter(
-        post.content, img_path=post.get_image_path())
+        post.content, img_path=post.get_image_path(),
+        person_processor=util.person_to_microcard if post.post_type == 'article'
+        else util.person_to_at_name)
 
     if not post.id:
         db.session.add(post)
@@ -1145,7 +1147,7 @@ def venue_by_slug(slug):
     venue = Venue.query.filter_by(slug=slug).first()
     if not venue:
         abort(404)
-    app.logger.debug('rendering venue, location. {}, {}',
+    app.logger.debug('rendering venue, location. %s, %s',
                      venue, venue.location)
     posts = Post.query.filter_by(venue_id=venue.id).all()
     return render_template('admin/venue.jinja2', venue=venue, posts=posts)
