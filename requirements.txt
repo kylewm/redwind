@@ -23,6 +23,6 @@ requests==2.2.1
 requests-oauthlib==0.4.0
 uWSGI==2.0.4
 psycopg2==2.5.4
-mf2py==0.2.3
+mf2py==0.2.4
 mf2util==0.1.4
 -e .
