@@ -9,6 +9,7 @@ from flask.ext.login import login_required
 from flask import request, redirect, url_for, make_response,\
     render_template, flash, abort, has_request_context
 
+import brevity
 import collections
 import requests
 import re
@@ -321,10 +322,17 @@ def guess_tweet_content(post, in_reply_to):
     """Best guess effort to generate tweet content for a post; useful for
     auto-filling the share form.
     """
+    preview = ''
     if post.title:
-        preview = post.title
-    else:
-        preview = format_markdown_as_tweet(post.content)
+        preview += post.title
+
+    # add location url if it's a checkin
+    elif post.post_type == 'checkin' and post.venue:
+        preview = 'Checked in to ' + post.venue.name
+
+    text_content = format_markdown_as_tweet(post.content)
+    if text_content:
+        preview += (': ' if preview else '') + text_content
 
     # add an in-reply-to if one isn't there already
     if in_reply_to:
@@ -334,26 +342,6 @@ def guess_tweet_content(post, in_reply_to):
             if reply_name.lower() not in preview.lower():
                 preview = reply_name + ' ' + preview
 
-    # add location url if it's a checkin
-    if post.post_type == 'checkin' and post.location:
-        preview = preview + ' ' + post.location_url
-
-    components = []
-    prev_end = 0
-    for match in util.LINK_RE.finditer(preview):
-        text = preview[prev_end:match.start()].strip(' ')
-        components.append(TweetComponent(
-            length=len(text), can_shorten=True, can_drop=True, text=text))
-        link = match.group(0)
-        components.append(TweetComponent(
-            length=URL_CHAR_LENGTH, can_shorten=False,
-            can_drop=True, text=link))
-        prev_end = match.end()
-
-    text = preview[prev_end:].strip()
-    components.append(TweetComponent(
-        length=len(text), can_shorten=True, can_drop=True, text=text))
-
     target_length = TWEET_CHAR_LENGTH
 
     img_url = None
@@ -361,34 +349,9 @@ def guess_tweet_content(post, in_reply_to):
         photo = post.photos[0]
         img_url = post.photo_url(photo)
         target_length -= MEDIA_CHAR_LENGTH
-        caption = photo.get('caption')
-        if caption:
-            components.append(TweetComponent(
-                length=len(caption), can_shorten=True,
-                can_drop=True, text=caption))
 
-    if post.title or sum(c.length for c in components) > target_length:
-        components.append(TweetComponent(
-            length=URL_CHAR_LENGTH, can_shorten=False,
-            can_drop=False, text=post.permalink))
-
-    # iteratively shorten
-    nspaces = len(components) - 1
-    delta = sum(c.length for c in components) + nspaces - target_length
-    shortened = []
-
-    for c in reversed(components):
-        if delta <= 0 or not c.can_drop:
-            shortened.append(c)
-        elif c.can_shorten and c.length >= delta + 1:
-            text = c.text[:len(c.text) - (delta + 1)] + '…'
-            delta -= (c.length - len(text))
-            shortened.append(TweetComponent(
-                length=len(text), text=text, can_shorten=False, can_drop=True))
-        elif c.can_drop:
-            delta -= c.length
-
-    preview = ' '.join(reversed([s.text for s in shortened]))
+    preview = brevity.shorten(preview, permalink=post.permalink,
+                              target_length=target_length)
     return preview, img_url
 
 
