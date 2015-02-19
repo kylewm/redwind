@@ -130,7 +130,7 @@ def person_to_at_name(contact, nick, soup):
         url = contact.url or url_for('contact_by_name', nick)
     else:
         url = 'https://twitter.com/' + nick
-        
+
     a_tag = soup.new_tag('a', href=url)
     a_tag['class'] = ['microcard', 'h-card']
     a_tag.append('@' + nick)
