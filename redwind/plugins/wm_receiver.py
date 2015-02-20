@@ -197,8 +197,8 @@ def do_process_webmention(source, target):
         app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
-        return target_post, None, False,\
-            "Could not find any links from source to target"
+        return ProcessResult(target_post, None, False,\
+            "Could not find any links from source to target")
 
     mention = create_mention(target_post, source, source_response)
     return ProcessResult(
