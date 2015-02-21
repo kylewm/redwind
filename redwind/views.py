@@ -1204,11 +1204,10 @@ def delete_venue():
 
 def save_venue(venue):
     venue.name = request.form.get('name')
-    if venue.location is None:
-        venue.location = {}
-
-    venue.location['latitude'] = float(request.form.get('latitude'))
-    venue.location['longitude'] = float(request.form.get('longitude'))
+    venue.location = {
+        'latitude': float(request.form.get('latitude')),
+        'longitude': float(request.form.get('longitude')),
+    }
     venue.update_slug(request.form.get('geocode'))
 
     if not venue.id:
