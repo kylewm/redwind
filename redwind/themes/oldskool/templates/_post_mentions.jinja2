@@ -52,12 +52,16 @@
   {% for mention in post.replies %}
     <div class="p-comment h-cite">
       <div>
-        {% if mention.author_name and mention.author_url %}
+        {% if mention.author_name or mention.author_url %}
           <span class="p-author h-card">
             {% if mention.author_image %}<img class="u-photo" src="{{ mention.author_image | imageproxy(24) }}"/>{% endif %}
-            <a class="u-url" href="{{mention.author_url}}">
+            {% if mention.author_url %}
+              <a class="u-url" href="{{mention.author_url}}">
+                <span class="p-name">{{ mention.author_name or mention.author_url}}</span>
+              </a>
+            {% else %}
               <span class="p-name">{{ mention.author_name}}</span>
-            </a>
+            {% endif %}
           </span>
         {% endif %}
         (<a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>)

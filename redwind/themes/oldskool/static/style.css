@@ -360,9 +360,11 @@ th {
 /* Subtlety of Hue */
 body {
   font: 10pt/1.5em Helvetica, Arial, sans-serif;
-  max-width: 600px;
+  max-width: 800px;
   padding: 0 1em;
-  background-color: #ECEBF0; }
+  margin: 0 auto;
+  background-color: #ECEBF0;
+  background-image: url("/_themes/oldskool/swirl_pattern.png"); }
 
 main {
   width: 100%;

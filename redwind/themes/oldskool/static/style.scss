@@ -15,9 +15,11 @@ $box-shadow: 0 0 2px $sirocco;
 
 body {
     font: 10pt/1.5em $body-font;
-    max-width: 600px;
+    max-width: 800px;
     padding: 0 1em;
+    margin: 0 auto;
     background-color: $athens-gray;
+    background-image: url("/_themes/oldskool/swirl_pattern.png");
 }
 
 main {

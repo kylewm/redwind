@@ -15,7 +15,7 @@
 
     {% if request.endpoint == 'index' %}
       <!-- PubSubHubbub Discovery -->
-      <link rel="hub" href="http://kylewm.superfeedr.com/" />
+      <link rel="hub" href="https://kylewm.superfeedr.com/" />
       <link rel="self" href="{{url_for('index', _external=True)}}"/>
       <!-- End Of PubSubHubbub Discovery -->
     {% endif %}
