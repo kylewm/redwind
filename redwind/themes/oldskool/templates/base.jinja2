@@ -13,9 +13,9 @@
     {% endif %}
     <link rel="feed" type="text/html" href="{{ url_for('everything') }}" />
 
-    {% if request.endpoint == 'index' %}
+    {% if request.endpoint == 'index' and 'PUSH_HUB' in config %}
       <!-- PubSubHubbub Discovery -->
-      <link rel="hub" href="https://kylewm.superfeedr.com/" />
+      <link rel="hub" href="{{ config['PUSH_HUB']}}" />
       <link rel="self" href="{{url_for('index', _external=True)}}"/>
       <!-- End Of PubSubHubbub Discovery -->
     {% endif %}
