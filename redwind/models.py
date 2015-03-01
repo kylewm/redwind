@@ -355,12 +355,13 @@ class Post(db.Model):
         if self.title:
             return util.slugify(self.title)
 
-        if self.content:
-            return util.slugify(self.content, 48) or 'untitled'
+        content_plain = util.format_as_text(self.content or '', lambda a: a)
+        if content_plain:
+            return util.slugify(content_plain, 48) or 'untitled'
 
         if self.post_type == 'checkin' and self.venue:
             return util.slugify('checked into ' + self.venue.name + ' '
-                                + self.content, 48)
+                                + content_plain, 48)
 
         for ctxs, prefix in ((self.bookmark_contexts, 'bookmark-of-'),
                              (self.like_contexts, 'like-of-'),
