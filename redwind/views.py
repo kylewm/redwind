@@ -158,7 +158,15 @@ def index(before_ts=None):
         None, include_hidden=False)
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
-    return render_posts('Stream', posts, older, template='home.jinja2')
+    resp = make_response(
+        render_posts('Stream', posts, older, template='home.jinja2'))
+
+    if 'PUSH_HUB' in app.config:
+        resp.headers.add('Link', '<{}>; rel="hub"'.format(
+            app.config['PUSH_HUB']))
+        resp.headers.add('Link', '<{}>; rel="self"'.format(
+            url_for('index', _external=True)))
+    return resp
 
 
 @app.route('/everything')
