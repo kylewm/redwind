@@ -469,6 +469,9 @@ pre, code {
   .p-comment .rsvp.maybe {
     color: #E7AA19; }
 
+blockquote.context {
+  margin: 0; }
+
 .pager {
   text-align: center; }
   .pager a {

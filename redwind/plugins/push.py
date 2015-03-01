@@ -22,7 +22,8 @@ def publish(url):
         data = {'hub.mode': 'publish', 'hub.url': url}
         response = requests.post(publish_url, data)
         if response.status_code == 204:
-            app.logger.info('successfully sent PuSH notification')
+            app.logger.info('successfully sent PuSH notification. %r %r',
+                            response, response.text)
         else:
-            app.logger.warn('unexpected response from PuSH hub %s',
-                            response)
+            app.logger.warn('unexpected response from PuSH hub %r %r',
+                            response, response.text)
