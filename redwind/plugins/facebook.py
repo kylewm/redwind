@@ -183,15 +183,15 @@ def handle_new_or_edit(post, preview, img_url, post_type,
                        album_id):
     app.logger.debug('publishing to facebook')
 
-    #TODO I cannot figure out how to tag people via the FB API
-    #tagger = PersonTagger()
-    #preview = util.autolink(preview, url_processor=None, person_processor=tagger)
+    # TODO I cannot figure out how to tag people via the FB API
+    # tagger = PersonTagger()
+    # preview = util.autolink(preview, url_processor=None, person_processor=tagger)
 
     post_args = {
         'access_token': get_settings().facebook_access_token,
-        'message': preview.strip(),
-        'actions': json.dumps({'name': 'See Original',
-                               'link': post.permalink}),
+        'message': preview.strip() + '\n\nOriginal: ' + post.permalink,
+        #'actions': json.dumps({'name': 'See Original',
+        #                       'link': post.permalink}),
         #'privacy': json.dumps({'value': 'SELF'}),
         'privacy': json.dumps({'value': 'EVERYONE'}),
         #'article': post.permalink,
