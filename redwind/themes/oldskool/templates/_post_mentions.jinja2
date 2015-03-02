@@ -67,6 +67,14 @@
         (<a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>)
       </div>
       {{ mention.content | proxy_all(24) | safe }}
+      {% if mention._children %}
+        <div>
+          also on
+          {% for child in mention._children %}
+            <a href="{{ child.permalink }}">{{ child.permalink | domain_from_url }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
   {% endfor %}
 {% endif %}
