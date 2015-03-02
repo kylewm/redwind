@@ -9,7 +9,7 @@
   <form id="edit_form" method="POST" action="{{ settings.site_url }}/save_{{edit_type}}" enctype="multipart/form-data">
 
     <div class="form-group btn-group" role="group">
-      {% for action in ['publish', 'publish_quietly', 'save_draft'] %}
+      {% for action in ['publish', 'save_draft'] %}
         <button
            class="btn {% if loop.first %}btn-primary{%else%}btn-default{% endif %}"
            type="submit" name="action" value="{{action}}">
@@ -19,22 +19,22 @@
     </div>
 
     <div class="form-group">
-      <span class="toggle">
+      <div class="syndication-toggle">
         <input id="syndicate-to-twitter" name="syndicate-to" type="checkbox" value="twitter" />
-        <label for="syndicate-to-twitter">Twitter</label>
-      </span>
-      <span class="toggle">
+        <label for="syndicate-to-twitter"><img src="http://www.google.com/s2/favicons?domain=twitter.com" /></label>
+      </div>
+      <div class="syndication-toggle">
         <input id="syndicate-to-facebook" name="syndicate-to" type="checkbox" value="facebook" />
-        <label for="syndicate-to-facebook">Facebook</label>
-      </span>
-      <span class="toggle">
+        <label for="syndicate-to-facebook"><img src="http://www.google.com/s2/favicons?domain=facebook.com" /></label>
+      </div>
+      <div class="syndication-toggle">
         <input id="syndicate-to-instagram" name="syndicate-to" type="checkbox" value="instagram" />
-        <label for="syndicate-to-instagram">Instagram</label>
-      </span>
-      <span class="toggle">
+        <label for="syndicate-to-instagram"><img src="http://www.google.com/s2/favicons?domain=instagram.com" /></label>
+      </div>
+      <div class="syndication-toggle">
         <input id="syndicate-to-wordpress" name="syndicate-to" type="checkbox" value="wordpress" />
-        <label for="syndicate-to-wordpress">WordPress</label>
-      </span>
+        <label for="syndicate-to-wordpress"><img src="http://www.google.com/s2/favicons?domain=wordpress.com" /></label>
+      </div>
     </div>
 
     {% with is_single = True %}
@@ -47,7 +47,7 @@
     {% block content_fields %}
       <div class="form-group">
         <textarea class="form-control" name="content" id="content" rows="2" placeholder="Content">{{ post.content or '' }}</textarea>
-        <span id="character-count">?</span>
+        <span id="character-count"></span>
       </div>
     {% endblock content_fields %}
 
@@ -92,7 +92,7 @@
   <script src="{{url_for('static', filename='admin/util.js')}}"></script>
   <script src="{{url_for('static', filename='admin/edit_post.js')}}"></script>
   <script src="{{url_for('static', filename='js/cassis.js')}}"></script>
-  
+
   <script>
     $('#tag-list').tagit({
       placeholderText: 'Tags',
