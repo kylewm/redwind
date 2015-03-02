@@ -245,25 +245,35 @@ class Post(db.Model):
         site_url = get_settings().site_url or 'http://localhost'
         return '/'.join((site_url, self.path))
 
+    def _dedupe(self, mentions):
+        all_children = set()
+        mentions = list(mentions)
+        for m in mentions:
+            if m.syndication:
+                m._children = [n for n in mentions
+                               if n.permalink in m.syndication]
+                all_children.update(m._children)
+        return [m for m in mentions if m not in all_children]
+
     @property
     def likes(self):
-        return [m for m in self.mentions if m.reftype == 'like']
+        return self._dedupe(m for m in self.mentions if m.reftype == 'like')
 
     @property
     def reposts(self):
-        return [m for m in self.mentions if m.reftype == 'repost']
+        return self._dedupe(m for m in self.mentions if m.reftype == 'repost')
 
     @property
     def replies(self):
-        return [m for m in self.mentions if m.reftype == 'reply']
+        return self._dedupe(m for m in self.mentions if m.reftype == 'reply')
 
     @property
     def rsvps(self):
-        return [m for m in self.mentions if m.reftype == 'rsvp']
+        return self._dedupe(m for m in self.mentions if m.reftype == 'rsvp')
 
     @property
     def references(self):
-        return [m for m in self.mentions if m.reftype == 'reference']
+        return self._dedupe(m for m in self.mentions if m.reftype == 'reference')
 
     @property
     def tweet_id(self):
