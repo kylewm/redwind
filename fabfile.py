@@ -1,4 +1,4 @@
-from fabric.api import local, prefix, cd, run, env, lcd
+from fabric.api import local, prefix, cd, run, env, lcd, sudo
 import datetime
 
 env.hosts = ['orin.kylewm.com']
@@ -33,7 +33,13 @@ def restart():
         with prefix("source venv/bin/activate"):
             run("pip install --upgrade -r requirements.txt")
             # run("uwsgi --reload /tmp/redwind.pid")
-            run("supervisorctl restart rw:*")
+            # run("supervisorctl restart rw:*")
+        sudo("restart redwind")
+        sudo("restart redwind-qworker")
+
+
+def tail():
+    sudo("tail -n 60 -f /var/log/upstart/redwind.log")
 
 
 def deploy():

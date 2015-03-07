@@ -1,0 +1,25 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    {{ type }}
+  </div>
+  <div class="panel-body">
+    <div class="col-sm-1">
+      {% if context.author_image %}
+        <img  src="{{ context.author_image | imageproxy(64) }}" />
+      {% endif %}
+      <a href="{{ context.author_url }}">{{ context.author_name }}</a>
+    </div>
+    <div class="col-sm-11">
+      {% if context.title %}
+        <h4>
+          {{ context.title }}
+        </h4>
+      {% endif %}
+      {% if context.content_plain and (context.content_plain | length) > 512 %}
+        {{ context.content_plain | truncate(512) }}
+      {% elif context.content %}
+        {{ context.content | proxy_all | safe }}
+      {% endif %}
+    </div>
+  </div>
+</div>

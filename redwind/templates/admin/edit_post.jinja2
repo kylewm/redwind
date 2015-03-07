@@ -6,6 +6,25 @@
     </div>
   {% endif %}
 
+  <!--
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active">
+      <a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='article') }}" id="new-article"><i class="glyphicon glyphicon-book"></i> Article</a>
+    </li>
+    <li role="presentation"><a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='note') }}" id="new-note"><i class="glyphicon glyphicon-file"></i> Note</a></li>
+    <li role="presentation"><a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='photo') }}" id="new-photo"><i class="glyphicon glyphicon-camera"></i> Photo</a></li>
+    <li role="presentation"><a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='reply') }}" id="new-reply"><i class="glyphicon glyphicon-comment"></i> Reply</a></li>
+    <li role="presentation"><a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='share') }}" id="new-share"><i class="glyphicon glyphicon-share"></i> Share</a></li>
+    <li role="presentation"><a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='like') }}" id="new-like"><i class="glyphicon glyphicon-star"></i> Like</a></li>
+    <li role="presentation"><a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='bookmark') }}" id="new-bookmark"><i class=" glyphicon glyphicon-bookmark"></i> Bookmark</a></li>
+    <li role="presentation"><a role="tab" data-toggle="tab" href="{{ url_for('new_post', type='checkin') }}" id="new-checkin"><i class="glyphicon glyphicon-map-marker"></i> Check-in</a></li>
+  </ul>
+  -->
+
+
+  <div id="context-area">
+  </div>
+
   <form id="edit_form" method="POST" action="{{ settings.site_url }}/save_{{edit_type}}" enctype="multipart/form-data">
 
     <div class="form-group btn-group" role="group">
@@ -36,10 +55,6 @@
         <label for="syndicate-to-wordpress"><img src="http://www.google.com/s2/favicons?domain=wordpress.com" /></label>
       </div>
     </div>
-
-    {% with is_single = True %}
-      {% include "admin/_contexts.jinja2" %}
-    {% endwith %}
 
     {% block above_content %}
     {% endblock above_content %}
@@ -83,6 +98,8 @@
   </form>
 
   <a href="{{ url_for('edit_by_id', id=post.id, full=True) }}">Edit all fields</a>
+
+
 {% endblock  content %}
 
 

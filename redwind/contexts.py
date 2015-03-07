@@ -7,7 +7,7 @@ from .models import Context
 import bs4
 import mf2py
 import mf2util
-from flask.ext.login import current_user
+from flask import request, render_template, jsonify
 
 
 def fetch_contexts(post):
@@ -21,7 +21,7 @@ def do_fetch_context(post, context_attr, urls):
     app.logger.debug("fetching urls %s", urls)
     old_contexts = getattr(post, context_attr)
     new_contexts = [create_context(url) for url in urls]
-    
+
     for old in old_contexts:
         if old not in new_contexts:
             db.session.delete(old)
@@ -45,12 +45,13 @@ def create_context(url):
         response.raise_for_status()
 
         context = Context.query.filter_by(url=url).first()
-        app.logger.debug('checked for pre-existing context for this url: %s', context)
+        app.logger.debug(
+            'checked for pre-existing context for this url: %s', context)
         blob = mf2py.Parser(doc=response.text, url=url).to_dict()
         if blob:
             app.logger.debug('parsed successfully by mf2py: %s', url)
             entry = mf2util.interpret(blob, url)
-            if entry: 
+            if entry:
                 app.logger.debug('parsed successfully by mf2util: %s', url)
                 published = entry.get('published')
                 content = util.clean_foreign_html(entry.get('content', ''))
@@ -59,7 +60,8 @@ def create_context(url):
 
                 title = entry.get('name')
                 if title and len(title) > 512:
-                    title = title[:512] # FIXME is there a db setting to do this automatically?
+                    # FIXME is there a db setting to do this automatically?
+                    title = title[:512]
                 author_name = entry.get('author', {}).get('name', '')
                 author_image = entry.get('author', {}).get('photo')
 
@@ -94,3 +96,19 @@ def create_context(url):
                 context.title = soup.title.string
 
     return context
+
+
+@app.route('/services/fetch_context')
+def fetch_context_service():
+    results = []
+    for url in request.args.getlist('url[]'):
+        ctx = create_context(url)
+        results.append({
+            'title': ctx.title,
+            'permalink': ctx.permalink,
+            'html': render_template(
+                'admin/_context.jinja2', type=request.args.get('type'),
+                context=ctx),
+        })
+
+    return jsonify({'contexts': results})
