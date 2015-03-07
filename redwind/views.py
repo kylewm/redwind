@@ -243,7 +243,7 @@ def search(before_ts=None):
 
 @app.route('/mentions')
 def mentions():
-    mentions = Mention.query.order_by(Mention.published.desc()).limit(30)
+    mentions = Mention.query.order_by(Mention.published.desc()).limit(100)
     return render_template('admin/mentions.jinja2', mentions=mentions)
 
 

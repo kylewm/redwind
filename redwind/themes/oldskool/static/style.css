@@ -441,6 +441,10 @@ blockquote {
 
 article footer {
   font-size: 0.9em; }
+article p:first-child {
+  margin-top: 0; }
+article p:last-child {
+  margin-bottom: 0; }
 
 pre, code {
   overflow: auto; }

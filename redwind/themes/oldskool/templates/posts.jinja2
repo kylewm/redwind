@@ -32,6 +32,9 @@
             <a class="u-url" href="{{post.permalink}}">
               <time class="dt-published" datetime="{{post.published|isotime}}">{{ post.published | time }}
             </time></a>
+            {% for s in post.syndication %}
+              <a class="u-syndication" href="{{ s }}"></a>
+            {% endfor %}
           </footer>
         </article>
       {% endfor %}
