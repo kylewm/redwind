@@ -42,5 +42,4 @@ the #indiewebcamp channel on Freenode IRC if you want to discuss.
 
 # Requirements
 
-Python 3.3+, Flask, uWSGI, SQLite (MySQL or Postgres should also
-work), and Redis. See requirements.txt for details.
+Python 3.3+, Flask, uWSGI, a database supported by SQLAlchemy (Postgres, MySQL, SQLite), and Redis (optional, recommended). See requirements.txt for details.
