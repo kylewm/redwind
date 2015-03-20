@@ -7,11 +7,13 @@
       {% if post.title %}
         <h1 class="p-name">{{ post.title }}</h1>
       {% endif %}
+      {% if post.post_type != 'event' %}
       <h2>
         <time class="dt-published" datetime="{{ post.published | isotime }}">
           {{ post.published | date }}
         </time>
       </h2>
+      {% endif %}
 
       {% from theme("_contexts.jinja2") import full_context %}
       {% for reply_context in post.reply_contexts %}
