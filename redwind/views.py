@@ -119,16 +119,17 @@ MIN_TAG_COUNT = 2
 
 
 def render_tags(title, tags):
-    counts = [tag['count'] for tag in tags]
-    mincount, maxcount = min(counts), max(counts)
-    for tag in tags:
-        if maxcount > mincount:
-            tag['size'] = (MIN_TAG_SIZE +
-                           (MAX_TAG_SIZE - MIN_TAG_SIZE) *
-                           (tag['count'] - mincount) /
-                           (maxcount - mincount))
-        else:
-            tag['size'] = MIN_TAG_SIZE
+    if tags:
+        counts = [tag['count'] for tag in tags]
+        mincount, maxcount = min(counts), max(counts)
+        for tag in tags:
+            if maxcount > mincount:
+                tag['size'] = (MIN_TAG_SIZE +
+                               (MAX_TAG_SIZE - MIN_TAG_SIZE) *
+                               (tag['count'] - mincount) /
+                               (maxcount - mincount))
+            else:
+                tag['size'] = MIN_TAG_SIZE
     return util.render_themed('tags.jinja2', tags=tags, title=title,
                               max_tag_size=MAX_TAG_SIZE)
 

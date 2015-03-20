@@ -1,18 +1,41 @@
 #!/usr/bin/env python
 
-from redwind import db, models
+from redwind import app, db, models
 
-print('creating database tables')
+print('''\
+Welcome to the Red Wind installation script. This should only be used for
+to initialize a brand new database. Running this script against an existing
+database could destroy your data!''')
+
+author_domain = input('Domain name (no schema): ').strip()
+twitter_username = input('Your Twitter username: ').strip()
+github_username = input('Your GitHub username: ').strip()
+
+
+print('creating database tables for database', app.config['SQLALCHEMY_DATABASE_URI'])
 db.create_all()
-
 print('done creating database tables')
+
+bio = '''
+<div class="p-author h-card">
+<a class="p-name u-url" href="/">New User</a> is a brand new Red Wind user!
+Visit <a href="/settings">Settings</a> to edit your bio.
+<ul>
+<li><a href="https://twitter.com/{}">Twitter</a></li>
+<li><a href="https://github.com/{}">GitHub</a></li>
+</ul>
+</div>
+'''.format(twitter_username.lstrip('@'),
+           github_username)
+
+
 print('setting default settings')
 
 defaults = [
     ('Author Name',                ''),
     ('Author Image',               ''),
-    ('Author Domain',              ''),
-    ('Author Bio',                 ''),
+    ('Author Domain',              author_domain),
+    ('Author Bio',                 bio),
     ('Site Title',                 ''),
     ('Site URL',                   ''),
     ('Shortener URL',              None),
