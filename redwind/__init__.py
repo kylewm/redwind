@@ -48,7 +48,7 @@ if not app.debug:
     app.logger.addHandler(stream_handler)
 
 
-for handler in ['views', 'services', 'micropub']:
+for handler in ['views', 'services', 'micropub', 'imageproxy']:
     importlib.import_module('redwind.' + handler)
 
 

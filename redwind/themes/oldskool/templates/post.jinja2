@@ -3,7 +3,18 @@
 <body class="{{post.mf2_type}}">
   <main>
     <a href="{{url_for('index')}}">&lt; home</a>
+
     <article>
+
+        <span class="byline">
+          by
+          <a class="p-author h-card" href="{{ settings.site_url }}">
+            {{ settings.author_name }}
+            <img class="u-photo" src="{{settings.author_image}}"/>
+          </a>
+        </span>
+
+
       {% if post.title %}
         <h1 class="p-name">{{ post.title }}</h1>
       {% endif %}
@@ -46,13 +57,6 @@
 
       <div class="meta">
         <a class="u-url" href="{{ post.permalink }}"><time class="dt-published" datetime="{{ post.published | isotime }}">{{ post.published | time }}</time></a>
-        <span class="byline">
-          by
-          <a class="p-author h-card" href="{{ settings.site_url }}">
-            {{ settings.author_name }}
-            <img class="u-photo" src="{{settings.author_image}}"/>
-          </a>
-        </span>
         {% if current_user.is_authenticated() %}
           <a href="{{url_for('edit_by_id', id=post.id)}}">Edit</a>
           <a href="{{url_for('delete_by_id', id=post.id)}}">Delete</a>

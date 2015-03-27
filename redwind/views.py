@@ -1,15 +1,17 @@
-from . import app
-from . import auth
-from . import contexts
-from . import db
-from . import hooks
-from . import maps
-from . import util
-from .models import Post, Tag, Mention, Contact, Nick, Setting,\
+from redwind import app
+from redwind import auth
+from redwind import contexts
+from redwind import db
+from redwind import hooks
+from redwind import maps
+from redwind import util
+from redwind import imageproxy
+from redwind.models import Post, Tag, Mention, Contact, Nick, Setting,\
     Venue, get_settings
 
 from flask import request, redirect, url_for, render_template, flash, g,\
-    abort, make_response, Markup, send_from_directory, session, current_app
+    abort, make_response, Markup, send_from_directory, session, current_app,\
+    escape
 import flask.ext.login as flask_login
 from werkzeug import secure_filename
 
@@ -838,22 +840,22 @@ IMAGE_TAG_RE = re.compile(r'<img([^>]*) src="(https?://[^">]+)"')
 
 
 @app.template_filter('proxy_all')
-def proxy_all_images(html, side=None):
+def proxy_all_filter(html, side=None):
     def repl(m):
         url = m.group(2)
         # don't proxy images that come from this site
         if url.startswith(get_settings().site_url):
             return m.group(0)
-        return '<img{} src="{}"'.format(m.group(1), imageproxy(m.group(2), side=side))
+        url = url.replace('&amp;', '&')
+        return '<img{} src="{}"'.format(
+            m.group(1), imageproxy_filter(url, side))
     return IMAGE_TAG_RE.sub(repl, html) if html else html
 
 
 @app.template_filter('imageproxy')
-def imageproxy(src, side=None):
-    parsed = urllib.parse.urlparse(src)
-    if parsed.netloc and parsed.netloc.startswith('localhost'):
-        return src
-    return util.construct_imageproxy_url(src, side)
+def imageproxy_filter(src, side=None):
+    return escape(
+        imageproxy.construct_url(src, side and str(side)))
 
 
 @app.route('/save_edit', methods=['POST'])
