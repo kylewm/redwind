@@ -18,12 +18,6 @@ class Configuration(object):
     SQLALCHEMY_DATABASE_URI = 'postgres:///redwind'
     # SQLALCHEMY_DATABASE_URI = 'sqlite:////home/kmahan/kylewm.com.db'
 
-    # base url for pilbox requests (handles image proxy/resize)
-    PILBOX_URL = '/imageproxy'
-
-    # sign requests to prevent unauthorized use of pilbox service
-    PILBOX_KEY = 'a key used to sign pilbox requests'
-
     # optionally, use Redis for async task queue. if this is disabled,
     # jobs will be stored in the database and qworker will poll for new
     # jobs.
