@@ -9,15 +9,15 @@
       {% include theme("_post.jinja2") %}
   {% endfor %}
 
-  <div class="page-arrows clearfix">
-    {% if older %}
-      <div class="page-right">
-        <a rel="previous" class="older" href="{{older}}">
-          Older &rarr;
-        </a>
-      </div>
-    {% endif %}
-  </div>
+
+  {% if older %}
+    <div class="pager">
+      <a rel="previous" class="older" href="{{older}}">
+        Older &rarr;
+      </a>
+    </div>
+  {% endif %}
+
 
   <div style="text-align: center">
     <a onclick="(function(btn){var z=document.createElement('script');document.subtomeBtn=btn;z.src='https://www.subtome.com/load.js';document.body.appendChild(z);})(this)" href="#"><i class="fa fa-rss"></i> Subscribe</a>
