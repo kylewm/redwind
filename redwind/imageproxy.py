@@ -1,13 +1,14 @@
 from . import app, util
 from PIL import Image, ExifTags
 from flask import request, abort, send_file, url_for, make_response
+from requests.exceptions import HTTPError
 import datetime
-import hmac
 import hashlib
+import hmac
+import json
 import os
 import shutil
-import json
-from requests.exceptions import HTTPError
+import urllib.parse
 
 # store image locally as
 # /_imageproxy/<encoded url>/(orig|size)
@@ -19,7 +20,13 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
 def construct_url(url, size):
-    return url_for('proxy', url=url, size=size, sig=sign(url, size))
+    args = []
+    args.append(('url', url))
+    if size:
+        args.append(('size', size))
+    args.append(('sig', sign(url, size)))
+    return '/imageproxy?' + urllib.parse.urlencode(args)
+    #return url_for('proxy', url=url, size=size, sig=sign(url, size))
 
 
 @app.route('/imageproxy')
@@ -120,7 +127,7 @@ def sign(url, size):
     key = app.config['SECRET_KEY']
     h = hmac.new(key.encode())
     if size:
-        h.update(size.encode())
+        h.update(str(size).encode())
     h.update(url.encode())
     return h.hexdigest()
 
