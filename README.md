@@ -6,7 +6,6 @@ kylewm.com. I have been using it to screw around with
 [IndieWeb](http://indiewebcamp.com) ideas like POSSE (Twitter and
 Facebook), microformats, and webmentions (sending and receiving).
 
-
 # IndieWeb Support
 
 Red Wind supports a bunch of (indie)web technologies, some better than others.
@@ -33,13 +32,94 @@ Red Wind supports a bunch of (indie)web technologies, some better than others.
 
 * **Python 3.3 or newer**. Will not work in Python 2!
 * Flask (and other libraries defined in requirements.txt)
-* An application server. Tested with uWSGI, though Gunicorn should
-  work too.
 * A database supported by SQLAlchemy (Postgres, MySQL, SQLite)
 * Redis (optional, recommended)
+* uWSGI and nginx (other servers like gunicorn should work but are
+  untested)
+
+# Disclaimer
+
+This is an experimental project with lots of rough edges. It is not
+particularly user-friendly and requires some command-line
+gymnastics to install and manage.
+
+If you want to hack on IndieWeb stuff in Python/Flask, it might be
+interesting to you! If on the other hand you want something polished
+and fully-formed and with an established userbase, I can highly recommend
+[Known](https://withknown.com).
+
+Come join us in the #indiewebcamp IRC channel on Freenode (I'm kylewm)
+if you have any questions, comments, concerns, or of course file an
+issue here. I'd love to hear from you.
+
 
 # Installation
 
+**Create a new database.** Unless you are using SQLite, you must
+create a database (and possibly database user). For Postgres, I do
+something like
+
+```
+kmahan@orin:~$ createuser kmahan
+kmahan@orin:~$ createdb redwind --owner=kmahan
+```
+
+**Copy config.py.template to config.py and fill in details.** At a
+minimum, set the following keys:
+
+* `SECRET_KEY`: Used for securing your session. Can be anything at all
+  that is sufficiently long and unguessable.
+* `SQLALCHEMY_DATABASE_URI`: specify the location of your database as
+  a URI.
+
+
+**Create a virtualenv and install python dependencies.**
+
+Note: if you are not using Postgres, comment out the requirement for
+psycopg2 in requirements.txt.
+
+```
+kmahan@orin:$ virtualenv --python=/usr/bin/python3 venv
+Running virtualenv with interpreter /usr/bin/python3
+Using base prefix '/usr'
+New python executable in venv/bin/python3
+Not overwriting existing python script venv/bin/python (you must use venv/bin/python3)
+Installing setuptools, pip...done.
+kmahan@orin:$ source venv/bin/activate
+(venv)kmahan@orin:$ pip install -r requirements.txt
+```
+
+**Run unit tests with py.test.** At this point, running the unit tests
+is a good sanity-check to make sure most things are set up
+correctly.
+
+```
+(venv)kmahan@orin:$ py.test tests
+== test session starts ==
+platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+plugins: mock, cov
+collected 26 items
+
+tests/util_test.py .........
+tests/views_test.py ...........
+tests/wm_receiver_test.py ....
+tests/wm_sender_test.py ..
+```
+
+**Run ./install.py from the command line to generate the database
+schema.** This script will prompt you for some basic info to seed
+the author bio with enough information to let you authenticate with
+the system and .
+
+
+**Run a local server to test installation.** Use `./run.py` or
+`uwsgi --http :5000 --module redwind:app` to run a simple local server for
+development.
+
+I use `uwsgi uwsgi-local.ini` for local development and
+`uwsgi-prod.ini` in production. In the local case, I like to setup an
+`/etc/hosts` entry for `redwind.dev` and configure nginx to serve the
+application just like in production.
 
 ## Nginx Configuration
 
@@ -173,7 +253,7 @@ interface feels disconnected, like a CMS or Wordpress blog, where the
 experience on most social sites is more integrated.
 
 
-# Red Wind Plugins
+# Plugins
 
 Plugins provide non-core functionality (like sending and receiving
 webmentions and various silo integrations). To be honest the plugin
