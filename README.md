@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/kylewm/redwind.svg?branch=master)](https://travis-ci.org/kylewm/redwind)
 [![Coverage Status](https://img.shields.io/coveralls/kylewm/redwind.svg)](https://coveralls.io/r/kylewm/redwind?branch=master)
 
+# Red Wind
+
 Red Wind is a (micro)-blogging engine used on my personal website,
 kylewm.com. I have been using it to screw around with
 [IndieWeb](http://indiewebcamp.com) ideas like POSSE (Twitter and
@@ -109,16 +111,18 @@ tests/wm_sender_test.py ..
 **Run ./install.py from the command line to generate the database
 schema.** This script will prompt you for some basic info to seed
 the author bio with enough information to let you authenticate with
-the system and .
+indieauth.com. Once authenticated,  you will be able to edit your bio
+from the /settings page.
 
+**Run a local server to test installation.** You can use `./run.py` or
+`uwsgi --http :5000 --module redwind:app` to run a simple local server 
+on localhost:5000 as a sanity check (or to do local development work).
 
-**Run a local server to test installation.** Use `./run.py` or
-`uwsgi --http :5000 --module redwind:app` to run a simple local server for
-development.
+In production `uwsgi uwsgi-prod.ini` will start the application server 
+and qworker daemon.
 
-I use `uwsgi uwsgi-local.ini` for local development and
-`uwsgi-prod.ini` in production. In the local case, I like to setup an
-`/etc/hosts` entry for `redwind.dev` and configure nginx to serve the
+Note: for development, I actually prefer to use `uwsgi uwsgi-local.ini`,
+add a `/etc/hosts` entry for `redwind.dev` and configure nginx to serve the
 application just like in production.
 
 ## Nginx Configuration
