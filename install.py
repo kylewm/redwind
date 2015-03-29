@@ -21,8 +21,8 @@ bio = '''
 <a class="p-name u-url" href="/">New User</a> is a brand new Red Wind user!
 Visit <a href="/settings">Settings</a> to edit your bio.
 <ul>
-<li><a href="https://twitter.com/{}">Twitter</a></li>
-<li><a href="https://github.com/{}">GitHub</a></li>
+<li><a rel="me" href="https://twitter.com/{}">Twitter</a></li>
+<li><a rel="me" href="https://github.com/{}">GitHub</a></li>
 </ul>
 </div>
 '''.format(twitter_username.lstrip('@'),
@@ -48,6 +48,12 @@ defaults = [
     ('Facebook App ID',            ''),
     ('Facebook App Secret',        ''),
     ('Facebook Access Token',      ''),
+    ('WordPress Client ID',        ''),
+    ('WordPress Client Secret',    ''),
+    ('WordPress Access Token',     ''),
+    ('Instagram Client ID',        ''),
+    ('Instagram Client Secret',    ''),
+    ('Instagram Access Token',     ''),
     ('PGP Key URL',                ''),
     ('Avatar Prefix',              'nobody'),
     ('Avatar Suffix',              'png'),
