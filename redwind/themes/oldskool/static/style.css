@@ -394,9 +394,10 @@ main {
   box-shadow: 0 0 2px #687D77; }
 
 a {
-  color: #687D77; }
+  color: #687D77;
+  text-decoration: none; }
   a:hover {
-    text-decoration: none; }
+    text-decoration: underline; }
   a:visited {
     color: #687D77; }
 

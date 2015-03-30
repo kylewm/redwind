@@ -30,3 +30,4 @@ redwind/static/mirror
 redwind/static/map
 .sass-cache
 *.css.map
+_imageproxy

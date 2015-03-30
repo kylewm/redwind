@@ -142,6 +142,8 @@ def resize_image(source, target, side):
         else:
             im = source
 
+        # grab the format before we start rotating it
+        format = im.format 
         orientation = next((k for k, v in ExifTags.TAGS.items()
                             if v == 'Orientation'), None)
 
@@ -163,4 +165,4 @@ def resize_image(source, target, side):
         else:
             resized = im.resize((int(origw * ratio), int(origh * ratio)),
                                 Image.ANTIALIAS)
-            resized.save(target, format=im.format)
+            resized.save(target, format=format)

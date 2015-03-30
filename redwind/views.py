@@ -284,6 +284,15 @@ def check_audience(post):
     return flask_login.current_user.get_id() in post.audience
 
 
+@app.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/files/<filename>')
+def post_associated_file_by_historic_path(post_type, year, month, day, index, filename):
+    post = Post.load_by_historic_path('{}/{}/{:02d}/{:02d}/{}'.format(
+        post_type, year, month, day, index))
+    if not post:
+        abort(404)
+    return redirect('/{}/files/{}'.format(post.path, filename))
+
+
 @app.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
 def post_associated_file(year, month, slug, filename):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
@@ -766,12 +775,13 @@ def date_filter(thedate, first_only=False):
         if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
             tz = pytz.timezone(get_settings().timezone)
             thedate = pytz.utc.localize(thedate).astimezone(tz)
-
-        previous = getattr(g, 'previous date', None)
         formatted = thedate.strftime('%B %-d, %Y')
-        setattr(g, 'previous date', formatted)
-        if not first_only or not previous or previous != formatted:
-            return formatted
+        if first_only:
+            previous = getattr(g, 'previous date', None)
+            setattr(g, 'previous date', formatted)
+            if previous == formatted:
+                return None
+        return formatted
 
 
 @app.template_filter('time')
