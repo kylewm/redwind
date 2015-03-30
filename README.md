@@ -19,7 +19,7 @@ Red Wind supports a bunch of (indie)web technologies, some better than others.
 * Sign-in to Red Wind via IndieAuth
 * Publish posts via Micropub
 * Reply context for posts with microformats or certain silo posts.
-* [POSSE](https://indiewebcamp.com/POSSE).
+* [POSSE](https://indiewebcamp.com/POSSE)
     * to Twitter (notes, articles, photos, likes, retweets)
     * to Facebook (notes, articles, photos)
     * likes to Instagram (API prevents us from posting anything
@@ -49,11 +49,6 @@ If you want to hack on IndieWeb stuff in Python/Flask, it might be
 interesting to you! If on the other hand you want something polished
 and fully-formed and with an established userbase, I can highly recommend
 [Known](https://withknown.com).
-
-Come join us in the #indiewebcamp IRC channel on Freenode (I'm kylewm)
-if you have any questions, comments, concerns, or of course file an
-issue here. I'd love to hear from you.
-
 
 # Installation
 
@@ -115,14 +110,14 @@ indieauth.com. Once authenticated,  you will be able to edit your bio
 from the /settings page.
 
 **Run a local server to test installation.** You can use `./run.py` or
-`uwsgi --http :5000 --module redwind:app` to run a simple local server 
+`uwsgi --http :5000 --module redwind:app` to run a simple local server
 on localhost:5000 as a sanity check (or to do local development work).
 
-In production `uwsgi uwsgi-prod.ini` will start the application server 
+In production `uwsgi uwsgi-prod.ini` will start the application server
 and qworker daemon.
 
 Note: for development, I actually prefer to use `uwsgi uwsgi-local.ini`,
-add a `/etc/hosts` entry for `redwind.dev` and configure nginx to serve the
+add a `/etc/hosts` entry for `redwind.dev`, and configure nginx to serve the
 application just like in production.
 
 ## Nginx Configuration
@@ -289,7 +284,8 @@ below:
 
 Running a background work queue lets us respond immediately when
 receiving a webmention, or when saving a post that will be syndicated
-elsewhere.
+elsewhere. To accomplish this, we'll run another Python process
+outside of the usual uWSGI worker pool.
 
 The work queue is a hand-rolled solution based on
 [Basic Message Queue with Redis](http://flask.pocoo.org/snippets/73/),
@@ -297,14 +293,26 @@ that supports either storing background jobs in the primary SQL
 database and polling periodically for new jobs, or (recommended) in a
 Redis queue.
 
-To start the work queue, run `./qworker.py` from the commandline. If
-using uWSGI, add the line `attach-daemon=qworker.py` to the ini file
-to have the process managed automatically by uWSGI.
+Run `./qworker.py` to start the work queue processor from the
+commandline. If you're using uWSGI, you can add the line
+`attach-daemon=qworker.py` to the ini file to have the process managed
+automatically by uWSGI. To enable redis-backed work queue, uncomment
+`REDIS_URL` and `REDIS_QUEUE_KEY` in config.py, then run
+`./qworker.py` as usual. Jobs will be triggered almost immediately,
+instead of waiting up to 10 seconds for polling the DB.
 
-Note: this will probably be replaced by the more robust and
-memory-efficient [Redis Queue](http://python-rq.org/) library in the
-future. At that point, redis will become a hard requirement. Please
-let me know if this will present problems for you!
+Note: this all will probably be replaced by the more robust and
+memory-efficient [RQ](http://python-rq.org/) library in the future. At
+that point, redis will become a hard requirement. Please let me know
+if this will present problems for you!
+
+# Contributing
+
+Come join us in the #indiewebcamp IRC channel on Freenode (I'm kylewm)
+if you have any questions, comments, concerns, or of course file an
+issue or pull request here. I'd love to hear from you.
+
+Code style follows typical pep8 guidelines.
 
 # Etymology
 
