@@ -142,30 +142,17 @@ pre, code {
 
 .context {
     overflow: auto;
-
     .author {
-        display: block;
         img {
-            border-radius: 2px;
-            vertical-align: middle;
+            display: block;
+            float: left;
+            margin: 0.5em 0.5em 0 0;
         }
     }
-
-    .heading {
-        font-style: italic;
-    }
-
     .e-content {
         overflow: auto;
     }
-
-    blockquote {
-        margin: 0;
-        padding: 0.5em;
-    }
-
 }
-
 
 .microcard {
     img {
@@ -194,6 +181,9 @@ pre, code {
     }
 }
 
+blockquote.context {
+    margin: 0;
+}
 
 .pager {
     text-align: center;
