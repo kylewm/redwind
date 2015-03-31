@@ -25,34 +25,37 @@
       {% endif %}
     </span>
 
-    <blockquote>
-      <span class="author p-author  h-card">
-        {% if context.author_image %}
-          <img class="u-photo" src="{{ context.author_image | imageproxy(24) }}" />
-        {% endif %}
-        {% if context.author_name %}
-          {% if context.author_url %}
-            <a class="p-name" href="{{ context.author_url }}">
-              {{ context.author_name }}
-            </a>
-          {% else %}
-            <span class="p-name">{{ context.author_name }}</span>
+    {% if context.author_name or context.author_url or context.content %}
+      <blockquote>
+        <span class="author p-author  h-card">
+          {% if context.author_image %}
+            <img class="u-photo" src="{{ context.author_image | imageproxy(24) }}" />
           {% endif %}
-        {% endif %}
-        {% if context.author_url %}
-          <a class="u-url" href="{{ context.author_url }}">
-            {{ context.author_url | prettify_url }}
-          </a>
-        {% endif %}
-      </span>
+          {% if context.author_name %}
+            {% if context.author_url %}
+              <a class="p-name" href="{{ context.author_url }}">
+                {{ context.author_name }}
+              </a>
+            {% else %}
+              <span class="p-name">{{ context.author_name }}</span>
+            {% endif %}
+          {% endif %}
+          {% if context.author_url %}
+            <a class="u-url" href="{{ context.author_url }}">
+              {{ context.author_url | prettify_url }}
+            </a>
+          {% endif %}
+        </span>
 
-      <div class="e-content{% if not post.title %} p-name{% endif %}">
-        {% if context.content_plain and (context.content_plain | length) > 512 %}
-          {{ context.content_plain | truncate(512) }}
-        {% elif context.content %}
-          {{ context.content | proxy_all | safe }}
-        {% endif %}
-      </div>
-    </blockquote>
+        <div class="e-content{% if not post.title %} p-name{% endif %}">
+          {% if context.content_plain and (context.content_plain | length) > 512 %}
+            {{ context.content_plain | truncate(512) }}
+          {% elif context.content %}
+            {{ context.content | proxy_all | safe }}
+          {% endif %}
+        </div>
+      </blockquote>
+    {% endif %}
+    
   </div>
 {% endmacro %}
