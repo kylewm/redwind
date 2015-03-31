@@ -387,7 +387,7 @@ def prettify_url(url):
         schema, path = split
     else:
         path = url
-    return path
+    return path.rstrip('/')
 
 
 def fetch_html(url):

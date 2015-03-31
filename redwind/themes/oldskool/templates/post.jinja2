@@ -1,4 +1,5 @@
 {% extends theme("base.jinja2") %}
+{% from theme("_contexts.jinja2") import full_context %}
 {% block body %}
 <body class="{{post.mf2_type}}">
   <main>
@@ -15,8 +16,6 @@
         </time>
       </h2>
       {% endif %}
-
-      {% from theme("_contexts.jinja2") import full_context %}
       {% for reply_context in post.reply_contexts %}
         {{ full_context(post, reply_context, 'u-in-reply-to h-cite', 'in reply to') }}
       {% endfor %}
@@ -28,7 +27,10 @@
       {% endfor %}
 
       <div class="e-content{% if not post.title %} p-name{% endif %}">
-        {% include theme("_repost_contexts.jinja2") %}
+        {% for repost_context in post.repost_contexts %}
+          {{ full_context(post, repost_context, 'u-repost-of h-cite', 'shared') }}
+        {% endfor %}
+
         {% include theme("_checkin.jinja2")%}
         {{ post.content_html | proxy_all | safe }}
         {% include theme("_photos.jinja2") %}
