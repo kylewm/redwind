@@ -35,7 +35,6 @@ def restart():
             # run("uwsgi --reload /tmp/redwind.pid")
             # run("supervisorctl restart rw:*")
         sudo("restart redwind")
-        sudo("restart redwind-qworker")
 
 
 def tail():
