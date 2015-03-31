@@ -69,7 +69,7 @@ def test_autolink_word_boundaries():
 
 def test_autolink_trailing_slash():
     result = util.autolink('http://hel.lo/world/')
-    assert result == '<a href="http://hel.lo/world/">hel.lo/world/</a>'
+    assert result == '<a href="http://hel.lo/world/">hel.lo/world</a>'
 
 
 def test_no_autolink_in_code_block():
@@ -92,7 +92,7 @@ def test_autolink_at_names(contacts, mocker):
     result = util.autolink("@luke this is @leia tell @obiwan he\'s our only help!")
     assert result == """<a class="microcard h-card" href="http://tatooine.com/moseisley"><img alt="" src="/imageproxy?url=http%3A%2F%2Ftatooine.com%2Fluke.jpg&amp;size=24&amp;sig=97ad9f9406cf09a03a0c5ecc333de3d1"/>Luke Skywalker</a> this is <a class="microcard h-card" href="http://aldera.an"><img alt="" src="/imageproxy?url=http%3A%2F%2Faldera.an%2Fleia.png&amp;size=24&amp;sig=f5803c340d2511eac014af8af029de2c"/>Princess Leia</a> tell <a href="https://twitter.com/obiwan">@obiwan</a> he's our only help!"""
 
-    
+
 def test_autolink_urls():
     """Exercise the URL matching regex
     """
