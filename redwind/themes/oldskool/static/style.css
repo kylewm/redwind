@@ -436,7 +436,7 @@ article {
   margin-bottom: 2.5em; }
 
 blockquote {
-  background-color: #ECEBF0;
+  background-color: #ecebf0;
   color: #353129;
   padding: 0em 0.5em 0.5em 0.5em; }
 
@@ -452,12 +452,18 @@ pre, code {
 
 .context {
   overflow: auto; }
-  .context .author img {
-    display: block;
-    float: left;
-    margin: 0.5em 0.5em 0 0; }
+  .context .author {
+    display: block; }
+    .context .author img {
+      border-radius: 2px;
+      vertical-align: middle; }
+  .context .heading {
+    font-style: italic; }
   .context .e-content {
     overflow: auto; }
+  .context blockquote {
+    margin: 0;
+    padding: 0.5em; }
 
 .microcard img {
   height: 1em; }
@@ -474,17 +480,12 @@ pre, code {
   .p-comment .rsvp.maybe {
     color: #E7AA19; }
 
-blockquote.context {
-  margin: 0; }
-
 .pager {
   text-align: center; }
   .pager a {
     display: inline-block;
     padding: 0.2em;
-    border: 1px solid #687D77;
+    border: 1px solid #687d77;
     border-radius: 4px;
-    background-color: #ECEBF0;
+    background-color: #ecebf0;
     text-decoration: none; }
-
-/*# sourceMappingURL=style.css.map */
