@@ -36,6 +36,7 @@
             {% include theme("_photos.jinja2") %}
           </div>
           <footer>
+            {% include theme("_location.jinja2") %}
             <a class="u-url" href="{{post.permalink}}">
               <time class="dt-published" datetime="{{post.published|isotime}}">{{ post.published | time }}
             </time></a>
@@ -56,22 +57,51 @@
 
     </main>
     <aside>
-      <h1>.:{{settings.site_title}}:.</h1>
-      <ul>
-        <li><a href="{{ url_for('index') }}">Stream</a></li>
-        <li><a href="{{ url_for('posts_by_type', plural_type='articles') }}">Articles</a></li>
-        <li><a href="{{ url_for('everything') }}">Everything</a></li>
-        <li><a href="{{ url_for('tag_cloud') }}">Tags</a></li>
-      </ul><br/>
-      <h1>.:bio:.</h1>
-      {{ settings.author_bio }}
-      <br/>
-      <h1>.:search:.</h1>
-      <form method="GET" action="{{url_for('search')}}">
-        <input name="q" style="width:65%"/>
-        <button type="submit" style="width:25%">Go</button>
-      </form>
+      <div>
+        <h1>.:{{settings.site_title}}:.</h1>
+        <ul>
+          <li><a href="{{ url_for('index') }}">Stream</a></li>
+          <li><a href="{{ url_for('posts_by_type', plural_type='articles') }}">Articles</a></li>
+          <li><a href="{{ url_for('everything') }}">Everything</a></li>
+          <li><a href="{{ url_for('tag_cloud') }}">Tags</a></li>
+        </ul>
+      </div>
 
+      <div>
+        <h1>.:bio:.</h1>
+        {{ settings.author_bio }}
+        <br/>
+      </div>
+
+      {% if events %}
+        <div>
+          <h1>.:upcoming events:.</h1>
+          {% for event in events %}
+            <div class="upcoming-event h-event">
+              <a class="u-url" href="{{event.permalink}}">
+                <time class="dt-start" datetime="{{event.start | isotime }}">
+                  {{event.start | date}}
+                </time>
+                <div class="p-name">
+                  {{event.title}}
+                </div>
+                <div class="p-location">
+                  {{event.venue.name}}
+                </div>
+              </a>
+            </div> <!-- .upcoming-event -->
+          {% endfor %}
+        </div>
+        
+      {% endif %}
+
+      <div>
+        <h1>.:search:.</h1>
+        <form method="GET" action="{{url_for('search')}}">
+          <input name="q" style="width:65%"/>
+          <button type="submit" style="width:25%">Go</button>
+        </form>
+      </div>
     </aside>
   </body>
 {% endblock body %}

@@ -44,6 +44,7 @@ POST_TYPES = [
     ('checkin', 'checkins', 'All Check-ins'),
     ('photo', 'photos', 'All Photos'),
     ('bookmark', 'bookmarks', 'All Bookmarks'),
+    ('event', 'events', 'All Events'),
 ]
 
 POST_TYPE_RULE = '<any({}):post_type>'.format(','.join(tup[0] for tup in POST_TYPES))
@@ -114,6 +115,17 @@ def collect_posts(post_types, before_ts, per_page, tag, search=None,
 
     return posts, older
 
+
+def collect_upcoming_events():
+    now = datetime.datetime.utcnow()
+    events = Post.query\
+        .filter(Post.post_type=='event')\
+        .filter(Post.end_utc > now.isoformat('T'))\
+        .order_by(Post.start_utc)\
+        .all()
+    return events
+
+
 # Font sizes in em. Maybe should be configurable
 MIN_TAG_SIZE = 1.0
 MAX_TAG_SIZE = 4.0
@@ -136,14 +148,14 @@ def render_tags(title, tags):
                               max_tag_size=MAX_TAG_SIZE)
 
 
-def render_posts(title, posts, older, template='posts.jinja2'):
+def render_posts(title, posts, older, events=None, template='posts.jinja2'):
     atom_args = request.view_args.copy()
     atom_args.update({'feed': 'atom', '_external': True})
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
     return util.render_themed(template, posts=posts, title=title,
                               older=older, atom_url=atom_url,
-                              atom_title=atom_title)
+                              atom_title=atom_title, events=events)
 
 
 def render_posts_atom(title, feed_id, posts):
@@ -156,13 +168,18 @@ def render_posts_atom(title, feed_id, posts):
 @app.route('/')
 @app.route('/before-<before_ts>')
 def index(before_ts=None):
+    post_types = [type[0] for type in POST_TYPES if type[0] != 'event']
     posts, older = collect_posts(
-        None, before_ts, int(get_settings().posts_per_page),
+        post_types, before_ts, int(get_settings().posts_per_page),
         None, include_hidden=False)
+    events = collect_upcoming_events()
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
+    
     resp = make_response(
-        render_posts('Stream', posts, older, template='home.jinja2'))
+        render_posts('Stream', posts, older, 
+                     events=collect_upcoming_events(),
+                     template='home.jinja2'))
 
     if 'PUSH_HUB' in app.config:
         resp.headers.add('Link', '<{}>; rel="hub"'.format(
@@ -871,7 +888,7 @@ def format_syndication_url(url, include_rel=True):
 
     if util.TWITTER_RE.match(url):
         return Markup(fmt.format(url, 'fa-twitter', 'Twitter'))
-    if util.FACEBOOK_RE.match(url):
+    if util.FACEBOOK_RE.match(url) or util.FACEBOOK_EVENT_RE.match(url):
         return Markup(fmt.format(url, 'fa-facebook', 'Facebook'))
     if util.INSTAGRAM_RE.match(url):
         return Markup(fmt.format(url, 'fa-instagram', 'Instagram'))

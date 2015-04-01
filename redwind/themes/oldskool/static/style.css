@@ -392,6 +392,10 @@ main {
   float: right;
   background-color: white;
   box-shadow: 0 0 2px #687d77; }
+  .h-feed > aside ul {
+    padding-left: 0; }
+  .h-feed > aside li {
+    list-style: none; }
 
 a {
   color: #687d77;
@@ -432,20 +436,22 @@ h5 {
 h6 {
   font-size: 0.8em; }
 
-article {
-  margin-bottom: 2.5em; }
-
 blockquote {
   background-color: #ecebf0;
   color: #353129;
   padding: 0em 0.5em 0.5em 0.5em; }
 
-article footer {
-  font-size: 0.9em; }
-article p:first-child {
-  margin-top: 0; }
-article p:last-child {
-  margin-bottom: 0; }
+article {
+  margin-bottom: 2.5em; }
+  article footer {
+    font-size: 0.9em; }
+  article p:first-child {
+    margin-top: 0; }
+  article p:last-child {
+    margin-bottom: 0; }
+
+.upcoming-event + .upcoming-event {
+  margin-top: 1em; }
 
 pre, code {
   overflow: auto; }
