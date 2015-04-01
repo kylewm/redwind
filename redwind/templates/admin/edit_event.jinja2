@@ -1,11 +1,36 @@
 {% extends "admin/edit_post.jinja2" %}
 {% block content_fields %}
   <div class="form-group">
-    <label>Title</label>
-    <input class="form-control" type="text" name="title" value="{{ post.title or '' }}"/>
+    <label for="title">Title</label>
+    <input class="form-control" type="text" name="title" id="title" value="{{ post.title or '' }}"/>
   </div>
+
+  <div class="form-group row">
+    <div class="col-md-6">
+    <label for="startField">Start</label>
+    <input class="form-control" name="start" id="startField" value="{{ post.start or '' }}"/>
+    </div>
+
+    <div class="col-md-6">
+    <label for="endField">End</label>
+    <input class="form-control" name="end" id="endField" value="{{ post.end or '' }}"/>
+    </div>
+  </div>
+
   <div class="form-group">
-    <label>Content</label>
-    <textarea class="form-control" name="content" id="content" rows="8">{{ post.content or '' }}</textarea>
+    <label for="content">Description</label>
+    <textarea class="form-control" name="content" id="content" rows="4">{{ post.content or '' }}</textarea>
   </div>
+
+  <div class="form-group">
+    <label for="venue">Venue</label>
+    <select class="form-control" name="venue" id="venue">
+      <option>No Venue</option>
+      {% for venue in venues %}
+        <option value="{{ venue.id }}" {% if post.venue == venue %}selected{% endif %}>{{ venue.name }}: {{ venue.location | geo_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+
 {% endblock content_fields %}

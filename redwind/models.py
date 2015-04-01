@@ -171,6 +171,8 @@ class Post(db.Model):
 
     title = db.Column(db.String(256))
     published = db.Column(db.DateTime, index=True)
+    start = db.Column(db.DateTime)
+    end = db.Column(db.DateTime)
     slug = db.Column(db.String(256))
 
     syndication = db.Column(JsonType)
@@ -211,6 +213,8 @@ class Post(db.Model):
         self.bookmark_of = []
         self.title = None
         self.published = None
+        self.start_time = None
+        self.end_time = None
         self.slug = None
         self.location = None
         self.syndication = []

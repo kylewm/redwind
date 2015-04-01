@@ -9,13 +9,19 @@
       {% if post.title %}
         <h1 class="p-name">{{ post.title }}</h1>
       {% endif %}
-      {% if post.post_type != 'event' %}
-      <h2>
-        <time class="dt-published" datetime="{{ post.published | isotime }}">
-          {{ post.published | date }}
-        </time>
-      </h2>
+
+      {% if post.post_type == 'event' %}
+        <h2>
+          {{ (post.start, post.end) | datetime_range }}
+        </h2>
+      {% else %}
+        <h2>
+          <time class="dt-published" datetime="{{ post.published | isotime }}">
+            {{ post.published | date }}
+          </time>
+        </h2>
       {% endif %}
+
       {% for reply_context in post.reply_contexts %}
         {{ full_context(post, reply_context, 'u-in-reply-to h-cite', 'in reply to') }}
       {% endfor %}

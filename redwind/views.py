@@ -659,10 +659,15 @@ def new_post(type):
         'save_draft': 'Save as Draft',
     }
 
+    if type == 'event':
+        venues = Venue.query.order_by(Venue.name).all()
+    else:
+        venues = []
+
     return render_template('admin/edit_' + type + '.jinja2',
                            edit_type='new', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
-                           button_text=button_text)
+                           button_text=button_text, venues=venues)
 
 
 @app.route('/edit')
@@ -694,9 +699,14 @@ def edit_by_id():
     if request.args.get('full'):
         template = 'admin/edit_post_all.jinja2'
 
+    if type == 'event':
+        venues = Venue.query.order_by(Venue.name).all()
+    else:
+        venues = []
+
     return render_template(template, edit_type='edit', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
-                           button_text=button_text)
+                           button_text=button_text, venues=venues)
 
 
 @app.route('/uploads')
@@ -767,6 +777,29 @@ def human_time(thedate, alternate=None):
         return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
     else:
         return thedate.strftime('%B %-d, %Y')
+
+
+@app.template_filter('datetime_range')
+def datetime_range(rng):
+    start, end = rng
+    if not start or not end:
+        return '???'
+
+    fmt1 = '%Y %B %-d, %-I:%M%P'
+    if start.date() == end.date():
+        fmt2 = '%-I:%M%P %Z'
+    else:
+        fmt2 = '%Y %B %-d, %-I:%M%P %Z'
+
+    return (
+        '<time class="dt-start" datetime="{}">{}</time>'
+        ' &mdash; <time class="dt-end" datetime="{}">{}</time>'
+    ).format(
+        isotime_filter(start),
+        start.strftime(fmt1),
+        isotime_filter(end),
+        end.strftime(fmt2)
+    )
 
 
 @app.template_filter('date')
@@ -888,7 +921,6 @@ def save_new():
 
 def save_post(post):
     was_draft = post.draft
-
     pub_str = request.form.get('published')
     if pub_str:
         pub = mf2util.parse_dt(pub_str)
@@ -896,6 +928,14 @@ def save_post(post):
             pub = pub.astimezone(datetime.timezone.utc)
             pub = pub.replace(tzinfo=None)
         post.published = pub
+
+    start_str = request.form.get('start')
+    if start_str:
+        post.start = mf2util.parse_dt(start_str)
+
+    end_str = request.form.get('end')
+    if end_str:
+        post.end = mf2util.parse_dt(end_str)
 
     if not post.published or was_draft:
         post.published = datetime.datetime.utcnow()
