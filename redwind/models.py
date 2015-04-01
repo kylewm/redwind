@@ -9,6 +9,7 @@ import os
 import os.path
 import json
 import urllib
+import datetime
 
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'
@@ -171,8 +172,10 @@ class Post(db.Model):
 
     title = db.Column(db.String(256))
     published = db.Column(db.DateTime, index=True)
-    start = db.Column(db.DateTime)
-    end = db.Column(db.DateTime)
+    start_utc = db.Column(db.DateTime)
+    end_utc = db.Column(db.DateTime)
+    start_utcoffset = db.Column(db.Interval)
+    end_utcoffset = db.Column(db.Interval)
     slug = db.Column(db.String(256))
 
     syndication = db.Column(JsonType)
@@ -243,6 +246,30 @@ class Post(db.Model):
 
     def photo_thumbnail(self, photo):
         return self.photo_url(photo) + '?size=medium'
+
+    @property
+    def start(self):
+        if self.start_utc and self.start_utcoffset:
+            return self.start_utc.replace(tzinfo=datetime.timezone(self.start_utcoffset))
+        return self.start_utc
+
+    @start.setter
+    def start(self, value):
+        print('setting start based on', value)
+        self.start_utc = value and value.replace(tzinfo=None)
+        self.start_utcoffset = value and value.utcoffset()
+
+    @property
+    def end(self):
+        if self.end_utc and self.end_utcoffset:
+            return self.end_utc.replace(tzinfo=datetime.timezone(self.end_utcoffset))
+        return self.end_utc
+
+    @end.setter
+    def end(self, value):
+        print('setting end based on', value)
+        self.end_utc = value and value.replace(tzinfo=None)
+        self.end_utcoffset = value and value.utcoffset()
 
     @property
     def permalink(self):

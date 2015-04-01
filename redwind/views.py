@@ -923,19 +923,21 @@ def save_post(post):
     was_draft = post.draft
     pub_str = request.form.get('published')
     if pub_str:
-        pub = mf2util.parse_dt(pub_str)
-        if pub.tzinfo:
-            pub = pub.astimezone(datetime.timezone.utc)
-            pub = pub.replace(tzinfo=None)
-        post.published = pub
+        post.published = mf2util.parse_dt(pub_str)
 
     start_str = request.form.get('start')
     if start_str:
-        post.start = mf2util.parse_dt(start_str)
+        start = mf2util.parse_dt(start_str)
+        if start:
+            post.start = start
+            post.start_utcoffset = start.utcoffset()
 
     end_str = request.form.get('end')
     if end_str:
-        post.end = mf2util.parse_dt(end_str)
+        end = mf2util.parse_dt(end_str)
+        if end:
+            post.end = end
+            post.end_utcoffset = end.utcoffset()
 
     if not post.published or was_draft:
         post.published = datetime.datetime.utcnow()
