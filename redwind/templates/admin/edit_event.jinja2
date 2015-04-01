@@ -25,7 +25,7 @@
   <div class="form-group">
     <label for="venue">Venue</label>
     <select class="form-control" name="venue" id="venue">
-      <option>No Venue</option>
+      <option value="">No Venue</option>
       {% for venue in venues %}
         <option value="{{ venue.id }}" {% if post.venue == venue %}selected{% endif %}>{{ venue.name }}: {{ venue.location | geo_name }}</option>
       {% endfor %}
