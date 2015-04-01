@@ -12,8 +12,10 @@ from config import Configuration
 
 engine = create_engine(Configuration.SQLALCHEMY_DATABASE_URI, echo=True)
 
-engine.execute('alter table post add column "start" type timestamp with time zone')
-engine.execute('alter table post add column "end" type timestamp with time zone')
+engine.execute('alter table post add column start_utc type timestamp')
+engine.execute('alter table post add column end_utc type timestamp')
+engine.execute('alter table post add column start_utcoffset type interval')
+engine.execute('alter table post add column end_utcoffset type interval')
 engine.execute('alter table post add column updated timestamp')
 
 
