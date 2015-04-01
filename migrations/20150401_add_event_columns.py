@@ -12,6 +12,8 @@ from config import Configuration
 
 engine = create_engine(Configuration.SQLALCHEMY_DATABASE_URI, echo=True)
 
-engine.execute('alter table post add column start datetime')
-engine.execute('alter table post add column end datetime')
-engine.execute('alter table post add column updated datetime')
+engine.execute('alter table post add column "start" type timestamp with time zone')
+engine.execute('alter table post add column "end" type timestamp with time zone')
+engine.execute('alter table post add column updated timestamp')
+
+
