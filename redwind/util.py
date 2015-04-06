@@ -235,6 +235,7 @@ TAG_TO_TYPE = {
     'c': 'checkin',
     'p': 'photo',
     'b': 'bookmark',
+    'e': 'event',
 }
 
 TYPE_TO_TAG = {v: k for k, v in TAG_TO_TYPE.items()}

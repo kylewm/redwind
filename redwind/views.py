@@ -23,6 +23,7 @@ import bs4
 import collections
 import datetime
 import hashlib
+import itertools
 import json
 import mf2util
 import operator
@@ -175,9 +176,9 @@ def index(before_ts=None):
     events = collect_upcoming_events()
     if request.args.get('feed') == 'atom':
         return render_posts_atom('Stream', 'index.atom', posts)
-    
+
     resp = make_response(
-        render_posts('Stream', posts, older, 
+        render_posts('Stream', posts, older,
                      events=collect_upcoming_events(),
                      template='home.jinja2'))
 
@@ -356,6 +357,14 @@ def post_associated_file(year, month, slug, filename):
 def post_by_date(post_type, year, month, day, index, slug):
     post = Post.load_by_historic_path('{}/{}/{:02d}/{:02d}/{}'.format(
         post_type, year, month, day, index))
+    if not post:
+        abort(404)
+    return redirect(post.permalink)
+
+
+@app.route('/<any({}):tag>/<tail>'.format(','.join(util.TAG_TO_TYPE)))
+def post_by_short_path(tag, tail):
+    post = Post.load_by_short_path('{}/{}'.format(tag, tail))
     if not post:
         abort(404)
     return redirect(post.permalink)
@@ -1047,7 +1056,19 @@ def save_post(post):
         while Post.load_by_path(unique_path):
             unique_path = '{}-{}'.format(base_path, idx)
             idx += 1
-        post.path = unique_path
+            post.path = unique_path
+
+    # generate short path
+    if not post.short_path:
+        short_base = '{}/{}'.format(
+            util.tag_for_post_type(post.post_type),
+            util.base60_encode(util.date_to_ordinal(post.published)))
+        short_paths = db.session.query(Post.short_path).filter(
+            Post.short_path.startswith(short_base)).all()
+        for idx in itertools.count(1):
+            post.short_path = short_base + util.base60_encode(idx)
+            if post.short_path not in short_paths:
+                break
 
     # TODO accept multiple photos and captions
     inphoto = request.files.get('photo')

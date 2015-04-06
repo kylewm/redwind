@@ -148,6 +148,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(256))
     historic_path = db.Column(db.String(256))
+    short_path = db.Column(db.String(16))
     post_type = db.Column(db.String(64))
     draft = db.Column(db.Boolean)
     deleted = db.Column(db.Boolean)
@@ -198,6 +199,10 @@ class Post(db.Model):
     @classmethod
     def load_by_path(cls, path):
         return cls.query.filter_by(path=path).first()
+
+    @classmethod
+    def load_by_short_path(cls, path):
+        return cls.query.filter_by(short_path=path).first()
 
     @classmethod
     def load_by_historic_path(cls, path):
@@ -275,6 +280,11 @@ class Post(db.Model):
     def permalink(self):
         site_url = get_settings().site_url or 'http://localhost'
         return '/'.join((site_url, self.path))
+
+    @property
+    def shortlink(self):
+        site_url = get_settings().site_url or 'http://localhost'
+        return '/'.join((site_url, self.short_path))
 
     def _dedupe(self, mentions):
         all_children = set()
