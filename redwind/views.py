@@ -1056,7 +1056,7 @@ def save_post(post):
         while Post.load_by_path(unique_path):
             unique_path = '{}-{}'.format(base_path, idx)
             idx += 1
-            post.path = unique_path
+        post.path = unique_path
 
     # generate short path
     if not post.short_path:
