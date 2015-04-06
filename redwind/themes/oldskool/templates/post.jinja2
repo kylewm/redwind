@@ -42,15 +42,16 @@
         {% include theme("_photos.jinja2") %}
       </div>
 
-      <div class="meta">
-        {% for tag in post.tags %}
-          <a class="p-category" href="{{url_for('posts_by_tag', tag=tag.name)}}">
-            #{{tag.name}}
-          </a>
-        {% endfor %}
-      </div>
-
       {% include theme("_location.jinja2") %}
+
+      {% if post.tags %}
+        <div class="meta">
+          <code>#</code>
+          {% for tag in post.tags %}
+            <a class="p-category" href="{{url_for('posts_by_tag', tag=tag.name)}}">{{tag.name}}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
       {% include theme("_syndication.jinja2") %}
 
       <div class="meta">

@@ -65,6 +65,7 @@
           </span>
         {% endif %}
         (<a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>)
+        <a href="{{ mention.url }}">#</a>
       </div>
       {{ mention.content | proxy_all | safe }}
       {% if mention._children %}
@@ -83,7 +84,7 @@
   <h3>other references</h3>
   <ul>
   {% for mention in post.references %}
-    <li><a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a></li>
+    <li><a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a> <a href="{{ mention.url }}">#</a></li>
   {% endfor %}
   </ul>
 {% endif %}

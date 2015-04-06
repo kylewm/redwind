@@ -495,3 +495,6 @@ pre, code {
     border-radius: 4px;
     background-color: #ecebf0;
     text-decoration: none; }
+
+i.fa {
+  display: none; }
