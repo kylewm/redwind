@@ -1,4 +1,3 @@
-from . import app
 from datetime import date
 from flask import url_for, current_app
 from flask.ext.themes2 import render_theme_template, get_theme
@@ -6,7 +5,7 @@ from markdown import markdown
 from smartypants import smartyPants
 import bleach
 import bs4
-import codecs
+
 import datetime
 import jwt
 import os
@@ -14,11 +13,10 @@ import os.path
 import random
 import re
 import requests
-import shutil
+
 import unicodedata
 import urllib
-import hmac
-import hashlib
+
 import mf2py
 from requests.exceptions import HTTPError, SSLError
 
@@ -67,7 +65,7 @@ def isoparse_with_tz(s):
 def isoformat(date):
     if date:
         if (isinstance(date, datetime.date)
-            and not isinstance(date, datetime.datetime)):
+                and not isinstance(date, datetime.datetime)):
             return date.isoformat()
         if date.tzinfo:
             date = date.astimezone(datetime.timezone.utc)
@@ -100,7 +98,7 @@ def filter_empty_keys(data):
 
 def download_resource(url, path):
     from .models import get_settings
-    app.logger.debug("downloading {} to {}".format(url, path))
+    current_app.logger.debug("downloading {} to {}".format(url, path))
     response = requests.get(urllib.parse.urljoin(get_settings().site_url, url),
                             stream=True, timeout=10)
     response.raise_for_status()
@@ -147,7 +145,7 @@ def person_to_microcard(contact, nick, soup):
 
         image = contact.image
         if image:
-            mcard_size = app.config.get('MICROCARD_SIZE', 24)
+            mcard_size = current_app.config.get('MICROCARD_SIZE', 24)
             image = imageproxy.construct_url(image, mcard_size)
             image_tag = soup.new_tag('img', src=image, alt='')
             a_tag.append(image_tag)
@@ -206,7 +204,7 @@ def autolink(plain, url_processor=url_to_link,
         return url_processor(url, soup)
 
     def process_nick(m):
-        from . import db
+        from .extensions import db
         from .models import Nick
         name = m.group(1)
         nick = Nick.query.filter(
@@ -255,7 +253,7 @@ def parse_date(tag):
         if ordinal:
             return date_from_ordinal(ordinal)
     except ValueError:
-        app.logger.warn("Could not parse base60 date %s", tag)
+        current_app.logger.warn("Could not parse base60 date %s", tag)
 
 
 def parse_index(tag):
@@ -317,7 +315,7 @@ def multiline_string_to_list(s):
 
 
 def image_root_path():
-    return app.config.get('IMAGE_ROOT_PATH', app.root_path)
+    return current_app.config.get('IMAGE_ROOT_PATH', current_app.root_path)
 
 
 def markdown_filter(data, img_path=None, url_processor=url_to_link,
@@ -410,8 +408,8 @@ def fetch_html(url):
             if encodings:
                 response.encoding = encodings[0]
     else:
-        app.logger.warn('failed to fetch url %s. got response %s.',
-                        url, response)
+        current_app.logger.warn('failed to fetch url %s. got response %s.',
+                                url, response)
     return response
 
 
@@ -421,11 +419,11 @@ def clean_foreign_html(html):
 
 def jwt_encode(obj):
     obj['nonce'] = random.randint(1000000, 2 ** 31)
-    return jwt.encode(obj, app.config['SECRET_KEY'])
+    return jwt.encode(obj, current_app.config['SECRET_KEY'])
 
 
 def jwt_decode(s):
-    return jwt.decode(s, app.config['SECRET_KEY'])
+    return jwt.decode(s, current_app.config['SECRET_KEY'])
 
 
 def render_themed(template, **context):
@@ -455,11 +453,11 @@ def posse_post_discovery(post, regex):
                 if regex.match(url):
                     return url
         except HTTPError:
-            app.logger.exception('Could not fetch original')
+            current_app.logger.exception('Could not fetch original')
         except SSLError:
-            app.logger.exception('SSL Error')
+            current_app.logger.exception('SSL Error')
         except Exception as e:
-            app.logger.exception('MF2 Parser error: %s', e)
+            current_app.logger.exception('MF2 Parser error: %s', e)
 
     def find_first_syndicated(originals):
         for original in originals:

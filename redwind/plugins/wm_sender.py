@@ -1,37 +1,45 @@
-from .. import app
-from .. import queue
 from .. import hooks
 from ..models import Post
+from ..tasks import queue, session_scope
 from bs4 import BeautifulSoup
-import urllib
+import logging
 import re
 import requests
+import sys
+import urllib
+from flask import current_app
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def register():
+def register(app):
+    #app.register_blueprint(wm_sender)
     hooks.register('post-saved', send_webmentions)
 
 
 def send_webmentions(post, args):
     if args.get('action') in ('save_draft', 'publish_quietly'):
-        app.logger.debug('skipping webmentions for {}'.format(post.id))
+        logger.debug('skipping webmentions for {}'.format(post.id))
         return
 
     try:
-        app.logger.debug("queueing webmentions for {}".format(post.id))
-        queue.enqueue(do_send_webmentions, post.id)
+        logger.debug("queueing webmentions for {}".format(post.id))
+        queue.enqueue(do_send_webmentions, post.id, current_app.config)
         return True, 'Success'
 
     except Exception as e:
-        app.logger.exception('sending webmentions')
+        logger.exception('sending webmentions')
         return False, "Exception while sending webmention: {}"\
             .format(e)
 
 
-def do_send_webmentions(post_id):
-    app.logger.debug("sending mentions for {}".format(post_id))
-    post = Post.load_by_id(post_id)
-    return handle_new_or_edit(post)
+def do_send_webmentions(post_id, app_config):
+    with session_scope(app_config) as session:
+        logger.debug("sending mentions for {}".format(post_id))
+        post = Post.load_by_id(post_id, session)
+        return handle_new_or_edit(post)
 
 
 def get_source_url(post):
@@ -45,14 +53,14 @@ def get_target_urls(post):
     target_urls += post.repost_of
     target_urls += post.like_of
 
-    app.logger.debug("search post content {}".format(post.content_html))
+    logger.debug("search post content {}".format(post.content_html))
 
     soup = BeautifulSoup(post.content_html)
     for link in soup.find_all('a'):
         link_target = link.get('href')
         if link_target:
-            app.logger.debug("found link {} with href {}"
-                             .format(link, link_target))
+            logger.debug(
+                'found link {} with href {}'.format(link, link_target))
             target_urls.append(link_target.strip())
 
     return target_urls
@@ -70,8 +78,8 @@ get_response.cached_responses = {}
 
 def handle_new_or_edit(post):
     target_urls = get_target_urls(post)
-    app.logger.debug("Sending webmentions to these urls {}"
-                     .format(" ; ".join(target_urls)))
+    logger.debug(
+        'Sending webmentions to these urls {}'.format(" ; ".join(target_urls)))
     results = []
     for target_url in target_urls:
         results.append(send_mention(post, target_url))
@@ -79,22 +87,21 @@ def handle_new_or_edit(post):
 
 
 def send_mention(post, target_url):
-    app.logger.debug("Looking for webmention endpoint on %s",
-                     target_url)
+    logger.debug("Looking for webmention endpoint on %s", target_url)
 
     success, explanation = check_content_type_and_size(target_url)
     if success:
         if supports_webmention(target_url):
-            app.logger.debug("Site supports webmention")
+            logger.debug("Site supports webmention")
             success, explanation = send_webmention(post, target_url)
 
         elif supports_pingback(target_url):
-            app.logger.debug("Site supports pingback")
+            logger.debug("Site supports pingback")
             success, explanation = send_pingback(post, target_url)
-            app.logger.debug("Sending pingback successful: %s", success)
+            logger.debug("Sending pingback successful: %s", success)
 
         else:
-            app.logger.debug("Site does not support mentions")
+            logger.debug("Site does not support mentions")
             success = False
             explanation = 'Site does not support webmentions or pingbacks'
 
@@ -130,12 +137,12 @@ def supports_webmention(target_url):
 
 
 def find_webmention_endpoint(target_url):
-    app.logger.debug("looking for webmention endpoint in %s", target_url)
+    logger.debug("looking for webmention endpoint in %s", target_url)
     response = get_response(target_url)
-    app.logger.debug("looking for webmention endpoint in headers and body")
+    logger.debug("looking for webmention endpoint in headers and body")
     endpoint = (find_webmention_endpoint_in_headers(response.headers)
                 or find_webmention_endpoint_in_html(response.text))
-    app.logger.debug("webmention endpoint %s %s", response.url, endpoint)
+    logger.debug("webmention endpoint %s %s", response.url, endpoint)
     return endpoint and urllib.parse.urljoin(response.url, endpoint)
 
 
@@ -158,7 +165,7 @@ def find_webmention_endpoint_in_html(body):
 
 
 def send_webmention(post, target_url):
-    app.logger.debug(
+    logger.debug(
         "Sending webmention from %s to %s",
         get_source_url(post), target_url)
 
@@ -177,14 +184,14 @@ def send_webmention(post, target_url):
         #from https://github.com/vrypan/webmention-tools/blob/master/
         #             webmentiontools/send.py
         if response.status_code // 100 != 2:
-            app.logger.warn(
+            logger.warn(
                 "Failed to send webmention for %s. "
                 "Response status code: %s, %s",
                 target_url, response.status_code, response.text)
             return False, "Status code: {}, Response: {}".format(
                 response.status_code, response.text)
         else:
-            app.logger.debug(
+            logger.debug(
                 "Sent webmention successfully to %s. Sender response: %s:",
                 target_url, response.text)
             return True, "Successful"
@@ -212,15 +219,15 @@ def send_pingback(post, target_url):
         endpoint = find_pingback_endpoint(target_url)
         source_url = get_source_url(post)
 
-        payload = (
-            """<?xml version="1.0" encoding="iso-8859-1"?><methodCall>"""
-            """<methodName>pingback.ping</methodName><params><param>"""
-            """<value><string>{}</string></value></param><param><value>"""
-            """<string>{}</string></value></param></params></methodCall>"""
-            .format(source_url, target_url))
+        payload = """\
+<?xml version="1.0" encoding="iso-8859-1"?><methodCall>
+<methodName>pingback.ping</methodName><params><param>
+<value><string>{}</string></value></param><param><value>
+<string>{}</string></value></param></params></methodCall>"""
+        payload = payload.format(source_url, target_url)
         headers = {'content-type': 'application/xml'}
         response = requests.post(endpoint, data=payload, headers=headers)
-        app.logger.debug(
+        logger.debug(
             "Pingback to %s response status code %s. Message %s",
             target_url, response.status_code, response.text)
 

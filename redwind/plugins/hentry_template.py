@@ -1,4 +1,5 @@
 
+
 def fill(author_url=None, author_name=None, author_image=None, pub_date=None,
          title=None, content=None, permalink=None):
 

@@ -13,7 +13,7 @@
   <id>{{request.url}}</id>
   <author>
     <name>{{ settings.author_name }}</name>
-    <uri>{{url_for('index', _external=True)}}</uri>
+    <uri>{{url_for('views.index', _external=True)}}</uri>
   </author>
   <updated>{{ posts | first | attr('published') | isotime }}</updated>
 
@@ -49,7 +49,7 @@
             &lt;img src="{{ map_image }}"/>
           {% endif %}
         {% endif %}
-        
+
         {% for photo in (post.photos or []) %}
           &lt;a href="{{ post.photo_url(photo) }}">
             &lt;img src="{{ post.photo_thumbnail(photo) }}" />

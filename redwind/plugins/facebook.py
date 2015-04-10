@@ -1,30 +1,39 @@
-from .. import app
-from .. import db
+from ..extensions import db
 from .. import util
 from .. import hooks
-from .. import queue
+from ..tasks import queue, session_scope
 from ..models import Post, Setting, get_settings
 
 
 from flask.ext.login import login_required
-from flask import request, redirect, url_for, render_template, flash,\
-    has_request_context
+from flask import (
+    request, redirect, url_for, render_template, flash, has_request_context,
+    Blueprint, current_app,
+)
 
 import requests
 import json
 import urllib
+import logging
 
 
-def register():
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+facebook = Blueprint('facebook', __name__)
+
+
+def register(app):
+    app.register_blueprint(facebook)
     hooks.register('post-saved', send_to_facebook)
 
 
-@app.route('/authorize_facebook')
+@facebook.route('/authorize_facebook')
 @login_required
 def authorize_facebook():
     import urllib.parse
     import urllib.request
-    redirect_uri = url_for('authorize_facebook', _external=True)
+    redirect_uri = url_for('.authorize_facebook', _external=True)
     params = {
         'client_id': get_settings().facebook_app_id,
         'redirect_uri': redirect_uri,
@@ -44,7 +53,7 @@ def authorize_facebook():
         access_token = payload[b'access_token'][0].decode('ascii')
         Setting.query.get('facebook_access_token').value = access_token
         db.session.commit()
-        return redirect(url_for('edit_settings'))
+        return redirect(url_for('admin.edit_settings'))
     else:
         return redirect('https://graph.facebook.com/oauth/authorize?'
                         + urllib.parse.urlencode(params))
@@ -56,38 +65,39 @@ def send_to_facebook(post, args):
             return False, 'Current user is not authorized to post to Facebook'
 
         try:
-            app.logger.debug('auto-posting to Facebook %s', post.id)
-            queue.enqueue(do_send_to_facebook, post.id)
+            logger.debug('auto-posting to Facebook %s', post.id)
+            queue.enqueue(do_send_to_facebook, post.id, current_app.config)
             return True, 'Success'
 
         except Exception as e:
-            app.logger.exception('auto-posting to facebook')
+            logger.exception('auto-posting to facebook')
             return False, 'Exception while auto-posting to FB: {}'.format(e)
 
 
-def do_send_to_facebook(post_id):
-    app.logger.debug('auto-posting to facebook for %s', post_id)
-    post = Post.load_by_id(post_id)
+def do_send_to_facebook(post_id, app_config):
+    with session_scope(app_config) as session:
+        logger.debug('auto-posting to facebook for %s', post_id)
+        post = Post.load_by_id(post_id, session)
 
-    preview = guess_content(post)
-    post_type = 'post'
-    img_url = None
+        preview = guess_content(post)
+        post_type = 'post'
+        img_url = None
 
-    if post.post_type == 'photo' and post.photos:
-        img_url = post.photo_url(post.photos[0])
-        post_type = 'photo'
+        if post.post_type == 'photo' and post.photos:
+            img_url = post.photo_url(post.photos[0])
+            post_type = 'photo'
 
-    facebook_url = handle_new_or_edit(post, preview, img_url,
-                                      post_type, album_id=None)
-    db.session.commit()
-    if has_request_context():
-        flash('Shared on Facebook: <a href="{}">Original</a>, '
-              '<a href="{}">On Facebook</a><br/>'
-              .format(post.permalink, facebook_url))
-        return redirect(post.permalink)
+        facebook_url = handle_new_or_edit(post, preview, img_url,
+                                          post_type, album_id=None)
+        session.commit()
+        if has_request_context():
+            flash('Shared on Facebook: <a href="{}">Original</a>, '
+                  '<a href="{}">On Facebook</a><br/>'
+                  .format(post.permalink, facebook_url))
+            return redirect(post.permalink)
 
 
-@app.route('/share_on_facebook', methods=['GET', 'POST'])
+@facebook.route('/share_on_facebook', methods=['GET', 'POST'])
 @login_required
 def share_on_facebook():
     from .twitter import collect_images
@@ -101,12 +111,12 @@ def share_on_facebook():
 
         albums = []
         if imgs:
-            app.logger.debug('fetching user albums')
+            logger.debug('fetching user albums')
             resp = requests.get(
                 'https://graph.facebook.com/v2.2/me/albums',
                 params={'access_token': get_settings().facebook_access_token})
             resp.raise_for_status()
-            app.logger.debug('user albums response %s: %s', resp, resp.text)
+            logger.debug('user albums response %s: %s', resp, resp.text)
             albums = resp.json().get('data', [])
 
         return render_template('admin/share_on_facebook.jinja2', post=post,
@@ -136,9 +146,9 @@ def share_on_facebook():
 
     except Exception as e:
         if has_request_context():
-            app.logger.exception('posting to facebook')
+            logger.exception('posting to facebook')
             flash('Share on Facebook Failed! Exception: {}'.format(e))
-        return redirect(url_for('index'))
+        return redirect(url_for('views.index'))
 
 
 class PersonTagger:
@@ -166,7 +176,7 @@ class PersonTagger:
 
 
 def create_album(name, msg):
-    app.logger.debug('creating new facebook album %s', name)
+    logger.debug('creating new facebook album %s', name)
     resp = requests.post(
         'https://graph.facebook.com/v2.0/me/albums', data={
             'access_token': get_settings().facebook_access_token,
@@ -175,17 +185,18 @@ def create_album(name, msg):
             'privacy': json.dumps({'value': 'EVERYONE'}),
         })
     resp.raise_for_status()
-    app.logger.debug('new facebook album response: %s, %s', resp, resp.text)
+    logger.debug('new facebook album response: %s, %s', resp, resp.text)
     return resp.json()['id']
 
 
 def handle_new_or_edit(post, preview, img_url, post_type,
                        album_id):
-    app.logger.debug('publishing to facebook')
+    logger.debug('publishing to facebook')
 
     # TODO I cannot figure out how to tag people via the FB API
     # tagger = PersonTagger()
-    # preview = util.autolink(preview, url_processor=None, person_processor=tagger)
+    # preview = util.autolink(preview, url_processor=None,
+    #                         person_processor=tagger)
 
     post_args = {
         'access_token': get_settings().facebook_access_token,
@@ -216,22 +227,22 @@ def handle_new_or_edit(post, preview, img_url, post_type,
             post_args['picture'] = img_url
 
     if is_photo:
-        app.logger.debug('Sending photo %s to album %s', post_args, album_id)
+        logger.debug('Sending photo %s to album %s', post_args, album_id)
         response = requests.post(
             'https://graph.facebook.com/v2.0/{}/photos'.format(
                 album_id if album_id else 'me'),
             data=post_args)
     else:
-        app.logger.debug('Sending post %s', post_args)
+        logger.debug('Sending post %s', post_args)
         response = requests.post('https://graph.facebook.com/v2.0/me/feed',
                                  data=post_args)
     response.raise_for_status()
-    app.logger.debug("Got response from facebook %s", response)
+    logger.debug("Got response from facebook %s", response)
 
     if 'json' in response.headers['content-type']:
         result = response.json()
 
-    app.logger.debug('published to facebook. response {}'.format(result))
+    logger.debug('published to facebook. response {}'.format(result))
     if result:
         if is_photo:
             facebook_photo_id = result['id']

@@ -1,4 +1,4 @@
-from . import login_mgr
+from .extensions import login_mgr
 from .models import User
 
 

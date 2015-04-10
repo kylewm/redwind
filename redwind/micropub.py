@@ -1,8 +1,9 @@
-from . import app
 from . import auth
 from . import util
 from .models import get_settings
-from flask import request, abort, make_response, url_for, jsonify
+from flask import (
+    request, abort, make_response, url_for, jsonify, Blueprint, current_app,
+)
 from flask.ext.login import login_user
 import datetime
 import jwt
@@ -16,8 +17,10 @@ SYNDICATION_TARGETS = {
     'https://kylewm.wordpress.com': 'wordpress',
 }
 
+micropub = Blueprint('micropub', __name__)
 
-@app.route('/token', methods=['POST'])
+
+@micropub.route('/token', methods=['POST'])
 def token_endpoint():
     code = request.form.get('code')
     me = request.form.get('me')
@@ -25,9 +28,9 @@ def token_endpoint():
     client_id = request.form.get('client_id')
     state = request.form.get('state')
 
-    app.logger.debug("received access token request with code=%s, "
-                     "me=%s, redirect_uri=%s, client_id=%s, state=%s",
-                     code, me, redirect_uri, client_id, state)
+    current_app.logger.debug("received access token request with code=%s, "
+                             "me=%s, redirect_uri=%s, client_id=%s, state=%s",
+                             code, me, redirect_uri, client_id, state)
 
     # delegate to indieauth to authenticate this token request
     auth_endpoint = 'https://indieauth.com/auth'
@@ -39,8 +42,9 @@ def token_endpoint():
         'state': state,
     })
 
-    app.logger.debug("raw verification response from indieauth %s, %s, %s",
-                     response, response.headers, response.text)
+    current_app.logger.debug(
+        "raw verification response from indieauth %s, %s, %s",
+        response, response.headers, response.text)
 
     response.raise_for_status()
 
@@ -48,11 +52,12 @@ def token_endpoint():
     auth_me = resp_data.get('me', [])
     auth_scope = resp_data.get('scope', [])
 
-    app.logger.debug("verification response from indieauth. me=%s, "
-                     "client_id=%s, scope=%s", auth_me, auth_scope)
+    current_app.logger.debug(
+        "verification response from indieauth. me=%s, client_id=%s, scope=%s",
+        auth_me, auth_scope)
 
     if me not in auth_me:
-        app.logger.warn(
+        current_app.logger.warn(
             "rejecting access token request me=%s, expected me=%s",
             me, auth_me)
         abort(400)
@@ -64,39 +69,39 @@ def token_endpoint():
         'date_issued': util.isoformat(datetime.datetime.utcnow()),
     })
 
-    app.logger.debug("generating access token %s", token)
+    current_app.logger.debug("generating access token %s", token)
 
     response_body = urllib.parse.urlencode({
         'access_token': token,
         'me': me,
         'scope': ' '.join(auth_scope),
     })
-    app.logger.debug("returning urlencoded response %s", response_body)
+    current_app.logger.debug("returning urlencoded response %s", response_body)
 
     return make_response(
         response_body, 200,
         {'Content-Type': 'application/x-www-form-urlencoded'})
 
 
-@app.route('/micropub', methods=['GET', 'POST'])
+@micropub.route('/micropub', methods=['GET', 'POST'])
 def micropub_endpoint():
-    app.logger.info(
+    current_app.logger.info(
         "received micropub request %s, args=%s, form=%s, headers=%s",
         request, request.args, request.form, request.headers)
 
     if request.method == 'GET':
-        app.logger.debug('micropub GET request %s -> %s', request,
-                         request.args)
+        current_app.logger.debug('micropub GET request %s -> %s', request,
+                                 request.args)
         q = request.args.get('q')
         if q == 'syndicate-to':
-            app.logger.debug('returning syndication targets')
+            current_app.logger.debug('returning syndication targets')
             response = make_response(urllib.parse.urlencode([
                 ('syndicate-to[]', target) for target in SYNDICATION_TARGETS]))
             response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
             return response
 
         elif q in ('actions', 'json_actions'):
-            app.logger.debug('returning action handlers')
+            current_app.logger.debug('returning action handlers')
             reply_url = url_for('new_post', type='reply', _external=True)
             repost_url = url_for('new_post', type='share', _external=True)
             like_url = url_for('new_post', type='like', _external=True)
@@ -125,20 +130,21 @@ def micropub_endpoint():
         token = request.form.get('access_token')
 
     if not token:
-        app.logger.warn('hit micropub endpoint with no access token')
+        current_app.logger.warn('hit micropub endpoint with no access token')
         abort(401)
 
     try:
         decoded = util.jwt_decode(token)
     except jwt.DecodeError as e:
-        app.logger.warn('could not decode access token: %s', e)
+        current_app.logger.warn('could not decode access token: %s', e)
         abort(401)
 
     me = decoded.get('me')
     parsed = urllib.parse.urlparse(me)
     user = auth.load_user(parsed.netloc)
     if not user:
-        app.logger.warn('received valid access token for invalid user: %s', me)
+        current_app.logger.warn(
+            'received valid access token for invalid user: %s', me)
         abort(401)
 
     in_reply_to = request.form.get('in-reply-to')
@@ -184,11 +190,15 @@ def micropub_endpoint():
         'syndicate-to': [SYNDICATION_TARGETS.get(to) for to in syndicate_to],
         'hidden': 'true' if in_reply_to or like_of or bookmark else 'false',
     })
-    with app.test_request_context(base_url=get_settings().site_url, path='/save_new',
-                                  method='POST', data=translated):
-        app.logger.debug('received fake request %s: %s', request, request.args)
+    with current_app.test_request_context(
+            base_url=get_settings().site_url, path='/save_new',
+            method='POST', data=translated
+    ):
+        current_app.logger.debug('received fake request %s: %s',
+                                 request, request.args)
         login_user(user)
-        app.logger.debug('successfully authenticated as user %s => %s', me, user)
+        current_app.logger.debug('successfully authenticated as user %s => %s',
+                                 me, user)
         from . import views
         resp = views.save_new()
         return make_response('Created', 201, {'Location': resp.location})

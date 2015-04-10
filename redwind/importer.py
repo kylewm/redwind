@@ -1,4 +1,4 @@
-from . import db
+from .extensions import db
 from .models import Setting, Post, Contact, Venue, Tag, Nick, Mention, Context
 import datetime
 
@@ -16,7 +16,7 @@ def import_all(blob):
     db.session.add_all([import_post(p, tags, venues) for p in blob['posts']])
     db.session.commit()
 
-    
+
 def import_datetime(dt):
     if dt:
         return datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S')
@@ -119,4 +119,3 @@ def import_mention(blob):
     m.syndication = blob['syndication']
     m.reftype = blob['reftype']
     return m
-

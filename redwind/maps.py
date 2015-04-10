@@ -1,8 +1,7 @@
 """
 Generate static map images
 """
-from flask import url_for
-from redwind import app
+from flask import url_for, current_app
 from redwind import util
 import hashlib
 import os
@@ -38,7 +37,8 @@ def get_map_image(width, height, maxzoom, markers):
     hash = m.hexdigest()
 
     relpath = os.path.join('map', hash + '.png')
-    abspath = os.path.join(util.image_root_path(), app.static_folder, relpath)
+    abspath = os.path.join(util.image_root_path(),
+                           current_app.static_folder, relpath)
 
     if not os.path.exists(abspath):
         map_url = 'http://static-maps.kylewm.com/img.php?' + query

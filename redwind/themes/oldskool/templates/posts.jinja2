@@ -60,10 +60,10 @@
       <div>
         <h1>.:{{settings.site_title}}:.</h1>
         <ul>
-          <li><a href="{{ url_for('index') }}">Stream</a></li>
-          <li><a href="{{ url_for('posts_by_type', plural_type='articles') }}">Articles</a></li>
-          <li><a href="{{ url_for('everything') }}">Everything</a></li>
-          <li><a href="{{ url_for('tag_cloud') }}">Tags</a></li>
+          <li><a href="{{ url_for('.index') }}">Stream</a></li>
+          <li><a href="{{ url_for('.posts_by_type', plural_type='articles') }}">Articles</a></li>
+          <li><a href="{{ url_for('.everything') }}">Everything</a></li>
+          <li><a href="{{ url_for('.tag_cloud') }}">Tags</a></li>
         </ul>
       </div>
 
@@ -92,12 +92,12 @@
             </div> <!-- .upcoming-event -->
           {% endfor %}
         </div>
-        
+
       {% endif %}
 
       <div>
         <h1>.:search:.</h1>
-        <form method="GET" action="{{url_for('search')}}">
+        <form method="GET" action="{{url_for('.search')}}">
           <input name="q" style="width:65%"/>
           <button type="submit" style="width:25%">Go</button>
         </form>

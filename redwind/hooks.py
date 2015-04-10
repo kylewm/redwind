@@ -1,4 +1,4 @@
-from . import app
+
 
 actions = {}
 
@@ -9,6 +9,6 @@ def register(hook, action):
 
 
 def fire(hook, *args, **kwargs):
-    app.logger.debug('firing hook %s', hook)
+    #app.logger.debug('firing hook %s', hook)
     return [action(*args, **kwargs)
             for action in actions.get(hook, [])]

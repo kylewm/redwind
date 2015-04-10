@@ -1,18 +1,25 @@
-from . import app
+from . import contexts
 from .models import Venue
 from .views import geo_name
-from flask import request, jsonify, redirect, url_for
+
+from flask import (
+    request, jsonify, redirect, url_for, Blueprint, current_app,
+    render_template,
+)
 import datetime
 import mf2py
 import mf2util
 
 
-@app.route('/api/mf2')
+services = Blueprint('services', __name__)
+
+
+@services.route('/api/mf2')
 def old_convert_mf2():
     return redirect(url_for('convert_mf2'))
 
 
-@app.route('/services/mf2')
+@services.route('/services/mf2')
 def convert_mf2():
     url = request.args.get('url')
     if url:
@@ -27,12 +34,12 @@ def convert_mf2():
 </form></body></html> """
 
 
-@app.route('/api/mf2util')
+@services.route('/api/mf2util')
 def old_convert_mf2util():
     return redirect(url_for('convert_mf2util'))
 
 
-@app.route('/services/mf2util')
+@services.route('/services/mf2util')
 def convert_mf2util():
     def dates_to_string(json):
         if isinstance(json, dict):
@@ -61,7 +68,7 @@ def convert_mf2util():
 </form></body></html>"""
 
 
-@app.route('/services/fetch_profile')
+@services.route('/services/fetch_profile')
 def fetch_profile():
     url = request.args.get('url')
     if not url:
@@ -127,7 +134,7 @@ def fetch_profile():
         return resp
 
 
-@app.route('/services/nearby')
+@services.route('/services/nearby')
 def nearby_venues():
     lat = float(request.args.get('latitude'))
     lng = float(request.args.get('longitude'))
@@ -145,3 +152,19 @@ def nearby_venues():
             'geocode': geo_name(venue.location),
         } for venue in venues[:10]]
     })
+
+
+@services.route('/services/fetch_context')
+def fetch_context_service():
+    results = []
+    for url in request.args.getlist('url[]'):
+        ctx = contexts.create_context(url)
+        results.append({
+            'title': ctx.title,
+            'permalink': ctx.permalink,
+            'html': render_template(
+                'admin/_context.jinja2', type=request.args.get('type'),
+                context=ctx),
+        })
+
+    return jsonify({'contexts': results})

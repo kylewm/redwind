@@ -1,15 +1,21 @@
 import requests
 import json
-from .. import app
-from .. import db
 from .. import hooks
-from .. import models
-from .. import queue
+from ..models import Post, Venue
+from ..tasks import queue, session_scope
 from .. import views
-from flask import request, jsonify
+from flask import request, jsonify, Blueprint, current_app
+import logging
 
 
-def register():
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+locations = Blueprint('locations', __name__)
+
+
+def register(app):
+    app.register_blueprint(locations)
     hooks.register('post-saved', reverse_geocode)
     hooks.register('venue-saved', reverse_geocode_venue)
 
@@ -19,34 +25,36 @@ def reverse_geocode(post, args):
 
 
 def reverse_geocode_venue(venue, args):
-    queue.enqueue(do_reverse_geocode_venue, venue.id)
+    queue.enqueue(do_reverse_geocode_venue, venue.id, current_app.config)
 
 
-def do_reverse_geocode_post(postid):
-    post = models.Post.load_by_id(postid)
-    if post.location and 'latitude' in post.location \
-       and 'longitude' in post.location:
-        adr = do_reverse_geocode(post.location['latitude'],
-                                 post.location['longitude'])
-        # copy the dict so that the ORM recognizes
-        # that it changed
-        post.location = dict(post.location)
-        post.location.update(adr)
-        db.session.commit()
+def do_reverse_geocode_post(postid, app_config):
+    with session_scope(app_config) as session:
+        post = Post.load_by_id(postid, session)
+        if post.location and 'latitude' in post.location \
+           and 'longitude' in post.location:
+            adr = do_reverse_geocode(post.location['latitude'],
+                                     post.location['longitude'])
+            # copy the dict so that the ORM recognizes
+            # that it changed
+            post.location = dict(post.location)
+            post.location.update(adr)
+            session.commit()
 
 
-def do_reverse_geocode_venue(venueid):
-    venue = models.Venue.query.get(venueid)
-    if venue.location and 'latitude' in venue.location \
-       and 'longitude' in venue.location:
-        adr = do_reverse_geocode(venue.location['latitude'],
-                                 venue.location['longitude'])
-        # copy the dict so the ORM actually recognizes
-        # that it changed
-        venue.location = dict(venue.location)
-        venue.location.update(adr)
-        venue.update_slug(views.geo_name(venue.location))
-        db.session.commit()
+def do_reverse_geocode_venue(venueid, app_config):
+    with session_scope(app_config) as session:
+        venue = session.query(Venue).get(venueid)
+        if venue.location and 'latitude' in venue.location \
+           and 'longitude' in venue.location:
+            adr = do_reverse_geocode(venue.location['latitude'],
+                                     venue.location['longitude'])
+            # copy the dict so the ORM actually recognizes
+            # that it changed
+            venue.location = dict(venue.location)
+            venue.location.update(adr)
+            venue.update_slug(views.geo_name(venue.location))
+            session.commit()
 
 
 def do_reverse_geocode(lat, lng):
@@ -56,7 +64,7 @@ def do_reverse_geocode(lat, lng):
         else:
             return adr.get('county') or adr.get('state')
 
-    app.logger.debug('reverse geocoding with nominatum')
+    logger.debug('reverse geocoding with nominatum')
     r = requests.get('http://nominatim.openstreetmap.org/reverse',
                      params={
                          'lat': lat,
@@ -66,8 +74,7 @@ def do_reverse_geocode(lat, lng):
     r.raise_for_status()
 
     data = json.loads(r.text)
-    app.logger.debug('received response %s',
-                     json.dumps(data, indent=True))
+    logger.debug('received response %s', json.dumps(data, indent=True))
 
     adr = data.get('address', {})
 
@@ -89,7 +96,7 @@ def do_reverse_geocode(lat, lng):
     }
 
 
-@app.route('/services/geocode')
+@locations.route('/services/geocode')
 def reverse_geocode_service():
     lat = request.args.get('latitude')
     lng = request.args.get('longitude')

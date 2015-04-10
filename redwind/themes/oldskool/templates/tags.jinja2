@@ -7,7 +7,7 @@
     {% for tag in tags %}
       <a class="p-category" style="font-size: {{tag.size}}em"
         title="{{tag.count}}"
-        href="{{url_for('posts_by_tag', tag=tag.name)}}">#{{tag.name}}</a>
+        href="{{url_for('.posts_by_tag', tag=tag.name)}}">#{{tag.name}}</a>
     {% endfor %}
   </p>
   </main>

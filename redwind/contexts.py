@@ -1,13 +1,13 @@
-from . import app
-from . import db
 from . import hooks
 from . import util
-
+from .extensions import db
 from .models import Context
+
 import bs4
 import mf2py
 import mf2util
-from flask import request, render_template, jsonify
+
+from flask import current_app
 
 
 def fetch_contexts(post):
@@ -18,7 +18,7 @@ def fetch_contexts(post):
 
 
 def do_fetch_context(post, context_attr, urls):
-    app.logger.debug("fetching urls %s", urls)
+    current_app.logger.debug("fetching urls %s", urls)
     old_contexts = getattr(post, context_attr)
     new_contexts = [create_context(url) for url in urls]
 
@@ -45,14 +45,15 @@ def create_context(url):
         response.raise_for_status()
 
         context = Context.query.filter_by(url=url).first()
-        app.logger.debug(
+        current_app.logger.debug(
             'checked for pre-existing context for this url: %s', context)
         blob = mf2py.Parser(doc=response.text, url=url).to_dict()
         if blob:
-            app.logger.debug('parsed successfully by mf2py: %s', url)
+            current_app.logger.debug('parsed successfully by mf2py: %s', url)
             entry = mf2util.interpret(blob, url)
             if entry:
-                app.logger.debug('parsed successfully by mf2util: %s', url)
+                current_app.logger.debug(
+                    'parsed successfully by mf2util: %s', url)
                 published = entry.get('published')
                 content = util.clean_foreign_html(entry.get('content', ''))
                 content_plain = util.format_as_text(
@@ -80,35 +81,19 @@ def create_context(url):
                 context.published = published
                 context.title = title
     except:
-        app.logger.exception(
+        current_app.logger.exception(
             'Could not fetch context for url %s, received response %s',
             url, response)
 
     if not context:
-        app.logger.debug('Generating default context: %s', url)
+        current_app.logger.debug('Generating default context: %s', url)
         context = Context()
         context.url = context.permalink = url
         if response:
             html = response.text
             soup = bs4.BeautifulSoup(html)
             if soup.title:
-                app.logger.debug('Found title: %s', soup.title.string)
+                current_app.logger.debug('Found title: %s', soup.title.string)
                 context.title = soup.title.string
 
     return context
-
-
-@app.route('/services/fetch_context')
-def fetch_context_service():
-    results = []
-    for url in request.args.getlist('url[]'):
-        ctx = create_context(url)
-        results.append({
-            'title': ctx.title,
-            'permalink': ctx.permalink,
-            'html': render_template(
-                'admin/_context.jinja2', type=request.args.get('type'),
-                context=ctx),
-        })
-
-    return jsonify({'contexts': results})

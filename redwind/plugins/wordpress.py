@@ -1,19 +1,21 @@
-from .. import app
-from .. import db
-from .. import util
 from .. import hooks
-from .. import queue
+from ..tasks import queue, session_scope
 from ..models import Post, Setting, get_settings
 
 from flask.ext.login import login_required
-from flask import request, redirect, url_for, render_template, flash,\
-    has_request_context, make_response
-
+from flask import (
+    request, redirect, url_for, Blueprint, current_app, make_response,
+)
 import requests
-import json
 import urllib.request
 import urllib.parse
+import logging
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+wordpress = Blueprint('wordpress', __name__)
 
 API_TOKEN_URL = 'https://public-api.wordpress.com/oauth2/token'
 API_AUTHORIZE_URL = 'https://public-api.wordpress.com/oauth2/authorize'
@@ -25,13 +27,15 @@ API_NEW_REPLY_URL = 'https://public-api.wordpress.com/rest/v1.1/sites/{}/posts/{
 API_ME_URL = 'https://public-api.wordpress.com/rest/v1.1/me'
 
 
-def register():
+def register(app):
+    app.register_blueprint(wordpress)
     hooks.register('post-saved', send_to_wordpress)
 
 
-@app.route('/install_wordpress')
+@wordpress.route('/install_wordpress')
 @login_required
 def install():
+    from redwind.extensions import db
     settings = [
         Setting(key='wordpress_client_id', name='WordPress Client ID'),
         Setting(key='wordpress_client_secret', name='WordPress Client Secret'),
@@ -46,9 +50,10 @@ def install():
     return 'Success'
 
 
-@app.route('/authorize_wordpress')
+@wordpress.route('/authorize_wordpress')
 @login_required
 def authorize_wordpress():
+    from redwind.extensions import db
     redirect_uri = url_for('authorize_wordpress', _external=True)
 
     code = request.args.get('code')
@@ -83,30 +88,31 @@ def authorize_wordpress():
 
 def send_to_wordpress(post, args):
     if 'wordpress' in args.getlist('syndicate-to'):
-        queue.enqueue(do_send_to_wordpress, post.id)
+        queue.enqueue(do_send_to_wordpress, post.id, current_app.config)
 
 
-def do_send_to_wordpress(post_id):
-    post = Post.load_by_id(post_id)
+def do_send_to_wordpress(post_id, app_config):
+    with session_scope(app_config) as session:
+        post = Post.load_by_id(post_id, session)
 
-    if post.like_of:
-        for url in post.like_of:
-            try_post_like(url, post)
+        if post.like_of:
+            for url in post.like_of:
+                try_post_like(url, post, session)
 
-    elif post.in_reply_to:
-        for url in post.in_reply_to:
-            try_post_reply(url, post)
+        elif post.in_reply_to:
+            for url in post.in_reply_to:
+                try_post_reply(url, post, session)
 
 
-def try_post_like(url, post):
-    app.logger.debug('wordpress. posting like to %s', url)
+def try_post_like(url, post, session):
+    logger.debug('wordpress. posting like to %s', url)
     myid = find_my_id()
     siteid, postid = find_post_id(url)
-    app.logger.debug('wordpress. posting like to site-id %d, post-id %d',
-                     siteid, postid)
+    logger.debug('wordpress. posting like to site-id %d, post-id %d',
+                 siteid, postid)
     if myid and siteid and postid:
         endpoint = API_NEW_LIKE_URL.format(siteid, postid)
-        app.logger.debug('wordpress: POST to endpoint %s', endpoint)
+        logger.debug('wordpress: POST to endpoint %s', endpoint)
         r = requests.post(endpoint, headers={
             'authorization': 'Bearer ' + get_settings().wordpress_access_token,
         })
@@ -114,22 +120,22 @@ def try_post_like(url, post):
         if r.json().get('success'):
             wp_url = '{}#liked-by-{}'.format(url, myid)
             post.add_syndication_url(wp_url)
-            db.session.commit()
+            session.commit()
             return wp_url
 
-        app.logger.error(
+        logger.error(
             'failed to post wordpress like. response: %r: %r', r, r.text)
 
 
-def try_post_reply(url, post):
-    app.logger.debug('wordpress. posting reply to %s', url)
+def try_post_reply(url, post, session):
+    logger.debug('wordpress. posting reply to %s', url)
     myid = find_my_id()
     siteid, postid = find_post_id(url)
-    app.logger.debug('wordpress. posting reply to site-id %d, post-id %d',
-                     siteid, postid)
+    logger.debug('wordpress. posting reply to site-id %d, post-id %d',
+                 siteid, postid)
     if myid and siteid and postid:
         endpoint = API_NEW_REPLY_URL.format(siteid, postid)
-        app.logger.debug('wordpress: POST to endpoint %s', endpoint)
+        logger.debug('wordpress: POST to endpoint %s', endpoint)
         r = requests.post(endpoint, headers={
             'authorization': 'Bearer ' + get_settings().wordpress_access_token,
         }, data={
@@ -139,10 +145,10 @@ def try_post_reply(url, post):
         wp_url = r.json().get('URL')
         if wp_url:
             post.add_syndication_url(wp_url)
-            db.session.commit()
+            session.commit()
             return wp_url
 
-        app.logger.error(
+        logger.error(
             'failed to post wordpress reply. response: %r: %r', r, r.text)
 
 

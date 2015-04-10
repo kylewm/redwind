@@ -1,34 +1,11 @@
-import imp
 import sys
+import os
+import tempfile
+import shutil
 
-
-class Configuration:
-    pass
-
-config = imp.new_module('config')
-config.Configuration = Configuration
-sys.modules['config'] = config
-
-Configuration.SECRET_KEY = 'lmnop8765309'
-Configuration.DEBUG = True
-Configuration.DEBUG_TB_ENABLED = False
-Configuration.SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-Configuration.TESTING = True
-Configuration.REDIS_URL = 'redis://localhost:911'
-Configuration.BYPASS_INDIEAUTH = False
-
-
-from redwind import app as rw_app, db as rw_db
+from redwind import create_app
+from redwind.extensions import db as rw_db
 import pytest
-
-
-@rw_app.route('/bypass_login')
-def bypass_login():
-    from redwind.models import User
-    from flask.ext.login import login_user
-    from flask import redirect
-    login_user(User('example.com'))
-    return redirect('/')
 
 
 @pytest.yield_fixture
@@ -36,8 +13,6 @@ def app(request):
     """The redwind flask app, set up with an empty database and
     some sane defaults
     """
-    import tempfile
-    import shutil
 
     def set_setting(key, value):
         from redwind.models import Setting
@@ -49,9 +24,33 @@ def app(request):
         s.value = value
         rw_db.session.commit()
 
-    assert str(rw_db.engine.url) == 'sqlite:///:memory:'
+    def bypass_login():
+        from redwind.models import User
+        from flask.ext.login import login_user
+        from flask import redirect
+        login_user(User('example.com'))
+        return redirect('/')
+
+    dburi = 'sqlite:///:memory:'
+
+    cfgfd, cfgname = tempfile.mkstemp(suffix='-redwind.cfg', text=True)
+    with os.fdopen(cfgfd, 'w') as f:
+        f.write("""\
+SECRET_KEY = 'lmnop8765309'
+DEBUG = True
+DEBUG_TB_ENABLED = False
+SQLALCHEMY_DATABASE_URI = '{}'
+TESTING = True
+REDIS_URL = 'redis://localhost:911'
+BYPASS_INDIEAUTH = False""".format(dburi))
+
+    rw_app = create_app(cfgname)
+    rw_app.add_url_rule('/', 'bypass_login', bypass_login)
+
     app_context = rw_app.app_context()
     app_context.push()
+    assert str(rw_db.engine.url) == dburi
+
     rw_db.create_all()
     temp_image_path = tempfile.mkdtemp()
     rw_app.config['IMAGE_ROOT_PATH'] = temp_image_path
@@ -64,11 +63,12 @@ def app(request):
 
     yield rw_app
 
-    app_context.pop()
+    assert str(rw_db.engine.url) == dburi
     shutil.rmtree(temp_image_path)
-    assert str(rw_db.engine.url) == 'sqlite:///:memory:'
     rw_db.session.remove()
     rw_db.drop_all()
+    app_context.pop()
+    os.unlink(cfgname)
 
 
 @pytest.fixture

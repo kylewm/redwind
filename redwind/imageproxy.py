@@ -1,6 +1,7 @@
-from . import app, util
+from . import util
 from PIL import Image, ExifTags
-from flask import request, abort, send_file, url_for, make_response
+from flask import request, abort, send_file, url_for, make_response, \
+    Blueprint, escape, current_app
 from requests.exceptions import HTTPError
 import datetime
 import hashlib
@@ -19,6 +20,9 @@ import urllib.parse
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
+imageproxy = Blueprint('imageproxy', __name__)
+
+
 def construct_url(url, size):
     args = []
     args.append(('url', url))
@@ -29,7 +33,13 @@ def construct_url(url, size):
     #return url_for('proxy', url=url, size=size, sig=sign(url, size))
 
 
-@app.route('/imageproxy')
+@imageproxy.app_template_filter('imageproxy')
+def imageproxy_filter(src, side=None):
+    return escape(
+        construct_url(src, side and str(side)))
+
+
+@imageproxy.route('/imageproxy')
 def proxy():
     url = request.args.get('url')
     size = request.args.get('size')
@@ -114,7 +124,7 @@ def proxy():
 
 
 def _send_file_x_accel(filepath, intpath, mimetype):
-    if app.debug:
+    if current_app.debug:
         return send_file(filepath, mimetype=mimetype)
     resp = make_response('')
     resp.headers['X-Accel-Redirect'] = intpath
@@ -124,7 +134,7 @@ def _send_file_x_accel(filepath, intpath, mimetype):
 
 
 def sign(url, size):
-    key = app.config['SECRET_KEY']
+    key = current_app.config['SECRET_KEY']
     h = hmac.new(key.encode())
     if size:
         h.update(str(size).encode())
@@ -143,7 +153,7 @@ def resize_image(source, target, side):
             im = source
 
         # grab the format before we start rotating it
-        format = im.format 
+        format = im.format
         orientation = next((k for k, v in ExifTags.TAGS.items()
                             if v == 'Orientation'), None)
 

@@ -7,7 +7,6 @@ from testutil import FakeResponse, assert_urls_match
 from werkzeug.datastructures import MultiDict
 
 
-
 def test_empty_db(client):
     """Make sure there are no articles when the database is empty"""
     rv = client.get('/')
@@ -17,7 +16,7 @@ def test_empty_db(client):
 def test_create_post(client, auth, mocker):
     """Create a simple post as the current user"""
     mocker.patch('requests.get').return_value = FakeResponse()
-    mocker.patch('redwind.queue.enqueue')
+    mocker.patch('redwind.tasks.queue.enqueue')
     rv = client.post('/save_new', data={
         'post_type': 'note',
         'content': 'This is a test note',
@@ -33,7 +32,7 @@ def test_create_post(client, auth, mocker):
 @pytest.fixture
 def silly_posts(client, auth, mocker):
     mocker.patch('requests.get').return_value = FakeResponse()
-    mocker.patch('redwind.queue.enqueue')
+    mocker.patch('redwind.tasks.queue.enqueue')
 
     data = [
         {
@@ -160,7 +159,7 @@ def test_upload_image(client, mocker):
     import io
     today = datetime.date.today()
     mocker.patch('requests.get')
-    mocker.patch('redwind.queue.enqueue')
+    mocker.patch('redwind.tasks.queue.enqueue')
 
     rv = client.post('/save_new', data={
         'photo': (open('tests/image.jpg', 'rb'), 'image.jpg', 'image/jpeg'),
