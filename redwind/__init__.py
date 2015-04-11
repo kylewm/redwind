@@ -1,10 +1,4 @@
-import sys
-
-sys.path.append('external')
-
 from flask import Flask
-
-#from config import Configuration
 from logging import StreamHandler
 import logging
 import importlib
