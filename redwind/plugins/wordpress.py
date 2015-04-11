@@ -1,19 +1,16 @@
-from .. import hooks
-from ..tasks import queue, session_scope
-from ..models import Post, Setting, get_settings
+from redwind import hooks
+from redwind.tasks import get_queue, async_app_context
+from redwind.models import Post, Setting, get_settings
+from redwind.extensions import db
 
 from flask.ext.login import login_required
 from flask import (
     request, redirect, url_for, Blueprint, current_app, make_response,
 )
+
 import requests
 import urllib.request
 import urllib.parse
-import logging
-
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 wordpress = Blueprint('wordpress', __name__)
 
@@ -35,7 +32,6 @@ def register(app):
 @wordpress.route('/install_wordpress')
 @login_required
 def install():
-    from redwind.extensions import db
     settings = [
         Setting(key='wordpress_client_id', name='WordPress Client ID'),
         Setting(key='wordpress_client_secret', name='WordPress Client Secret'),
@@ -88,31 +84,31 @@ def authorize_wordpress():
 
 def send_to_wordpress(post, args):
     if 'wordpress' in args.getlist('syndicate-to'):
-        queue.enqueue(do_send_to_wordpress, post.id, current_app.config)
+        get_queue().enqueue(do_send_to_wordpress, post.id, current_app.config)
 
 
 def do_send_to_wordpress(post_id, app_config):
-    with session_scope(app_config) as session:
-        post = Post.load_by_id(post_id, session)
+    with async_app_context(app_config):
+        post = Post.load_by_id(post_id)
 
         if post.like_of:
             for url in post.like_of:
-                try_post_like(url, post, session)
+                try_post_like(url, post)
 
         elif post.in_reply_to:
             for url in post.in_reply_to:
-                try_post_reply(url, post, session)
+                try_post_reply(url, post)
 
 
-def try_post_like(url, post, session):
-    logger.debug('wordpress. posting like to %s', url)
+def try_post_like(url, post):
+    current_app.logger.debug('wordpress. posting like to %s', url)
     myid = find_my_id()
     siteid, postid = find_post_id(url)
-    logger.debug('wordpress. posting like to site-id %d, post-id %d',
-                 siteid, postid)
+    current_app.logger.debug(
+        'wordpress. posting like to site-id %d, post-id %d', siteid, postid)
     if myid and siteid and postid:
         endpoint = API_NEW_LIKE_URL.format(siteid, postid)
-        logger.debug('wordpress: POST to endpoint %s', endpoint)
+        current_app.logger.debug('wordpress: POST to endpoint %s', endpoint)
         r = requests.post(endpoint, headers={
             'authorization': 'Bearer ' + get_settings().wordpress_access_token,
         })
@@ -120,22 +116,22 @@ def try_post_like(url, post, session):
         if r.json().get('success'):
             wp_url = '{}#liked-by-{}'.format(url, myid)
             post.add_syndication_url(wp_url)
-            session.commit()
+            db.session.commit()
             return wp_url
 
-        logger.error(
+        current_app.logger.error(
             'failed to post wordpress like. response: %r: %r', r, r.text)
 
 
-def try_post_reply(url, post, session):
-    logger.debug('wordpress. posting reply to %s', url)
+def try_post_reply(url, post):
+    current_app.logger.debug('wordpress. posting reply to %s', url)
     myid = find_my_id()
     siteid, postid = find_post_id(url)
-    logger.debug('wordpress. posting reply to site-id %d, post-id %d',
-                 siteid, postid)
+    current_app.logger.debug(
+        'wordpress. posting reply to site-id %d, post-id %d', siteid, postid)
     if myid and siteid and postid:
         endpoint = API_NEW_REPLY_URL.format(siteid, postid)
-        logger.debug('wordpress: POST to endpoint %s', endpoint)
+        current_app.logger.debug('wordpress: POST to endpoint %s', endpoint)
         r = requests.post(endpoint, headers={
             'authorization': 'Bearer ' + get_settings().wordpress_access_token,
         }, data={
@@ -145,10 +141,10 @@ def try_post_reply(url, post, session):
         wp_url = r.json().get('URL')
         if wp_url:
             post.add_syndication_url(wp_url)
-            session.commit()
+            db.session.commit()
             return wp_url
 
-        logger.error(
+        current_app.logger.error(
             'failed to post wordpress reply. response: %r: %r', r, r.text)
 
 

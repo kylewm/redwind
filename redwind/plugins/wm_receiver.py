@@ -1,6 +1,7 @@
-from ..tasks import (session_scope, queue,)
-from .. import util
-from ..models import (Post, Mention, get_settings,)
+from redwind import util
+from redwind.extensions import db
+from redwind.models import Post, Mention, get_settings
+from redwind.tasks import get_queue, async_app_context
 from bs4 import BeautifulSoup
 from flask import (
     request, make_response, render_template, url_for, Blueprint, current_app,
@@ -13,12 +14,6 @@ import mf2util
 import requests
 import urllib.parse
 import urllib.request
-import logging
-import sys
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.StreamHandler(sys.stdout))
 
 wm_receiver = Blueprint('wm_receiver', __name__)
 
@@ -47,11 +42,11 @@ def receive_webmention():
         return make_response(
             'webmention missing required target parameter', 400)
 
-    logger.debug(
+    current_app.logger.debug(
         "Webmention from %s to %s received", source, target)
 
-    job = queue.enqueue(do_process_webmention, source, target, callback,
-                        current_app.config, current_app.url_map)
+    job = get_queue().enqueue(
+        do_process_webmention, source, target, callback, current_app.config)
     status_url = url_for('.webmention_status', key=job.id, _external=True)
 
     return make_response(
@@ -60,7 +55,7 @@ def receive_webmention():
 
 @wm_receiver.route('/webmention/status/<key>')
 def webmention_status(key):
-    rv = queue.fetch_job(key)
+    rv = get_queue().fetch_job(key)
 
     if not rv:
         rv = {
@@ -81,19 +76,17 @@ def webmention_status(key):
         rv.get('response_code', 400))
 
 
-def do_process_webmention(source, target, callback, app_config, app_url_map):
+def do_process_webmention(source, target, callback, app_config):
     def call_callback(result):
         if callback:
             requests.post(callback, data=result)
-
-    logger.debug('processing webmention using database %s',
-                 app_config['SQLALCHEMY_DATABASE_URI'])
-    with session_scope(app_config) as session:
+    with async_app_context(app_config):
         try:
-            result = interpret_mention(source, target, app_url_map, session)
+            result = interpret_mention(source, target)
 
             if result.error:
-                logger.warn("Failed to process webmention: %s", result.error)
+                current_app.logger.warn(
+                    'Failed to process webmention: %s', result.error)
                 response = {
                     'source': source,
                     'target': target,
@@ -110,8 +103,8 @@ def do_process_webmention(source, target, callback, app_config, app_url_map):
             elif result.post and result.mention:
                 result.post.mentions.append(result.mention)
 
-            session.commit()
-            logger.debug("saved mentions to %s", result.post.path)
+            db.session.commit()
+            current_app.logger.debug("saved mentions to %s", result.post.path)
 
             if result.post and result.mention and result.create:
                 send_push_notification(result.post, result.mention, app_config)
@@ -130,7 +123,7 @@ def do_process_webmention(source, target, callback, app_config, app_url_map):
             return response
 
         except Exception as e:
-            logger.exception(
+            current_app.logger.exception(
                 "exception while processing webmention")
             response = {
                 'source': source,
@@ -160,20 +153,22 @@ def send_push_notification(post, mention, app_config):
         })
 
 
-def interpret_mention(source, target, app_url_map, session=None):
-    logger.debug("processing webmention from %s to %s", source, target)
+def interpret_mention(source, target):
+    current_app.logger.debug(
+        'processing webmention from %s to %s', source, target)
     if target and target.strip('/') == get_settings().site_url.strip('/'):
         # received a domain-level mention
-        logger.debug('received domain-level webmention from %s', source)
+        current_app.logger.debug(
+            'received domain-level webmention from %s', source)
         target_post = None
         target_urls = (target,)
         # TODO save domain-level webmention somewhere
     else:
         # confirm that target is a valid link to a post
-        target_post = find_target_post(target, app_url_map, session)
+        target_post = find_target_post(target)
 
         if not target_post:
-            logger.warn(
+            current_app.logger.warn(
                 "Webmention could not find target post: %s. Giving up", target)
             return ProcessResult(
                 post=None, mention=None, create=False, delete=False,
@@ -188,16 +183,17 @@ def interpret_mention(source, target, app_url_map, session=None):
 
     # confirm that source actually refers to the post
     source_response = util.fetch_html(source)
-    logger.debug('received response from source %s', source_response)
+    current_app.logger.debug(
+        'received response from source %s', source_response)
 
     if source_response.status_code == 410:
-        logger.debug("Webmention indicates original was deleted")
+        current_app.logger.debug("Webmention indicates original was deleted")
         return ProcessResult(
             post=target_post, mention=None, create=False, delete=True,
             error=None)
 
     if source_response.status_code // 100 != 2:
-        logger.warn(
+        current_app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
         return ProcessResult(
             post=target_post, mention=None, create=False, delete=False,
@@ -207,14 +203,14 @@ def interpret_mention(source, target, app_url_map, session=None):
     source_length = source_response.headers.get('Content-Length')
 
     if source_length and int(source_length) > 2097152:
-        logger.warn("Very large source. length=%s", source_length)
+        current_app.logger.warn("Very large source. length=%s", source_length)
         return ProcessResult(
             post=target_post, mention=None, create=False, delete=False,
             error="Source is very large. Length={}".format(source_length))
 
     link_to_target = find_link_to_target(source, source_response, target_urls)
     if not link_to_target:
-        logger.warn(
+        current_app.logger.warn(
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
         return ProcessResult(
@@ -229,7 +225,7 @@ def interpret_mention(source, target, app_url_map, session=None):
 
 def find_link_to_target(source_url, source_response, target_urls):
     if source_response.status_code // 2 != 100:
-        logger.warn(
+        current_app.logger.warn(
             "Received unexpected response from webmention source: %s",
             source_response.text)
         return None
@@ -243,19 +239,19 @@ def find_link_to_target(source_url, source_response, target_urls):
             return link
 
 
-def find_target_post(target_url, app_url_map, session=None):
-    logger.debug("looking for target post at %s", target_url)
+def find_target_post(target_url):
+    current_app.logger.debug("looking for target post at %s", target_url)
 
     # follow redirects if necessary
     redirect_url = urllib.request.urlopen(target_url).geturl()
     if redirect_url and redirect_url != target_url:
-        logger.debug("followed redirection to %s", redirect_url)
+        current_app.logger.debug("followed redirection to %s", redirect_url)
         target_url = redirect_url
 
     parsed_url = urllib.parse.urlparse(target_url)
 
     if not parsed_url:
-        logger.warn(
+        current_app.logger.warn(
             "Could not parse target_url of received webmention: %s",
             target_url)
         return None
@@ -270,15 +266,15 @@ def find_target_post(target_url, app_url_map, session=None):
         if not parsed_url.path.startswith(parsed_site_root.path):
             raise NotFound
 
-        urls = app_url_map.bind(get_settings().site_url)
+        urls = current_app.url_map.bind(get_settings().site_url)
         path = parsed_url.path[len(site_prefix):]
-        logger.debug('target path with no prefix %s', path)
+        current_app.logger.debug('target path with no prefix %s', path)
         endpoint, args = urls.match(path)
-        logger.debug('found match for target url %r: %r',
-                     endpoint, args)
+        current_app.logger.debug(
+            'found match for target url %r: %r', endpoint, args)
     except NotFound:
-        logger.warn("Webmention could not find target for %s",
-                    parsed_url.path)
+        current_app.logger.warn(
+            'Webmention could not find target for %s', parsed_url.path)
         return None
 
     post = None
@@ -287,7 +283,7 @@ def find_target_post(target_url, app_url_map, session=None):
         month = args.get('month')
         slug = args.get('slug')
         post = Post.load_by_path(
-            '{}/{:02d}/{}'.format(year, month, slug), session)
+            '{}/{:02d}/{}'.format(year, month, slug))
 
     elif endpoint == 'views.post_by_date':
         post_type = args.get('post_type')
@@ -295,7 +291,7 @@ def find_target_post(target_url, app_url_map, session=None):
         month = args.get('month')
         day = args.get('day')
         index = args.get('index')
-        post = Post.load_by_date(post_type, year, month, day, index, session)
+        post = Post.load_by_date(post_type, year, month, day, index)
 
     elif endpoint == 'views.post_by_old_date':
         post_type = args.get('post_type')
@@ -303,14 +299,14 @@ def find_target_post(target_url, app_url_map, session=None):
         year = int('20' + yymmdd[0:2])
         month = int(yymmdd[2:4])
         day = int(yymmdd[4:6])
-        post = Post.load_by_date(post_type, year, month, day, index, session)
+        post = Post.load_by_date(post_type, year, month, day, index)
 
     elif endpoint == 'views.post_by_id':
         dbid = args.get('dbid')
-        post = Post.load_by_id(dbid, session)
+        post = Post.load_by_id(dbid)
 
     if not post:
-        logger.warn(
+        current_app.logger.warn(
             "Webmention target points to unknown post: {}".format(args)),
 
     return post
@@ -329,11 +325,11 @@ def create_mention(post, url, source_response):
 
     blob = mf2py.Parser(doc=source_response.text, url=url).to_dict()
     if not blob:
-        logger.debug('create_mention: no mf2 in source_response')
+        current_app.logger.debug('create_mention: no mf2 in source_response')
         return
     entry = mf2util.interpret_comment(blob, url, target_urls)
     if not entry:
-        logger.debug(
+        current_app.logger.debug(
             'create_mention: mf2util found no comment entry')
         return
     comment_type = entry.get('comment_type')

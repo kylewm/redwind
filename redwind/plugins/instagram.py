@@ -2,7 +2,7 @@ from .. import hooks
 from .. import util
 from ..extensions import db
 from ..models import Post, Setting, get_settings, Context
-from ..tasks import queue, session_scope
+from ..tasks import get_queue, async_app_context
 
 from flask.ext.login import login_required
 from flask import (
@@ -12,12 +12,8 @@ from flask import (
 import requests
 import urllib
 import datetime
-import logging
 
 PERMALINK_RE = util.INSTAGRAM_RE
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 instagram = Blueprint('instagram', __name__)
@@ -56,7 +52,7 @@ def authorize_instagram():
 
     result = requests.post(
         'https://api.instagram.com/oauth/access_token', data=params)
-    logger.debug('received result %s', result)
+    current_app.logger.debug('received result %s', result)
     payload = result.json()
     access_token = payload.get('access_token')
 
@@ -68,14 +64,15 @@ def authorize_instagram():
 def create_context(url):
     m = PERMALINK_RE.match(url)
     if not m:
-        logger.debug('url is not an instagram media url %s', url)
+        current_app.logger.debug('url is not an instagram media url %s', url)
         return
 
     r = ig_get('https://api.instagram.com/v1/media/shortcode/' + m.group(1))
 
     if r.status_code // 2 != 100:
-        logger.warn("failed to fetch instagram media with shortcode %s %s %s",
-                    m.group(1), r, r.content)
+        current_app.logger.warn(
+            "failed to fetch instagram media with shortcode %s %s %s",
+            m.group(1), r, r.content)
         return
 
     blob = r.json()
@@ -107,7 +104,7 @@ def create_context(url):
     context.content = content
     context.content_plain = caption_text
 
-    logger.debug('created instagram context %s', context)
+    current_app.logger.debug('created instagram context %s', context)
 
     return context
 
@@ -119,15 +116,16 @@ def send_to_instagram(post, args):
         if not is_instagram_authorized():
             return False, 'Current user is not authorized for instagram'
 
-        logger.debug("queueing post to instagram {}".format(post.id))
-        queue.enqueue(do_send_to_instagram, post.id, current_app.config)
+        current_app.logger.debug(
+            "queueing post to instagram {}".format(post.id))
+        get_queue().enqueue(do_send_to_instagram, post.id, current_app.config)
         return True, 'Success'
 
 
 def do_send_to_instagram(post_id, app_config):
-    with session_scope(app_config) as session:
-        logger.debug('posting to instagram %d', post_id)
-        post = Post.load_by_id(post_id, session)
+    with async_app_context(app_config):
+        current_app.logger.debug('posting to instagram %d', post_id)
+        post = Post.load_by_id(post_id)
 
         in_reply_to, repost_of, like_of \
             = util.posse_post_discovery(post, PERMALINK_RE)
@@ -141,14 +139,14 @@ def do_send_to_instagram(post_id, app_config):
                        + m.group(1))
 
             if r.status_code // 2 != 100:
-                logger.warn("failed to fetch instagram media %s %s",
-                            r, r.content)
+                current_app.logger.warn(
+                    "failed to fetch instagram media %s %s", r, r.content)
                 return None
 
             media_id = r.json().get('data', {}).get('id')
             if not media_id:
-                logger.warn('could not find media id for shortcode %s',
-                            shortcode)
+                current_app.logger.warn(
+                    'could not find media id for shortcode %s', shortcode)
                 return None
 
             r = ig_get('https://api.instagram.com/v1/users/self')
@@ -158,13 +156,13 @@ def do_send_to_instagram(post_id, app_config):
                         + media_id + '/likes')
 
             if r.status_code // 2 != 100:
-                logger.warn("failed to POST like for instagram id %s",
-                            media_id)
+                current_app.logger.warn(
+                    "failed to POST like for instagram id %s", media_id)
                 return None
 
             like_url = like_of + '#liked-by-' + my_username
             post.add_syndication_url(like_url)
-            session.commit()
+            db.session.commit()
             return like_url
 
 

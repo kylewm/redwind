@@ -6,7 +6,7 @@ db = SQLAlchemy()
 
 # toolbar = DebugToolbarExtension(app)
 login_mgr = LoginManager()
-login_mgr.login_view = 'login'
+login_mgr.login_view = 'admin.login'
 
 themes = Themes()
 

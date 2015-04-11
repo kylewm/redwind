@@ -4,7 +4,6 @@ import urllib
 import datetime
 from redwind.models import User
 from testutil import FakeResponse, assert_urls_match
-from werkzeug.datastructures import MultiDict
 
 
 def test_empty_db(client):
@@ -16,7 +15,7 @@ def test_empty_db(client):
 def test_create_post(client, auth, mocker):
     """Create a simple post as the current user"""
     mocker.patch('requests.get').return_value = FakeResponse()
-    mocker.patch('redwind.tasks.queue.enqueue')
+    mocker.patch('redwind.tasks.create_queue')
     rv = client.post('/save_new', data={
         'post_type': 'note',
         'content': 'This is a test note',
@@ -32,7 +31,7 @@ def test_create_post(client, auth, mocker):
 @pytest.fixture
 def silly_posts(client, auth, mocker):
     mocker.patch('requests.get').return_value = FakeResponse()
-    mocker.patch('redwind.tasks.queue.enqueue')
+    mocker.patch('redwind.tasks.create_queue')
 
     data = [
         {
@@ -156,10 +155,9 @@ def test_atom_redirects(client):
 
 
 def test_upload_image(client, mocker):
-    import io
     today = datetime.date.today()
     mocker.patch('requests.get')
-    mocker.patch('redwind.tasks.queue.enqueue')
+    mocker.patch('redwind.tasks.create_queue')
 
     rv = client.post('/save_new', data={
         'photo': (open('tests/image.jpg', 'rb'), 'image.jpg', 'image/jpeg'),

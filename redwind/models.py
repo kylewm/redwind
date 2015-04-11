@@ -190,24 +190,20 @@ class Post(db.Model):
     content_html = db.Column(db.Text)
 
     @classmethod
-    def load_by_id(cls, dbid, session=None):
-        query = session.query(cls) if session else cls.query
-        return query.get(dbid)
+    def load_by_id(cls, dbid):
+        return cls.query.get(dbid)
 
     @classmethod
-    def load_by_path(cls, path, session=None):
-        query = session.query(cls) if session else cls.query
-        return query.filter_by(path=path).first()
+    def load_by_path(cls, path):
+        return cls.query.filter_by(path=path).first()
 
     @classmethod
-    def load_by_short_path(cls, path, session=None):
-        query = session.query(cls) if session else cls.query
-        return query.filter_by(short_path=path).first()
+    def load_by_short_path(cls, path):
+        return cls.query.filter_by(short_path=path).first()
 
     @classmethod
-    def load_by_historic_path(cls, path, session=None):
-        query = session.query(cls) if session else cls.query
-        return query.filter_by(historic_path=path).first()
+    def load_by_historic_path(cls, path):
+        return cls.query.filter_by(historic_path=path).first()
 
     def __init__(self, post_type):
         self.post_type = post_type

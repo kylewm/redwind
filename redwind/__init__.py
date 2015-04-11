@@ -10,7 +10,7 @@ import logging
 import importlib
 
 
-def create_app(config_path):
+def create_app(config_or_path):
     from redwind import extensions
     from redwind.views import views
     from redwind.admin import admin
@@ -19,7 +19,10 @@ def create_app(config_path):
     from redwind.imageproxy import imageproxy
 
     app = Flask(__name__)
-    app.config.from_pyfile(config_path)
+    if isinstance(config_or_path, dict):
+        app.config.update(config_or_path)
+    else:
+        app.config.from_pyfile(config_or_path)
 
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True

@@ -16,14 +16,14 @@ def source_post(app, db):
 
 
 def test_queue_wm_sender(app, auth, client, mocker):
-    enqueue = mocker.patch('redwind.tasks.queue.enqueue')
+    get_queue = mocker.patch('redwind.plugins.wm_sender.get_queue')
     client.post('/save_new', data={
         'post_type': 'note',
         'content': 'Some content',
     })
     post = Post.query.first()
-    enqueue.assert_called_with(wm_sender.do_send_webmentions,
-                               post.id, app.config)
+    get_queue().enqueue.assert_called_with(
+        wm_sender.do_send_webmentions, post.id, app.config)
 
 
 def test_send_wms(mocker, source_post):
