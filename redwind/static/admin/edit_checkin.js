@@ -20,8 +20,8 @@ $(function() {
         }
     });
 
-    $('select#venue').each(function (venueList) {
-        function updateVenueList(venueList, lat, lng) {
+    $('select#venue').each(function (idx, venueList) {
+        function updateVenueList(lat, lng) {
             $.getJSON(
                 '/services/nearby?latitude=' + lat + '&longitude=' + lng,
                 function appendToVenueList(blob) {
@@ -35,13 +35,11 @@ $(function() {
         var prevLat = $('#previous_venue_info').data('latitude');
         var prevLng = $('#previous_venue_info').data('longitude');
         if (prevLat && prevLng) {
-            updateVenueList(venueList, prevLat, prevLng);
+            updateVenueList(prevLat, prevLng);
         }
         else {
             navigator.geolocation.getCurrentPosition(function (position) {
-                updateVenueList(
-                    venueList, position.coords.latitude,
-                    position.coords.longitude);
+                updateVenueList(position.coords.latitude, position.coords.longitude);
             });
         }
     });

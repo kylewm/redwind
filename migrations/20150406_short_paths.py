@@ -14,7 +14,7 @@ from redwind import app, db, util
 from redwind.models import Post
 import itertools
 
-
+print('adding table column')
 db.engine.execute('alter table post add column short_path varchar(16)')
 
 

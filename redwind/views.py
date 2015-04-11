@@ -1063,8 +1063,10 @@ def save_post(post):
         short_base = '{}/{}'.format(
             util.tag_for_post_type(post.post_type),
             util.base60_encode(util.date_to_ordinal(post.published)))
-        short_paths = db.session.query(Post.short_path).filter(
-            Post.short_path.startswith(short_base)).all()
+        short_paths = set(
+            row[0] for row in
+            db.session.query(Post.short_path).filter(
+                Post.short_path.startswith(short_base)).all())
         for idx in itertools.count(1):
             post.short_path = short_base + util.base60_encode(idx)
             if post.short_path not in short_paths:
