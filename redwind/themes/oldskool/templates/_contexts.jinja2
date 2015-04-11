@@ -16,18 +16,18 @@
 
 {% macro full_context(post, context, mf2class, heading) %}
   <div class="context {{mf2class}}">
-    <span class="heading">
+    <div class="heading">
       {{ heading }}
       {% if context.title %}
         <a class="u-url" href="{{context.permalink}}">{{ context.title }}</a>
       {% else %}
         <a class="u-url" href="{{context.permalink}}">a post on {{ context.permalink | domain_from_url }}</a>
       {% endif %}
-    </span>
+    </div>
 
     {% if context.author_name or context.author_url or context.content %}
       <blockquote>
-        <span class="author p-author  h-card">
+        <div class="author p-author  h-card">
           {% if context.author_image %}
             <img class="u-photo" src="{{ context.author_image | imageproxy(24) }}" />
           {% endif %}
@@ -45,7 +45,7 @@
               {{ context.author_url | prettify_url }}
             </a>
           {% endif %}
-        </span>
+        </div>
 
         <div class="e-content{% if not post.title %} p-name{% endif %}">
           {% if context.content_plain and (context.content_plain | length) > 512 %}

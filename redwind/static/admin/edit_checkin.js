@@ -39,9 +39,7 @@ $(function() {
         }
         else {
             navigator.geolocation.getCurrentPosition(function (position) {
-                updateVenueList(
-                    position.coords.latitude,
-                    position.coords.longitude);
+                updateVenueList(position.coords.latitude, position.coords.longitude);
             });
         }
     });

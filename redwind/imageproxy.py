@@ -117,7 +117,7 @@ def proxy():
             json.dump(info, f)
 
     if origpath != resizepath:
-        resize_image(source, resizepath, int(size))
+        resize_image(origpath, resizepath, int(size), source_image=source)
     source.close()
     # TODO X-Accel
     return _send_file_x_accel(resizepath, intpath, mimetype=mimetype)
@@ -142,15 +142,15 @@ def sign(url, size):
     return h.hexdigest()
 
 
-def resize_image(source, target, side):
-    if not os.path.exists(target):
-        if not os.path.exists(os.path.dirname(target)):
-            os.makedirs(os.path.dirname(target))
+def resize_image(source_path, target_path, side, source_image=None):
+    if not os.path.exists(target_path):
+        if not os.path.exists(os.path.dirname(target_path)):
+            os.makedirs(os.path.dirname(target_path))
 
-        if isinstance(source, str):
-            im = Image.open(source)
+        if source_image:
+            im = source_image
         else:
-            im = source
+            im = Image.open(source_path)
 
         # grab the format before we start rotating it
         format = im.format
@@ -171,8 +171,8 @@ def resize_image(source, target, side):
         ratio = side / max(origw, origh)
         # scale down, not up
         if ratio >= 1:
-            shutil.copyfile(source, target)
+            shutil.copyfile(source_path, target_path)
         else:
             resized = im.resize((int(origw * ratio), int(origh * ratio)),
                                 Image.ANTIALIAS)
-            resized.save(target, format=format)
+            resized.save(target_path, format=format)
