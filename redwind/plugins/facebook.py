@@ -22,6 +22,13 @@ def register(app):
     hooks.register('post-saved', send_to_facebook)
 
 
+@facebook.context_processor
+def inject_settings_variable():
+    return {
+        'settings': get_settings()
+    }
+
+    
 @facebook.route('/authorize_facebook')
 @login_required
 def authorize_facebook():

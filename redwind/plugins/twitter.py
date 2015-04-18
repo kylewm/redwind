@@ -47,6 +47,13 @@ def register(app):
     hooks.register('post-saved', send_to_twitter)
 
 
+@twitter.context_processor
+def inject_settings_variable():
+    return {
+        'settings': get_settings()
+    }
+
+
 @twitter.route('/authorize_twitter')
 @login_required
 def authorize_twitter():

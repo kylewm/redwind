@@ -50,7 +50,7 @@ def install():
 @login_required
 def authorize_wordpress():
     from redwind.extensions import db
-    redirect_uri = url_for('authorize_wordpress', _external=True)
+    redirect_uri = url_for('.authorize_wordpress', _external=True)
 
     code = request.args.get('code')
     if code:
@@ -72,7 +72,7 @@ def authorize_wordpress():
         access_token = payload.get('access_token')
         Setting.query.get('wordpress_access_token').value = access_token
         db.session.commit()
-        return redirect(url_for('edit_settings'))
+        return redirect(url_for('admin.edit_settings'))
     else:
         return redirect(API_AUTHORIZE_URL + '?' + urllib.parse.urlencode({
             'client_id': get_settings().wordpress_client_id,

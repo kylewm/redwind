@@ -199,6 +199,6 @@ def micropub_endpoint():
         login_user(user)
         current_app.logger.debug('successfully authenticated as user %s => %s',
                                  me, user)
-        from . import views
-        resp = views.save_new()
+        from . import admin
+        resp = admin.save_new()
         return make_response('Created', 201, {'Location': resp.location})

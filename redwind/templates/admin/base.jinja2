@@ -110,32 +110,32 @@
             <li role="presentation" class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" area-expanded="false"><i class="glyphicon glyphicon-file"></i> New Post <i class="caret"></i></a>
               <ul class="dropdown-menu" role="menu">
-                <li><a href="{{ url_for('.new_post', type='article') }}" id="new-article"><i class="glyphicon glyphicon-book"></i> Article</a></li>
-                <li><a href="{{ url_for('.new_post', type='note') }}" id="new-note"><i class="glyphicon glyphicon-file"></i> Note</a></li>
-                <li><a href="{{ url_for('.new_post', type='photo') }}" id="new-photo"><i class="glyphicon glyphicon-camera"></i> Photo</a></li>
-                <li><a href="{{ url_for('.new_post', type='reply') }}" id="new-reply"><i class="glyphicon glyphicon-comment"></i> Reply</a></li>
-                <li><a href="{{ url_for('.new_post', type='share') }}" id="new-share"><i class="glyphicon glyphicon-share"></i> Share</a></li>
-                <li><a href="{{ url_for('.new_post', type='like') }}" id="new-like"><i class="glyphicon glyphicon-star"></i> Like</a></li>
-                <li><a href="{{ url_for('.new_post', type='bookmark') }}" id="new-bookmark"><i class=" glyphicon glyphicon-bookmark"></i> Bookmark</a></li>
-                <li><a href="{{ url_for('.new_post', type='checkin') }}" id="new-checkin"><i class="glyphicon glyphicon-map-marker"></i> Check-in</a></li>
-                <li><a href="{{ url_for('.new_post', type='event') }}" id="new-event"><i class="glyphicon glyphicon-calendar"></i> Event</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='article') }}" id="new-article"><i class="glyphicon glyphicon-book"></i> Article</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='note') }}" id="new-note"><i class="glyphicon glyphicon-file"></i> Note</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='photo') }}" id="new-photo"><i class="glyphicon glyphicon-camera"></i> Photo</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='reply') }}" id="new-reply"><i class="glyphicon glyphicon-comment"></i> Reply</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='share') }}" id="new-share"><i class="glyphicon glyphicon-share"></i> Share</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='like') }}" id="new-like"><i class="glyphicon glyphicon-star"></i> Like</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='bookmark') }}" id="new-bookmark"><i class=" glyphicon glyphicon-bookmark"></i> Bookmark</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='checkin') }}" id="new-checkin"><i class="glyphicon glyphicon-map-marker"></i> Check-in</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='event') }}" id="new-event"><i class="glyphicon glyphicon-calendar"></i> Event</a></li>
               </ul>
             </li>
 
-            <li><a href="{{ url_for('.all_drafts') }}"><i class="glyphicon glyphicon-inbox"></i> Drafts</a></li>
-            <li><a href="{{url_for('.mentions')}}"><i class="glyphicon glyphicon-comment"></i> Mentions</a></li>
+            <li><a href="{{ url_for('admin.all_drafts') }}"><i class="glyphicon glyphicon-inbox"></i> Drafts</a></li>
+            <li><a href="{{url_for('admin.mentions')}}"><i class="glyphicon glyphicon-comment"></i> Mentions</a></li>
 
-            <li><a href="{{ url_for('.contacts') }}"><i class="glyphicon glyphicon-user"></i> Contacts</a></li>
-            <li><a href="{{ url_for('.all_venues') }}"><i class="glyphicon glyphicon-map-marker"></i> Venues</a></li>
-            <li><a href="{{ url_for('.edit_settings') }}"><i class="glyphicon glyphicon-wrench"></i> Settings</a></li>
+            <li><a href="{{ url_for('admin.contacts') }}"><i class="glyphicon glyphicon-user"></i> Contacts</a></li>
+            <li><a href="{{ url_for('admin.all_venues') }}"><i class="glyphicon glyphicon-map-marker"></i> Venues</a></li>
+            <li><a href="{{ url_for('admin.edit_settings') }}"><i class="glyphicon glyphicon-wrench"></i> Settings</a></li>
           </ul>
 
           {% if current_user.is_authenticated() %}
             <div class="navbar-text navbar-right">
-              {{ current_user.domain | prettify_url }} (<a class="navbar-link" href="{{ url_for('.logout', next=request.path) }}">logout</a>)
+              {{ current_user.domain | prettify_url }} (<a class="navbar-link" href="{{ url_for('admin.logout', next=request.path) }}">logout</a>)
             </div>
           {% else %}
-          <form class="navbar-form navbar-right" role="search" action="{{url_for('.login')}}" method="get">
+          <form class="navbar-form navbar-right" role="search" action="{{url_for('admin.login')}}" method="get">
             <div class="form-group">
               <input type="text" name="me" class="form-control" placeholder="yourdomain.com">
             </div>
