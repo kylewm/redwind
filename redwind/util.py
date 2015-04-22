@@ -414,6 +414,7 @@ def fetch_html(url):
 
 
 def clean_foreign_html(html):
+    html = re.sub('<script.*?</script>', '', html, flags=re.DOTALL)
     return bleach.clean(html, strip=True)
 
 

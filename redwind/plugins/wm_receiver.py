@@ -55,21 +55,23 @@ def receive_webmention():
 
 @wm_receiver.route('/webmention/status/<key>')
 def webmention_status(key):
-    rv = get_queue().fetch_job(key)
+    job = get_queue().fetch_job(key)
 
-    if not rv:
+    if not job:
         rv = {
             'response_code': 400,
             'status': 'unknown',
             'reason': 'Job does not exist or its status has expired',
         }
 
-    elif rv == 'queued':
+    elif job.result == 'queued':
         rv = {
             'response_code': 202,
             'status': 'queued',
             'reason': 'Mention has been queued for processing',
         }
+    else:
+        rv = job.result
 
     return make_response(
         render_template('wm_status.jinja2', **rv),

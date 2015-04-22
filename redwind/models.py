@@ -280,8 +280,9 @@ class Post(db.Model):
 
     @property
     def shortlink(self):
-        site_url = get_settings().site_url or 'http://localhost'
-        return '/'.join((site_url, self.short_path))
+        if self.short_path:
+            site_url = get_settings().site_url or 'http://localhost'
+            return '/'.join((site_url, self.short_path))
 
     def _dedupe(self, mentions):
         all_children = set()

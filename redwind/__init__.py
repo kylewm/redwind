@@ -1,10 +1,23 @@
 from flask import Flask
-from logging import StreamHandler
+from logging import StreamHandler, Formatter
+from logging.handlers import SMTPHandler
 import logging
 import importlib
 
+MAIL_FORMAT = '''\
+Message type:       %(levelname)s
+Location:           %(pathname)s:%(lineno)d
+Module:             %(module)s
+Function:           %(funcName)s
+Time:               %(asctime)s
 
-def create_app(config_or_path):
+Message:
+
+%(message)s
+'''
+
+
+def create_app(config_or_path='../redwind.cfg'):
     from redwind import extensions
     from redwind.views import views
     from redwind.admin import admin
@@ -41,6 +54,15 @@ def create_app(config_or_path):
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         stream_handler.setFormatter(formatter)
         app.logger.addHandler(stream_handler)
+
+        recipients = app.config.get('ADMIN_EMAILS')
+        if recipients:
+            error_handler = SMTPHandler(
+                'localhost', 'Redwind <redwind@kylewm.com>', 
+                recipients, 'redwind error')
+            error_handler.setLevel(logging.ERROR)
+            error_handler.setFormatter(Formatter(MAIL_FORMAT))
+            app.logger.addHandler(error_handler)
 
     app.register_blueprint(views)
     app.register_blueprint(admin)
