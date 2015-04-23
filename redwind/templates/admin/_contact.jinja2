@@ -10,7 +10,7 @@
       <span class="p-name">{{ contact.name }}</span>
 
       {% for nick in contact.nicks %}
-        <a href="{{ url_for('contact_by_name', name=nick.name) }}">@{{ nick.name }}</a>
+        <a href="{{ url_for('.contact_by_name', name=nick.name) }}">@{{ nick.name }}</a>
       {% endfor %}
 
       <br/>
@@ -22,8 +22,8 @@
       {% endfor %}
 
       {% if current_user.is_authenticated() %}
-        <a href="{{ url_for('edit_contact', id=contact.id) }}"><i class="glyphicon glyphicon-edit"></i> Edit</a> &bull;
-        <a href="{{ url_for('delete_contact', id=contact.id) }}"><i class="glyphicon glyphicon-trash"></i> Delete</a>
+        <a href="{{ url_for('.edit_contact', id=contact.id) }}"><i class="glyphicon glyphicon-edit"></i> Edit</a> &bull;
+        <a href="{{ url_for('.delete_contact', id=contact.id) }}"><i class="glyphicon glyphicon-trash"></i> Delete</a>
       {% endif %}
     </div>
 

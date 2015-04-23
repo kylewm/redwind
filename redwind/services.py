@@ -16,7 +16,7 @@ services = Blueprint('services', __name__)
 
 @services.route('/api/mf2')
 def old_convert_mf2():
-    return redirect(url_for('convert_mf2'))
+    return redirect(url_for('.convert_mf2'))
 
 
 @services.route('/services/mf2')
@@ -36,7 +36,7 @@ def convert_mf2():
 
 @services.route('/api/mf2util')
 def old_convert_mf2util():
-    return redirect(url_for('convert_mf2util'))
+    return redirect(url_for('.convert_mf2util'))
 
 
 @services.route('/services/mf2util')

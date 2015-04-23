@@ -71,7 +71,7 @@ def webmention_status(key):
             'reason': 'Mention has been queued for processing',
         }
     else:
-        rv = job.result
+        rv = job.result or {}
 
     return make_response(
         render_template('wm_status.jinja2', **rv),
@@ -216,8 +216,8 @@ def interpret_mention(source, target):
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
         return ProcessResult(
-            target_post, None, False,
-            "Could not find any links from source to target")
+            post=target_post, mention=None, create=False, delete=False,
+            error="Could not find any links from source to target")
 
     mention = create_mention(target_post, source, source_response)
     return ProcessResult(
@@ -325,7 +325,7 @@ def create_mention(post, url, source_response):
                                if base_url.startswith('https://')
                                else base_url.replace('http://', 'https://'))
 
-    blob = mf2py.Parser(doc=source_response.text, url=url).to_dict()
+    blob = mf2py.parse(doc=source_response.text, url=url)
     if not blob:
         current_app.logger.debug('create_mention: no mf2 in source_response')
         return

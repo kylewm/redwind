@@ -9,6 +9,7 @@ import hmac
 import json
 import os
 import shutil
+import sys
 import urllib.parse
 
 # store image locally as
@@ -65,46 +66,38 @@ def proxy():
 
     info = {}
     source = None
-
+    
     # first check if the info file exists
-    if os.path.exists(infopath):
-        with open(infopath) as f:
-            info = json.load(f)
-
+    current_app.logger.debug('checking for saved imageproxy info %s', infopath)
+    try:
+        if os.path.exists(infopath):
+            with open(infopath) as f:
+                info = json.load(f)
+    except:
+        current_app.logger.exception('loading imageproxy info %s', infopath)
+                
     # check if it was an error
-    if 'error' in info and 'code' in info:
-        return abort(info['code'])
+    if 'error' in info:
+        current_app.logger.info('fetching image %s previously returned an error %s', url, info.get('error'))
+        return abort(info.get('code', 404))
 
     # we may already have the image downloaded and resized
     if 'mimetype' in info and os.path.exists(resizepath):
         return _send_file_x_accel(resizepath, intpath, info['mimetype'])
 
-    # we may already have the original downloaded
-    if os.path.exists(origpath):
-        source = Image.open(origpath)
-        mimetype = Image.MIME.get(source.format)
-
     # download the source image
-    else:
-        info = {
-            'url': url,
-            'retrieved': datetime.datetime.strftime(
-                datetime.datetime.utcnow(), DATETIME_FORMAT),
-        }
 
-        if not os.path.exists(parent):
-            os.makedirs(parent)
+    info = {
+        'url': url,
+        'retrieved': datetime.datetime.strftime(
+            datetime.datetime.utcnow(), DATETIME_FORMAT),
+    }
 
-        try:
-            util.download_resource(url, origpath)
-        except HTTPError as e:
-            info.update({
-                'error': str(e),
-                'code': e.response.status_code,
-            })
-            with open(infopath, 'w') as f:
-                json.dump(info, f)
-            return abort(e.response.status_code)
+    if not os.path.exists(parent):
+        os.makedirs(parent)
+
+    try:
+        util.download_resource(url, origpath)
 
         source = Image.open(origpath)
         mimetype = Image.MIME.get(source.format)
@@ -113,8 +106,23 @@ def proxy():
             'width': source.size[0],
             'height': source.size[1],
         })
+
+    except HTTPError as e:
+        info.update({
+            'error': str(e),
+            'code': e.response.status_code,
+        })
+        return abort(e.response.status_code)
+
+    except:
+        info.update({
+            'error': str(sys.exc_info()[0]),
+        })
+        return abort(404)
+
+    finally:
         with open(infopath, 'w') as f:
-            json.dump(info, f)
+            json.dump(info, f)            
 
     if origpath != resizepath:
         resize_image(origpath, resizepath, int(size), source_image=source)
