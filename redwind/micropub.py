@@ -102,9 +102,9 @@ def micropub_endpoint():
 
         elif q in ('actions', 'json_actions'):
             current_app.logger.debug('returning action handlers')
-            reply_url = url_for('new_post', type='reply', _external=True)
-            repost_url = url_for('new_post', type='share', _external=True)
-            like_url = url_for('new_post', type='like', _external=True)
+            reply_url = url_for('admin.new_post', type='reply', _external=True)
+            repost_url = url_for('admin.new_post', type='share', _external=True)
+            like_url = url_for('admin.new_post', type='like', _external=True)
             payload = {
                 'reply': reply_url + '?url={url}',
                 'repost': repost_url + '?url={url}',
