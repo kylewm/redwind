@@ -23,16 +23,26 @@ def old_convert_mf2():
 @services.route('/services/mf2')
 def convert_mf2():
     url = request.args.get('url')
-    if url:
+    doc = request.args.get('doc')
+    doc = doc and doc.strip()
+    if url or doc:
         try:
-            json = mf2py.parse(url=url)
+            json = mf2py.parse(url=url, doc=doc)
             return jsonify(json)
         except:
             return jsonify({'error': str(sys.exc_info()[0])})
     return """
 <html><body>
 <h1>mf2py</h1>
-<form><label>URL to parse: <input name="url"></label>
+<style>
+body { max-width: 960px; font-family: sans-serif; }
+label { display: inline-block; font-weight: bold; }
+input[type="text"],textarea { width: 100% }
+</style>
+<form><label>URL to parse:</label>
+<input type="text" name="url"/>
+<label>Document to parse:</label>
+<textarea name="doc"></textarea>
 <input type="Submit">
 </form></body></html> """
 
@@ -65,7 +75,7 @@ def convert_mf2util():
                 return jsonify(dates_to_string(json))
         except:
             return jsonify({'error': str(sys.exc_info()[0])})
-            
+
     return """
 <html><body>
 <h1>mf2util</h1>
