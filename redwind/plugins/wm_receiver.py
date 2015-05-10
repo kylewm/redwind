@@ -139,6 +139,10 @@ def do_process_webmention(source, target, callback, app_config):
 
 
 def send_push_notification(post, mention, app_config):
+    # ignore mentions from bridgy
+    if mention.url and mention.url.startswith('https://brid-gy.appspot.com/'):
+        return
+        
     if 'PUSHOVER_TOKEN' in app_config and 'PUSHOVER_USER' in app_config:
         token = app_config['PUSHOVER_TOKEN']
         user = app_config['PUSHOVER_USER']

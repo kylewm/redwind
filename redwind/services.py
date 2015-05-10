@@ -9,6 +9,7 @@ from flask import (
 import datetime
 import mf2py
 import mf2util
+import sys
 
 
 services = Blueprint('services', __name__)
@@ -23,9 +24,11 @@ def old_convert_mf2():
 def convert_mf2():
     url = request.args.get('url')
     if url:
-        p = mf2py.Parser(url=url)
-        json = p.to_dict()
-        return jsonify(json)
+        try:
+            json = mf2py.parse(url=url)
+            return jsonify(json)
+        except:
+            return jsonify({'error': str(sys.exc_info()[0])})
     return """
 <html><body>
 <h1>mf2py</h1>
@@ -53,12 +56,16 @@ def convert_mf2util():
     url = request.args.get('url')
     as_feed = request.args.get('as-feed')
     if url:
-        d = mf2py.Parser(url=url).to_dict()
-        if as_feed == 'true' or mf2util.find_first_entry(d, ['h-feed']):
-            json = mf2util.interpret_feed(d, url)
-        else:
-            json = mf2util.interpret(d, url)
-        return jsonify(dates_to_string(json))
+        try:
+            d = mf2py.parse(url=url)
+            if as_feed == 'true' or mf2util.find_first_entry(d, ['h-feed']):
+                json = mf2util.interpret_feed(d, url)
+            else:
+                json = mf2util.interpret(d, url)
+                return jsonify(dates_to_string(json))
+        except:
+            return jsonify({'error': str(sys.exc_info()[0])})
+            
     return """
 <html><body>
 <h1>mf2util</h1>

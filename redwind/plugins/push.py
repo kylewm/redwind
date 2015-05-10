@@ -11,19 +11,18 @@ def register(app):
 
 def send_notifications(post, args):
     if not post.hidden and not post.draft:
-        get_queue().enqueue(
-            publish, url_for('views.index', _external=True),
-            current_app.config)
-        get_queue().enqueue(
-            publish, url_for('views.index', feed='atom', _external=True),
-            current_app.config)
+        urls = [
+            url_for('views.index', _external=True),
+            url_for('views.index', feed='atom', _external=True),
+        ]
+        get_queue().enqueue(publish, urls, current_app.config)
 
 
-def publish(url, app_config):
+def publish(urls, app_config):
     publish_url = app_config.get('PUSH_HUB')
     if publish_url:
-        print('sending PuSH notification to', url)
-        data = {'hub.mode': 'publish', 'hub.url': url}
+        print('sending PuSH notification to', urls)
+        data = {'hub.mode': 'publish', 'hub.url[]': urls}
         response = requests.post(publish_url, data)
         if response.status_code == 204:
             print('successfully sent PuSH notification.',

@@ -15,7 +15,9 @@
     <name>{{ settings.author_name }}</name>
     <uri>{{url_for('views.index', _external=True)}}</uri>
   </author>
-  <updated>{{ posts | first | attr('published') | isotime }}</updated>
+  {% if posts %}
+    <updated>{{ posts | first | attr('published') | isotime }}</updated>
+  {% endif %}
 
   {% for post in posts %}
 

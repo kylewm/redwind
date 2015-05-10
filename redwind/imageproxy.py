@@ -25,13 +25,14 @@ imageproxy = Blueprint('imageproxy', __name__)
 
 
 def construct_url(url, size):
-    args = []
-    args.append(('url', url))
-    if size:
-        args.append(('size', size))
-    args.append(('sig', sign(url, size)))
-    return '/imageproxy?' + urllib.parse.urlencode(args)
-    #return url_for('proxy', url=url, size=size, sig=sign(url, size))
+    if url:
+        args = []
+        args.append(('url', url))
+        if size:
+            args.append(('size', size))
+        args.append(('sig', sign(url, size)))
+        return '/imageproxy?' + urllib.parse.urlencode(args)
+        #return url_for('proxy', url=url, size=size, sig=sign(url, size))
 
 
 @imageproxy.app_template_filter('imageproxy')
@@ -45,6 +46,9 @@ def proxy():
     url = request.args.get('url')
     size = request.args.get('size')
     sig = request.args.get('sig')
+
+    if not url:
+        abort(404)
 
     if sign(url, size) != sig:
         return abort(403)
@@ -86,7 +90,6 @@ def proxy():
         return _send_file_x_accel(resizepath, intpath, info['mimetype'])
 
     # download the source image
-
     info = {
         'url': url,
         'retrieved': datetime.datetime.strftime(

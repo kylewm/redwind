@@ -125,8 +125,11 @@ def new_post(type):
 
 
 @admin.route('/edit')
+@flask_login.login_required
 def edit_by_id():
     id = request.args.get('id')
+    if not id:
+        abort(404)
     post = Post.load_by_id(id)
     if not post:
         abort(404)
