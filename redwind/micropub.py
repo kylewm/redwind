@@ -11,9 +11,9 @@ import requests
 import urllib
 
 SYNDICATION_TARGETS = {
-    'https://twitter.com/kylewm2': 'twitter',
+    'https://twitter.com/kylewmahan': 'twitter',
     'https://facebook.com/kyle.mahan': 'facebook',
-    'http://instagram.com/kylewm2': 'instagram',
+    'http://instagram.com/kylewmahan': 'instagram',
     'https://kylewm.wordpress.com': 'wordpress',
 }
 
@@ -54,7 +54,7 @@ def token_endpoint():
 
     current_app.logger.debug(
         "verification response from indieauth. me=%s, client_id=%s, scope=%s",
-        auth_me, auth_scope)
+        auth_me, client_id, auth_scope)
 
     if me not in auth_me:
         current_app.logger.warn(
@@ -153,7 +153,8 @@ def micropub_endpoint():
     bookmark = request.form.get('bookmark') or request.form.get('bookmark-of')
     repost_of = request.form.get('repost-of')
 
-    post_type = ('photo' if photo_file else 'reply' if in_reply_to
+    post_type = ('article' if 'name' in request.form
+                 else 'photo' if photo_file else 'reply' if in_reply_to
                  else 'like' if like_of else 'bookmark' if bookmark
                  else 'share' if repost_of else 'note')
 
