@@ -72,7 +72,7 @@ def convert_mf2util():
                 json = mf2util.interpret_feed(d, url)
             else:
                 json = mf2util.interpret(d, url)
-                return jsonify(dates_to_string(json))
+            return jsonify(dates_to_string(json))
         except:
             return jsonify({'error': str(sys.exc_info()[0])})
 

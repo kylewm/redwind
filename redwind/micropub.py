@@ -54,7 +54,7 @@ def token_endpoint():
 
     current_app.logger.debug(
         "verification response from indieauth. me=%s, client_id=%s, scope=%s",
-        auth_me, auth_scope)
+        auth_me, client_id, auth_scope)
 
     if me not in auth_me:
         current_app.logger.warn(
