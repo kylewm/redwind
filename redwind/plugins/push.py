@@ -22,7 +22,7 @@ def publish(urls, app_config):
     publish_url = app_config.get('PUSH_HUB')
     if publish_url:
         print('sending PuSH notification to', urls)
-        data = {'hub.mode': 'publish', 'hub.url[]': urls}
+        data = {'hub.mode': 'publish', 'hub.url': urls}
         response = requests.post(publish_url, data)
         if response.status_code == 204:
             print('successfully sent PuSH notification.',
