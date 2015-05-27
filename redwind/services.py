@@ -20,14 +20,18 @@ def old_convert_mf2():
     return redirect(url_for('.convert_mf2'))
 
 
-@services.route('/services/mf2')
+@services.route('/services/mf2', methods=['GET', 'POST'])
 def convert_mf2():
-    url = request.args.get('url')
-    doc = request.args.get('doc')
+    strip_rel_urls = request.args.get('strip_rel_urls') or request.form.get('strip_rel_urls')
+    url = request.args.get('url') or request.form.get('url')
+    doc = request.args.get('doc') or request.form.get('doc')
     doc = doc and doc.strip()
+
     if url or doc:
         try:
             json = mf2py.parse(url=url, doc=doc)
+            if strip_rel_urls:
+                json.pop('rel-urls', None)
             return jsonify(json)
         except:
             return jsonify({'error': str(sys.exc_info()[0])})
@@ -35,14 +39,28 @@ def convert_mf2():
 <html><body>
 <h1>mf2py</h1>
 <style>
-body { max-width: 960px; font-family: sans-serif; }
+body { max-width: 640px; margin: 0 auto; font-family: sans-serif; }
 label { display: inline-block; font-weight: bold; }
 input[type="text"],textarea { width: 100% }
 </style>
-<form><label>URL to parse:</label>
+
+<form method="get">
+<label>URL to parse:</label>
 <input type="text" name="url"/>
+<input type="Submit">
+</form>
+<form method="post">
+<div>
 <label>Document to parse:</label>
-<textarea name="doc"></textarea>
+<textarea name="doc" rows="10"></textarea>
+</div>
+<label>Base URL:</label>
+<div>
+<input type="text" name="url"/>
+</div>
+<div>
+<label><input type="checkbox" name="strip_rel_urls"> Strip rel-urls</label>
+</div>
 <input type="Submit">
 </form></body></html> """
 
