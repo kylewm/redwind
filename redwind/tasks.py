@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from flask import current_app
 from redis import StrictRedis
 import rq
 
@@ -19,11 +18,7 @@ def create_queue():
     directly, it is a convenient place to mock for tests that don't
     care about the queue.
     """
-    redis = StrictRedis(
-        host=current_app.config.get('REDIS_HOST','localhost'),
-        port=current_app.config.get('REDIS_PORT',6379),
-        password=current_app.config.get('REDIS_PASSWORD',None)
-    )
+    redis = StrictRedis()
     return rq.Queue('redwind:low', connection=redis)
 
 
