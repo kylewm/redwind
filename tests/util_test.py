@@ -141,3 +141,25 @@ def test_autolink_people(db):
         assert out == util.autolink(
             inp, person_processor=simple_name_marker,
             url_processor=None)
+
+
+def test_parsing_hashtags():
+    """Exercise the #-tag matching regex
+    """
+
+    test_cases = [
+        ('#hashtag should be linked', 
+         '<a href="/tags/hashtag">#hashtag</a> should be linked',
+         ['hashtag']),
+        ('hashtag should not be linked',
+         'hashtag should not be linked',
+         []),
+        ('match #hashtags in the middle',
+         ['hashtags']),
+        ('match a tag at the #end',
+         'match a tag at the <a href="/tags/end">#end</a>',
+         ['end']),
+    ]
+
+    for inp, out, tags in test_cases:
+        assert out, tags == util.parse_hashtags(inp)
