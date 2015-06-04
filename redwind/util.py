@@ -161,15 +161,7 @@ def person_to_microcard(contact, nick, soup):
     return a_tag
 
 
-def autolink(plain, url_processor=url_to_link,
-             person_processor=person_to_microcard):
-    """Replace bare URLs in a document with an HTML <a> representation
-    """
-    blacklist = ('a', 'script', 'pre', 'code', 'embed', 'object',
-                      'audio', 'video')
-    soup = bs4.BeautifulSoup(plain)
-
-    def bs4_sub(regex, repl):
+def bs4_sub(soup, regex, repl, blacklist):
         """Process text elements in a BeautifulSoup document with a regex and
         replacement string.
 
@@ -200,6 +192,15 @@ def autolink(plain, url_processor=url_to_link,
             for offset, node in enumerate(nodes):
                 parent.insert(ii + offset, node)
 
+
+def autolink(plain, url_processor=url_to_link,
+             person_processor=person_to_microcard):
+    """Replace bare URLs in a document with an HTML <a> representation
+    """
+    blacklist = ('a', 'script', 'pre', 'code', 'embed', 'object',
+                      'audio', 'video')
+    soup = bs4.BeautifulSoup(plain)
+
     def link_repl(m):
         url = (m.group(1) or 'http://') + m.group(2)
         return url_processor(url, soup)
@@ -217,10 +218,10 @@ def autolink(plain, url_processor=url_to_link,
         return m.group(0)
 
     if url_processor:
-        bs4_sub(LINK_RE, link_repl)
+        bs4_sub(soup, LINK_RE, link_repl, blacklist)
 
     if person_processor:
-        bs4_sub(AT_USERNAME_RE, process_nick)
+        bs4_sub(soup, AT_USERNAME_RE, process_nick, blacklist)
 
     return ''.join(str(t) for t in soup.body.contents) if soup.body else ''
 
@@ -475,18 +476,26 @@ def posse_post_discovery(post, regex):
 
 
 def parse_hashtags(s):
-    # TODO: do this better
-    filler = 0  # keeps track of how much we've changed our string indices by
-    tags   = []
+    """ Parses out hashtags from a string and replaces them with links, then
+        returns the new string and a list of tags encountered
+    """
+    blacklist = ('a', 'script', 'pre', 'code', 'embed', 'object',
+                      'audio', 'video')
+    soup = bs4.BeautifulSoup(s)
+    tags = []
+
+    def process_hashtag(m):
+        url = '/tags/' + m.group(1).lower()
+        a = soup.new_tag('a', href=url)
+        a.string = m.group(0)
+
+        tags.append(m.group(1).lower())
+        
+        return a
+
     try:
-        for tag in HASHTAG_RE.finditer(s):
-            link = '<a href="{}">{}</a>'.format(
-                '/tags/' + tag.group(1).lower(),
-                tag.group(0)
-            )
-            s = s[:(tag.start()+filler)] + link + s[(tag.end()+filler):]
-            filler += len(link) - len(tag.group(0))
-            tags.append( tag.group(1).lower() )
+        bs4_sub(soup, HASHTAG_RE, process_hashtag, blacklist)
+        s = ''.join(str(t) for t in soup.body.contents) if soup.body else ''
         return s, tags
     except TypeError:
         return s, []
