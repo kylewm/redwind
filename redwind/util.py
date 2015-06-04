@@ -36,7 +36,7 @@ YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
 INSTAGRAM_RE = re.compile(r'https?://(?:www\.|mobile\.)?instagram\.com/p/([a-zA-Z0-9_\-]+)/?')
 PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
 RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
-HASHTAG_RE = re.compile('#(\w+)')
+HASHTAG_RE = re.compile('#(\w\w+)')
 
 AT_USERNAME_RE = re.compile(r"""(?<!\w)@([a-zA-Z0-9_]+)(?=($|[\s,:;.?'")]))""")
 LINK_RE = re.compile(
