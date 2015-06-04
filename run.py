@@ -1,4 +1,5 @@
 #!/usr/bin/env python
-from redwind import app
+from redwind import create_app
 
+app = create_app()
 app.run(debug=True)
