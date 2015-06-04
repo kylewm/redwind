@@ -83,11 +83,12 @@ def collect_posts(post_types, before_ts, per_page, tag, search=None,
     try:
         if before_ts:
             # convert ts in local timezone to utc and re-remove the timezone
-            before_dt = datetime.datetime\
-                                .strptime(before_ts, BEFORE_TS_FORMAT)\
-                                .replace(tzinfo=TIMEZONE)\
-                                .astimezone(datetime.timezone.utc)\
-                                .replace(tzinfo=None)
+            # before_dt = datetime.datetime\
+            #                     .strptime(before_ts, BEFORE_TS_FORMAT)\
+            #                     .replace(tzinfo=TIMEZONE)\
+            #                     .astimezone(datetime.timezone.utc)\
+            #                     .replace(tzinfo=None)
+            before_dt = datetime.datetime.strptime(before_ts, BEFORE_TS_FORMAT)
             query = query.filter(Post.published < before_dt)
     except ValueError:
         current_app.logger.warn('Could not parse before timestamp: %s',
