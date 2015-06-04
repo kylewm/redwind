@@ -155,11 +155,26 @@ def test_parsing_hashtags():
          'hashtag should not be linked',
          []),
         ('match #hashtags in the middle',
+         'match <a href="/tags/hashtags">#hashtags</a> in the middle'
          ['hashtags']),
         ('match a tag at the #end',
          'match a tag at the <a href="/tags/end">#end</a>',
          ['end']),
+        ('#1 should not be linked',
+         '#1 should not be linked',
+         []),
+        ('#12345 should be linked',
+         '<a href="/tags/12345">#12345</a> should be linked',
+         ['12345']),
+        ('#.foobar should not be linked',
+         '#.foobar should not be linked',
+         []),
+        ('#foo.bar should be partially linked',
+         '<a href="/tags/foo">#foo</a>.bar should be partially linked',
+         ['foo']),
     ]
 
     for inp, out, tags in test_cases:
-        assert out, tags == util.parse_hashtags(inp)
+        res, ts = util.parse_hashtags(inp)
+        assert out == res
+        assert tags == ts
