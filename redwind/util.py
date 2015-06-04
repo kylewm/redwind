@@ -478,12 +478,15 @@ def parse_hashtags(s):
     # TODO: do this better
     filler = 0  # keeps track of how much we've changed our string indices by
     tags   = []
-    for tag in HASHTAG_RE.finditer(s):
-        link = '<a href="{}">{}</a>'.format(
-            '/tags/' + tag.group(1),
-            tag.group(0)
-        )
-        s = s[:(tag.start()+filler)] + link + s[(tag.end()+filler):]
-        filler += len(link) - len(tag.group(0))
-        tags.append( tag.group(1) )
-    return s, tags
+    try:
+        for tag in HASHTAG_RE.finditer(s):
+            link = '<a href="{}">{}</a>'.format(
+                '/tags/' + tag.group(1),
+                tag.group(0)
+            )
+            s = s[:(tag.start()+filler)] + link + s[(tag.end()+filler):]
+            filler += len(link) - len(tag.group(0))
+            tags.append( tag.group(1) )
+        return s, tags
+    except TypeError:
+        return s, []
