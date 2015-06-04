@@ -36,7 +36,7 @@ YOUTUBE_RE = re.compile(r'https?://(?:www.)?youtube\.com/watch\?v=(\w+)')
 INSTAGRAM_RE = re.compile(r'https?://(?:www\.|mobile\.)?instagram\.com/p/([a-zA-Z0-9_\-]+)/?')
 PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
 RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
-HASHTAG_RE = re.compile('#(\w\w+)')
+HASHTAG_RE = re.compile('(?<!\w)#(\w\w+)')
 
 AT_USERNAME_RE = re.compile(r"""(?<!\w)@([a-zA-Z0-9_]+)(?=($|[\s,:;.?'")]))""")
 LINK_RE = re.compile(
@@ -481,12 +481,12 @@ def parse_hashtags(s):
     try:
         for tag in HASHTAG_RE.finditer(s):
             link = '<a href="{}">{}</a>'.format(
-                '/tags/' + tag.group(1),
+                '/tags/' + tag.group(1).lower(),
                 tag.group(0)
             )
             s = s[:(tag.start()+filler)] + link + s[(tag.end()+filler):]
             filler += len(link) - len(tag.group(0))
-            tags.append( tag.group(1) )
+            tags.append( tag.group(1).lower() )
         return s, tags
     except TypeError:
         return s, []

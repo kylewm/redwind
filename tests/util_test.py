@@ -172,6 +172,21 @@ def test_parsing_hashtags():
         ('#foo.bar should be partially linked',
          '<a href="/tags/foo">#foo</a>.bar should be partially linked',
          ['foo']),
+        ('capital letters in #HashTags will be lowercased',
+         'capital letters in <a href="/tags/hashtags">#HashTags</a> will be     lowercased',
+         ['hashtags']),
+        ('duplicate #hashtags should parse both #hashtags fine',
+         'duplicate <a href="/tags/hashtags">#hashtags</a> should parse         both <a href="/tags/hashtags">#hashtags</a> fine',
+         ['hashtags','hashtags']),
+        ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent tincidunt aliquam sem, in tempus elit lacinia vel. Integer accumsan cursus purus et euismod. Nullam ultricies nunc sit amet ante consequat porta. Pellentesque et porta odio. Sed et neque cursus, iaculis lorem nec, laoreet odio. Donec molestie volutpat vestibulum. Curabitur rhoncus elit ut massa pretium luctus. #Nullam sollicitudin ligula vitae tincidunt suscipit. Maecenas in neque porta, scelerisque metus at, mollis nunc. Fusce accumsan imperdiet velit, in tincidunt tellus aliquam ac. Nullam iaculis vel urna sed vulputate. Aliquam erat volutpat. Etiam et tortor turpis. Vivamus mattis enim lacus, in aliquet nulla blandit.',
+         'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent tincidunt aliquam sem, in tempus elit lacinia vel. Integer accumsan cursus purus et euismod. Nullam ultricies nunc sit amet ante consequat porta. Pellentesque et porta odio. Sed et neque cursus, iaculis lorem nec, laoreet odio. Donec molestie volutpat vestibulum. Curabitur rhoncus elit ut massa pretium luctus. <a href="/tags/nullam">#Nullam</a> sollicitudin ligula vitae tincidunt suscipit. Maecenas in neque porta, scelerisque metus at, mollis nunc. Fusce accumsan imperdiet velit, in tincidunt tellus aliquam ac. Nullam iaculis vel urna sed vulputate. Aliquam erat volutpat. Etiam et tortor turpis. Vivamus mattis enim lacus, in aliquet nulla blandit.',
+         ['nullam']),
+        ('this hash#tag will not be parsed',
+         'this hash#tag will not be parsed',
+         []),
+        ('http://example.com/path#fragment',
+         'http://example.com/path#fragment',
+         []),
     ]
 
     for inp, out, tags in test_cases:
