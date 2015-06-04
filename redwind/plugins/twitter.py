@@ -189,7 +189,10 @@ def share_on_twitter():
             'discovered in-reply-to: %s, repost-of: %s, like-of: %s',
             in_reply_to, repost_of, like_of)
 
-        preview, _ = guess_tweet_content(post, in_reply_to)
+        if post.repost_of and not repost_of:
+            preview = guess_raw_share_tweet_content(post)
+        else:
+            preview, _ = guess_tweet_content(post, in_reply_to)
 
         imgs = list(collect_images(post))
         current_app.logger.debug('twitter post has images: %s', imgs)
@@ -376,7 +379,7 @@ def guess_tweet_content(post, in_reply_to):
 
 def guess_raw_share_tweet_content(post):
     preview = ''
-    if len(post.repost_contexts) < 1:
+    if not post.repost_contexts:
         current_app.logger.debug('failed to load repost context for %s',        post.id)
         return None
     context = post.repost_contexts[0]
