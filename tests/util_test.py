@@ -155,7 +155,7 @@ def test_parsing_hashtags():
          'hashtag should not be linked',
          []),
         ('match #hashtags in the middle',
-         'match <a href="/tags/hashtags">#hashtags</a> in the middle'
+         'match <a href="/tags/hashtags">#hashtags</a> in the middle',
          ['hashtags']),
         ('match a tag at the #end',
          'match a tag at the <a href="/tags/end">#end</a>',
