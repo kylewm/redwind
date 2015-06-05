@@ -1,30 +1,29 @@
-from flask import (
-    Blueprint, render_template, request, current_app, abort,
-    flash, redirect, url_for, session, make_response
-)
+from flask import Blueprint, render_template, request, current_app, abort
+from flask import flash, redirect, url_for, session, make_response
 from redwind import auth
 from redwind import contexts
 from redwind import hooks
 from redwind import maps
 from redwind import util
-
 from redwind.extensions import db
-from redwind.models import (
-    Post, Tag, Contact, Mention, Nick, Venue, Setting, get_settings
-)
+from redwind.models import Post, Attachment, Tag, Contact, Mention, Nick
+from redwind.models import Venue, Setting, get_settings
 from werkzeug import secure_filename
+import bs4
+import collections
 import datetime
 import flask.ext.login as flask_login
 import hashlib
 import itertools
+import json
 import mf2util
-import collections
+import mimetypes
 import operator
 import os
+import random
 import requests
-import bs4
+import string
 import urllib
-import json
 
 admin = Blueprint('admin', __name__)
 
@@ -315,36 +314,15 @@ def save_post(post):
             if post.short_path not in short_paths:
                 break
 
-    # TODO accept multiple photos and captions
-    inphoto = request.files.get('photo')
-    if inphoto and inphoto.filename:
-        current_app.logger.debug('receiving uploaded file %s', inphoto)
-        relpath, photo_url, fullpath \
-            = generate_upload_path(post, inphoto)
-        if not os.path.exists(os.path.dirname(fullpath)):
-            os.makedirs(os.path.dirname(fullpath))
-        current_app.logger.debug('uploading photo to %s', fullpath)
-        inphoto.save(fullpath)
-        caption = request.form.get('caption')
-        post.photos = [{
-            'filename': os.path.basename(relpath),
-            'caption': caption,
-        }]
-
-    file_to_url = {}
-    infiles = request.files.getlist('files')
+    infiles = request.files.getlist('files') + request.files.getlist('photo')
     current_app.logger.debug('infiles: %s', infiles)
     for infile in infiles:
         if infile and infile.filename:
             current_app.logger.debug('receiving uploaded file %s', infile)
-            relpath, photo_url, fullpath \
-                = generate_upload_path(post, infile)
-            if not os.path.exists(os.path.dirname(fullpath)):
-                os.makedirs(os.path.dirname(fullpath))
-            infile.save(fullpath)
-            file_to_url[infile] = photo_url
-
-    current_app.logger.debug('uploaded files map %s', file_to_url)
+            attachment = create_attachment_from_file(post, infile)
+            os.makedirs(os.path.dirname(attachment.disk_path))
+            infile.save(attachment.disk_path)
+            post.attachments.append(attachment)
 
     # pre-render the post html
     post.content_html = util.markdown_filter(
@@ -361,30 +339,25 @@ def save_post(post):
     redirect_url = post.permalink
 
     hooks.fire('post-saved', post, request.form)
-
     return redirect(redirect_url)
 
 
-def generate_upload_path(post, f, default_ext=None):
+def create_attachment_from_file(post, f, default_ext=None):
     filename = secure_filename(f.filename)
     basename, ext = os.path.splitext(filename)
-
-    if ext:
-        current_app.logger.debug('file has extension: %s, %s', basename, ext)
-    else:
-        current_app.logger.debug('no file extension, checking mime_type: %s',
-                                 f.mimetype)
-        if f.mimetype == 'image/png':
-            ext = '.png'
-        elif f.mimetype == 'image/jpeg':
-            ext = '.jpg'
-        elif default_ext:
-            # fallback application/octet-stream
-            ext = default_ext
+    mimetype, _ = mimetypes.guess_mime_type(f.filename)
+    if not mimetype:
+        mimetype = f.mimetype
 
     # special handling for ugly filenames from OwnYourGram
     if basename.startswith('tmp_') and ext.lower() in ('.png', '.jpg'):
         basename = 'photo'
+
+    now = datetime.datetime.now()
+    storage_path = '{}/{:02d}/{:02d}/{}'.format(
+        now.year, now.month, now.day,
+        ''.join(random.choice(string.ascii_letters + string.digits)
+                for _ in range(8)))
 
     idx = 0
     while True:
@@ -392,13 +365,13 @@ def generate_upload_path(post, f, default_ext=None):
             filename = '{}{}'.format(basename, ext)
         else:
             filename = '{}-{}{}'.format(basename, idx, ext)
-        relpath = '{}/files/{}'.format(post.path, filename)
-        fullpath = os.path.join(util.image_root_path(), '_data', relpath)
-        if not os.path.exists(fullpath):
+        if filename not in [a.filename for a in post.attachment]:
             break
         idx += 1
 
-    return relpath, '/' + relpath, fullpath
+    return Attachment(filename=filename,
+                      mimetype=f.mimetype,
+                      storage_path=storage_path)
 
 
 def discover_endpoints(me):

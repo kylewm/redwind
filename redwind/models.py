@@ -188,6 +188,7 @@ class Post(db.Model):
 
     content = db.Column(db.Text)
     content_html = db.Column(db.Text)
+    attachments = db.relationship('Attachment')
 
     @classmethod
     def load_by_id(cls, dbid):
@@ -437,6 +438,19 @@ class Post(db.Model):
             return 'post:{}'.format(self.path)
         else:
             return 'post:{}'.format(self.path)
+
+
+class Attachment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(256))
+    mimetype = db.Column(db.String(256))
+    storage_path = db.Column(db.String(256))
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+    @property
+    def disk_path(self):
+        return urllib.parse.urljoin(
+            util.image_root_path(), '_data', self.storage_path)
 
 
 class Context(db.Model):
