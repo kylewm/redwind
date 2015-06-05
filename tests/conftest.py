@@ -52,9 +52,11 @@ BYPASS_INDIEAUTH = False""".format(dburi))
     assert str(rw_db.engine.url) == dburi
 
     rw_db.create_all()
-    temp_image_path = tempfile.mkdtemp()
-    rw_app.config['IMAGE_ROOT_PATH'] = temp_image_path
-
+    temp_upload_path = tempfile.mkdtemp()
+    temp_imageproxy_path = tempfile.mkdtemp()
+    rw_app.config['UPLOAD_PATH'] = temp_upload_path
+    rw_app.config['IMAGEPROXY_PATH'] = temp_imageproxy_path
+    
     set_setting('posts_per_page', '15')
     set_setting('author_domain', 'example.com')
     set_setting('site_url', 'http://example.com')
@@ -64,7 +66,9 @@ BYPASS_INDIEAUTH = False""".format(dburi))
     yield rw_app
 
     assert str(rw_db.engine.url) == dburi
-    shutil.rmtree(temp_image_path)
+    shutil.rmtree(temp_upload_path)
+    shutil.rmtree(temp_imageproxy_path)
+
     rw_db.session.remove()
     rw_db.drop_all()
     app_context.pop()
