@@ -301,7 +301,7 @@ def post_associated_file_by_historic_path(post_type, year, month, day,
 
 
 @views.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
-def post_associated_file(year, month, slug, filename):
+def attachment(year, month, slug, filename):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
     if not post:
         current_app.logger.debug('could not find post for path %s %s %s',
@@ -314,29 +314,32 @@ def post_associated_file(year, month, slug, filename):
     if not check_audience(post):
         abort(401)  # not authorized TODO a nicer page
 
-    sourcepath = os.path.join(
-        util.image_root_path(), '_data', post.path, 'files', filename)
+    attachment = next(
+        (a for a in post.attachments if a.filename == filename), None)
 
-    current_app.logger.debug('image source path: %s. request args: %s',
-                             sourcepath, request.args)
+    if not attachment:
+        current_app.logger.warn('no attachment naemd %s', filename)
 
-    if not os.path.exists(sourcepath):
-        current_app.logger.debug('source path does not exist %s', sourcepath)
+    current_app.logger.debug('image file path: %s. request args: %s',
+                             attachment.disk_path, request.args)
+
+    if not os.path.exists(attachment.disk_path):
+        current_app.logger.warn('source path does not exist %s',
+                                attachment.disk_path)
         abort(404)
 
     if current_app.debug:
-        _, ext = os.path.splitext(sourcepath)
+        _, ext = os.path.splitext(attachment.disk_path)
         return send_from_directory(
-            os.path.join(util.image_root_path(),
-                         os.path.dirname(sourcepath)),
-            os.path.basename(sourcepath), mimetype=None)
+            os.path.dirname(attachment.disk_path),
+            os.path.basename(attachment.disk_path),
+            mimetype=attachment.mimetype)
 
     resp = make_response('')
     # nginx is configured to serve internal resources directly
-    sourcepath_internal = os.path.join(
-        '/internal_data', post.path, 'files', filename)
-    resp.headers['X-Accel-Redirect'] = sourcepath_internal
-    del resp.headers['Content-Type']
+    resp.headers['X-Accel-Redirect'] = os.path.join(
+        '/internal_data', attachment.storage_path)
+    resp.headers['Content-Type'] = attachment.mimetype
     current_app.logger.debug('response with X-Accel-Redirect %s', resp.headers)
     return resp
 

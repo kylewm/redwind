@@ -9,7 +9,7 @@
   <div id="context-area">
   </div>
 
-  <form id="edit_form" method="POST" action="{{ settings.site_url }}/save_{{edit_type}}" enctype="multipart/form-data">
+  <form id="edit_form" method="POST" action="{{ url_for('admin.save_' + edit_type) }}" enctype="multipart/form-data">
 
     <div class="form-group btn-group" role="group">
       {% for action in ['publish', 'save_draft'] %}

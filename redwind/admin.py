@@ -320,7 +320,7 @@ def save_post(post):
         if infile and infile.filename:
             current_app.logger.debug('receiving uploaded file %s', infile)
             attachment = create_attachment_from_file(post, infile)
-            os.makedirs(os.path.dirname(attachment.disk_path))
+            os.makedirs(os.path.dirname(attachment.disk_path), exist_ok=True)
             infile.save(attachment.disk_path)
             post.attachments.append(attachment)
 
@@ -345,7 +345,7 @@ def save_post(post):
 def create_attachment_from_file(post, f, default_ext=None):
     filename = secure_filename(f.filename)
     basename, ext = os.path.splitext(filename)
-    mimetype, _ = mimetypes.guess_mime_type(f.filename)
+    mimetype, _ = mimetypes.guess_type(f.filename)
     if not mimetype:
         mimetype = f.mimetype
 
@@ -365,7 +365,7 @@ def create_attachment_from_file(post, f, default_ext=None):
             filename = '{}{}'.format(basename, ext)
         else:
             filename = '{}-{}{}'.format(basename, idx, ext)
-        if filename not in [a.filename for a in post.attachment]:
+        if filename not in [a.filename for a in post.attachments]:
             break
         idx += 1
 

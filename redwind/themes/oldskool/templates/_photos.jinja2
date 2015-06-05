@@ -1,14 +1,9 @@
-{% for photo in (post.photos or []) %}
-  <div class="photo">
-    <a href="{{post.photo_url(photo)}}">
-      {% if photo.get('noproxy') %}
-        <img class="u-photo" src="{{post.photo_url(photo)}}" />
-      {% else %}
-        <img class="u-photo" src="{{post.photo_url(photo) | imageproxy(600)}}" />
-      {% endif %}
-    </a>
-    {% if photo.get('caption') %}
-      <div class="caption">{{ photo.get('caption') | safe }}</div>
-    {% endif %}
-  </div>
-{% endfor %}
+{% if post.post_type == 'photo' %}
+  {% for photo in post.attachments %}
+    <div class="photo">
+      <a href="{{ photo.url }}">
+        <img class="u-photo" src="{{ photo.url | imageproxy(600)}}" />
+      </a>
+    </div>
+  {% endfor %}
+{% endif %}

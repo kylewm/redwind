@@ -7,6 +7,7 @@ from flask import g, session
 import json
 import urllib
 import datetime
+import os
 
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'
@@ -188,7 +189,7 @@ class Post(db.Model):
 
     content = db.Column(db.Text)
     content_html = db.Column(db.Text)
-    attachments = db.relationship('Attachment')
+    attachments = db.relationship('Attachment', backref='post')
 
     @classmethod
     def load_by_id(cls, dbid):
@@ -448,8 +449,12 @@ class Attachment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
 
     @property
+    def url(self):
+        return '/'.join((self.post.permalink, 'files', self.filename))
+
+    @property
     def disk_path(self):
-        return urllib.parse.urljoin(
+        return os.path.join(
             util.image_root_path(), '_data', self.storage_path)
 
 
