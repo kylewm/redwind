@@ -1,8 +1,8 @@
-from . import util
-from . import maps
-from .extensions import db
+from redwind import util
+from redwind import maps
+from redwind.extensions import db
 
-from flask import g, session
+from flask import g, session, current_app
 
 import json
 import urllib
@@ -455,7 +455,7 @@ class Attachment(db.Model):
     @property
     def disk_path(self):
         return os.path.join(
-            util.image_root_path(), '_data', self.storage_path)
+            current_app.config['UPLOAD_PATH'], self.storage_path)
 
 
 class Context(db.Model):

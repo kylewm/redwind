@@ -32,7 +32,7 @@ def construct_url(url, size):
             args.append(('size', size))
         args.append(('sig', sign(url, size)))
         return '/imageproxy?' + urllib.parse.urlencode(args)
-        #return url_for('proxy', url=url, size=size, sig=sign(url, size))
+        # return url_for('proxy', url=url, size=size, sig=sign(url, size))
 
 
 @imageproxy.app_template_filter('imageproxy')
@@ -55,7 +55,8 @@ def proxy():
 
     encurl = hashlib.md5(url.encode()).hexdigest()
     parent = os.path.join(
-        util.image_root_path(), '_imageproxy', encurl[:1], encurl[:2], encurl)
+        current_app.config['IMAGEPROXY_PATH'],
+        encurl[:1], encurl[:2], encurl)
     intparent = os.path.join(
         '/internal_imageproxy', encurl[:1], encurl[:2], encurl)
 
@@ -70,7 +71,7 @@ def proxy():
 
     info = {}
     source = None
-    
+
     # first check if the info file exists
     current_app.logger.debug('checking for saved imageproxy info %s', infopath)
     try:
@@ -79,7 +80,7 @@ def proxy():
                 info = json.load(f)
     except:
         current_app.logger.exception('loading imageproxy info %s', infopath)
-                
+
     # check if it was an error
     if 'error' in info:
         current_app.logger.info('fetching image %s previously returned an error %s', url, info.get('error'))
@@ -125,7 +126,7 @@ def proxy():
 
     finally:
         with open(infopath, 'w') as f:
-            json.dump(info, f)            
+            json.dump(info, f)
 
     if origpath != resizepath:
         resize_image(origpath, resizepath, int(size), source_image=source)

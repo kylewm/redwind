@@ -11,5 +11,8 @@
 {% block file_upload %}
   <input type="file" id="image_upload_button" name="photo" accept="image/*"></input>
   <ul id="uploads">
+    {% for attachment in post.attachments %}
+      <li><img src="{{attachment.url}}" style="max-width:150px; max-height:150px"/>{{attachment.filename}}</li>
+    {% endfor %}
   </ul>
 {% endblock %}

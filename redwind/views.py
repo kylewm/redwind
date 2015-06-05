@@ -340,6 +340,7 @@ def attachment(year, month, slug, filename):
     resp.headers['X-Accel-Redirect'] = os.path.join(
         '/internal_data', attachment.storage_path)
     resp.headers['Content-Type'] = attachment.mimetype
+    del resp.headers['Content-Length']
     current_app.logger.debug('response with X-Accel-Redirect %s', resp.headers)
     return resp
 

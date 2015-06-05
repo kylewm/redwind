@@ -64,7 +64,11 @@
     {% block file_upload %}
       <div class="form-group">
         <input type="file" id="image_upload_button" name="files" multiple="multiple" accept="image/*" />
-        <ul id="uploads"></ul>
+        <ul id="uploads">
+          {% for attachment in post.attachments %}
+            <li><a href="#"><img src="{{attachment.url}}" style="max-width:150px; max-height:150px"/>{{attachment.filename}}</a></li>
+          {% endfor %}
+        </ul>
       </div>
     {% endblock %}
 
