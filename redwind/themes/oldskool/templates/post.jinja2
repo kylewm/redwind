@@ -61,6 +61,7 @@
         {% if current_user.is_authenticated() %}
           <a href="{{url_for('admin.edit_by_id', id=post.id)}}">Edit</a>
           <a href="{{url_for('admin.delete_by_id', id=post.id)}}">Delete</a>
+          <a href="{{url_for('twitter.share_on_twitter', id=post.id)}}">Tweet</a>
         {% endif %}
         <indie-action do="reply" with="{{ post.permalink }}">
           <a href="{{ post.reply_url }}">Reply</a>
@@ -68,6 +69,7 @@
         <indie-action do="like" with="{{ post.permalink }}">
           <a href="{{ post.favorite_url }}">Like</a>
         </indie-action>
+
 
       </div>
     </article>
