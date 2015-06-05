@@ -301,11 +301,20 @@ def post_associated_file_by_historic_path(post_type, year, month, day,
 
 
 @views.route('/<int:year>/<int(fixed_digits=2):month>/<slug>/files/<filename>')
-def attachment(year, month, slug, filename):
+def post_attachment(year, month, slug, filename):
     post = Post.load_by_path('{}/{:02d}/{}'.format(year, month, slug))
+    return render_attachment(post, filename)
+
+
+@views.route('/drafts/<hash>/files/<filename>')
+def draft_attachment(hash, filename):
+    post = Post.load_by_path('drafts/{}'.format(hash))
+    return render_attachment(post, filename)
+
+
+def render_attachment(post, filename):
     if not post:
-        current_app.logger.debug('could not find post for path %s %s %s',
-                                 year, month, slug)
+        current_app.logger.warn('no post found')
         abort(404)
 
     if post.deleted:
