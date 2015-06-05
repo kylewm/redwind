@@ -361,7 +361,7 @@ def format_as_text(html, link_fn=None):
     for a in soup.find_all('a'):
         if link_fn:
             link_fn(a)
-        elif a.text[0] == '#':
+        elif a.text[:1] == '#':
             a.replace_with(a.text)
         else:
             a.replace_with(a.get('href') or '[link]')
