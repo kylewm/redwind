@@ -24,7 +24,7 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 imageproxy = Blueprint('imageproxy', __name__)
 
 
-def construct_url(url, size):
+def construct_url(url, size=None):
     if url:
         args = []
         args.append(('url', url))
