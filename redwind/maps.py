@@ -37,8 +37,9 @@ def get_map_image(width, height, maxzoom, markers):
     hash = m.hexdigest()
 
     relpath = os.path.join('map', hash + '.png')
-    abspath = os.path.join(util.image_root_path(),
-                           current_app.static_folder, relpath)
+    abspath = os.path.join(current_app.root_path,
+                           current_app.static_folder,
+                           relpath)
 
     if not os.path.exists(abspath):
         map_url = 'http://static-maps.kylewm.com/img.php?' + query
