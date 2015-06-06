@@ -274,6 +274,10 @@ def save_post(post):
         post.audience = util.multiline_string_to_list(audience)
 
     tags = request.form.getlist('tags')
+    if post.post_type != "article" and post.content:
+        # parse out hashtags as tag links from note-like posts
+        post.content, htags = util.parse_hashtags(post.content)
+        tags += htags
     tags = list(filter(None, map(util.normalize_tag, tags)))
     post.tags = [Tag.query.filter_by(name=tag).first() or Tag(tag)
                  for tag in tags]

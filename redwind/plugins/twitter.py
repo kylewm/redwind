@@ -151,16 +151,18 @@ def do_send_to_twitter(post_id, app_config):
             current_app.logger.warn(
                 'could not find tweet to reply to for %s', post.in_reply_to)
             return None
-        if post.repost_of and not repost_of:
+        elif post.repost_of and not repost_of:
             current_app.logger.warn(
                 'could not find tweet to repost for %s', post.repost_of)
-            return None
-        if post.like_of and not like_of:
+            preview = guess_raw_share_tweet_content(post)
+            img_url = None
+        elif post.like_of and not like_of:
             current_app.logger.warn(
                 'could not find tweet to like for %s', post.like_of)
             return None
+        else:
+            preview, img_url = guess_tweet_content(post, in_reply_to)
 
-        preview, img_url = guess_tweet_content(post, in_reply_to)
         response = do_tweet(post_id, preview, img_url, in_reply_to, repost_of,
                             like_of)
         return str(response)
@@ -187,7 +189,10 @@ def share_on_twitter():
             'discovered in-reply-to: %s, repost-of: %s, like-of: %s',
             in_reply_to, repost_of, like_of)
 
-        preview, _ = guess_tweet_content(post, in_reply_to)
+        if post.repost_of and not repost_of:
+            preview = guess_raw_share_tweet_content(post)
+        else:
+            preview, _ = guess_tweet_content(post, in_reply_to)
 
         imgs = list(collect_images(post))
         current_app.logger.debug('twitter post has images: %s', imgs)
@@ -370,6 +375,33 @@ def guess_tweet_content(post, in_reply_to):
     preview = brevity.shorten(preview, permalink=post.permalink,
                               target_length=target_length)
     return preview, img_url
+
+
+def guess_raw_share_tweet_content(post):
+    preview = ''
+    if not post.repost_contexts:
+        current_app.logger.debug('failed to load repost context for %s',        post.id)
+        return None
+    context = post.repost_contexts[0]
+
+    if context.title:
+        preview += context.title
+
+        if context.author_name:
+            preview += ' by ' + context.author_name
+    elif context.content:
+        if context.author_name:
+            preview += context.author_name + ': '
+
+        preview += context.content
+
+    # if the tweet doesn't get trimmed, put the link on the end anyway
+    preview += (' ' if preview else '') + context.permalink
+
+    target_length = TWEET_CHAR_LENGTH
+    preview = brevity.shorten(preview, permalink=context.permalink,
+                              target_length=target_length)
+    return preview
 
 
 def do_tweet(post_id, preview, img_url, in_reply_to,
