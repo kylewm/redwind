@@ -327,7 +327,8 @@ def render_attachment(post, filename):
         (a for a in post.attachments if a.filename == filename), None)
 
     if not attachment:
-        current_app.logger.warn('no attachment naemd %s', filename)
+        current_app.logger.warn('no attachment named %s', filename)
+        abort(404)
 
     current_app.logger.debug('image file path: %s. request args: %s',
                              attachment.disk_path, request.args)
