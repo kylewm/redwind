@@ -23,3 +23,6 @@ PUSH_HUB = 'https://pubsubhubbub.superfeedr.com'
 # Use the Pushover service to send push notifications to your mobile device
 # PUSHOVER_USER = '...'
 # PUSHOVER_TOKEN = '...'
+
+UPLOAD_PATH = '/srv/www/redwind/Uploads'
+IMAGEPROXY_PATH = '/srv/www/redwind/ImageProxy'

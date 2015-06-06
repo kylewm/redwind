@@ -27,4 +27,5 @@ psycopg2==2.5.4
 mf2py
 mf2util
 brevity
+Flask-Migrate==1.4.0
 -e .

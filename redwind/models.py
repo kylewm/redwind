@@ -1,12 +1,13 @@
-from . import util
-from . import maps
-from .extensions import db
+from redwind import util
+from redwind import maps
+from redwind.extensions import db
 
-from flask import g, session
+from flask import g, session, current_app
 
 import json
 import urllib
 import datetime
+import os
 
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'
@@ -188,6 +189,7 @@ class Post(db.Model):
 
     content = db.Column(db.Text)
     content_html = db.Column(db.Text)
+    attachments = db.relationship('Attachment', backref='post')
 
     @classmethod
     def load_by_id(cls, dbid):
@@ -437,6 +439,23 @@ class Post(db.Model):
             return 'post:{}'.format(self.path)
         else:
             return 'post:{}'.format(self.path)
+
+
+class Attachment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(256))
+    mimetype = db.Column(db.String(256))
+    storage_path = db.Column(db.String(256))
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+    @property
+    def url(self):
+        return '/'.join((self.post.permalink, 'files', self.filename))
+
+    @property
+    def disk_path(self):
+        return os.path.join(
+            current_app.config['UPLOAD_PATH'], self.storage_path)
 
 
 class Context(db.Model):

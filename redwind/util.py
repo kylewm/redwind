@@ -316,10 +316,6 @@ def multiline_string_to_list(s):
     return [l.strip() for l in s.split('\n') if l.strip()]
 
 
-def image_root_path():
-    return current_app.config.get('IMAGE_ROOT_PATH', current_app.root_path)
-
-
 def markdown_filter(data, img_path=None, url_processor=url_to_link,
                     person_processor=person_to_microcard):
     if data is None:
