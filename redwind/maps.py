@@ -1,10 +1,7 @@
 """
 Generate static map images
 """
-from flask import url_for, current_app
-from redwind import util
-import hashlib
-import os
+from redwind import imageproxy
 import urllib.parse
 
 # get_map_image(600, 400, 33, -88, 13, [])
@@ -30,18 +27,6 @@ def get_map_image(width, height, maxzoom, markers):
         for m in markers
     ]
 
-    query = urllib.parse.urlencode(args)
-
-    m = hashlib.md5()
-    m.update(bytes(query, 'utf-8'))
-    hash = m.hexdigest()
-
-    relpath = os.path.join('map', hash + '.png')
-    abspath = os.path.join(util.image_root_path(),
-                           current_app.static_folder, relpath)
-
-    if not os.path.exists(abspath):
-        map_url = 'http://static-maps.kylewm.com/img.php?' + query
-        util.download_resource(map_url, abspath)
-
-    return url_for('static', filename=relpath)
+    return imageproxy.construct_url(
+        'http://static-maps.kylewm.com/img.php?'
+        + urllib.parse.urlencode(args))
