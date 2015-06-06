@@ -353,11 +353,12 @@ def create_attachment_from_file(post, f, default_ext=None):
     if basename.startswith('tmp_') and ext.lower() in ('.png', '.jpg'):
         basename = 'photo'
 
+    unique_filename = ''.join(
+        random.choice(string.ascii_letters + string.digits)
+        for _ in range(8)) + '-' + filename
     now = datetime.datetime.now()
     storage_path = '{}/{:02d}/{:02d}/{}'.format(
-        now.year, now.month, now.day,
-        ''.join(random.choice(string.ascii_letters + string.digits)
-                for _ in range(8)))
+        now.year, now.month, now.day, unique_filename)
 
     idx = 0
     while True:

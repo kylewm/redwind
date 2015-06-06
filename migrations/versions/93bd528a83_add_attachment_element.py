@@ -61,7 +61,7 @@ def convert_file_to_attachment(post, filename):
     storage_path = '{}/{:02d}/{:02d}/{}'.format(
         now.year, now.month, now.day,
         ''.join(random.choice(string.ascii_letters + string.digits)
-                for _ in range(8)) + ext)
+                for _ in range(8)) + '-' + filename)
     mimetype, _ = mimetypes.guess_type(filename)
     attachment = Attachment(filename=filename,
                             mimetype=mimetype,
