@@ -254,25 +254,33 @@ class Post(db.Model):
     @property
     def start(self):
         if self.start_utc and self.start_utcoffset:
-            return self.start_utc.replace(tzinfo=datetime.timezone(self.start_utcoffset))
+            tz = datetime.timezone(self.start_utcoffset)
+            return self.start_utc\
+                       .replace(tzinfo=datetime.timezone.utc)\
+                       .astimezone(tz)
         return self.start_utc
 
     @start.setter
     def start(self, value):
-        print('setting start based on', value)
-        self.start_utc = value and value.replace(tzinfo=None)
+        self.start_utc = value and value\
+            .astimezone(datetime.timezone.utc)\
+            .replace(tzinfo=None)
         self.start_utcoffset = value and value.utcoffset()
 
     @property
     def end(self):
         if self.end_utc and self.end_utcoffset:
-            return self.end_utc.replace(tzinfo=datetime.timezone(self.end_utcoffset))
+            tz = datetime.timezone(self.end_utcoffset)
+            return self.end_utc\
+                       .replace(tzinfo=datetime.timezone.utc)\
+                       .astimezone(tz)
         return self.end_utc
 
     @end.setter
     def end(self, value):
-        print('setting end based on', value)
-        self.end_utc = value and value.replace(tzinfo=None)
+        self.end_utc = value and value\
+            .astimezone(datetime.timezone.utc)\
+            .replace(tzinfo=None)
         self.end_utcoffset = value and value.utcoffset()
 
     @property
