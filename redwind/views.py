@@ -83,6 +83,10 @@ def collect_posts(post_types, before_ts, per_page, tag, search=None,
     try:
         if before_ts:
             before_dt = datetime.datetime.strptime(before_ts, BEFORE_TS_FORMAT)
+            before_dt = TIMEZONE.normalize(TIMEZONE.localize(before_dt))
+            before_dt = before_dt.astimezone(pytz.utc)
+            before_dt = before_dt.replace(tzinfo=None)
+
             query = query.filter(Post.published < before_dt)
     except ValueError:
         current_app.logger.warn('Could not parse before timestamp: %s',
@@ -94,12 +98,13 @@ def collect_posts(post_types, before_ts, per_page, tag, search=None,
 
     posts = [post for post in posts if check_audience(post)]
     if posts:
-        last_ts = posts[-1].published\
-                           .replace(tzinfo=datetime.timezone.utc)\
-                           .astimezone(TIMEZONE)\
-                           .strftime(BEFORE_TS_FORMAT)
+        last_ts = posts[-1].published
+        last_ts = pytz.utc.localize(last_ts)
+        last_ts = TIMEZONE.normalize(last_ts.astimezone(TIMEZONE))\
+                          .replace(tzinfo=None)
+
         view_args = request.view_args.copy()
-        view_args['before_ts'] = last_ts
+        view_args['before_ts'] = last_ts.strftime(BEFORE_TS_FORMAT)
         for k, v in request.args.items():
             view_args[k] = v
         older = url_for(request.endpoint, **view_args)
