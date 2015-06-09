@@ -33,6 +33,99 @@ def do_fetch_context(post, context_attr, urls):
     db.session.commit()
 
 
+def extract_ogp_context(context,doc,url):
+    """ Gets Open Graph Protocol data from the given document
+        See http://indiewebcamp.com/The-Open-Graph-protocol
+    """
+    soup = bs4.BeautifulSoup(doc)
+
+    # extract ogp data
+    ogp_title = soup.find('meta',{'property':'og:title'})
+    ogp_image = soup.find('meta',{'property':'og:image'})
+    ogp_site = soup.find('meta',{'property':'og:site_name'})
+    ogp_url = soup.find('meta',{'property':'og:url'})
+    ogp_content = soup.find('meta',{'property':'og:description'})
+
+    if ogp_title:
+        context.title = ogp_title['content']
+
+    if ogp_image:
+        context.author_image = ogp_image['content']
+
+    if ogp_site:
+        context.author_name = ogp_site['content']
+
+    if ogp_url:
+        context.url = ogp_url['content']
+        context.permalink = ogp_url['content']
+
+    if ogp_content:
+        context.content = ogp_content['content']
+        context.content_plain = ogp_content['content']
+
+    return context
+
+
+def extract_mf2_context(context,doc,url):
+    """ Gets Microformats2 data from the given document
+    """
+    blob = mf2py.Parser(doc=doc, url=url).to_dict()
+    if blob:
+        current_app.logger.debug('parsed successfully by mf2py: %s', url)
+        entry = mf2util.interpret(blob, url)
+        if entry:
+            current_app.logger.debug(
+                'parsed successfully by mf2util: %s', url)
+            published = entry.get('published')
+            content = util.clean_foreign_html(entry.get('content', ''))
+            content_plain = util.format_as_text(
+                content, link_fn=lambda a: a)
+
+            title = entry.get('name')
+            if title and len(title) > 512:
+                # FIXME is there a db setting to do this automatically?
+                title = title[:512]
+            author_name = entry.get('author', {}).get('name', '')
+            author_image = entry.get('author', {}).get('photo')
+
+            permalink = entry.get('url')
+            if not permalink or not isinstance(permalink, str):
+                permalink = url
+
+            context.url = url
+            context.permalink = permalink
+            context.author_name = author_name
+            context.author_url = entry.get('author', {}).get('url', '')
+            context.author_image = author_image
+            context.content = content
+            context.content_plain = content_plain
+            context.published = published
+            context.title = title
+    
+    return context
+
+
+def extract_default_context(context,response,url):
+    """ Gets default information if not all info is retrieved
+    """
+    context = Context() if not context else context
+    
+    if not context.url or not context.permalink:
+        current_app.logger.debug('getting default url info: %s', url)
+        context.url = context.permalink = url
+
+    if not context.title:
+        current_app.logger.debug('getting default title info: %s', url)
+        if response:
+            html = response.text
+            soup = bs4.BeautifulSoup(html)
+
+            if soup.title:
+                context.title = soup.title.string
+
+    return context
+
+
 def create_context(url):
     for context in hooks.fire('create-context', url):
         if context:
@@ -47,53 +140,31 @@ def create_context(url):
         context = Context.query.filter_by(url=url).first()
         current_app.logger.debug(
             'checked for pre-existing context for this url: %s', context)
-        blob = mf2py.Parser(doc=response.text, url=url).to_dict()
-        if blob:
-            current_app.logger.debug('parsed successfully by mf2py: %s', url)
-            entry = mf2util.interpret(blob, url)
-            if entry:
-                current_app.logger.debug(
-                    'parsed successfully by mf2util: %s', url)
-                published = entry.get('published')
-                content = util.clean_foreign_html(entry.get('content', ''))
-                content_plain = util.format_as_text(
-                    content, link_fn=lambda a: a)
+        
+        if not context:
+            context = Context()
 
-                title = entry.get('name')
-                if title and len(title) > 512:
-                    # FIXME is there a db setting to do this automatically?
-                    title = title[:512]
-                author_name = entry.get('author', {}).get('name', '')
-                author_image = entry.get('author', {}).get('photo')
+        context.url = context.permalink = url
 
-                permalink = entry.get('url')
-                if not permalink or not isinstance(permalink, str):
-                    permalink = url
-
-                context = Context()
-                context.url = url
-                context.permalink = permalink
-                context.author_name = author_name
-                context.author_url = entry.get('author', {}).get('url', '')
-                context.author_image = author_image
-                context.content = content
-                context.content_plain = content_plain
-                context.published = published
-                context.title = title
+        context = extract_ogp_context(
+            context=context,
+            doc=response.text,
+            url=url
+        )
+        context = extract_mf2_context(
+            context=context,
+            doc=response.text,
+            url=url
+        )
     except:
         current_app.logger.exception(
             'Could not fetch context for url %s, received response %s',
             url, response)
 
-    if not context:
-        current_app.logger.debug('Generating default context: %s', url)
-        context = Context()
-        context.url = context.permalink = url
-        if response:
-            html = response.text
-            soup = bs4.BeautifulSoup(html)
-            if soup.title:
-                current_app.logger.debug('Found title: %s', soup.title.string)
-                context.title = soup.title.string
-
+    context = extract_default_context(
+        context=context,
+        response=response,
+        url=url
+    )
+    
     return context
