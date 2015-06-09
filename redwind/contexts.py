@@ -46,20 +46,20 @@ def extract_ogp_context(context,doc,url):
     ogp_url = soup.find('meta',{'property':'og:url'})
     ogp_content = soup.find('meta',{'property':'og:description'})
 
-    if ogp_title:
+    if ogp_title and not context.title:
         context.title = ogp_title['content']
 
-    if ogp_image:
+    if ogp_image and not context.author_image:
         context.author_image = ogp_image['content']
 
-    if ogp_site:
+    if ogp_site and not context.author_name:
         context.author_name = ogp_site['content']
 
-    if ogp_url:
+    if ogp_url and not context.permalink:
         context.url = ogp_url['content']
         context.permalink = ogp_url['content']
 
-    if ogp_content:
+    if ogp_content and not context.content:
         context.content = ogp_content['content']
         context.content_plain = ogp_content['content']
 
@@ -146,12 +146,12 @@ def create_context(url):
 
         context.url = context.permalink = url
 
-        context = extract_ogp_context(
+        context = extract_mf2_context(
             context=context,
             doc=response.text,
             url=url
         )
-        context = extract_mf2_context(
+        context = extract_ogp_context(
             context=context,
             doc=response.text,
             url=url
