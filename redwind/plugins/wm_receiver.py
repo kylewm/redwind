@@ -1,13 +1,12 @@
+from bs4 import BeautifulSoup
+from flask import current_app
+from flask import request, make_response, render_template, url_for, Blueprint
+from redwind import hooks
 from redwind import util
 from redwind.extensions import db
 from redwind.models import Post, Mention, get_settings
 from redwind.tasks import get_queue, async_app_context
-from bs4 import BeautifulSoup
-from flask import (
-    request, make_response, render_template, url_for, Blueprint, current_app,
-)
 from werkzeug.exceptions import NotFound
-import collections
 import datetime
 import mf2py
 import mf2util
@@ -126,6 +125,7 @@ def do_process_webmention(source, target, callback, app_config):
             db.session.commit()
             current_app.logger.debug("saved mentions to %s", result.post.path)
 
+            hooks.fire('mention-received', post=result.post)
             if result.post:
                 for mres in result.mention_results:
                     if mres.create:

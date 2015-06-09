@@ -9,15 +9,28 @@ from flask import current_app
 
 
 def register(app):
-    #app.register_blueprint(wm_sender)
-    hooks.register('post-saved', send_webmentions)
+    # app.register_blueprint(wm_sender)
+    hooks.register('post-saved', send_webmentions_on_save)
+    hooks.register('mention-received', send_webmentions_on_comment)
 
 
-def send_webmentions(post, args):
+def send_webmentions_on_save(post, args):
     if args.get('action') in ('save_draft', 'publish_quietly'):
         current_app.logger.debug('skipping webmentions for {}'.format(post.id))
         return
 
+    try:
+        current_app.logger.debug("queueing webmentions for {}".format(post.id))
+        get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
+        return True, 'Success'
+
+    except Exception as e:
+        current_app.logger.exception('sending webmentions')
+        return False, "Exception while sending webmention: {}"\
+            .format(e)
+
+
+def send_webmentions_on_comment(post):
     try:
         current_app.logger.debug("queueing webmentions for {}".format(post.id))
         get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
