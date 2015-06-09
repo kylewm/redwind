@@ -55,9 +55,9 @@ def test_process_wm(db, client, target_url, mocker):
     result = wm_receiver.interpret_mention(source_url, target_url)
 
     assert result.post.permalink == target_url
-    assert result.mention is not None
-    assert result.mention.reftype == 'reply'
-    assert result.create
+    assert result.mentions
+    assert result.mentions[0].reftype == 'reply'
+    assert result.mention_results[0].create
     assert not result.delete
     assert not result.error
     getter.assert_called_once_with('http://foreign/permalink/url', timeout=30)
@@ -74,8 +74,7 @@ def test_process_wm_no_target_post(client, mocker):
     result = wm_receiver.interpret_mention(source_url, target_url)
 
     assert result.post is None
-    assert result.mention is None
-    assert not result.create
+    assert not result.mentions
     assert not result.delete
     assert result.error.startswith('Webmention could not find target')
 
@@ -93,8 +92,7 @@ def test_process_wm_deleted(client, target_url, mocker):
     result = wm_receiver.interpret_mention(source_url, target_url)
 
     assert result.post.permalink == target_url
-    assert not result.mention
-    assert result.create is False
+    assert not result.mentions
     assert result.delete is True
     assert result.error is None
     getter.assert_called_once_with('http://foreign/permalink/url', timeout=30)
