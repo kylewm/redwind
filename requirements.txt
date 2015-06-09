@@ -25,7 +25,7 @@ rq==0.5.1
 uWSGI==2.0.4
 psycopg2==2.5.4
 mf2py
-mf2util
+mf2util>=0.2.1
 brevity
 Flask-Migrate==1.4.0
 -e .
