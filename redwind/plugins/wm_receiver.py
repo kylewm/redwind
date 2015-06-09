@@ -138,7 +138,8 @@ def do_process_webmention(source, target, callback, app_config):
                 'response_code': 200,
                 'status': 'success',
                 'reason': 'Deleted' if result.delete
-                else 'Created' if result.create
+                else 'Created' if any(mres.create for mres
+                                      in result.mention_results)
                 else 'Updated'
             }
 
