@@ -189,7 +189,7 @@ def micropub_endpoint():
         'bookmark_of': bookmark,
         'photo': photo_file,
         'syndicate-to': [SYNDICATION_TARGETS.get(to) for to in syndicate_to],
-        'hidden': 'true' if in_reply_to or like_of or bookmark else 'false',
+        'hidden': 'true' if like_of or bookmark else 'false',
     })
     with current_app.test_request_context(
             base_url=get_settings().site_url, path='/save_new',
