@@ -126,8 +126,11 @@ def do_process_webmention(source, target, callback, app_config):
             db.session.commit()
             current_app.logger.debug("saved mentions to %s", result.post.path)
 
-            if result.post and result.mention and result.create:
-                send_push_notification(result.post, result.mention, app_config)
+            if result.post:
+                for mres in result.mention_results:
+                    if mres.create:
+                        send_push_notification(result.post, mres.mention,
+                                               app_config)
 
             response = {
                 'source': source,
@@ -187,6 +190,8 @@ def interpret_mention(source, target):
         target_post = None
         target_urls = (target,)
         # TODO save domain-level webmention somewhere
+        return ProcessResult(
+            error="Receiving domain-level webmentions is not yet implemented")
     else:
         # confirm that target is a valid link to a post
         target_post = find_target_post(target)
