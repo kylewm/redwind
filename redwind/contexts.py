@@ -33,40 +33,39 @@ def do_fetch_context(post, context_attr, urls):
     db.session.commit()
 
 
-def extract_ogp_context(context,doc,url):
+def extract_ogp_context(context, doc, url):
     """ Gets Open Graph Protocol data from the given document
         See http://indiewebcamp.com/The-Open-Graph-protocol
     """
     soup = bs4.BeautifulSoup(doc)
 
     # extract ogp data
-    ogp_title = soup.find('meta',{'property':'og:title'})
-    ogp_image = soup.find('meta',{'property':'og:image'})
-    ogp_site = soup.find('meta',{'property':'og:site_name'})
-    ogp_url = soup.find('meta',{'property':'og:url'})
-    ogp_content = soup.find('meta',{'property':'og:description'})
+    ogp_title = soup.find('meta', {'property':'og:title'})
+    ogp_image = soup.find('meta', {'property':'og:image'})
+    ogp_site = soup.find('meta', {'property':'og:site_name'})
+    ogp_url = soup.find('meta', {'property':'og:url'})
+    ogp_content = soup.find('meta', {'property':'og:description'})
 
     if ogp_title and not context.title:
-        context.title = ogp_title['content']
+        context.title = ogp_title.get('content')
 
     if ogp_image and not context.author_image:
-        context.author_image = ogp_image['content']
+        context.author_image = ogp_image.get('content')
 
     if ogp_site and not context.author_name:
-        context.author_name = ogp_site['content']
+        context.author_name = ogp_site.get('content')
 
     if ogp_url and not context.permalink:
-        context.url = ogp_url['content']
-        context.permalink = ogp_url['content']
+        context.permalink = ogp_url.get('content')
 
     if ogp_content and not context.content:
-        context.content = ogp_content['content']
-        context.content_plain = ogp_content['content']
+        context.content = ogp_content.get('content')
+        context.content_plain = ogp_content.get('content')
 
     return context
 
 
-def extract_mf2_context(context,doc,url):
+def extract_mf2_context(context, doc, url):
     """ Gets Microformats2 data from the given document
     """
     blob = mf2py.Parser(doc=doc, url=url).to_dict()
@@ -105,7 +104,7 @@ def extract_mf2_context(context,doc,url):
     return context
 
 
-def extract_default_context(context,response,url):
+def extract_default_context(context, response, url):
     """ Gets default information if not all info is retrieved
     """
     context = Context() if not context else context
