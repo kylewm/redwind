@@ -17,8 +17,26 @@ import urllib.request
 
 wm_receiver = Blueprint('wm_receiver', __name__)
 
-ProcessResult = collections.namedtuple(
-    'ProcessResult', 'post mention create delete error')
+
+class MentionResult:
+    def __init__(self, mention, create):
+        self.mention = mention
+        self.create = create
+
+
+class ProcessResult:
+    def __init__(self, post=None, error=None, delete=False):
+        self.post = post
+        self.error = error
+        self.delete = delete
+        self.mention_results = []
+
+    def add_mention(self, mention, create):
+        self.mention_results.append(MentionResult(mention, create))
+
+    @property
+    def mentions(self):
+        return [r.mention for r in self.mention_results]
 
 
 def register(app):
@@ -102,8 +120,8 @@ def do_process_webmention(source, target, callback, app_config):
             if result.post and result.delete:
                 result.post.mentions = [m for m in result.post.mentions if
                                         m.url != source]
-            elif result.post and result.mention:
-                result.post.mentions.append(result.mention)
+            elif result.post:
+                result.post.mentions.extend(result.mentions)
 
             db.session.commit()
             current_app.logger.debug("saved mentions to %s", result.post.path)
@@ -142,7 +160,7 @@ def send_push_notification(post, mention, app_config):
     # ignore mentions from bridgy
     if mention.url and mention.url.startswith('https://brid-gy.appspot.com/'):
         return
-        
+
     if 'PUSHOVER_TOKEN' in app_config and 'PUSHOVER_USER' in app_config:
         token = app_config['PUSHOVER_TOKEN']
         user = app_config['PUSHOVER_USER']
@@ -177,14 +195,12 @@ def interpret_mention(source, target):
             current_app.logger.warn(
                 "Webmention could not find target post: %s. Giving up", target)
             return ProcessResult(
-                post=None, mention=None, create=False, delete=False,
-                error="Webmention could not find target post: {}".format(
-                    target))
+                error="Webmention could not find target post: {}"
+                .format(target))
         target_urls = (target, target_post.permalink,)
 
     if source in target_urls:
         return ProcessResult(
-            post=None, mention=None, create=False, delete=False,
             error='{} and {} refer to the same post'.format(source, target))
 
     # confirm that source actually refers to the post
@@ -194,15 +210,13 @@ def interpret_mention(source, target):
 
     if source_response.status_code == 410:
         current_app.logger.debug("Webmention indicates original was deleted")
-        return ProcessResult(
-            post=target_post, mention=None, create=False, delete=True,
-            error=None)
+        return ProcessResult(post=target_post, delete=True)
 
     if source_response.status_code // 100 != 2:
         current_app.logger.warn(
             "Webmention could not read source post: %s. Giving up", source)
         return ProcessResult(
-            post=target_post, mention=None, create=False, delete=False,
+            post=target_post,
             error="Bad response when reading source post: {}, {}".format(
                 source, source_response))
 
@@ -211,7 +225,7 @@ def interpret_mention(source, target):
     if source_length and int(source_length) > 2097152:
         current_app.logger.warn("Very large source. length=%s", source_length)
         return ProcessResult(
-            post=target_post, mention=None, create=False, delete=False,
+            post=target_post,
             error="Source is very large. Length={}".format(source_length))
 
     link_to_target = find_link_to_target(source, source_response, target_urls)
@@ -220,13 +234,19 @@ def interpret_mention(source, target):
             "Webmention source %s does not appear to link to target %s. "
             "Giving up", source, target)
         return ProcessResult(
-            post=target_post, mention=None, create=False, delete=False,
+            post=target_post,
             error="Could not find any links from source to target")
 
-    mention = create_mention(target_post, source, source_response)
-    return ProcessResult(
-        post=target_post, mention=mention, create=not mention.id,
-        delete=False, error=None)
+    mentions = create_mentions(target_post, source, source_response)
+    if not mentions:
+        return ProcessResult(
+            post=target_post,
+            error="Could not parse a mention from the source")
+
+    result = ProcessResult(post=target_post)
+    for mention in mentions:
+        result.add_mention(mention, create=not mention.id)
+    return result
 
 
 def find_link_to_target(source_url, source_response, target_urls):
@@ -318,7 +338,7 @@ def find_target_post(target_url):
     return post
 
 
-def create_mention(post, url, source_response):
+def create_mentions(post, url, source_response):
     target_urls = []
     if post:
         base_target_urls = [post.permalink]
@@ -334,34 +354,50 @@ def create_mention(post, url, source_response):
         current_app.logger.debug('create_mention: no mf2 in source_response')
         return
     entry = mf2util.interpret_comment(blob, url, target_urls)
+    current_app.logger.debug('interpreted comment: %r', entry)
+
     if not entry:
         current_app.logger.debug(
             'create_mention: mf2util found no comment entry')
         return
-    comment_type = entry.get('comment_type')
+    comment_type = entry.get('comment_type', [])
 
-    content = util.clean_foreign_html(entry.get('content', ''))
-    content_plain = util.format_as_text(content)
+    to_process = [(entry, url)]
+    # process 2nd level "downstream" comments
+    if 'reply' in comment_type:
+        downstream_cmts = entry.get('comment', [])
+        current_app.logger.debug('adding in downstream comments:%d', len(downstream_cmts))
+        for dc in downstream_cmts:
+            if dc.get('url'):
+                to_process.append((dc, dc.get('url')[0]))
 
-    published = entry.get('published')
-    if not published:
-        published = datetime.datetime.utcnow()
+    results = []
+    for entry, url in to_process:
+        current_app.logger.debug('processing %s %r', url, entry)
+        content = util.clean_foreign_html(entry.get('content', ''))
+        content_plain = util.format_as_text(content)
 
-    # update an existing mention
-    mention = next((m for m in post.mentions if m.url == url), None)
-    # or create a new one
-    if not mention:
-        mention = Mention()
-    mention.url = url
-    mention.permalink = entry.get('url') or url
-    mention.reftype = comment_type[0] if comment_type else 'reference'
-    mention.author_name = entry.get('author', {}).get('name', '')
-    mention.author_url = entry.get('author', {}).get('url', '')
-    mention.author_image = entry.get('author', {}).get('photo')
-    mention.content = content
-    mention.content_plain = content_plain
-    mention.published = published
-    mention.title = entry.get('name')
-    mention.syndication = entry.get('syndication', [])
-    mention.rsvp = entry.get('rsvp')
-    return mention
+        published = entry.get('published')
+        if not published:
+            published = datetime.datetime.utcnow()
+
+        # update an existing mention
+        mention = next((m for m in post.mentions if m.url == url), None)
+        # or create a new one
+        if not mention:
+            mention = Mention()
+        mention.url = url
+        mention.permalink = entry.get('url') or url
+        mention.reftype = comment_type[0] if comment_type else 'reference'
+        mention.author_name = entry.get('author', {}).get('name', '')
+        mention.author_url = entry.get('author', {}).get('url', '')
+        mention.author_image = entry.get('author', {}).get('photo')
+        mention.content = content
+        mention.content_plain = content_plain
+        mention.published = published
+        mention.title = entry.get('name')
+        mention.syndication = entry.get('syndication', [])
+        mention.rsvp = entry.get('rsvp')
+        results.append(mention)
+
+    return results

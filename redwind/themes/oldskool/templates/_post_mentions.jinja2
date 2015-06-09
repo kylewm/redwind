@@ -67,7 +67,9 @@
         (<a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>)
         <a href="{{ mention.url }}">#</a>
       </div>
-      {{ mention.content | proxy_all | safe }}
+      <div class="e-content">
+        {{ mention.content | proxy_all | safe }}
+      </div>
       {% if mention._children %}
         <div>
           also on
