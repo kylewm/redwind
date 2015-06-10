@@ -155,12 +155,20 @@ def test_default_context(app):
             '</body>',
             '</html>',
         ])),
+        FakeResponse(''),
+        None,
     ]
     test_output = [
         (('title','Hello, world!'),
          ('permalink','http://example.com'),
          ('url','http://example.com')),
         (('title','Hello, world!'),
+         ('permalink','http://example.com'),
+         ('url','http://example.com')),
+        (('title',None),
+         ('permalink','http://example.com'),
+         ('url','http://example.com')),
+        (('title',None),
          ('permalink','http://example.com'),
          ('url','http://example.com')),
     ]
