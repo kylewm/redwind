@@ -1,7 +1,7 @@
 {% if post.likes %}
   <h3>likes</h3>
   {% for mention in post.likes %}
-    <a href="{{mention.author_url}}">
+    <a class="u-like h-cite" href="{{mention.author_url}}">
       <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
     </a>
   {% endfor %}
@@ -10,7 +10,7 @@
 {% if post.reposts %}
   <h3>reposts</h3>
   {% for mention in post.reposts %}
-    <a href="{{mention.author_url}}">
+    <a class="u-repost h-cite" href="{{mention.author_url}}">
       <img src="{{ mention.author_image | imageproxy(24) }}" title="{{ mention.author_name }}"/>
     </a>
   {% endfor %}
