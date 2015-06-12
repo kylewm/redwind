@@ -372,10 +372,11 @@ def create_mentions(post, url, source_response):
     # process 2nd level "downstream" comments
     if 'reply' in comment_type:
         downstream_cmts = entry.get('comment', [])
-        current_app.logger.debug('adding in downstream comments:%d', len(downstream_cmts))
+        current_app.logger.debug('adding in downstream comments:%d',
+                                 len(downstream_cmts))
         for dc in downstream_cmts:
             if dc.get('url'):
-                to_process.append((dc, dc.get('url')[0]))
+                to_process.append((dc, dc.get('url')))
 
     results = []
     for entry, url in to_process:
