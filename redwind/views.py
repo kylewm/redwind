@@ -1,26 +1,19 @@
-from redwind import util
+from flask import Blueprint
+from flask import make_response, Markup, send_from_directory, current_app
+from flask import request, redirect, url_for, render_template, g, abort
 from redwind import imageproxy
+from redwind import util
 from redwind.extensions import db
-from redwind.models import (
-    Post, Tag, Mention, get_settings,
-)
-
-from flask import (
-    request, redirect, url_for, render_template, g, abort,
-    make_response, Markup, send_from_directory, current_app,
-    Blueprint,
-)
-
-import flask.ext.login as flask_login
-
-import sqlalchemy.orm
-import sqlalchemy.sql
-import sqlalchemy
+from redwind.models import Post, Tag, get_settings
 import datetime
+import flask.ext.login as flask_login
 import json
 import os
 import pytz
 import re
+import sqlalchemy
+import sqlalchemy.orm
+import sqlalchemy.sql
 import urllib.parse
 
 
@@ -556,18 +549,18 @@ def domain_from_url(url):
 
 
 @views.app_template_filter('format_syndication_url')
-def format_syndication_url(url, include_rel=True):
+def format_syndication_url(url, include_rel=True, include_text=True):
     fmt = '<a class="u-syndication" '
     if include_rel:
         fmt += 'rel="syndication" '
     fmt += 'href="{}"><i class="fa {}"></i> {}</a>'
 
     if util.TWITTER_RE.match(url):
-        return Markup(fmt.format(url, 'fa-twitter', 'Twitter'))
+        return Markup(fmt.format(url, 'fa-twitter', 'Twitter' if include_text else ''))
     if util.FACEBOOK_RE.match(url) or util.FACEBOOK_EVENT_RE.match(url):
-        return Markup(fmt.format(url, 'fa-facebook', 'Facebook'))
+        return Markup(fmt.format(url, 'fa-facebook', 'Facebook' if include_text else ''))
     if util.INSTAGRAM_RE.match(url):
-        return Markup(fmt.format(url, 'fa-instagram', 'Instagram'))
+        return Markup(fmt.format(url, 'fa-instagram', 'Instagram' if include_text else ''))
 
     return Markup(fmt.format(url, 'fa-paper-plane', domain_from_url(url)))
 

@@ -1,0 +1,5 @@
+{% if post.syndication %}
+  {% for s in post.syndication %}
+    {{ s | format_syndication_url(include_text=False) }}
+  {% endfor %}
+{% endif %}

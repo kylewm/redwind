@@ -1,0 +1,97 @@
+{% extends theme("base.jinja2") %}
+{% from theme("_contexts.jinja2") import full_context %}
+{% from theme("_author.jinja2") import author %}
+
+{% block body %}
+<body class="{{post.mf2_type}}">
+  <main>
+    <a href="{{url_for('.index')}}">&lt; home</a>
+
+    {% for reply_context in post.reply_contexts %}
+      {{ full_context(post, reply_context, 'u-in-reply-to h-cite', 'in reply to') }}
+    {% endfor %}
+    {% for like_context in post.like_contexts %}
+      {{ full_context(post, like_context, 'u-like-of h-cite', 'liked') }}
+    {% endfor %}
+    {% for bookmark_context in post.bookmark_contexts %}
+      {{ full_context(post, bookmark_context, 'u-bookmark-of h-cite', 'bookmarked') }}
+    {% endfor %}
+
+
+    <article class="prime">
+
+      {% if post.title %}
+        <h1 class="p-name">{{ post.title }}</h1>
+      {% endif %}
+
+      {% if post.post_type == 'event' %}
+        <h2>
+          {{ (post.start, post.end) | datetime_range }}
+        </h2>
+      {% endif %}
+
+      {{ author(settings.author_name, settings.site_url, settings.author_image) }}
+      <div class="e-content{% if not post.title %} p-name{% endif %}">
+        {% for repost_context in post.repost_contexts %}
+          {{ full_context(post, repost_context, 'u-repost-of h-cite', 'shared') }}
+        {% endfor %}
+
+        {% include theme("_checkin.jinja2")%}
+        {{ post.content_html | proxy_all | safe }}
+        {% include theme("_photos.jinja2") %}
+      </div>
+
+      {% include theme("_location.jinja2") %}
+
+      {% if post.tags %}
+        <div class="meta">
+          <code>#</code>
+          {% for tag in post.tags %}
+            <a class="p-category" href="{{url_for('.posts_by_tag', tag=tag.name)}}">{{tag.name}}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="actions">
+        <indie-action do="like" with="{{ post.permalink }}">
+          <a href="{{ post.favorite_url }}"><i class="fa fa-star-o"></i></a>
+        </indie-action>
+        <indie-action do="reply" with="{{ post.permalink }}">
+          <a href="{{ post.reply_url }}"><i class="fa fa-reply"></i></a>
+        </indie-action>
+        <indie-action do="repost" with="{{ post.permalink }}">
+          <a href="{{ post.retweet_url }}"><i class="fa fa-retweet"></i></a>
+        </indie-action>
+      </div>
+
+      <div class="meta">
+        <a class="u-url u-uid" href="{{ post.permalink }}">
+          <time class="dt-published" datetime="{{ post.published | isotime }}">
+            {{ post.published | human_time }}
+        </time></a>
+        <a class="u-url u-shortlink" href="{{ post.shortlink }}">
+          <i class="fa fa-link"></i>
+        </a>
+      {% include theme("_syndication.jinja2") %}
+
+        {% if current_user.is_authenticated() %}
+          <div style="float: right;">
+          <a href="{{url_for('admin.edit_by_id', id=post.id)}}">Edit</a>
+          <a href="{{url_for('admin.delete_by_id', id=post.id)}}">Delete</a>
+          <a href="{{url_for('twitter.share_on_twitter', id=post.id)}}">Tweet</a>
+          </div>
+        {% endif %}
+      </div>
+    </article>
+
+
+    {% include theme("_post_mentions.jinja2") %}
+
+
+  </main>
+
+  <script src="{{ theme_static('indieconfig.js') }}"></script>
+  <script src="{{ theme_static('webaction.js') }}"></script>
+
+</body>
+{% endblock body %}
