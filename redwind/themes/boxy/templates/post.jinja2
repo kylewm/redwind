@@ -1,93 +1,77 @@
 {% extends theme("base.jinja2") %}
 {% from theme("_contexts.jinja2") import full_context %}
-{% from theme("_author.jinja2") import author %}
+{% from theme("_macros.jinja2") import
+  author_name, author_image, location, tags, actions, permalink, photos,
+  checkin, repost_content %}
+{% from theme("_macros.jinja2") import
+  admin with context %}
+
 
 {% block body %}
 <body class="{{post.mf2_type}}">
   <main>
-    <a href="{{url_for('.index')}}">&lt; home</a>
+    <a href="{{url_for('.index')}}">&larr; home</a>
 
     {% for reply_context in post.reply_contexts %}
       {{ full_context(post, reply_context, 'u-in-reply-to h-cite', 'in reply to') }}
     {% endfor %}
-    {% for like_context in post.like_contexts %}
-      {{ full_context(post, like_context, 'u-like-of h-cite', 'liked') }}
-    {% endfor %}
-    {% for bookmark_context in post.bookmark_contexts %}
-      {{ full_context(post, bookmark_context, 'u-bookmark-of h-cite', 'bookmarked') }}
-    {% endfor %}
 
-
-    <article class="prime">
-
-      {% if post.title %}
-        <h1 class="p-name">{{ post.title }}</h1>
-      {% endif %}
-
+    <article class="prime {{post.post_type}}">
       {% if post.post_type == 'event' %}
+        <h1 class="p-name">{{ post.title }}</h1>
         <h2>
           {{ (post.start, post.end) | datetime_range }}
         </h2>
-      {% endif %}
-
-      {{ author(settings.author_name, settings.site_url, settings.author_image) }}
-      <div class="e-content{% if not post.title %} p-name{% endif %}">
-        {% for repost_context in post.repost_contexts %}
-          {{ full_context(post, repost_context, 'u-repost-of h-cite', 'shared') }}
-        {% endfor %}
-
-        {% include theme("_checkin.jinja2")%}
-        {{ post.content_html | proxy_all | safe }}
-        {% include theme("_photos.jinja2") %}
-      </div>
-
-      {% include theme("_location.jinja2") %}
-
-      {% if post.tags %}
-        <div class="meta">
-          <code>#</code>
-          {% for tag in post.tags %}
-            <a class="p-category" href="{{url_for('.posts_by_tag', tag=tag.name)}}">{{tag.name}}</a>
-          {% endfor %}
+        <div class="e-content">
+          {{ post.content_html | proxy_all | safe }}
         </div>
+      {% elif post.post_type == 'article' %}
+        <h1 class="p-name">{{ post.title }}</h1>
+        <div class="e-content">
+          {{ post.content_html | proxy_all | safe }}
+        </div>
+        {{ actions(post) }}
+      {% elif post.post_type == 'share' %}
+        {{ repost_content(post) }}
+      {% elif post.post_type == 'like' %}
+        {% for like_context in post.like_contexts %}
+          <i class="fa fa-star-o"></i> Liked
+          {{ full_context(post, like_context, 'u-like-of h-cite', 'liked') }}
+        {% endfor %}
+      {% elif post.post_type == 'bookmark' %}
+        {% for bookmark_context in post.bookmark_contexts %}
+          <i class="fa fa-bookmark"></i> Bookmarked
+          {{ full_context(post, bookmark_context, 'u-bookmark-of h-cite', 'bookmarked') }}
+        {% endfor %}
+      {% elif post.post_type == 'checkin' %}
+        <div class="e-content p-name">
+          {{ checkin(post) }}
+          {{ post.content_html | proxy_all | safe }}
+          {{ photos(post) }}
+        </div>
+        {{ actions(post) }}
+      {% elif post.post_type == 'note' or post.post_type == 'reply' or post.post_type == 'photo' %}
+        {{ author_image(settings.author_name, settings.author_image) }}
+        {{ author_name(settings.author_name, settings.site_url) }}
+        <div class="e-content p-name">
+          {{ post.content_html | proxy_all | safe }}
+          {{ photos(post) }}
+        </div>
+        {{ actions(post) }}
       {% endif %}
 
-      <div class="actions">
-        <indie-action do="like" with="{{ post.permalink }}">
-          <a href="{{ post.favorite_url }}"><i class="fa fa-star-o"></i></a>
-        </indie-action>
-        <indie-action do="reply" with="{{ post.permalink }}">
-          <a href="{{ post.reply_url }}"><i class="fa fa-reply"></i></a>
-        </indie-action>
-        <indie-action do="repost" with="{{ post.permalink }}">
-          <a href="{{ post.retweet_url }}"><i class="fa fa-retweet"></i></a>
-        </indie-action>
-      </div>
-
-      <div class="meta">
-        <a class="u-url u-uid" href="{{ post.permalink }}">
-          <time class="dt-published" datetime="{{ post.published | isotime }}">
-            {{ post.published | human_time }}
-        </time></a>
-        <a class="u-url u-shortlink" href="{{ post.shortlink }}">
-          <i class="fa fa-link"></i>
-        </a>
-      {% include theme("_syndication.jinja2") %}
-
-        {% if current_user.is_authenticated() %}
-          <div style="float: right;">
-          <a href="{{url_for('admin.edit_by_id', id=post.id)}}">Edit</a>
-          <a href="{{url_for('admin.delete_by_id', id=post.id)}}">Delete</a>
-          <a href="{{url_for('twitter.share_on_twitter', id=post.id)}}">Tweet</a>
-          </div>
-        {% endif %}
-      </div>
+      {{ location(post) }}
+      {{ tags(post) }}
+      {{ permalink(post) }}
+      {{ admin(post) }}
     </article>
 
+      <a class="hidden p-author h-card" href="{{ settings.author_url }}">
+        <img src="{{ settings.author_image }}"/>
+        {{ settings.author_name }}
+      </a>
 
     {% include theme("_post_mentions.jinja2") %}
-
-
   </main>
 
   <script src="{{ theme_static('indieconfig.js') }}"></script>

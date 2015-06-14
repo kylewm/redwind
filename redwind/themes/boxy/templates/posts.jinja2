@@ -1,16 +1,46 @@
 {% extends theme("base.jinja2") %}
-{% from theme("_contexts.jinja2") import short_context, full_context %}
+{% from theme("_contexts.jinja2") import
+  short_context, full_context %}
+{% from theme("_macros.jinja2") import
+  author_name, author_image, location, tags, actions, photos, checkin,
+  repost_content, permalink_from_feed %}
+{% from theme("_macros.jinja2") import
+  admin with context %}
+
 {% block body %}
   <body class="h-feed">
-    <span class="p-name"></span>
+
+
+    <header>
+      <ul>
+        <li class="p-name">{{settings.site_title}}</li>
+        <li><a href="{{ url_for('.index') }}">stream</a></li>
+        <li><a href="{{ url_for('.posts_by_type', plural_type='articles') }}">articles</a></li>
+        <li><a href="{{ url_for('.everything') }}">everything</a></li>
+        <li><a href="{{ url_for('.tag_cloud') }}">tags</a></li>
+      </ul>
+
+      {% if current_user.is_authenticated() %}
+        <ul>
+          <li>new</li>
+          {% for type in 'note', 'reply', 'like', 'share',
+            'photo', 'checkin', 'bookmark', 'article': %}
+
+            <li><a href="{{ url_for('admin.new_post', type=type) }}"
+                   >{{type}}</a></li>
+                 {% endfor %}
+        </ul>
+      {% endif %}
+    </header>
+
     <main>
       {% for post in posts %}
         {% set date = post.published | date(first_only=True) %}
         {% if date %}
           <h1>{{ date }}</h1>
         {% endif %}
-        <article class="post {{post.mf2_type}}">
 
+        <article class="post {{post.post_type}} {{post.mf2_type}}">
           {% for reply in post.reply_contexts %}
             {{ short_context(post, reply, 'u-in-reply-to', '<i class="fa fa-share"></i>') }}
           {% endfor %}
@@ -21,76 +51,55 @@
             {{ short_context(post, bookmark, 'u-bookmark-of', '<i class="fa fa-bookmark"></i>') }}
           {% endfor %}
 
-          {% if post.title %}
-            <h2><a class="u-url p-name" href="{{post.permalink}}">{{ post.title }}</a></h2>
-          {% endif %}
-
           {% if post.post_type == 'event' %}
-            <h2>
-              {{ (post.start, post.end) | datetime_range }}
-            </h2>
+            <h2 class="p-name"><a href="{{post.permalink}}">{{ post.title }}</a></h2>
+            <h3>{{ (post.start, post.end) | datetime_range }}</h3>
+            <div class="e-content">
+              {{ post.content_html | proxy_all | safe }}
+            </div>
+          {% elif post.post_type == 'article' %}
+            <h2 class="p-name"><a href="{{post.permalink}}">{{ post.title }}</a></h2>
+            <div class="e-content">
+              {{ post.content_html | proxy_all | safe }}
+            </div>
+          {% elif post.post_type == 'share' %}
+            {{ repost_content(post) }}
+          {% elif post.post_type == 'checkin' %}
+            <div class="e-content p-name">
+              {{ post.content_html | proxy_all | safe }}
+              {{ photos(post) }}
+            </div>
+          {% elif post.post_type == 'note' or post.post_type == 'reply' or post.post_type == 'photo' %}
+            <div class="e-content p-name">
+              {{ post.content_html | proxy_all | safe }}
+              {{ photos(post) }}
+            </div>
           {% endif %}
-
-          <div class="e-content{% if not post.title %} p-name{% endif %}">
-            {% for repost_context in post.repost_contexts %}
-              {{ full_context(post, repost_context, 'u-repost-of', '<i class="fa fa-retweet"></i>') }}
-            {% endfor %}
-            {% include theme("_checkin.jinja2") %}
-            {{ post.content_html | proxy_all | safe }}
-            {% include theme("_photos.jinja2") %}
-          </div>
-
-          <footer>
-            {% include theme("_location.jinja2") %}
-            <a class="u-url" href="{{post.permalink}}">
-              <time class="dt-published" datetime="{{post.published|isotime}}">{{ post.published | time }}
-            </time></a>
-            {% for s in post.syndication %}
-              <a class="u-syndication" href="{{ s }}"></a>
-            {% endfor %}
-          </footer>
-
+          {{ location(post) }}
+          {{ tags(post) }}
+          {{ permalink_from_feed(post) }}
+          {{ admin(post) }}
         </article>
       {% endfor %}
 
       {% if older %}
-        <div class="pager">
-          <a rel="previous" class="older" href="{{older}}">
-            Older &rarr;
-          </a>
-        </div>
-      {% endif %}
+  <div class="pager">
+    <a rel="previous" class="older" href="{{older}}">
+      Older &rarr;
+    </a>
+  </div>
+{% endif %}
 
     </main>
-    <aside>
+
+    <footer>
       <div>
-        <h1>.:{{settings.site_title}}:.</h1>
-        <ul>
-          <li><a href="{{ url_for('.index') }}">Stream</a></li>
-          <li><a href="{{ url_for('.posts_by_type', plural_type='articles') }}">Articles</a></li>
-          <li><a href="{{ url_for('.everything') }}">Everything</a></li>
-          <li><a href="{{ url_for('.tag_cloud') }}">Tags</a></li>
-        </ul>
-      </div>
-      {% if current_user.is_authenticated() %}
-        <div>
-          <h1>.:create new:.</h1>
-          <ul>
-            {% for type in 'note', 'reply', 'like', 'share', 'photo', 'checkin', 'bookmark', 'article': %}
-              <li><a href="{{ url_for('admin.new_post', type=type) }}">{{ type|capitalize }}</a></il>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
-      <div>
-        <h1>.:bio:.</h1>
         {{ settings.author_bio }}
-        <br/>
       </div>
 
       {% if events %}
         <div>
-          <h1>.:upcoming events:.</h1>
+          <strong>upcoming events</strong>
           {% for event in events %}
             <div class="upcoming-event h-event">
               <a class="u-url" href="{{event.permalink}}">
@@ -107,16 +116,16 @@
             </div> <!-- .upcoming-event -->
           {% endfor %}
         </div>
-
       {% endif %}
 
       <div>
-        <h1>.:search:.</h1>
-        <form method="GET" action="{{url_for('.search')}}">
-          <input name="q" style="width:65%"/>
-          <button type="submit" style="width:25%">Go</button>
-        </form>
+        <label>
+          <form method="GET" action="{{url_for('.search')}}">
+            <input name="q" style="width:150px" placeholder="search"/>
+            <button type="submit" style="width:50px">Go</button>
+          </form>
+        </label>
       </div>
-    </aside>
+    </footer>
   </body>
 {% endblock body %}

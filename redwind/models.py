@@ -344,6 +344,7 @@ class Post(db.Model):
         tweet_id = self.tweet_id
         if tweet_id:
             return TWEET_INTENT_URL.format(tweet_id)
+        return '#'
 
     @property
     def retweet_url(self):
@@ -355,6 +356,7 @@ class Post(db.Model):
         tweet_id = self.tweet_id
         if tweet_id:
             return RETWEET_INTENT_URL.format(tweet_id)
+        return '#'
 
     @property
     def favorite_url(self):
@@ -366,6 +368,7 @@ class Post(db.Model):
         tweet_id = self.tweet_id
         if tweet_id:
             return FAVORITE_INTENT_URL.format(tweet_id)
+        return '#'
 
     @property
     def location_url(self):

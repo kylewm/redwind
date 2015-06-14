@@ -1,4 +1,4 @@
-{% from theme("_author.jinja2") import author %}
+{% from theme("_macros.jinja2") import author_image, author_name %}
 
 
 {% if post.likes %}
@@ -27,27 +27,28 @@
 
 {% if post.replies %}
   {% for mention in post.replies %}
-    <div class="p-comment h-cite reply">
+    <div class="p-comment h-cite comment">
       <div class="container">
         <div class="avatar-column">
-         {{ author(mention.author_name, mention.author_url, mention.author_image) }}
+          {{ author_image(mention.author_name, mention.author_image) }}
         </div> <!-- avatar-column -->
         <div class="content-column">
+          {{ author_name(mention.author_name, mention.author_url) }}
           <div class="e-content">
             {{ mention.content | proxy_all | safe }}
           </div>
           <div class="meta">
-          on <a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>
+            on <a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>
 
-          {% if mention._children %}
-            <div>
-              also on
-              {% for child in mention._children %}
-                <a href="{{ child.permalink }}">{{ child.permalink | domain_from_url }}</a>
-              {% endfor %}
-            </div>
+            {% if mention._children %}
+              <div>
+                also on
+                {% for child in mention._children %}
+                  <a href="{{ child.permalink }}">{{ child.permalink | domain_from_url }}</a>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
-      {% endif %}
         </div> <!-- conent-column -->
       </div> <!-- container -->
     </div>

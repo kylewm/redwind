@@ -35,11 +35,15 @@ h4,h5,h6 {
 }
 
 article+article {
-    margin-top: 3em;
+    margin-top: 5em;
 }
 
-.p-comment {
-    margin-bottom: 1em;
+h1+article {
+    margin-top: 1em;
+}
+
+article+h1 {
+    margin-top: 4em;
 }
 
 p {
@@ -84,30 +88,27 @@ blockquote {
     margin-left: 5px;
 }
 
-.prime,.full-context,.reply {
-    .h-card .p-name {
-        vertical-align: top;
-    }
-
-    padding: 5px;
-    border-radius: 5px;
-    margin: 5px 0;
+.p-author {
+   vertical-align: top;
 }
 
-.full-context,.reply {
-    .avatar {
-    }
+.full-context,.comment {
+    padding: 5px;
+    border-radius: 5px;
+    margin: 1em 0;
 
     border: 1px solid #333;
     border-radius: 5px;
-
     img {
         max-width: 150px;
     }
 }
 
 
-.prime {
+.prime.note, .prime.reply {
+    padding: 5px;
+    border-radius: 5px;
+    margin: 1em 0;
     border: 1px solid #666;
     .e-content {
         font-size: 1.1em;
@@ -123,7 +124,6 @@ blockquote {
     font-size: 1.1em;
 }
 
-
 .actions {
     a {
         font-size: 1.1em;
@@ -131,4 +131,44 @@ blockquote {
         display: inline-block;
     }
 
+}
+
+header {
+    margin: 1em 0 2em 0;
+
+    .p-name {
+        font-weight: bold;
+    }
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    li {
+        display: inline;
+        margin-right: 4px;
+    }
+}
+
+footer {
+    margin-top: 4em;
+}
+
+.hidden {
+    display: none;
+}
+
+.pager {
+
+    text-align: center;
+    margin: 1em;
+
+    a {
+        display: inline-block;
+        padding: 0.2em;
+        border: 1px solid #999;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #999;
+    }
 }

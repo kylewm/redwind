@@ -1,0 +1,148 @@
+
+
+{% macro author_image(name, image) %}
+    {% if image %}
+      <img class="avatar u-photo" src="{{ image | imageproxy(64) }}"/>
+    {% endif %}
+{% endmacro %}
+
+{% macro author_name(name, url) %}
+  {% if url %}
+    <a class="p-author h-card" href="{{url}}">{{ name or url}}</a>
+  {% elif name %}
+    <span class="p-author">{{ name }}</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro actions(post) %}
+  <div class="actions">
+    <indie-action do="like" with="{{ post.permalink }}">
+      <a href="{{ post.favorite_url }}"><i class="fa fa-star-o"></i></a>
+    </indie-action>
+    <indie-action do="reply" with="{{ post.permalink }}">
+      <a href="{{ post.reply_url }}"><i class="fa fa-reply"></i></a>
+    </indie-action>
+    <indie-action do="repost" with="{{ post.permalink }}">
+      <a href="{{ post.retweet_url }}"><i class="fa fa-retweet"></i></a>
+    </indie-action>
+  </div>
+{% endmacro %}
+
+{% macro tags(post) %}
+  {% if post.tags %}
+    <div>
+    <code>#</code>
+    {% for tag in post.tags %}
+      <a class="p-category" href="{{url_for('.posts_by_tag', tag=tag.name)}}">{{tag.name}}</a>
+    {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro location(post) %}
+  {% if post.location %}
+    <div class="meta">
+      <code>@</code>
+      <a class="p-location h-geo" href="{{post.location_url}}" title="{{post.location.get('latitude')}},{{post.location.get('longitude')}}">
+        <data class="p-latitude" value="{{post.location.get('latitude')}}"></data>
+        <data class="p-longitude" value="{{post.location.get('longitude')}}"></data>
+        <span class="p-name">
+          {{post.location | geo_name}}
+        </span>
+      </a>
+    </div>
+  {% endif %}
+  {% if post.venue %}
+    <div class="meta">
+      <code>@</code>
+      <a class="p-location h-card" href="{{ post.venue.permalink }}">{{ post.venue.name }} &ndash; {{ post.venue.location | geo_name }}</a>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro permalink(post) %}
+  <a class="u-url u-uid" href="{{ post.permalink }}">
+    <time class="dt-published" datetime="{{ post.published | isotime }}">
+      {{ post.published | human_time }}
+  </time></a>
+  <a class="u-url u-shortlink" href="{{ post.shortlink }}">
+    <i class="fa fa-link"></i>
+  </a>
+  {% for context in post.repost_contexts %}
+    <a class="u-repost-of" href="{{ context.permalink }}"><i class="fa fa-retweet"></i></a>
+  {% endfor %}
+  {% if post.syndication %}
+    {% for s in post.syndication %}
+      <a href="{{s}}" rel="syndication" class="u-syndication">{{ s | syndication_icon }}</a>
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
+
+{% macro permalink_from_feed(post) %}
+  <a class="u-url u-uid" href="{{ post.permalink }}">
+    <time class="dt-published" datetime="{{ post.published | isotime }}">
+      {{ post.published | time }}
+  </time></a>
+  {% for context in post.repost_contexts %}
+    <a class="u-repost-of" href="{{ context.permalink }}"><i class="fa fa-retweet"></i></a>
+  {% endfor %}
+  {% if post.syndication %}
+    {% for s in post.syndication %}
+      <a href="{{s}}" class="u-syndication">{{ s | syndication_icon }}</a>
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
+
+{% macro admin(post) %}
+  {% if current_user.is_authenticated() %}
+    <div style="float: right;">
+      <a href="{{url_for('admin.edit_by_id', id=post.id)}}">Edit</a>
+      <a href="{{url_for('admin.delete_by_id', id=post.id)}}">Delete</a>
+      <a href="{{url_for('twitter.share_on_twitter', id=post.id)}}">Tweet</a>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro checkin(post) %}
+  {% if post.venue %}
+    <p>Checked in to {{ post.venue.name }}</p>
+  {% endif %}
+  {% set map_image = post.map_image(600, 400) %}
+  {% if map_image %}
+    <img src="{{ map_image }}"/>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro photos(post) %}
+  {% if post.post_type == 'photo' %}
+    {% for photo in post.attachments %}
+      <div class="photo">
+        <a href="{{ photo.url }}">
+          <img class="u-photo" src="{{ photo.url | imageproxy(600)}}" />
+        </a>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
+
+{% macro repost_content(post) %}
+  {% for context in post.repost_contexts %}
+    {{ author_image(context.author_name, context.author_image) }}
+    {{ author_name(context.author_name, context.author_url) }}
+    {% if context.title %}
+      <h4 class="p-name">{{ context.title }}</h4>
+    {% endif %}
+    {% if context.content %}
+      <div class="e-content{% if not post.title %} p-name{% endif %}">
+        {% if context.content_plain and (context.content_plain | length) > 512 %}
+          {{ context.content_plain | truncate(512) }}
+        {% elif context.content %}
+          {{ context.content | proxy_all | safe }}
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+{% endmacro %}
