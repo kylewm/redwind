@@ -458,11 +458,12 @@ def human_time(thedate, alternate=None):
         tz = pytz.timezone(get_settings().timezone)
         thedate = pytz.utc.localize(thedate).astimezone(tz)
 
-    if (isinstance(thedate, datetime.datetime)
-            and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
+    # limit full time to things that happen "today"
+    # and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
+
+    if (isinstance(thedate, datetime.datetime)):
         return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
-    else:
-        return thedate.strftime('%B %-d, %Y')
+    return thedate.strftime('%B %-d, %Y')
 
 
 @views.app_template_filter('datetime_range')
@@ -549,20 +550,36 @@ def domain_from_url(url):
 
 
 @views.app_template_filter('format_syndication_url')
-def format_syndication_url(url, include_rel=True, include_text=True):
+def format_syndication_url(url, include_rel=True):
     fmt = '<a class="u-syndication" '
     if include_rel:
         fmt += 'rel="syndication" '
-    fmt += 'href="{}"><i class="fa {}"></i> {}</a>'
+    fmt += 'href="{}">{} {}</a>'
+    return Markup(fmt.format(syndication_icon(url),
+                             syndication_text(url)))
 
+
+@views.app_template_filter('syndication_icon')
+def syndication_icon(url):
+    fmt = '<i class="fa {}"></i>'
     if util.TWITTER_RE.match(url):
-        return Markup(fmt.format(url, 'fa-twitter', 'Twitter' if include_text else ''))
+        return Markup(fmt.format('fa-twitter'))
     if util.FACEBOOK_RE.match(url) or util.FACEBOOK_EVENT_RE.match(url):
-        return Markup(fmt.format(url, 'fa-facebook', 'Facebook' if include_text else ''))
+        return Markup(fmt.format('fa-facebook'))
     if util.INSTAGRAM_RE.match(url):
-        return Markup(fmt.format(url, 'fa-instagram', 'Instagram' if include_text else ''))
+        return Markup(fmt.format('fa-instagram'))
+    return Markup(fmt.format('fa-paper-plane'))
 
-    return Markup(fmt.format(url, 'fa-paper-plane', domain_from_url(url)))
+
+@views.app_template_filter('syndication_text')
+def syndication_text(url):
+    if util.TWITTER_RE.match(url):
+        return 'Twitter'
+    if util.FACEBOOK_RE.match(url) or util.FACEBOOK_EVENT_RE.match(url):
+        return 'Facebook'
+    if util.INSTAGRAM_RE.match(url):
+        return 'Instagram'
+    return domain_from_url(url)
 
 
 IMAGE_TAG_RE = re.compile(r'<img([^>]*) src="(https?://[^">]+)"')
