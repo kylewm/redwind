@@ -65,7 +65,9 @@
           </span>
         {% endif %}
         (<a class="u-url" href="{{ mention.permalink }}">{{ mention.permalink | domain_from_url }}</a>)
-        <a href="{{ mention.url }}">#</a>
+        {% if current_user.is_authenticated() %}
+        <a style="font-size:0.4em;" href="{{ mention.url }}">#</a>
+        {% endif %}
       </div>
       <div class="e-content">
         {{ mention.content | proxy_all | safe }}
