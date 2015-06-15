@@ -555,8 +555,8 @@ def format_syndication_url(url, include_rel=True):
     if include_rel:
         fmt += 'rel="syndication" '
     fmt += 'href="{}">{} {}</a>'
-    return Markup(fmt.format(syndication_icon(url),
-                             syndication_text(url)))
+    return Markup(fmt.format(
+        url, syndication_icon(url), syndication_text(url)))
 
 
 @views.app_template_filter('syndication_icon')
