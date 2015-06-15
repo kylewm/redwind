@@ -38,7 +38,7 @@ def authorize_facebook():
     params = {
         'client_id': get_settings().facebook_app_id,
         'redirect_uri': redirect_uri,
-        'scope': 'publish_stream,user_photos',
+        'scope': 'publish_actions,user_photos',
     }
 
     code = request.args.get('code')
