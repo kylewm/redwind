@@ -357,14 +357,18 @@ th {
   padding: 0; }
 
 body {
-  font: 12pt/1.4em sans-serif;
-  background: #191919;
-  color: #c2c2c2;
+  font: 12pt/1.4em serif;
+  background: #fafafa;
+  color: #2C4156;
+  /*color: #1F2D3C;*/
   max-width: 800px;
   margin: 0 auto; }
 
+img {
+  max-width: 100%; }
+
 a {
-  color: #5d90cd;
+  color: #2F6193;
   text-decoration: none; }
   a:hover {
     text-decoration: underline; }
@@ -421,7 +425,7 @@ blockquote {
 
 .content-column {
   display: block;
-  width: 705px;
+  max-width: 705px;
   float: left;
   margin-left: 5px; }
 
@@ -432,7 +436,7 @@ blockquote {
   padding: 5px;
   border-radius: 5px;
   margin: 1em 0;
-  border: 1px solid #333;
+  border: 1px solid #ddd;
   border-radius: 5px; }
   .full-context img, .comment img {
     max-width: 150px; }
@@ -441,7 +445,7 @@ blockquote {
   padding: 5px;
   border-radius: 5px;
   margin: 1em 0;
-  border: 1px solid #666; }
+  border: 1px solid #aaa; }
   .prime.note .e-content, .prime.reply .e-content {
     font-size: 1.1em; }
 

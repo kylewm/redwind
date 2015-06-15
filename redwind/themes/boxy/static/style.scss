@@ -1,16 +1,21 @@
 @import "normalize";
 
 body {
-    font: 12pt/1.4em sans-serif;
-    background: #191919;
-    color: #c2c2c2;
+    font: 12pt/1.4em serif;
+    background: #fafafa;
+    color: #2C4156;
+    /*color: #1F2D3C;*/
     max-width: 800px;
     margin: 0 auto;
+}
 
+img {
+    max-width: 100%;
 }
 
 a {
-    color: #5d90cd;
+    color: #2F6193;
+
     text-decoration: none;
     &:hover {
         text-decoration: underline;
@@ -21,15 +26,19 @@ a {
 h1,h2,h3,h4,h5,h6 {
     font-family: sans-serif;
 }
+
 h1 {
     font-size: 1.4em;
 }
+
 h2 {
     font-size:1.3em;
 }
+
 h3 {
     font-size: 1.2em;
 }
+
 h4,h5,h6 {
     font-size: 1.1em;
 }
@@ -83,7 +92,7 @@ blockquote {
 
 .content-column {
     display: block;
-    width: 705px;
+    max-width: 705px;
     float: left;
     margin-left: 5px;
 }
@@ -97,19 +106,18 @@ blockquote {
     border-radius: 5px;
     margin: 1em 0;
 
-    border: 1px solid #333;
+    border: 1px solid #ddd;
     border-radius: 5px;
     img {
         max-width: 150px;
     }
 }
 
-
 .prime.note, .prime.reply {
     padding: 5px;
     border-radius: 5px;
     margin: 1em 0;
-    border: 1px solid #666;
+    border: 1px solid #aaa;
     .e-content {
         font-size: 1.1em;
     }
