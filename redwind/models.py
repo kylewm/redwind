@@ -180,7 +180,6 @@ class Post(db.Model):
     syndication = db.Column(JsonType)
 
     location = db.Column(JsonType)
-    photos = db.Column(JsonType)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'))
     venue = db.relationship('Venue', uselist=False)
 
@@ -228,7 +227,6 @@ class Post(db.Model):
         self.tags = []
         self.audience = []  # public
         self.mention_urls = []
-        self.photos = None
         self.content = None
         self.content_html = None
 
@@ -244,12 +242,6 @@ class Post(db.Model):
             return maps.get_map_image(
                 width, height, 13,
                 [maps.Marker(lat, lng, 'dot-small-blue')])
-
-    def photo_url(self, photo):
-        return '/'.join((self.get_image_path(), photo.get('filename')))
-
-    def photo_thumbnail(self, photo):
-        return self.photo_url(photo) + '?size=medium'
 
     @property
     def start(self):
