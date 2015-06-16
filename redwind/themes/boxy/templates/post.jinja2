@@ -1,7 +1,7 @@
 {% extends theme("base.jinja2") %}
 {% from theme("_contexts.jinja2") import full_context %}
 {% from theme("_macros.jinja2") import
-  author_name, author_image, location, tags, actions, permalink, photos,
+  author, location, tags, actions, permalink, photos,
   checkin, repost_content %}
 {% from theme("_macros.jinja2") import
   admin with context %}
@@ -51,8 +51,8 @@
         </div>
         {{ actions(post) }}
       {% elif post.post_type == 'note' or post.post_type == 'reply' or post.post_type == 'photo' %}
-        {{ author_image(settings.author_name, settings.author_image) }}
-        {{ author_name(settings.author_name, settings.site_url) }}
+        {{ author(settings.author_name, settings.site_url, settings.author_image) }}
+
         <div class="e-content p-name">
           {{ post.content_html | proxy_all | safe }}
           {{ photos(post) }}

@@ -1,14 +1,16 @@
-
-
-{% macro author_image(name, image) %}
-    {% if image %}
-      <img class="avatar u-photo" src="{{ image | imageproxy(64) }}"/>
-    {% endif %}
-{% endmacro %}
-
-{% macro author_name(name, url) %}
+{% macro author(name, url, image) %}
   {% if url %}
-    <a class="p-author h-card" href="{{url}}">{{ name or url}}</a>
+    <a class="p-author h-card" href="{{url}}">
+      {% if image %}
+        <img class="avatar" src="{{ image | imageproxy(64) }}"/>
+      {% endif %}
+      {{ name or url}}
+    </a>
+  {% elif name and image %}
+    <span class="p-author h-card">
+      <img class="avatar" src="{{ image | imageproxy(64) }}"/>
+      {{ name }}
+    </span>
   {% elif name %}
     <span class="p-author">{{ name }}</span>
   {% endif %}
@@ -129,8 +131,7 @@
 
 {% macro repost_content(post) %}
   {% for context in post.repost_contexts %}
-    {{ author_image(context.author_name, context.author_image) }}
-    {{ author_name(context.author_name, context.author_url) }}
+    {{ author(context.author_name, context.author_url, context.author_image) }}
     {% if context.title %}
       <h4 class="p-name">{{ context.title }}</h4>
     {% endif %}

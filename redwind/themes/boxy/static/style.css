@@ -416,19 +416,6 @@ blockquote {
     display: table;
     clear: both; }
 
-.avatar-column {
-  display: block;
-  width: 75px;
-  float: left;
-  font-size: 0.8em;
-  text-align: center; }
-
-.content-column {
-  display: block;
-  max-width: 705px;
-  float: left;
-  margin-left: 5px; }
-
 .p-author {
   vertical-align: top; }
 
@@ -436,8 +423,14 @@ blockquote {
   padding: 5px;
   border-radius: 5px;
   margin: 1em 0;
-  border: 1px solid #ddd;
+  border: 1px solid #eee;
   border-radius: 5px; }
+  .full-context .container, .comment .container {
+    margin-left: 75px; }
+    .full-context .container img.avatar, .comment .container img.avatar {
+      position: relative;
+      margin-left: -75px;
+      float: left; }
   .full-context img, .comment img {
     max-width: 150px; }
 
@@ -445,7 +438,7 @@ blockquote {
   padding: 5px;
   border-radius: 5px;
   margin: 1em 0;
-  border: 1px solid #aaa; }
+  border: 1px solid #999; }
   .prime.note .e-content, .prime.reply .e-content {
     font-size: 1.1em; }
 
