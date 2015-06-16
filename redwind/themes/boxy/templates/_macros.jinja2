@@ -2,14 +2,22 @@
   {% if url %}
     <a class="p-author h-card" href="{{url}}">
       {% if image %}
-        <img class="avatar" src="{{ image | imageproxy(64) }}"/>
+        <data class="p-photo" value="{{ image }}">
+          <img class="avatar" src="{{ image | imageproxy(64) }}"/>
+        </data>
       {% endif %}
-      {{ name or url}}
+      {% if name %}
+        <span class="p-name">{{ name }}</span>
+      {% else %}
+        {{ url | domain_from_url }}
+      {% endif %}
     </a>
   {% elif name and image %}
     <span class="p-author h-card">
-      <img class="avatar" src="{{ image | imageproxy(64) }}"/>
-      {{ name }}
+      <data class="p-photo" value="{{ image }}">
+        <img class="avatar" src="{{ image | imageproxy(64) }}"/>
+      </data>
+      <span class="p-name">{{ name }}</span>
     </span>
   {% elif name %}
     <span class="p-author">{{ name }}</span>
@@ -121,8 +129,8 @@
   {% if post.post_type == 'photo' %}
     {% for photo in post.attachments %}
       <div class="photo">
-        <a href="{{ photo.url }}">
-          <img class="u-photo" src="{{ photo.url | imageproxy(600)}}" />
+        <a class="u-photo" href="{{ photo.url }}">
+          <img src="{{ photo.url | imageproxy(600)}}" />
         </a>
       </div>
     {% endfor %}
