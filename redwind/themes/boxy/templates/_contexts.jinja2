@@ -21,22 +21,23 @@
   {% from theme("_macros.jinja2") import author %}
   <div class="full-context {{mf2class}} h-cite">
     <div class="container">
-    {{ author(context.author_name, context.author_url, context.author_image) }}
-    {% if context.title %}
-      <h4>{{ context.title }}</h4>
-    {% endif %}
-    {% if context.content %}
-      <div class="e-content{% if not context.title %} p-name{% endif %}">
-        {% if context.content_plain and (context.content_plain | length) > 512 %}
-          {{ context.content_plain | truncate(512) }}
-        {% elif context.content %}
-          {{ context.content | proxy_all | safe }}
-        {% endif %}
+      {{ author(context.author_name, context.author_url, context.author_image) }}
+      {% if context.title %}
+        <h4>{{ context.title }}</h4>
+      {% endif %}
+      {% if context.content %}
+        <div class="e-content{% if not context.title %} p-name{% endif %}">
+          {% if context.content_plain and (context.content_plain | length) > 512 %}
+            {{ context.content_plain | truncate(512) }}
+          {% elif context.content %}
+            {{ context.content | proxy_all | safe }}
+          {% endif %}
+        </div>
+      {% endif %}
+      <div class="meta">
+        on <a class="u-url" href="{{ context.permalink }}">{{ context.permalink | domain_from_url }}</a>
+        <time class="dt-published" datetime="{{ context.published | isotime }}"></time>
       </div>
-    {% endif %}
-    <div class="meta">
-      on <a class="u-url" href="{{ context.permalink }}">{{ context.permalink | domain_from_url }}</a>
-    </div>
     </div> <!-- .container -->
   </div>
 {% endmacro %}
