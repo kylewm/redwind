@@ -46,9 +46,10 @@ def extract_ogp_context(context, doc, url):
     ogp_url = soup.find('meta', {'property':'og:url'})
     ogp_content = soup.find('meta', {'property':'og:description'})
 
-    if ogp_title and not context.title:
+    # import the title if mf2 didn't get a title *or* content
+    if ogp_title and not context.title and not context.content:
         context.title = ogp_title.get('content')
-
+    
     if ogp_image and not context.author_image:
         context.author_image = ogp_image.get('content')
 
@@ -61,7 +62,10 @@ def extract_ogp_context(context, doc, url):
     if ogp_content and not context.content:
         context.content = ogp_content.get('content')
         context.content_plain = ogp_content.get('content')
-
+        # remove the title if they are the same
+        if context.title == context.content:
+            context.title = None
+            
     return context
 
 
@@ -113,7 +117,7 @@ def extract_default_context(context, response, url):
         current_app.logger.debug('getting default url info: %s', url)
         context.url = context.permalink = url
 
-    if not context.title:
+    if not context.title and not context.content:
         current_app.logger.debug('getting default title info: %s', url)
         if response:
             html = response.text
