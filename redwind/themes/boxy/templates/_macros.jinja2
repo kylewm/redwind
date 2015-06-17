@@ -1,8 +1,8 @@
-{% macro author(name, url, image) %}
+{% macro author(name, url, image, hidden=False) %}
   {% if url %}
-    <a class="p-author h-card" href="{{url}}">
+    <a class="p-author h-card{% if hidden %} hidden{% endif %}" href="{{ url }}">
       {% if image %}
-        <data class="p-photo" value="{{ image }}">
+        <data class="u-photo" value="{{ image }}">
           <img class="avatar" src="{{ image | imageproxy(64) }}"/>
         </data>
       {% endif %}

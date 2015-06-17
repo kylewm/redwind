@@ -13,11 +13,12 @@
     <a href="{{url_for('.index')}}">&larr; home</a>
 
     {% for reply_context in post.reply_contexts %}
-      {{ full_context(post, reply_context, 'u-in-reply-to h-cite', 'in reply to') }}
+      {{ full_context(post, reply_context, 'u-in-reply-to', 'in reply to') }}
     {% endfor %}
 
     <article class="prime {{post.post_type}}">
       {% if post.post_type == 'event' %}
+        {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
         <h1 class="p-name">{{ post.title }}</h1>
         <h2>
           {{ (post.start, post.end) | datetime_range }}
@@ -26,6 +27,7 @@
           {{ post.content_html | proxy_all | safe }}
         </div>
       {% elif post.post_type == 'article' %}
+        {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
         <h1 class="p-name">{{ post.title }}</h1>
         <div class="e-content">
           {{ post.content_html | proxy_all | safe }}
@@ -34,16 +36,22 @@
       {% elif post.post_type == 'share' %}
         {{ repost_content(post) }}
       {% elif post.post_type == 'like' %}
+        {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
+
         {% for like_context in post.like_contexts %}
           <i class="fa fa-star-o"></i> Liked
-          {{ full_context(post, like_context, 'u-like-of h-cite', 'liked') }}
+          {{ full_context(post, like_context, 'u-like-of', 'liked') }}
         {% endfor %}
       {% elif post.post_type == 'bookmark' %}
+        {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
+
         {% for bookmark_context in post.bookmark_contexts %}
           <i class="fa fa-bookmark"></i> Bookmarked
-          {{ full_context(post, bookmark_context, 'u-bookmark-of h-cite', 'bookmarked') }}
+          {{ full_context(post, bookmark_context, 'u-bookmark-of', 'bookmarked', hidden=True) }}
         {% endfor %}
       {% elif post.post_type == 'checkin' %}
+        {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
+
         <div class="e-content p-name">
           {{ checkin(post) }}
           {{ post.content_html | proxy_all | safe }}
@@ -65,11 +73,6 @@
       {{ permalink(post) }}
       {{ admin(post) }}
     </article>
-
-      <a class="hidden p-author h-card" href="{{ settings.author_url }}">
-        <img src="{{ settings.author_image }}"/>
-        {{ settings.author_name }}
-      </a>
 
     {% include theme("_post_mentions.jinja2") %}
   </main>
