@@ -47,7 +47,7 @@
 
         {% for bookmark_context in post.bookmark_contexts %}
           <i class="fa fa-bookmark"></i> Bookmarked
-          {{ full_context(post, bookmark_context, 'u-bookmark-of', 'bookmarked', hidden=True) }}
+          {{ full_context(post, bookmark_context, 'u-bookmark-of', 'bookmarked') }}
         {% endfor %}
       {% elif post.post_type == 'checkin' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
