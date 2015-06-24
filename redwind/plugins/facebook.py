@@ -85,8 +85,8 @@ def do_send_to_facebook(post_id, app_config):
         post_type = 'post'
         img_url = None
 
-        if post.post_type == 'photo' and post.photos:
-            img_url = post.photo_url(post.photos[0])
+        if post.post_type == 'photo' and post.attachments:
+            img_url = post.attachments[0].url
             post_type = 'photo'
 
         facebook_url = handle_new_or_edit(post, preview, img_url,

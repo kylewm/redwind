@@ -549,6 +549,13 @@ def domain_from_url(url):
     return urllib.parse.urlparse(url).netloc
 
 
+@views.app_template_filter('make_absolute')
+def make_absolute(url):
+    if not url:
+        return url
+    return urllib.parse.urljoin(get_settings().site_url, url)
+    
+
 @views.app_template_filter('format_syndication_url')
 def format_syndication_url(url, include_rel=True):
     fmt = '<a class="u-syndication" '

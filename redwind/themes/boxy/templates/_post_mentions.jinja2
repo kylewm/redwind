@@ -28,6 +28,7 @@
 {% if post.replies %}
   {% for mention in post.replies %}
     <div class="p-comment h-cite comment">
+      <a name="{{ mention.fragment_id }}"></a>
       <div class="container">
         {{ author(mention.author_name, mention.author_url, mention.author_image) }}
         <div class="e-content">

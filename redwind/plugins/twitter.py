@@ -101,9 +101,9 @@ def collect_images(post):
     """collect the images (if any) that are in an <img> tag
     in the rendered post"""
 
-    if post.photos:
-        for photo in post.photos:
-            yield post.photo_url(photo)
+    if post.attachments:
+        for photo in post.attachments:
+            yield photo.url
 
     else:
         html = util.markdown_filter(
@@ -367,9 +367,8 @@ def guess_tweet_content(post, in_reply_to):
     target_length = TWEET_CHAR_LENGTH
 
     img_url = None
-    if post.photos:
-        photo = post.photos[0]
-        img_url = post.photo_url(photo)
+    if post.post_type == 'photo' and post.attachments:
+        img_url = post.attachments[0].url
         target_length -= MEDIA_CHAR_LENGTH
 
     preview = brevity.shorten(preview, permalink=post.permalink,
