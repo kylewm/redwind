@@ -5,11 +5,15 @@ from bs4 import BeautifulSoup
 import re
 import requests
 import urllib
-from flask import current_app
+from flask import current_app, request, jsonify, Blueprint
+from flask.ext.login import login_required
+
+
+wm_sender = Blueprint('wm_sender', __name__)
 
 
 def register(app):
-    # app.register_blueprint(wm_sender)
+    app.register_blueprint(wm_sender)
     hooks.register('post-saved', send_webmentions_on_save)
     hooks.register('mention-received', send_webmentions_on_comment)
 
@@ -41,12 +45,22 @@ def send_webmentions_on_comment(post):
         return False, "Exception while sending webmention: {}"\
             .format(e)
 
-
+        
 def do_send_webmentions(post_id, app_config):
     with async_app_context(app_config):
         current_app.logger.debug("sending mentions for {}".format(post_id))
         post = Post.load_by_id(post_id)
         return handle_new_or_edit(post)
+
+
+@wm_sender.route('/send_webmentions', methods=['GET'])
+@login_required
+def send_webmentions_manually():
+    id = request.args.get('id')
+    post = Post.load_by_id(id)
+    return jsonify({
+        'mentions': handle_new_or_edit(post),
+    })
 
 
 def get_source_url(post):

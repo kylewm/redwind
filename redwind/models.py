@@ -538,6 +538,11 @@ class Mention(db.Model):
         self._children = []
 
     @property
+    def fragment_id(self):
+        return '{}-{}'.format(self.author_name.lower().replace(' ', '_') if self.author_name else 'unnamed',
+                              self.id)
+        
+    @property
     def title_or_url(self):
         return self.title or util.prettify_url(self.permalink)
 
