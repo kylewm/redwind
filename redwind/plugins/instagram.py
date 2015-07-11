@@ -165,6 +165,61 @@ def do_send_to_instagram(post_id, app_config):
             db.session.commit()
             return like_url
 
+        if in_reply_to:
+            comment_text = format_markdown_for_instagram(post.content)
+            comment_url = post_comment(in_reply_to, comment_text)
+            if comment_url:
+                post.add_syndication_url(comment_url)
+                db.session.commit()
+                return comment_url
+
+
+def format_markdown_for_instagram(data):
+    return util.format_as_text(
+        util.markdown_filter(
+            data, url_processor=None, person_processor=None))
+
+
+def post_comment(permalink, comment_text):
+    if ('INSTAGRAM_USERNAME' not in current_app.config
+            or 'INSTAGRAM_PASSWORD' not in current_app.config):
+        return
+
+    from selenium import webdriver
+    from selenium.webdriver.common.keys import Keys
+    import selenium.webdriver.support.ui as ui
+    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+    dc = dict(DesiredCapabilities.PHANTOMJS)
+    dc['ssl-protocol'] = 'any'
+
+    browser = webdriver.PhantomJS(desired_capabilities=dc)
+    wait = ui.WebDriverWait(browser, 10)  # timeout after 10 seconds
+
+    browser.get('https://instagram.com/accounts/login/')
+
+    un = browser.find_element_by_id('lfFieldInputUsername')
+    un.send_keys(current_app.config['INSTAGRAM_USERNAME']
+                 + Keys.TAB
+                 + current_app.config['INSTAGRAM_PASSWORD'])
+    un.submit()
+
+    wait.until(lambda b: b.current_url == 'https://instagram.com/')
+
+    browser.get(permalink)
+
+    inp = browser.find_element_by_tag_name('input')
+    inp.send_keys(comment_text)
+    inp.submit()
+
+    # workaround for https://github.com/SeleniumHQ/selenium/issues/767
+    browser.service.process.terminate()
+    browser.quit()
+
+    return (permalink + '#comment-by-'
+            + current_app.config['INSTAGRAM_USERNAME']
+            + '-' + datetime.datetime.now().isoformat())
+
 
 def ig_get(url):
     return requests.get(url, params={
