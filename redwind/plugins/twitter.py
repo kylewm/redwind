@@ -360,9 +360,10 @@ def guess_tweet_content(post, in_reply_to):
     if in_reply_to:
         reply_match = PERMALINK_RE.match(in_reply_to)
         if reply_match:
-            reply_name = '@' + reply_match.group(1)
-            if reply_name.lower() not in preview.lower():
-                preview = reply_name + ' ' + preview
+            reply_name = reply_match.group(1)
+            if (reply_name.lower() not in preview.lower() 
+                    and reply_name.lower() not in current_app.config.get('TWEET_REPLY_BLACKLIST', [])):
+                preview = '@' + reply_name + ' ' + preview
 
     target_length = TWEET_CHAR_LENGTH
 
@@ -379,7 +380,7 @@ def guess_tweet_content(post, in_reply_to):
 def guess_raw_share_tweet_content(post):
     preview = ''
     if not post.repost_contexts:
-        current_app.logger.debug('failed to load repost context for %s',        post.id)
+        current_app.logger.debug('failed to load repost context for %s', post.id)
         return None
     context = post.repost_contexts[0]
 

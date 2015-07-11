@@ -37,16 +37,14 @@
         {{ repost_content(post) }}
       {% elif post.post_type == 'like' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
-
         {% for like_context in post.like_contexts %}
-          <i class="fa fa-star-o"></i> Liked
+          <span class="p-name"><i class="fa fa-star-o"></i> Liked</span>
           {{ full_context(post, like_context, 'u-like-of', 'liked') }}
         {% endfor %}
       {% elif post.post_type == 'bookmark' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
-
         {% for bookmark_context in post.bookmark_contexts %}
-          <i class="fa fa-bookmark"></i> Bookmarked
+          <span class="p-name"><i class="fa fa-bookmark"></i> Bookmarked</span>
           {{ full_context(post, bookmark_context, 'u-bookmark-of', 'bookmarked') }}
         {% endfor %}
       {% elif post.post_type == 'checkin' %}

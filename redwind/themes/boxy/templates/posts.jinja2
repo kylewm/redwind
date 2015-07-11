@@ -34,6 +34,29 @@
     </header>
 
     <main>
+
+      {% if events %}
+        <strong>upcoming events</strong>
+        <div class="container">
+          {% for event in events %}
+            <div class="upcoming-event h-event">
+              <a class="u-url" href="{{event.permalink}}">
+                <time class="dt-start" datetime="{{event.start | isotime }}">
+                  {{event.start | date}}
+                </time>
+                <div class="p-name">
+                  {{event.title}}
+                </div>
+                <div class="p-location">
+                  {{event.venue.name}}
+                </div>
+              </a>
+            </div> <!-- .upcoming-event -->
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      
       {% for post in posts %}
         {% set date = post.published | date(first_only=True) %}
         {% if date %}
@@ -85,39 +108,20 @@
       {% if older %}
   <div class="pager">
     <a rel="previous" class="older" href="{{older}}">
-      Older &rarr;
+      &larr; Older
     </a>
   </div>
+
 {% endif %}
 
     </main>
 
     <footer>
+      <input type="button" onclick="(function(btn){var z=document.createElement('script');document.subtomeBtn=btn;z.src='https://www.subtome.com/load.js';document.body.appendChild(z);})(this)" value="Subscribe">
+    
       <div>
         {{ settings.author_bio }}
       </div>
-
-      {% if events %}
-        <div>
-          <strong>upcoming events</strong>
-          {% for event in events %}
-            <div class="upcoming-event h-event">
-              <a class="u-url" href="{{event.permalink}}">
-                <time class="dt-start" datetime="{{event.start | isotime }}">
-                  {{event.start | date}}
-                </time>
-                <div class="p-name">
-                  {{event.title}}
-                </div>
-                <div class="p-location">
-                  {{event.venue.name}}
-                </div>
-              </a>
-            </div> <!-- .upcoming-event -->
-          {% endfor %}
-        </div>
-      {% endif %}
-
       <div>
         <label>
           <form method="GET" action="{{url_for('.search')}}">

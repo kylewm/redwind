@@ -35,6 +35,7 @@ def convert_mf2():
             return jsonify(json)
         except:
             return jsonify({'error': str(sys.exc_info()[0])})
+
     return """
 <html><body>
 <h1>mf2py</h1>

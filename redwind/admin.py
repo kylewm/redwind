@@ -288,15 +288,18 @@ def save_post(post):
     elif not post.slug or was_draft:
         post.slug = post.generate_slug()
 
+    # events should use their start date for permalinks
+    path_date = post.start or post.published
+
     if post.draft:
         m = hashlib.md5()
-        m.update(bytes(post.published.isoformat() + '|' + post.slug,
+        m.update(bytes(path_date.isoformat() + '|' + post.slug,
                        'utf-8'))
         post.path = 'drafts/{}'.format(m.hexdigest())
 
     elif not post.path or was_draft:
         base_path = '{}/{:02d}/{}'.format(
-            post.published.year, post.published.month, post.slug)
+            path_date.year, path_date.month, post.slug)
         # generate a unique path
         unique_path = base_path
         idx = 1
@@ -309,7 +312,7 @@ def save_post(post):
     if not post.short_path:
         short_base = '{}/{}'.format(
             util.tag_for_post_type(post.post_type),
-            util.base60_encode(util.date_to_ordinal(post.published)))
+            util.base60_encode(util.date_to_ordinal(path_date)))
         short_paths = set(
             row[0] for row in db.session.query(Post.short_path).filter(
                 Post.short_path.startswith(short_base)).all())

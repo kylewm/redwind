@@ -45,7 +45,9 @@
       <link rel="pgpkey" type="application/pgp-keys" href="{{ settings.pgp_key_url }}" />
     {% endif %}
 
-    <link rel="stylesheet" href="{{ theme_static('style.css') + '?version=2015-06-16' }}"/>
+    <link rel="meta" type="application/rdf+xml" title="Contact" href="/foaf.rdf" />
+
+    <link rel="stylesheet" href="{{ theme_static('style.css') + '?version=2015-06-25' }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}"/>
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet"/>
 
