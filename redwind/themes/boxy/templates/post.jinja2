@@ -34,7 +34,10 @@
         </div>
         {{ actions(post) }}
       {% elif post.post_type == 'share' %}
-        {{ repost_content(post) }}
+        {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
+        <div class="e-content p-name">
+          {{ repost_content(post) }}
+        </div>
       {% elif post.post_type == 'like' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
         {% for like_context in post.like_contexts %}

@@ -78,9 +78,6 @@
   <a class="u-url u-shortlink" href="{{ post.shortlink }}">
     <i class="fa fa-link"></i>
   </a>
-  {% for context in post.repost_contexts %}
-    <a class="u-repost-of" href="{{ context.permalink }}"><i class="fa fa-retweet"></i></a>
-  {% endfor %}
   {% if post.syndication %}
     {% for s in post.syndication %}
       <a href="{{s}}" rel="syndication" class="u-syndication">{{ s | syndication_icon }}</a>
@@ -93,9 +90,6 @@
     <time class="dt-published" datetime="{{ post.published | isotime }}">
       {{ post.published | time }}
   </time></a>
-  {% for context in post.repost_contexts %}
-    <a class="u-repost-of" href="{{ context.permalink }}"><i class="fa fa-retweet"></i></a>
-  {% endfor %}
   {% if post.syndication %}
     {% for s in post.syndication %}
       <a href="{{s}}" class="u-syndication">{{ s | syndication_icon }}</a>
@@ -140,19 +134,22 @@
 
 {% macro repost_content(post) %}
   {% for context in post.repost_contexts %}
-    {{ author(context.author_name, context.author_url, context.author_image) }}
-    {% if context.title %}
-      <h4 class="p-name">{{ context.title }}</h4>
-    {% endif %}
-    {% if context.content %}
-      <div class="e-content{% if not post.title %} p-name{% endif %}">
-        {% if context.content_plain and (context.content_plain | length) > 512 %}
-          {{ context.content_plain | truncate(512) }}
-        {% elif context.content %}
-          {{ context.content | proxy_all | safe }}
-        {% endif %}
-      </div>
-    {% endif %}
+    <div class="u-repost-of h-cite">
+      {{ author(context.author_name, context.author_url, context.author_image) }}
+      {% if context.title %}
+        <h4 class="p-name">{{ context.title }}</h4>
+      {% endif %}
+      {% if context.content %}
+        <div class="e-content{% if not post.title %} p-name{% endif %}">
+          {% if context.content_plain and (context.content_plain | length) > 512 %}
+            {{ context.content_plain | truncate(512) }}
+          {% elif context.content %}
+            {{ context.content | proxy_all | safe }}
+          {% endif %}
+        </div>
+      {% endif %}
+      <a class="u-url" href="{{ context.permalink }}"><i class="fa fa-retweet"></i> Reposted from {{context.permalink | domain_from_url }}</a>
+    </div>
   {% endfor %}
 
 {% endmacro %}
