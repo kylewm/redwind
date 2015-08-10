@@ -366,11 +366,11 @@ def guess_tweet_content(post, in_reply_to):
                     reply_match.group(2) ),
                 auth = get_auth() )
 
-            if status_reponse.status_code // 2 != 100 :
+            if status_response.status_code // 2 != 100 :
                 current_app.logger.warn(
                     'failed to fetch tweet %s %s while finding participants',
-                    status_reponse,
-                    status_reponse.content )
+                    status_response,
+                    status_response.content )
             else :
                 status_data = status_response.json()
                 mentioned_users = [p['screen_name'] for p in 
