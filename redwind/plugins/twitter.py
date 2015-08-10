@@ -360,6 +360,33 @@ def guess_tweet_content(post, in_reply_to):
     if in_reply_to:
         reply_match = PERMALINK_RE.match(in_reply_to)
         if reply_match:
+            # get the other participants in the conversation (if any exist)
+            status_response = requests.get(
+                'https://api.twitter.com/1.1/statuses/show/{}.json'.format(
+                    reply_match.group(2) ),
+                auth = get_auth() )
+
+            if status_reponse.status_code // 2 != 100 :
+                current_app.logger.warn(
+                    'failed to fetch tweet %s %s while finding participants',
+                    status_reponse,
+                    status_reponse.content )
+            else :
+                status_data = status_response.json()
+                mentioned_users = [p['screen_name'] for p in 
+                        status_data['entities']['user_mentions']]
+                current_app.logger.debug(
+                    'got tweet participants %s',
+                    str( mentioned_users ) )
+
+                for parti in mentioned_users :
+                    if (parti.lower() not in preview.lower()
+                        and parti.lower() not in current_app.config.get('TWITTER_REPLY_BLACKLIST', [])
+                        # TODO: make this not my username
+                        and parti.lower() != "lancecoyote" ):
+                        preview = '@' + parti + ' ' + preview
+
+            # get the poster we're responding to
             reply_name = reply_match.group(1)
             if (reply_name.lower() not in preview.lower() 
                     and reply_name.lower() not in current_app.config.get('TWEET_REPLY_BLACKLIST', [])):
