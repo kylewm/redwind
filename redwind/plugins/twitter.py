@@ -340,6 +340,30 @@ def expand_link(url):
     return url
 
 
+def get_authed_twitter_account():
+    """Gets the username of the currently authed twitter user
+    """
+    if not is_twitter_authorized() :
+        return None
+
+    user_response = requests.get(
+        'https://api.twitter.com/1.1/account/verify_credentials.json',
+        auth = get_auth() )
+
+    if user_response.status_code // 2 != 100 :
+        current_app.logger.warn(
+            'failed to retrieve user data %s %s',
+            user_response,
+            user_response.content )
+        return None
+
+    current_app.logger.debug(
+        'retrieved user data for %s',
+        user_response )
+
+    return user_response.json()
+
+
 def guess_tweet_content(post, in_reply_to):
     """Best guess effort to generate tweet content for a post; useful for
     auto-filling the share form.
@@ -383,7 +407,8 @@ def guess_tweet_content(post, in_reply_to):
                     if (parti.lower() not in preview.lower()
                         and parti.lower() not in current_app.config.get('TWITTER_REPLY_BLACKLIST', [])
                         # TODO: make this not my username
-                        and parti.lower() != "lancecoyote" ):
+                        and parti.lower() != 
+                            get_authed_twitter_account()['screen_name'].lower() ):
                         preview = '@' + parti + ' ' + preview
 
             # get the poster we're responding to
