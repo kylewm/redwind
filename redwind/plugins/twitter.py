@@ -370,6 +370,7 @@ def prepend_twitter_name(name, tweet, exclude_me = False):
         if (not exclude_me or
             name.lower() != get_authed_twitter_account()['screen_name'].lower()):
             return '@' + name + ' ' + tweet
+    return tweet
 
 
 def guess_tweet_content(post, in_reply_to):
