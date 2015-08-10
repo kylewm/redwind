@@ -364,6 +364,14 @@ def get_authed_twitter_account():
     return user_response.json()
 
 
+def prepend_twitter_name(name, tweet, exclude_me = False):
+    if (name.lower() not in tweet.lower()
+        and name.lower() not in current_app.config.get('TWITTER_REPLY_BLACKLIST', [])):
+        if (not exclude_me or
+            name.lower() != get_authed_twitter_account()['screen_name'].lower()):
+            return '@' + name + ' ' + tweet
+
+
 def guess_tweet_content(post, in_reply_to):
     """Best guess effort to generate tweet content for a post; useful for
     auto-filling the share form.
@@ -404,18 +412,11 @@ def guess_tweet_content(post, in_reply_to):
                     str( mentioned_users ) )
 
                 for parti in mentioned_users :
-                    if (parti.lower() not in preview.lower()
-                        and parti.lower() not in current_app.config.get('TWITTER_REPLY_BLACKLIST', [])
-                        # TODO: make this not my username
-                        and parti.lower() != 
-                            get_authed_twitter_account()['screen_name'].lower() ):
-                        preview = '@' + parti + ' ' + preview
+                    preview = prepend_twitter_name(parti, preview, exclude_me = True)
 
             # get the poster we're responding to
             reply_name = reply_match.group(1)
-            if (reply_name.lower() not in preview.lower() 
-                    and reply_name.lower() not in current_app.config.get('TWEET_REPLY_BLACKLIST', [])):
-                preview = '@' + reply_name + ' ' + preview
+            preview = prepend_twitter_name(reply_name, preview)
 
     target_length = TWEET_CHAR_LENGTH
 
