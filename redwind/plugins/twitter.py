@@ -39,6 +39,7 @@ TweetComponent = collections.namedtuple('TweetComponent', [
 ])
 
 PERMALINK_RE = util.TWITTER_RE
+USERMENTION_RE = util.AT_USERNAME_RE
 
 
 def register(app):
@@ -340,6 +341,39 @@ def expand_link(url):
     return url
 
 
+def get_authed_twitter_account():
+    """Gets the username of the currently authed twitter user
+    """
+    if not is_twitter_authorized() :
+        return None
+
+    user_response = requests.get(
+        'https://api.twitter.com/1.1/account/verify_credentials.json',
+        auth = get_auth() )
+
+    if user_response.status_code // 2 != 100 :
+        current_app.logger.warn(
+            'failed to retrieve user data %s %s',
+            user_response,
+            user_response.content )
+        return None
+
+    current_app.logger.debug(
+        'retrieved user data for %s',
+        user_response )
+
+    return user_response.json()
+
+
+def prepend_twitter_name(name, tweet, exclude_me = False):
+    if (name.lower() not in tweet.lower()
+        and name.lower() not in current_app.config.get('TWITTER_REPLY_BLACKLIST', [])):
+        if (not exclude_me or
+            name.lower() != get_authed_twitter_account()['screen_name'].lower()):
+            return '@' + name + ' ' + tweet
+    return tweet
+
+
 def guess_tweet_content(post, in_reply_to):
     """Best guess effort to generate tweet content for a post; useful for
     auto-filling the share form.
@@ -360,10 +394,41 @@ def guess_tweet_content(post, in_reply_to):
     if in_reply_to:
         reply_match = PERMALINK_RE.match(in_reply_to)
         if reply_match:
-            reply_name = reply_match.group(1)
-            if (reply_name.lower() not in preview.lower() 
-                    and reply_name.lower() not in current_app.config.get('TWEET_REPLY_BLACKLIST', [])):
-                preview = '@' + reply_name + ' ' + preview
+            # get the status we're responding to
+            status_response = requests.get(
+                'https://api.twitter.com/1.1/statuses/show/{}.json'.format(
+                    reply_match.group(2) ),
+                auth = get_auth() )
+
+            if status_response.status_code // 2 != 100 :
+                current_app.logger.warn(
+                    'failed to fetch tweet %s %s while finding participants',
+                    status_response,
+                    status_response.content )
+                status_data = {}
+            else :
+                status_data = status_response.json()
+
+            # get the list of people to respond to
+            mentioned_users = []
+            my_screen_name  = get_authed_twitter_account().get( 'screen_name', '' )
+            for user in status_data.get('entities',{}).get('user_mentions',[]) :
+                screen_name = user.get('screen_name','')
+                
+                if screen_name and screen_name.lower() != my_screen_name.lower() :
+                    mentioned_users.append( screen_name )
+            mentioned_users.append( reply_match.group(1) ) # the status author
+            current_app.logger.debug( "got mentioned users %s" % mentioned_users )
+
+            # check to see if anybody is already mentioned by the preview
+            mention_match = USERMENTION_RE.findall( preview )
+            for match in mention_match :
+                if match[0] in mentioned_users :
+                    break
+            else :
+                # nobody was mentioned, prepend all the names!
+                for user in mentioned_users :
+                    preview = prepend_twitter_name( user, preview )
 
     target_length = TWEET_CHAR_LENGTH
 
