@@ -63,7 +63,7 @@
         {{ author(settings.author_name, settings.site_url, settings.author_image) }}
 
         <div class="e-content p-name">
-          {{ post.content_html | proxy_all | safe }}
+          {{ post.content_html | proxy_all | add_preview | safe }}
           {{ photos(post) }}
         </div>
         {{ actions(post) }}

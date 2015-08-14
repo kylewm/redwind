@@ -94,7 +94,7 @@
             </div>
           {% elif post.post_type == 'note' or post.post_type == 'reply' or post.post_type == 'photo' %}
             <div class="e-content p-name">
-              {{ post.content_html | proxy_all | safe }}
+              {{ post.content_html | proxy_all | add_preview | safe }}
               {{ photos(post) }}
             </div>
           {% endif %}

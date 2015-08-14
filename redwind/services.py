@@ -1,16 +1,15 @@
 from . import contexts
+from . import util
 from .models import Venue
 from .views import geo_name
 
-from flask import (
-    request, jsonify, redirect, url_for, Blueprint, current_app,
-    render_template,
-)
+from bs4 import BeautifulSoup
+from flask import request, jsonify, redirect, url_for, Blueprint, current_app, render_template
 import datetime
 import mf2py
 import mf2util
+import requests
 import sys
-
 
 services = Blueprint('services', __name__)
 
