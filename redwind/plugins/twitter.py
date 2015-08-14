@@ -39,6 +39,7 @@ TweetComponent = collections.namedtuple('TweetComponent', [
 ])
 
 PERMALINK_RE = util.TWITTER_RE
+USERMENTION_RE = util.AT_USERNAME_RE
 
 
 def register(app):
@@ -393,7 +394,7 @@ def guess_tweet_content(post, in_reply_to):
     if in_reply_to:
         reply_match = PERMALINK_RE.match(in_reply_to)
         if reply_match:
-            # get the other participants in the conversation (if any exist)
+            # get the status we're responding to
             status_response = requests.get(
                 'https://api.twitter.com/1.1/statuses/show/{}.json'.format(
                     reply_match.group(2) ),
@@ -404,20 +405,30 @@ def guess_tweet_content(post, in_reply_to):
                     'failed to fetch tweet %s %s while finding participants',
                     status_response,
                     status_response.content )
+                status_data = {}
             else :
                 status_data = status_response.json()
-                mentioned_users = [p['screen_name'] for p in 
-                        status_data['entities']['user_mentions']]
-                current_app.logger.debug(
-                    'got tweet participants %s',
-                    str( mentioned_users ) )
 
-                for parti in mentioned_users :
-                    preview = prepend_twitter_name(parti, preview, exclude_me = True)
+            # get the list of people to respond to
+            mentioned_users = []
+            my_screen_name  = get_authed_twitter_account().get( 'screen_name', '' )
+            for user in status_data.get('entities',{}).get('user_mentions',[]) :
+                screen_name = user.get('screen_name','')
+                
+                if screen_name and screen_name.lower() != my_screen_name.lower() :
+                    mentioned_users.append( screen_name )
+            mentioned_users.append( reply_match.group(1) ) # the status author
+            current_app.logger.debug( "got mentioned users %s" % mentioned_users )
 
-            # get the poster we're responding to
-            reply_name = reply_match.group(1)
-            preview = prepend_twitter_name(reply_name, preview)
+            # check to see if anybody is already mentioned by the preview
+            mention_match = USERMENTION_RE.findall( preview )
+            for match in mention_match :
+                if match[0] in mentioned_users :
+                    break
+            else :
+                # nobody was mentioned, prepend all the names!
+                for user in mentioned_users :
+                    preview = prepend_twitter_name( user, preview )
 
     target_length = TWEET_CHAR_LENGTH
 
