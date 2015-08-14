@@ -110,7 +110,7 @@ def create_context(url):
 
 
 def send_to_instagram(post, args):
-    """Share a like to Instagram without user-input.
+    """Share a like or comment to Instagram without user-input.
     """
     if 'instagram' in args.getlist('syndicate-to'):
         if not is_instagram_authorized():
