@@ -102,14 +102,18 @@ def collect_images(post):
     """collect the images (if any) that are in an <img> tag
     in the rendered post"""
 
-    if post.attachments:
+    if type(post) == Post and post.attachments:
         for photo in post.attachments:
             yield photo.url
 
     else:
-        html = util.markdown_filter(
-            post.content, img_path=post.get_image_path(),
-            url_processor=None, person_processor=None)
+        if type(post) == Post:
+            html = util.markdown_filter(
+                post.content, img_path=post.get_image_path(),
+                url_processor=None, person_processor=None)
+        else:
+            html = post.content
+
         soup = BeautifulSoup(html)
         for img in soup.find_all('img'):
             if not img.find_parent(class_='h-card'):
@@ -155,8 +159,7 @@ def do_send_to_twitter(post_id, app_config):
         elif post.repost_of and not repost_of:
             current_app.logger.warn(
                 'could not find tweet to repost for %s', post.repost_of)
-            preview = guess_raw_share_tweet_content(post)
-            img_url = None
+            preview, img_url = guess_raw_share_tweet_content(post)
         elif post.like_of and not like_of:
             current_app.logger.warn(
                 'could not find tweet to like for %s', post.like_of)
@@ -191,11 +194,12 @@ def share_on_twitter():
             in_reply_to, repost_of, like_of)
 
         if post.repost_of and not repost_of:
-            preview = guess_raw_share_tweet_content(post)
+            preview, _ = guess_raw_share_tweet_content(post)
+            imgs = list(collect_images(post.repost_contexts[0]))
         else:
             preview, _ = guess_tweet_content(post, in_reply_to)
+            imgs = list(collect_images(post))
 
-        imgs = list(collect_images(post))
         current_app.logger.debug('twitter post has images: %s', imgs)
 
         return render_template('admin/share_on_twitter.jinja2',
@@ -464,9 +468,13 @@ def guess_raw_share_tweet_content(post):
     preview += (' ' if preview else '') + context.permalink
 
     target_length = TWEET_CHAR_LENGTH
+
+    imgs = list(collect_images(context))
+    img_url = imgs[0] if imgs else None
+
     preview = brevity.shorten(preview, permalink=context.permalink,
                               target_length=target_length)
-    return preview
+    return preview, img_url
 
 
 def do_tweet(post_id, preview, img_url, in_reply_to,
