@@ -458,7 +458,7 @@ def guess_raw_share_tweet_content(post):
         if context.author_name:
             preview += context.author_name + ': '
 
-        preview += context.content
+        preview += context.content_plain
 
     # if the tweet doesn't get trimmed, put the link on the end anyway
     preview += (' ' if preview else '') + context.permalink
