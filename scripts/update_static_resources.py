@@ -8,7 +8,7 @@ import shutil
 PYGMENTS_STYLE = 'tango'
 pygments_css = (pygments.formatters.HtmlFormatter(style=PYGMENTS_STYLE)
                 .get_style_defs('.codehilite'))
-with open('redwind/static/css/pygments.css', 'w') as f:
+with open('pygments.css', 'w') as f:
     f.write(pygments_css)
 
 

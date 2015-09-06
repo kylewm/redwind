@@ -203,3 +203,25 @@ def fetch_context_service():
         })
 
     return jsonify({'contexts': results})
+
+
+@services.route('/yt/<video>/<slug>/')
+def youtube_shortener(video, slug):
+    return redirect('https://youtube.com/watch?v={}'.format(video))
+
+
+@services.route('/services/youtube/')
+def create_youtube_link():
+    url = request.args.get('url')
+    if url:
+        m = util.YOUTUBE_RE.match(url)
+        if m:
+            video_id = m.group(1)
+            resp = requests.get(url)
+            soup = BeautifulSoup(resp.text)
+            title = soup.find('meta', {'property':'og:title'}).get('content')
+            if title:
+                url = url_for('.youtube_shortener', video=video_id, slug=util.slugify(title), _external=True)
+                return """<a href="{}">{}</a>""".format(url, url)
+
+    return """<form><input name="url"/><input type="submit"/></form>"""

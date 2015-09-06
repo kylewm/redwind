@@ -575,6 +575,10 @@ def syndication_icon(url):
         return Markup(fmt.format('fa-facebook'))
     if util.INSTAGRAM_RE.match(url):
         return Markup(fmt.format('fa-instagram'))
+    if util.FLICKR_RE.match(url):
+        return Markup(fmt.format('fa-flickr'))
+    if util.INDIENEWS_RE.match(url):
+        return Markup(fmt.format('fa-newspaper-o'))
     return Markup(fmt.format('fa-paper-plane'))
 
 
