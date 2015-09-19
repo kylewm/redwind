@@ -444,6 +444,22 @@ class Post(db.Model):
             return 'post:{}'.format(self.path)
 
 
+class UserPhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(256))
+    mimetype = db.Column(db.String(256))
+    storage_path = db.Column(db.String(256))
+
+    @property
+    def url(self):
+        return '/'.join(('userphoto', self.filename))
+
+    @property
+    def disk_path(self):
+        return os.path.join(
+            current_app.config['UPLOAD_PATH'], self.storage_path)
+
+
 class Attachment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(256))
@@ -541,7 +557,7 @@ class Mention(db.Model):
     def fragment_id(self):
         return '{}-{}'.format(self.author_name.lower().replace(' ', '_') if self.author_name else 'unnamed',
                               self.id)
-        
+
     @property
     def title_or_url(self):
         return self.title or util.prettify_url(self.permalink)

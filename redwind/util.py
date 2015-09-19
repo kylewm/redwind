@@ -164,35 +164,35 @@ def person_to_microcard(contact, nick, soup):
 
 
 def bs4_sub(soup, regex, repl, blacklist):
-        """Process text elements in a BeautifulSoup document with a regex and
-        replacement string.
+    """Process text elements in a BeautifulSoup document with a regex and
+    replacement string.
 
-        :param BeautifulSoup soup: the BeautifulSoup document to be
-         edited in place
-        :param string regex: a regular expression whose matches will
-         be replaced
-        :param function repl: a function that a Match object, and
-         returns text or a new HTML node
-        :param list blacklist: a list of tags whose children should
-         not be modified (<pre> for example)
-        """
-        for txt in soup.find_all(text=True):
-            if any(p.name in blacklist for p in txt.parents):
-                continue
-            nodes = []
-            start = 0
-            for m in regex.finditer(txt):
-                nodes.append(txt[start:m.start()])
-                nodes.append(repl(m))
-                start = m.end()
-            if not nodes:
-                continue
-            nodes.append(txt[start:])
-            parent = txt.parent
-            ii = parent.contents.index(txt)
-            txt.extract()
-            for offset, node in enumerate(nodes):
-                parent.insert(ii + offset, node)
+    :param BeautifulSoup soup: the BeautifulSoup document to be
+     edited in place
+    :param string regex: a regular expression whose matches will
+     be replaced
+    :param function repl: a function that a Match object, and
+     returns text or a new HTML node
+    :param list blacklist: a list of tags whose children should
+     not be modified (<pre> for example)
+    """
+    for txt in soup.find_all(text=True):
+        if any(p.name in blacklist for p in txt.parents):
+            continue
+        nodes = []
+        start = 0
+        for m in regex.finditer(txt):
+            nodes.append(txt[start:m.start()])
+            nodes.append(repl(m))
+            start = m.end()
+        if not nodes:
+            continue
+        nodes.append(txt[start:])
+        parent = txt.parent
+        ii = parent.contents.index(txt)
+        txt.extract()
+        for offset, node in enumerate(nodes):
+            parent.insert(ii + offset, node)
 
 
 def autolink(plain, url_processor=url_to_link,
@@ -490,7 +490,7 @@ def parse_hashtags(s):
         a.string = m.group(0)
 
         tags.append(m.group(1).lower())
-        
+
         return a
 
     try:

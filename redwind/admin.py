@@ -7,7 +7,7 @@ from redwind import maps
 from redwind import util
 from redwind.extensions import db
 from redwind.models import Post, Attachment, Tag, Contact, Mention, Nick
-from redwind.models import Venue, Setting, get_settings
+from redwind.models import Venue, Setting, UserPhoto, get_settings
 from werkzeug import secure_filename
 import bs4
 import collections
@@ -349,33 +349,40 @@ def save_post(post):
     return redirect(redirect_url)
 
 
-def create_attachment_from_file(post, f, default_ext=None):
-    filename = secure_filename(f.filename)
-    basename, ext = os.path.splitext(filename)
-    mimetype, _ = mimetypes.guess_type(f.filename)
-    if not mimetype:
-        mimetype = f.mimetype
+def generate_storage_path(filename):
+    now = datetime.datetime.now()
+    filename = ''.join(
+        random.choice(string.ascii_letters + string.digits)
+        for _ in range(8)) + '-' + filename
+    return '{}/{:02d}/{:02d}/{}'.format(
+        now.year, now.month, now.day, filename)
 
+
+def uniquify_filename(filename, existing_names):
+    basename, ext = os.path.splitext(filename)
     # special handling for ugly filenames from OwnYourGram
     if basename.startswith('tmp_') and ext.lower() in ('.png', '.jpg'):
         basename = 'photo'
-
-    unique_filename = ''.join(
-        random.choice(string.ascii_letters + string.digits)
-        for _ in range(8)) + '-' + filename
-    now = datetime.datetime.now()
-    storage_path = '{}/{:02d}/{:02d}/{}'.format(
-        now.year, now.month, now.day, unique_filename)
-
     idx = 0
     while True:
         if idx == 0:
             filename = '{}{}'.format(basename, ext)
         else:
             filename = '{}-{}{}'.format(basename, idx, ext)
-        if filename not in [a.filename for a in post.attachments]:
-            break
+        if filename not in existing_names:
+            return filename
         idx += 1
+
+
+def create_attachment_from_file(post, f, default_ext=None):
+    filename = secure_filename(f.filename)
+    mimetype, _ = mimetypes.guess_type(f.filename)
+    if not mimetype:
+        mimetype = f.mimetype
+
+    filename = uniquify_filename(
+        filename, [a.filename for a in post.attachments])
+    storage_path = generate_storage_path(filename)
 
     return Attachment(filename=filename,
                       mimetype=f.mimetype,
@@ -570,6 +577,47 @@ def edit_settings():
     db.session.commit()
 
     return redirect(url_for('.edit_settings'))
+
+
+@admin.route('/settings/photo', methods=['GET', 'POST'])
+@flask_login.login_required
+def settings_user_photo():
+    if request.method == 'GET':
+        return render_template('admin/userphoto.jinja2')
+
+    f = request.files.get('photo')
+    if not f:
+        flash('No photo specified for upload')
+        return redirect(url_for('.settings_user_photo'))
+
+    mimetype, _ = mimetypes.guess_type(f.filename)
+    if not mimetype:
+        mimetype = f.mimetype
+
+    filename = secure_filename(f.filename)
+    storage_path = generate_storage_path(filename)
+    filename = uniquify_filename(
+        filename, [up.filename for up in UserPhoto.query])
+
+    user_photo = UserPhoto(
+        filename=filename,
+        mimetype=mimetype,
+        storage_path=storage_path)
+
+    os.makedirs(os.path.dirname(user_photo.disk_path), exist_ok=True)
+    user_photo.disk_path
+    f.save(user_photo.disk_path)
+    db.session.add(user_photo)
+
+    s = Setting.query.get('user_photo')
+    if not s:
+        s = Setting(key='user_photo', name='User Photo')
+        db.session.add(s)
+    s.value = user_photo.id
+
+    db.session.commit()
+
+    return redirect(url_for('.settings_user_photo'))
 
 
 @admin.route('/delete')
