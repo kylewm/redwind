@@ -318,6 +318,16 @@ def create_context(url):
 def expand_links(status_data, as_html=True):
     text = status_data['text']
     urls = status_data.get('entities', {}).get('urls', [])
+
+    for um in status_data.get('entities', {}).get('user_mentions', []):
+        um = um.copy()
+        um.update({
+            'display_url': '@' + um.get('screen_name'),
+            'expanded_url': 'https://twitter.com/{}'.format(
+                um.get('screen_name')),
+        })
+        urls.append(um)
+
     urls = sorted(
         urls, key=lambda url_data: url_data['indices'][0], reverse=True)
     for url_data in urls:
