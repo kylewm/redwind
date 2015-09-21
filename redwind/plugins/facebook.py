@@ -28,7 +28,7 @@ def inject_settings_variable():
         'settings': get_settings()
     }
 
-    
+
 @facebook.route('/authorize_facebook')
 @login_required
 def authorize_facebook():
@@ -198,19 +198,16 @@ def handle_new_or_edit(post, preview, img_url, post_type,
     current_app.logger.debug('publishing to facebook')
 
     # TODO I cannot figure out how to tag people via the FB API
-    # tagger = PersonTagger()
-    # preview = util.autolink(preview, url_processor=None,
-    #                         person_processor=tagger)
 
     post_args = {
         'access_token': get_settings().facebook_access_token,
-        #'message': preview.strip() + '\n\nOriginal: ' + post.permalink,
+        # 'message': preview.strip() + '\n\nOriginal: ' + post.permalink,
         'message': preview.strip(),
         'actions': json.dumps({'name': 'See Original',
                                'link': post.shortlink}),
-        #'privacy': json.dumps({'value': 'SELF'}),
+        # 'privacy': json.dumps({'value': 'SELF'}),
         'privacy': json.dumps({'value': 'EVERYONE'}),
-        #'article': post.permalink,
+        # 'article': post.permalink,
     }
 
     if post.title:
@@ -283,9 +280,7 @@ def guess_content(post):
 
 
 def format_markdown_as_facebook(data):
-    return util.format_as_text(
-        util.markdown_filter(
-            data, url_processor=None, person_processor=None))
+    return util.format_as_text(util.markdown_filter(data))
 
 
 def is_facebook_authorized():

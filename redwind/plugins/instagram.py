@@ -175,9 +175,7 @@ def do_send_to_instagram(post_id, app_config):
 
 
 def format_markdown_for_instagram(data):
-    return util.format_as_text(
-        util.markdown_filter(
-            data, url_processor=None, person_processor=None))
+    return util.format_as_text(util.markdown_filter(data))
 
 
 def post_comment(permalink, comment_text):

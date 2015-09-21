@@ -109,8 +109,7 @@ def collect_images(post):
     else:
         if type(post) == Post:
             html = util.markdown_filter(
-                post.content, img_path=post.get_image_path(),
-                url_processor=None, person_processor=None)
+                post.content, img_path=post.get_image_path())
         else:
             html = post.content
 
@@ -219,17 +218,17 @@ def share_on_twitter():
 
 
 def format_markdown_as_tweet(data):
-    def person_to_twitter_handle(contact, nick, soup):
+    def to_twitter_handle(contact, nick):
         """Attempt to replace friendly @name with the official @twitter
         username
         """
         if contact and contact.social:
             nick = contact.social.get('twitter') or nick
         return '@' + nick
-    return util.format_as_text(
-        util.markdown_filter(
-            data, url_processor=None,
-            person_processor=person_to_twitter_handle))
+
+    html = util.markdown_filter(data)
+    html = util.process_people(to_twitter_handle, html)
+    return util.format_as_text(html)
 
 
 def get_auth():
