@@ -42,13 +42,13 @@ def contacts(db):
 
 def test_autolink_simple():
     result = util.autolink('This is a simple link to http://example.com')
-    assert result == 'This is a simple link to <a href="http://example.com">example.com</a>'
+    assert result == 'This is a simple link to <a class="auto-link" href="http://example.com">http://example.com</a>'
 
     result = util.autolink('A link without a schema jason.com/friday13th maybe?')
-    assert result == 'A link without a schema <a href="http://jason.com/friday13th">jason.com/friday13th</a> maybe?'
+    assert result == 'A link without a schema <a class="auto-link" href="http://jason.com/friday13th">jason.com/friday13th</a> maybe?'
 
     result = util.autolink('Shortened link is.gd/me for ex.')
-    assert result == 'Shortened link <a href="http://is.gd/me">is.gd/me</a> for ex.'
+    assert result == 'Shortened link <a class="auto-link" href="http://is.gd/me">is.gd/me</a> for ex.'
 
 
 def test_convert_legacy_people_to_at_names(contacts):
@@ -68,8 +68,8 @@ def test_autolink_word_boundaries():
 
 
 def test_autolink_trailing_slash():
-    result = util.autolink('http://hel.lo/world/')
-    assert result == '<a href="http://hel.lo/world/">hel.lo/world</a>'
+    result = util.autolink('http://hel.ly/world/')
+    assert result == '<a class="auto-link" href="http://hel.ly/world/">http://hel.ly/world/</a>'
 
 
 def test_no_autolink_in_code_block():
@@ -88,24 +88,23 @@ def asdf():
     assert '<a' not in result
 
 
-def test_autolink_at_names(contacts, mocker):
-    result = util.autolink("@luke this is @leia tell @obiwan he\'s our only help!")
-    assert result == """<a class="microcard h-card" href="http://tatooine.com/moseisley"><img alt="" src="/imageproxy?url=http%3A%2F%2Ftatooine.com%2Fluke.jpg&amp;size=24&amp;sig=97ad9f9406cf09a03a0c5ecc333de3d1"/>Luke Skywalker</a> this is <a class="microcard h-card" href="http://aldera.an"><img alt="" src="/imageproxy?url=http%3A%2F%2Faldera.an%2Fleia.png&amp;size=24&amp;sig=f5803c340d2511eac014af8af029de2c"/>Princess Leia</a> tell <a href="https://twitter.com/obiwan">@obiwan</a> he's our only help!"""
+def test_process_at_names(contacts, mocker):
+    result = util.process_people_to_microcards("@luke this is @leia tell @obiwan he's our only hope!")
+    assert result == """<a class="microcard h-card" href="http://tatooine.com/moseisley"><img alt="" src="/imageproxy?url=http%3A%2F%2Ftatooine.com%2Fluke.jpg&amp;size=24&amp;sig=97ad9f9406cf09a03a0c5ecc333de3d1" />Luke Skywalker</a> this is <a class="microcard h-card" href="http://aldera.an"><img alt="" src="/imageproxy?url=http%3A%2F%2Faldera.an%2Fleia.png&amp;size=24&amp;sig=f5803c340d2511eac014af8af029de2c" />Princess Leia</a> tell <a class="microcard h-card" href="https://twitter.com/obiwan">@obiwan</a> he's our only hope!"""
 
 
 def test_autolink_urls():
     """Exercise the URL matching regex
     """
-    def simple_url_marker(url, soup):
-        return '<' + url + '>'
-
     test_cases = [
-        ('this should be link.ed', 'this should be <http://link.ed>'),
-        ('this should not be link.linked', 'this should not be link.linked'),
+        ('this should be link.gy',
+         'this should be <a class="auto-link" href="http://link.gy">link.gy</a>'),
+        ('this should not be link.linked',
+         'this should not be link.linked'),
         ('a link to is.gd/supplies, should end at the comma',
-         'a link to <http://is.gd/supplies>, should end at the comma'),
+         'a link to <a class="auto-link" href="http://is.gd/supplies">is.gd/supplies</a>, should end at the comma'),
         ('A link to example.com/q?u=a75$qrst&v should not terminate early',
-         'A link to <http://example.com/q?u=a75$qrst&v> should not terminate early'),
+         'A link to <a class="auto-link" href="http://example.com/q?u=a75$qrst&v">example.com/q?u=a75$qrst&v</a> should not terminate early'),
         ('HTML links <a href="http://google.com">google.com</a> should not be affected',
          'HTML links <a href="http://google.com">google.com</a> should not be affected'),
         ('Neither should <code><pre>http://fenced.code/blocks</pre></code>',
@@ -113,15 +112,14 @@ def test_autolink_urls():
     ]
 
     for inp, out in test_cases:
-        assert out == util.autolink(
-            inp, person_processor=None, url_processor=simple_url_marker)
+        assert out == util.autolink(inp)
 
 
 def test_autolink_people(db):
     """Exercise the @-name matching regex, without contacts
     """
-    def simple_name_marker(contact, name, soup):
-        return '<' + name + '>'
+    def simple_name_marker(contact, nick):
+        return '<' + nick + '>'
 
     test_cases = [
         ('@han should be linked', '<han> should be linked'),
@@ -138,9 +136,7 @@ def test_autolink_people(db):
     ]
 
     for inp, out in test_cases:
-        assert out == util.autolink(
-            inp, person_processor=simple_name_marker,
-            url_processor=None)
+        assert out == util.process_people(simple_name_marker, inp)
 
 
 def test_parsing_hashtags():
@@ -148,7 +144,7 @@ def test_parsing_hashtags():
     """
 
     test_cases = [
-        ('#hashtag should be linked', 
+        ('#hashtag should be linked',
          '<a href="/tags/hashtag">#hashtag</a> should be linked',
          ['hashtag']),
         ('hashtag should not be linked',
@@ -185,11 +181,12 @@ def test_parsing_hashtags():
          'this hash#tag will not be parsed',
          []),
         ('http://example.com/path#fragment',
-         'http://example.com/path#fragment',
+         '<a class="auto-link" href="http://example.com/path#fragment">http://example.com/path#fragment</a>',
          []),
     ]
 
     for inp, out, tags in test_cases:
-        res, ts = util.parse_hashtags(inp)
+        ts = util.find_hashtags(inp)
+        res = util.autolink(inp)
         assert out == res
         assert tags == ts

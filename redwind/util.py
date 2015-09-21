@@ -164,8 +164,8 @@ def autolink(text):
     def link_hashtags(span):
         return HASHTAG_RE.sub(link_hashtag, span)
 
-    text = process_text(brevity.autolink, text)
     text = process_text(link_hashtags, text)
+    text = process_text(brevity.autolink, text)
     return text
 
 
@@ -196,8 +196,8 @@ def process_people_to_microcards(plain):
             image = contact.image
             if image:
                 mcard_size = current_app.config.get('MICROCARD_SIZE', 24)
-                image = imageproxy.construct_url(image, mcard_size)
-                result += '<img src="{}" alt="" />'.format(image)
+                image = imageproxy.construct_url(image, mcard_size).replace('&', '&amp;')
+                result += '<img alt="" src="{}" />'.format(image)
                 result += contact.name
             else:
                 result += '@' + contact.name

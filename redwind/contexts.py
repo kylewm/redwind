@@ -40,16 +40,16 @@ def extract_ogp_context(context, doc, url):
     soup = bs4.BeautifulSoup(doc)
 
     # extract ogp data
-    ogp_title = soup.find('meta', {'property':'og:title'})
-    ogp_image = soup.find('meta', {'property':'og:image'})
-    ogp_site = soup.find('meta', {'property':'og:site_name'})
-    ogp_url = soup.find('meta', {'property':'og:url'})
-    ogp_content = soup.find('meta', {'property':'og:description'})
+    ogp_title = soup.find('meta', {'property': 'og:title'})
+    ogp_image = soup.find('meta', {'property': 'og:image'})
+    ogp_site = soup.find('meta', {'property': 'og:site_name'})
+    ogp_url = soup.find('meta', {'property': 'og:url'})
+    ogp_content = soup.find('meta', {'property': 'og:description'})
 
     # import the title if mf2 didn't get a title *or* content
     if ogp_title and not context.title and not context.content:
         context.title = ogp_title.get('content')
-    
+
     if ogp_image and not context.author_image:
         context.author_image = ogp_image.get('content')
 
@@ -65,7 +65,7 @@ def extract_ogp_context(context, doc, url):
         # remove the title if they are the same
         if context.title == context.content:
             context.title = None
-            
+
     return context
 
 
@@ -104,7 +104,7 @@ def extract_mf2_context(context, doc, url):
             context.content_plain = content_plain
             context.published = published
             context.title = title
-    
+
     return context
 
 
@@ -112,7 +112,7 @@ def extract_default_context(context, response, url):
     """ Gets default information if not all info is retrieved
     """
     context = Context() if not context else context
-    
+
     if not context.url or not context.permalink:
         current_app.logger.debug('getting default url info: %s', url)
         context.url = context.permalink = url
@@ -143,7 +143,7 @@ def create_context(url):
         context = Context.query.filter_by(url=url).first()
         current_app.logger.debug(
             'checked for pre-existing context for this url: %s', context)
-        
+
         if not context:
             context = Context()
 
@@ -169,5 +169,5 @@ def create_context(url):
         response=response,
         url=url
     )
-    
+
     return context
