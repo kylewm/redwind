@@ -453,7 +453,7 @@ class Attachment(db.Model):
 
     @property
     def url(self):
-        return '/'.join((self.post.permalink, 'files', self.filename))
+        return '/'.join(('', self.post.path, 'files', self.filename))
 
     @property
     def disk_path(self):

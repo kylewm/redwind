@@ -52,14 +52,13 @@
           {% endif %}
         {% endif %}
 
-        {% for photo in (post.photos or []) %}
-          &lt;a href="{{ post.photo_url(photo) }}">
-            &lt;img src="{{ post.photo_thumbnail(photo) }}" />
-          &lt;/a>
-          {% if photo.caption %}
-            {{ photo.caption | atom_sanitize }}
-          {% endif %}
-        {% endfor %}
+        {% if post.post_type == 'photo' %}
+          {% for photo in post.attachments %}
+            &lt;a href="{{ photo.url }}">
+              &lt;img src="{{ photo.url | imageproxy(600) }}" />
+            &lt;/a>
+          {% endfor %}
+        {% endif %}
 
     </content>
     <object-type xmlns="http://activitystrea.ms/spec/1.0/">{{ post.post_type }}</object-type>
