@@ -554,7 +554,7 @@ def make_absolute(url):
     if not url:
         return url
     return urllib.parse.urljoin(get_settings().site_url, url)
-    
+
 
 @views.app_template_filter('format_syndication_url')
 def format_syndication_url(url, include_rel=True):
@@ -622,6 +622,7 @@ def add_preview(content):
     instagram_regex = 'https?://instagram\.com/p/[\w\-]+/?'
     vimeo_regex = 'https?://vimeo\.com/(\d+)/?'
     youtube_regex = 'https?://(?:(?:www\.)youtube\.com/watch\?v=|youtu\.be/)([\w\-]+)'
+    img_regex = 'https?://[^\s]*\.(?:gif|png|jpg)'
 
     m = re.search(instagram_regex, content)
     if m:
@@ -648,5 +649,9 @@ def add_preview(content):
             'src="https://www.youtube.com/embed/{}" frameborder="0" '
             'allowfullscreen></iframe>'
         ).format(content, youtube_id)
+
+    m = re.search(img_regex, content)
+    if m:
+        return '{}<img src="{}"/>'.format(content, m.group())
 
     return content
