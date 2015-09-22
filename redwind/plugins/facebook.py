@@ -1,18 +1,18 @@
+import json
+import urllib
+
 from redwind.extensions import db
 from redwind import util, hooks
 from redwind.tasks import get_queue, async_app_context
 from redwind.models import Post, Setting, get_settings
 
-
 from flask.ext.login import login_required
-from flask import (
-    request, redirect, url_for, render_template, flash, has_request_context,
-    Blueprint, current_app,
-)
-
+from flask import request, redirect, url_for, render_template, flash
+from flask import has_request_context, Blueprint, current_app
 import requests
-import json
-import urllib
+from bs4 import BeautifulSoup
+
+
 
 facebook = Blueprint('facebook', __name__)
 
@@ -81,16 +81,10 @@ def do_send_to_facebook(post_id, app_config):
         current_app.logger.debug('auto-posting to facebook for %s', post_id)
         post = Post.load_by_id(post_id)
 
-        preview = guess_content(post)
-        post_type = 'post'
-        img_url = None
-
-        if post.post_type == 'photo' and post.attachments:
-            img_url = post.attachments[0].url
-            post_type = 'photo'
-
-        facebook_url = handle_new_or_edit(post, preview, img_url,
-                                          post_type, album_id=None)
+        message, link, name, picture = guess_content(post)
+        facebook_url = handle_new_or_edit(post, message, link, name, picture,
+                                          post.post_type == 'photo',
+                                          album_id=None)
         db.session.commit()
         if has_request_context():
             flash('Shared on Facebook: <a href="{}">Original</a>, '
@@ -107,7 +101,7 @@ def share_on_facebook():
     if request.method == 'GET':
         post = Post.load_by_id(request.args.get('id'))
 
-        preview = guess_content(post)
+        message, link, name, picture = guess_content(post)
         imgs = [urllib.parse.urljoin(get_settings().site_url, img)
                 for img in collect_images(post)]
 
@@ -123,14 +117,16 @@ def share_on_facebook():
             albums = resp.json().get('data', [])
 
         return render_template('admin/share_on_facebook.jinja2', post=post,
-                               preview=preview, imgs=imgs, albums=albums)
+                               preview=message, link=link, name=name,
+                               picture=picture, imgs=imgs, albums=albums)
 
     try:
         post_id = request.form.get('post_id')
         preview = request.form.get('preview')
         img_url = request.form.get('img')
-        post_type = request.form.get('post_type')
+        is_photo = request.form.get('post_type') == 'photo'
         album_id = request.form.get('album')
+        link = request.form.get('link')
 
         if album_id == 'new':
             album_id = create_album(
@@ -138,8 +134,10 @@ def share_on_facebook():
                 request.form.get('new_album_message'))
 
         post = Post.load_by_id(post_id)
-        facebook_url = handle_new_or_edit(post, preview, img_url,
-                                          post_type, album_id)
+        facebook_url = handle_new_or_edit(
+            post, message=preview, link=link, name=None, picture=img_url,
+            is_photo=is_photo, album_id=album_id)
+
         db.session.commit()
         if has_request_context():
             flash('Shared on Facebook: <a href="{}">Original</a>, '
@@ -185,7 +183,8 @@ def create_album(name, msg):
             'access_token': get_settings().facebook_access_token,
             'name': name,
             'message': msg,
-            'privacy': json.dumps({'value': 'EVERYONE'}),
+            #'privacy': json.dumps({'value': 'EVERYONE'}),
+            'privacy': json.dumps({'value': 'SELF'}),
         })
     resp.raise_for_status()
     current_app.logger.debug(
@@ -193,42 +192,21 @@ def create_album(name, msg):
     return resp.json()['id']
 
 
-def handle_new_or_edit(post, preview, img_url, post_type,
-                       album_id):
+def handle_new_or_edit(post, message, link, name, picture,
+                       is_photo, album_id):
     current_app.logger.debug('publishing to facebook')
 
     # TODO I cannot figure out how to tag people via the FB API
 
     post_args = {
         'access_token': get_settings().facebook_access_token,
-        # 'message': preview.strip() + '\n\nOriginal: ' + post.permalink,
-        'message': preview.strip(),
-        'actions': json.dumps({'name': 'See Original',
-                               'link': post.shortlink}),
-        # 'privacy': json.dumps({'value': 'SELF'}),
-        'privacy': json.dumps({'value': 'EVERYONE'}),
-        # 'article': post.permalink,
+        'message': message.strip(),
+        #'privacy': json.dumps({'value': 'EVERYONE'}),
+        'privacy': json.dumps({'value': 'SELF'}),
     }
 
-    if post.title:
-        post_args['name'] = post.title
-
-    is_photo = False
-
-    share_link = next(iter(post.repost_of), None)
-    if share_link:
-        post_args['link'] = share_link
-    elif img_url:
-        if post_type == 'photo':
-            is_photo = True  # special case for posting photos
-            post_args['url'] = img_url
-        else:
-            # link back to the original post, and use the image
-            # as the preview image
-            post_args['link'] = post.permalink
-            post_args['picture'] = img_url
-
-    if is_photo:
+    if is_photo and picture:
+        post_args['url'] = picture
         current_app.logger.debug(
             'Sending photo %s to album %s', post_args, album_id)
         response = requests.post(
@@ -236,6 +214,11 @@ def handle_new_or_edit(post, preview, img_url, post_type,
                 album_id if album_id else 'me'),
             data=post_args)
     else:
+        post_args.update(util.filter_empty_keys({
+            'link': link,
+            'name': name,
+            'picture': picture,
+        }))
         current_app.logger.debug('Sending post %s', post_args)
         response = requests.post('https://graph.facebook.com/v2.0/me/feed',
                                  data=post_args)
@@ -247,6 +230,7 @@ def handle_new_or_edit(post, preview, img_url, post_type,
 
     current_app.logger.debug(
         'published to facebook. response {}'.format(result))
+
     if result:
         if is_photo:
             facebook_photo_id = result['id']
@@ -272,11 +256,41 @@ def handle_new_or_edit(post, preview, img_url, post_type,
 
 
 def guess_content(post):
-    preview = ''
+    name = None
+    picture = None
+    link = None
+    message = ''
+
     if post.title:
-        preview += post.title + '\n\n'
-    preview += format_markdown_as_facebook(post.content)
-    return preview
+        message += post.title + '\n\n'
+
+    html = util.autolink(
+        util.markdown_filter(post.content))
+
+    message += util.format_as_text(html)
+
+    if post.post_type != 'article':
+        message += ' (' + post.shortlink + ')'
+
+    if post.post_type == 'share':
+        link = next((s.url for s in post.repost_contexts), None)
+
+    elif post.post_type == 'article':
+        name = post.title
+        link = post.permalink
+
+    elif post.post_type == 'photo' and post.attachments:
+        picture = post.attachments[0].url
+
+    else:
+        # first link becomes the target
+        soup = BeautifulSoup(html)
+
+        # filter out hashtags
+        link = next(filter(lambda h: h and not h.startswith('#'),
+                           (a.get('href') for a in soup.find_all('a'))), None)
+
+    return message, link, name, picture
 
 
 def format_markdown_as_facebook(data):

@@ -354,16 +354,24 @@ def convert_legacy_people_to_at_names(data):
 def format_as_text(html, link_fn=None):
     if html is None:
         return ''
-    soup = bs4.BeautifulSoup(html)
 
+    # collapse whitespace
+    html = re.sub('\s\s+', ' ', html, re.MULTILINE)
+
+    soup = bs4.BeautifulSoup(html)
     # replace links with the URL
     for a in soup.find_all('a'):
         if link_fn:
             link_fn(a)
-        elif a.text[:1] == '#':
-            a.replace_with(a.text)
         else:
-            a.replace_with(a.get('href') or '[link]')
+            a.replace_with(a.text)
+
+    for br in soup.find_all('br'):
+        br.replace_with('\n')
+
+    for p in soup.find_all('p'):
+        p.append('\n\n')
+        p.unwrap()
 
     # and remove images
     for i in soup.find_all('img'):

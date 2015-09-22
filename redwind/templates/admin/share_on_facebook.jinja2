@@ -33,6 +33,11 @@
       <textarea  name="preview" id="preview" class="form-control">{{preview}}</textarea>
     </div>
 
+    <div class="form-group">
+      <label>Link</label>
+      <input name="link" id="link" class="form-control" value="{{link or ''}}"/>
+    </div>
+
     {% if imgs %}
       <div class="container">
         <div class="col-sm-6">

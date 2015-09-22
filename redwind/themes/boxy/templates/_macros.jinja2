@@ -103,6 +103,7 @@
       <a href="{{url_for('admin.edit_by_id', id=post.id)}}">Edit</a>
       <a href="{{url_for('admin.delete_by_id', id=post.id)}}">Delete</a>
       <a href="{{url_for('twitter.share_on_twitter', id=post.id)}}">Tweet</a>
+      <a href="{{url_for('facebook.share_on_facebook', id=post.id)}}">FB</a>
       <a href="{{url_for('wm_sender.send_webmentions_manually', id=post.id)}}">Mentions</a>
     </div>
   {% endif %}
