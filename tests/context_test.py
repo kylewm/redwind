@@ -8,9 +8,11 @@ class FakeResponse():
         self.text = text
 
 
-def test_ogp_context():
+def test_ogp_context(mocker):
     """ Check that we can get Open Graph Protocol data from a document
     """
+    mocker.patch('requests.get').side_effect = Exception('requests.get is disabled')
+
     test_data = [
         ("""<meta property="og:title" content="Test Doc">
         <meta property="og:type" content="website">
@@ -45,9 +47,10 @@ def test_ogp_context():
             assert out == getattr(context, inp)
 
 
-def test_mf2_context(app):
+def test_mf2_context(app, mocker):
     """ Check that we can get Microformats2 data from a document
     """
+    mocker.patch('requests.get').side_effect = Exception('requests.get is disabled')
     test_input = [
         '',  # empty test
         """
@@ -153,9 +156,11 @@ def test_mf2_context(app):
             assert v == getattr(context, k)
 
 
-def test_default_context(app):
+def test_default_context(app, mocker):
     """ Check that we can get basic website data as a fallback
     """
+    mocker.patch('requests.get').side_effect = Exception('requests.get is disabled')
+
     test_input = [
         FakeResponse('<title>Hello, world!</title>'),
         FakeResponse("""

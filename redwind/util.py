@@ -10,6 +10,7 @@ import jwt
 import mf2py
 
 from datetime import date
+import cgi
 import collections
 import datetime
 import functools
@@ -196,7 +197,7 @@ def process_people_to_microcards(plain):
             image = contact.image
             if image:
                 mcard_size = current_app.config.get('MICROCARD_SIZE', 24)
-                image = imageproxy.construct_url(image, mcard_size).replace('&', '&amp;')
+                image = cgi.escape(imageproxy.construct_url(image, mcard_size))
                 result += '<img alt="" src="{}" />'.format(image)
                 result += contact.name
             else:
@@ -395,7 +396,7 @@ def prettify_url(url):
 def fetch_html(url):
     """Utility to fetch HTML from an external site. If the Content-Type
     header does not explicitly list a charset, Requests will assume a
-    bad one, so we ahve to use 'get_encodings_from_content` to find
+    bad one, so we have to use 'get_encodings_from_content` to find
     the meta charset or other indications in the actual response body.
 
     Return a requests.Response

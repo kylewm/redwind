@@ -56,7 +56,7 @@ BYPASS_INDIEAUTH = False""".format(dburi))
     temp_imageproxy_path = tempfile.mkdtemp()
     rw_app.config['UPLOAD_PATH'] = temp_upload_path
     rw_app.config['IMAGEPROXY_PATH'] = temp_imageproxy_path
-    
+
     set_setting('posts_per_page', '15')
     set_setting('author_domain', 'example.com')
     set_setting('site_url', 'http://example.com')
