@@ -48,6 +48,9 @@ AT_USERNAME_RE = re.compile(r"""(?<![\w&])@(\w+)(?=($|[\s,:;.?!'")&-]))""", re.I
 BLACKLIST_TAGS = ('a', 'script', 'pre', 'code', 'embed', 'object',
                   'audio', 'video')
 
+USER_AGENT = 'Red Wind (https://github.com/kylewm/redwind)'
+
+
 
 def isoparse(s):
     """Parse (UTC) datetimes in ISO8601 format"""
@@ -409,7 +412,9 @@ def fetch_html(url):
 
     Return a requests.Response
     """
-    response = requests.get(url, timeout=30)
+    response = requests.get(url, timeout=30, headers={
+        'User-Agent': USER_AGENT,
+    })
     if response.status_code // 2 == 100:
         # requests ignores <meta charset> when a Content-Type header
         # is provided, even if the header does not define a charset
