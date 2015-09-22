@@ -359,7 +359,7 @@ def format_as_text(html, link_fn=None):
         return ''
 
     # collapse whitespace
-    html = re.sub('\s\s+', ' ', html, re.MULTILINE)
+    html = re.sub(r'\s\s+', ' ', html, re.MULTILINE)
 
     soup = bs4.BeautifulSoup(html)
     # replace links with the URL
@@ -380,7 +380,10 @@ def format_as_text(html, link_fn=None):
     for i in soup.find_all('img'):
         i.hidden = True
 
-    return soup.get_text().strip()
+    result = soup.get_text().strip()
+    # remove spaces before or after a linebreak
+    result = re.sub(r' *(\n+) *', r'\1', result)
+    return result
 
 
 def is_cached_current(original, cached):

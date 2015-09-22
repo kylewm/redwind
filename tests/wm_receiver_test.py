@@ -1,8 +1,14 @@
+from redwind.plugins import wm_receiver
+from redwind import util
+
 import pytest
 from testutil import FakeResponse, FakeUrlOpen
-from redwind.plugins import wm_receiver
 from flask.ext.login import current_user
 from flask import current_app
+
+
+HEADERS = {'User-Agent': util.USER_AGENT}
+TIMEOUT = 30
 
 
 @pytest.fixture
@@ -60,7 +66,8 @@ def test_process_wm(db, client, target_url, mocker):
     assert result.mention_results[0].create
     assert not result.delete
     assert not result.error
-    getter.assert_called_once_with('http://foreign/permalink/url', timeout=30)
+    getter.assert_called_once_with('http://foreign/permalink/url',
+                                   timeout=TIMEOUT, headers=HEADERS)
 
 
 def test_process_wm_no_target_post(client, mocker):
@@ -95,4 +102,5 @@ def test_process_wm_deleted(client, target_url, mocker):
     assert not result.mentions
     assert result.delete is True
     assert result.error is None
-    getter.assert_called_once_with('http://foreign/permalink/url', timeout=30)
+    getter.assert_called_once_with('http://foreign/permalink/url',
+                                   timeout=TIMEOUT, headers=HEADERS)
