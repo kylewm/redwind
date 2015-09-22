@@ -35,7 +35,7 @@ Red Wind supports a bunch of (indie)web technologies, some better than others.
 * **Python 3.3 or newer**. Will not work in Python 2!
 * Flask (and other libraries defined in requirements.txt)
 * A database supported by SQLAlchemy (Postgres, MySQL, SQLite)
-* Redis (optional, recommended)
+* Redis
 * uWSGI and nginx (other servers like gunicorn should work but are
   untested)
 
