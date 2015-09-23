@@ -77,7 +77,7 @@ def get_top_tags(n=10):
 @admin.route('/new', defaults={'type': 'note'})
 def new_post(type):
     post = Post(type)
-    post.published = datetime.datetime.utcnow()
+    post.published = post.updated = datetime.datetime.utcnow()
     post.content = ''
 
     if type == 'reply':
@@ -208,8 +208,10 @@ def save_post(post):
             post.end = end
             post.end_utcoffset = end.utcoffset()
 
+    now = datetime.datetime.utcnow()
     if not post.published or was_draft:
-        post.published = datetime.datetime.utcnow()
+        post.published = now
+    post.updated = now
 
     # populate the Post object and save it to the database,
     # redirect to the view
