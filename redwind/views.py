@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask import make_response, Markup, send_from_directory, current_app
 from flask import request, redirect, url_for, render_template, g, abort
-from werkzeug.http import http_date
+from werkzeug.http import http_date, generate_etag
 from redwind import imageproxy
 from redwind import util
 from redwind.extensions import db
@@ -153,6 +153,7 @@ def render_posts(title, posts, older, events=None, template='posts.jinja2'):
     last_modified = max(p.updated for p in posts)
     if last_modified:
         rv.headers['Last-Modified'] = http_date(last_modified)
+        rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
 
@@ -165,6 +166,7 @@ def render_posts_atom(title, feed_id, posts):
     last_modified = max(p.updated for p in posts)
     if last_modified:
         rv.headers['Last-Modified'] = http_date(last_modified)
+        rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
 
@@ -414,6 +416,7 @@ def render_post(post):
                            title=post.title_or_fallback))
     if post.updated:
         rv.headers['Last-Modified'] = http_date(post.updated)
+        rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
 
