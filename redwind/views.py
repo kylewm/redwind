@@ -670,6 +670,6 @@ def add_preview(content):
 
     m = re.search(img_regex, content)
     if m:
-        return '{}<img src="{}" />'.format(content, m.group(0))
+        return '{}<img src="{}"/>'.format(content, m.group(0))
 
     return content
