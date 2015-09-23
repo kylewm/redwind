@@ -576,7 +576,8 @@ def handle_new_or_edit(post, preview, img, in_reply_to,
         result_json.get('user', {}).get('screen_name'),
         result_json.get('id_str'))
 
-    post.add_syndication_url(twitter_url)
+    if not is_favorite:
+        post.add_syndication_url(twitter_url)
     return twitter_url
 
 
