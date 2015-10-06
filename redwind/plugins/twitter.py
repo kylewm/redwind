@@ -113,12 +113,13 @@ def collect_images(post):
         else:
             html = post.content
 
-        soup = BeautifulSoup(html)
-        for img in soup.find_all('img'):
-            if not img.find_parent(class_='h-card'):
-                src = img.get('src')
-                if src:
-                    yield urljoin(get_settings().site_url, src)
+        if html:
+            soup = BeautifulSoup(html)
+            for img in soup.find_all('img'):
+                if not img.find_parent(class_='h-card'):
+                    src = img.get('src')
+                    if src:
+                        yield urljoin(get_settings().site_url, src)
 
 
 def send_to_twitter(post, args):
