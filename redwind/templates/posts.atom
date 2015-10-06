@@ -30,11 +30,15 @@
       {{ post.title_or_fallback | truncate(140) | atom_sanitize }}
     </title>
     <content type="html" xml:base="{{ settings.site_url }}" xml:space="preserve">
+
 	{% for reply in post.reply_contexts %}
 	  &lt;p>In reply to &lt;a href="{{reply.permalink}}">{{reply.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
 	{% for share in post.repost_contexts %}
-	  &lt;p>Shared &lt;a href="{{share.permalink}}">{{share.permalink|prettify_url}}&lt;/a>&lt;/p>
+          Shared a post by &lt;a href="{{ share.author_url }}"/>{{ share.author_name }}&lt;/a> on &lt;a href="{{share.permalink}}">{{share.permalink|domain_from_url}}&lt;/a>&lt;/p>
+          &lt;div>
+          {{ share.content | atom_sanitize }}
+          &lt;/div>
 	{% endfor %}
 	{% for like in post.like_contexts %}
 	  &lt;p>Liked &lt;a href="{{like.permalink}}">{{like.permalink|prettify_url}}&lt;/a>&lt;/p>
@@ -42,9 +46,7 @@
 	{% for bmark in post.bookmark_contexts %}
 	  &lt;p>Bookmarked &lt;a href="{{bmark.permalink}}">{{bmark.permalink|prettify_url}}&lt;/a>&lt;/p>
 	{% endfor %}
-
         {{ post.content_html | atom_sanitize }}
-
         {% if post.post_type == 'checkin' %}
         {% set map_image = post.map_image(600, 400) %}
           {% if map_image %}
