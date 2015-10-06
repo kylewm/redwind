@@ -75,7 +75,7 @@ def proxy():
     # first check if the info file exists
     current_app.logger.debug('checking for saved imageproxy info %s', infopath)
     try:
-        if os.path.exists(infopath):
+        if os.path.exists(infopath) and not request.args.get('bust'):
             with open(infopath) as f:
                 info = json.load(f)
     except:
@@ -155,36 +155,37 @@ def sign(url, size):
 
 
 def resize_image(source_path, target_path, side, source_image=None):
-    if not os.path.exists(target_path):
-        if not os.path.exists(os.path.dirname(target_path)):
-            os.makedirs(os.path.dirname(target_path))
+    current_app.logger.debug('resizing %s to %s', source_path, target_path)
 
-        if source_image:
-            im = source_image
-        else:
-            im = Image.open(source_path)
+    if not os.path.exists(os.path.dirname(target_path)):
+        os.makedirs(os.path.dirname(target_path))
 
-        # grab the format before we start rotating it
-        format = im.format
-        orientation = next((k for k, v in ExifTags.TAGS.items()
-                            if v == 'Orientation'), None)
+    if source_image:
+        im = source_image
+    else:
+        im = Image.open(source_path)
 
-        if hasattr(im, '_getexif') and im._getexif():
-            exif = dict(im._getexif().items())
-            if orientation in exif:
-                if exif[orientation] == 3:
-                    im = im.transpose(Image.ROTATE_180)
-                elif exif[orientation] == 6:
-                    im = im.transpose(Image.ROTATE_270)
-                elif exif[orientation] == 8:
-                    im = im.transpose(Image.ROTATE_90)
+    # grab the format before we start rotating it
+    format = im.format
+    orientation = next((k for k, v in ExifTags.TAGS.items()
+                        if v == 'Orientation'), None)
 
-        origw, origh = im.size
-        ratio = side / max(origw, origh)
-        # scale down, not up
-        if ratio >= 1:
-            shutil.copyfile(source_path, target_path)
-        else:
-            resized = im.resize((int(origw * ratio), int(origh * ratio)),
-                                Image.ANTIALIAS)
-            resized.save(target_path, format=format)
+    if hasattr(im, '_getexif') and im._getexif():
+        exif = dict(im._getexif().items())
+        if orientation in exif:
+            if exif[orientation] == 3:
+                im = im.transpose(Image.ROTATE_180)
+            elif exif[orientation] == 6:
+                im = im.transpose(Image.ROTATE_270)
+            elif exif[orientation] == 8:
+                im = im.transpose(Image.ROTATE_90)
+
+    origw, origh = im.size
+    ratio = side / max(origw, origh)
+    # scale down, not up
+    if ratio >= 1:
+        shutil.copyfile(source_path, target_path)
+    else:
+        resized = im.resize((int(origw * ratio), int(origh * ratio)),
+                            Image.ANTIALIAS)
+        resized.save(target_path, format=format)

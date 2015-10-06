@@ -3,7 +3,7 @@
 {% block content %}
 
   {% for mention in mentions %}
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 40px;">
 
 
       {% for post in mention.posts %}
@@ -38,17 +38,18 @@
         <a href="{{ mention.author_url }}">{{ mention.author_name }}</a>
 
         {% if mention.title %}
-          <h4>
-            {{ mention.title }}
-          </h4>
+          <div>{{ mention.title }}</div>
         {% endif %}
-        {{mention.content | truncate(512) }}
+        <div>
+          {{mention.content | truncate(512) }}
+        </div>
         <div>
           at <a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a> <a href="{{ mention.url }}">#</a>
         </div>
       </div>
 
-
+      <a href="{{ url_for('admin.new_post', type='reply', url=mention.permalink) }}"><i class="glyphicon glyphicon-comment"></i> Reply</a>
+      <a href="{{ url_for('admin.new_post', type='like', url=mention.permalink) }}"><i class="glyphicon glyphicon-star"></i> Like</a>
 
 
     </div>

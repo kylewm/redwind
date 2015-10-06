@@ -585,6 +585,7 @@ def delete_by_id():
     post.deleted = True
     db.session.commit()
 
+    hooks.fire('post-deleted', post, request.args)
     redirect_url = request.args.get('redirect') or url_for('views.index')
     current_app.logger.debug('redirecting to {}'.format(redirect_url))
     return redirect(redirect_url)

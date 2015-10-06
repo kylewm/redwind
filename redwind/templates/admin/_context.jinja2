@@ -11,9 +11,7 @@
     </div>
     <div class="col-sm-11">
       {% if context.title %}
-        <h4>
-          {{ context.title }}
-        </h4>
+        <p> {{ context.title }} </p>
       {% endif %}
       {% if context.content_plain and (context.content_plain | length) > 512 %}
         {{ context.content_plain | truncate(512) }}

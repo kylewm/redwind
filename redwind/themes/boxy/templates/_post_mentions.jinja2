@@ -5,9 +5,14 @@
   <div class="likes">
   <i class="fa fa-star-o"></i>
   {% for mention in post.likes %}
-    <a class="u-like h-cite" href="{{mention.author_url}}">
-      <img src="{{ mention.author_image | imageproxy(48) }}" title="{{ mention.author_name }}"/>
-    </a>
+
+    <span class="u-like h-cite">
+      <data class="p-url" value="{{mention.permalink}}"/>
+      <a class="p-author h-card" href="{{mention.author_url}}">
+        <img src="{{ mention.author_image | imageproxy(48) }}" title="{{ mention.author_name }}"/>
+      </a>
+    </span>
+    
   {% endfor %}
   </div>
 {% endif %}
@@ -16,9 +21,12 @@
   <div class="reposts">
   <i class="fa fa-retweet"></i>
   {% for mention in post.reposts %}
-    <a class="u-repost h-cite" href="{{mention.author_url}}">
-      <img src="{{ mention.author_image | imageproxy(48) }}" title="{{ mention.author_name }}"/>
-    </a>
+    <span class="u-repost h-cite">
+      <data class="p-url" value="{{mention.permalink}}"/>
+      <a class="p-author h-card" href="{{mention.author_url}}">
+        <img src="{{ mention.author_image | imageproxy(48) }}" title="{{ mention.author_name }}"/>
+      </a>
+    </span>
   {% endfor %}
   </div>
 {% endif %}

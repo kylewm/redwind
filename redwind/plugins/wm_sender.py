@@ -15,6 +15,7 @@ wm_sender = Blueprint('wm_sender', __name__)
 def register(app):
     app.register_blueprint(wm_sender)
     hooks.register('post-saved', send_webmentions_on_save)
+    hooks.register('post-deleted', send_webmentions_on_delete)
     hooks.register('mention-received', send_webmentions_on_comment)
 
 
@@ -31,6 +32,18 @@ def send_webmentions_on_save(post, args):
     except Exception as e:
         current_app.logger.exception('sending webmentions')
         return False, "Exception while sending webmention: {}"\
+            .format(e)
+
+
+def send_webmentions_on_delete(post, args):
+    try:
+        current_app.logger.debug("queueing deletion webmentions for %s", post.id)
+        get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
+        return True, 'Success'
+
+    except Exception as e:
+        current_app.logger.exception('sending deletion webmentions')
+        return False, "Exception while sending deletion webmention: {}"\
             .format(e)
 
 
