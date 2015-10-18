@@ -193,6 +193,9 @@ def save_post(post):
     pub_str = request.form.get('published')
     if pub_str:
         post.published = mf2util.parse_dt(pub_str)
+        if post.published.tzinfo:
+            post.published = post.published.astimezone(datetime.timezone.utc)\
+                                           .replace(tzinfo=None)
 
     start_str = request.form.get('start')
     if start_str:

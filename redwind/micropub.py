@@ -1,14 +1,17 @@
-from . import auth
-from . import util
-from .models import get_settings
-from flask import (
-    request, abort, make_response, url_for, jsonify, Blueprint, current_app,
-)
-from flask.ext.login import login_user
 import datetime
+import urllib
+
+from redwind import auth
+from redwind import util
+from redwind.models import get_settings, Post
+from redwind.extensions import db
+
 import jwt
 import requests
-import urllib
+from flask import request, abort, make_response, url_for, jsonify, Blueprint
+from flask import current_app, redirect
+from flask.ext.login import login_user
+
 
 SYNDICATION_TARGETS = {
     'https://twitter.com/kylewmahan': 'twitter',
@@ -140,9 +143,10 @@ def micropub_endpoint():
         abort(401)
 
     me = decoded.get('me')
+    client_id = decoded.get('client_id')
     parsed = urllib.parse.urlparse(me)
     user = auth.load_user(parsed.netloc)
-    if not user:
+    if not user or not user.is_authenticated():
         current_app.logger.warn(
             'received valid access token for invalid user: %s', me)
         abort(401)
@@ -172,6 +176,22 @@ def micropub_endpoint():
             location_name = request.form.get('place_name')
 
     syndicate_to = request.form.getlist('syndicate-to[]')
+    syndication = request.form.get('syndication')
+
+    # TODO check client_id
+    if client_id == 'https://kylewm-responses.appspot.com/' and syndication:
+        current_app.logger.debug(
+            'checking for existing post with syndication %s', syndication)
+        existing = Post.query.filter(
+            Post.syndication.like(db.literal('%"' + syndication + '"%'))
+        ).first()
+        if existing:
+            current_app.logger.debug(
+                'found post for %s: %s', syndication, existing)
+            return redirect(existing.permalink)
+        else:
+            current_app.logger.debug(
+                'no post found with syndication %s', syndication)
 
     # translate from micropub's verbage.TODO unify
     translated = util.filter_empty_keys({
@@ -182,7 +202,7 @@ def micropub_endpoint():
         'latitude': latitude,
         'longitude': longitude,
         'location_name': location_name,
-        'syndication': request.form.get('syndication'),
+        'syndication': syndication,
         'in_reply_to': in_reply_to,
         'like_of': like_of,
         'repost_of': repost_of,
