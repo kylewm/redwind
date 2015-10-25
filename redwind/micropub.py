@@ -3,7 +3,7 @@ import urllib
 
 from redwind import auth
 from redwind import util
-from redwind.models import get_settings, Post
+from redwind.models import get_settings, Post, Venue
 from redwind.extensions import db
 
 import jwt
@@ -151,13 +151,15 @@ def micropub_endpoint():
             'received valid access token for invalid user: %s', me)
         abort(401)
 
+    h = request.form.get('h')
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
     photo_file = request.files.get('photo')
     bookmark = request.form.get('bookmark') or request.form.get('bookmark-of')
     repost_of = request.form.get('repost-of')
 
-    post_type = ('article' if 'name' in request.form
+    post_type = ('event' if h == 'event' 
+                 else 'article' if 'name' in request.form
                  else 'photo' if photo_file else 'reply' if in_reply_to
                  else 'like' if like_of else 'bookmark' if bookmark
                  else 'share' if repost_of else 'note')
@@ -165,16 +167,28 @@ def micropub_endpoint():
     latitude = None
     longitude = None
     location_name = None
-
+    venue_id = None
+    
     loc_str = request.form.get('location')
     geo_prefix = 'geo:'
-    if loc_str and loc_str.startswith(geo_prefix):
-        loc_str = loc_str[len(geo_prefix):]
-        loc_params = loc_str.split(';')
-        if loc_params:
-            latitude, longitude = loc_params[0].split(',', 1)
-            location_name = request.form.get('place_name')
+    if loc_str:
+        if loc_str.startswith(geo_prefix):
+            loc_str = loc_str[len(geo_prefix):]
+            loc_params = loc_str.split(';')
+            if loc_params:
+                latitude, longitude = loc_params[0].split(',', 1)
+                location_name = request.form.get('place_name')
+        else:
+            venue_prefix = urllib.parse.urljoin(get_settings().site_url, 'venues/')
+            if loc_str.startswith(venue_prefix):
+                slug = loc_str[len(venue_prefix):]
+                venue = Venue.query.filter_by(slug=slug).first()
+                if venue:
+                    venue_id = venue.id
 
+    # url of the venue, e.g. https://kylewm.com/venues/cafe-trieste-berkeley-california
+    venue = request.form.get('venue')
+            
     syndicate_to = request.form.getlist('syndicate-to[]')
     syndication = request.form.get('syndication')
 
@@ -197,8 +211,11 @@ def micropub_endpoint():
     translated = util.filter_empty_keys({
         'post_type': post_type,
         'published': request.form.get('published'),
+        'start': request.form.get('start'),
+        'end': request.form.get('end'),
         'title': request.form.get('name'),
         'content': request.form.get('content'),
+        'venue': venue_id,
         'latitude': latitude,
         'longitude': longitude,
         'location_name': location_name,
