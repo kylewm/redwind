@@ -38,7 +38,7 @@
       {% if events %}
         <strong>upcoming events</strong>
         <div class="container">
-          {% for event in events %}
+          {% for event in events[:2] %}
             <div class="upcoming-event h-event">
               <a class="u-url" href="{{event.permalink}}">
                 <time class="dt-start" datetime="{{event.start | isotime }}">
@@ -53,6 +53,9 @@
               </a>
             </div> <!-- .upcoming-event -->
           {% endfor %}
+          {% if (events | length) > 2 %}
+            <a href="{{ url_for('.posts_by_type', plural_type='events') }}">...more...</a>
+          {% endif %}
         </div>
       {% endif %}
 

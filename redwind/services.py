@@ -10,6 +10,7 @@ import mf2py
 import mf2util
 import requests
 import sys
+import urllib
 
 services = Blueprint('services', __name__)
 
@@ -25,6 +26,16 @@ def convert_mf2():
     url = request.args.get('url') or request.form.get('url')
     doc = request.args.get('doc') or request.form.get('doc')
     doc = doc and doc.strip()
+
+    if url and not doc:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.fragment:
+            r = requests.get(url)
+            r.raise_for_status()
+            doc = BeautifulSoup(
+                r.text if 'charset' in r.headers.get('content-type', '') 
+                else r.content)
+            doc = doc.find(id=parsed.fragment)
 
     if url or doc:
         try:

@@ -172,7 +172,7 @@ def render_posts_atom(title, feed_id, posts):
 
 
 @views.route('/')
-@views.route('/before-<before_ts>')
+@views.route('/before-<before_ts>/')
 def index(before_ts=None):
     post_types = [type[0] for type in POST_TYPES if type[0] != 'event']
     posts, older = collect_posts(
@@ -195,8 +195,8 @@ def index(before_ts=None):
     return resp
 
 
-@views.route('/everything')
-@views.route('/everything/before-<before_ts>')
+@views.route('/everything/')
+@views.route('/everything/before-<before_ts>/')
 def everything(before_ts=None):
     posts, older = collect_posts(
         None, before_ts, int(get_settings().posts_per_page), None,
@@ -207,8 +207,8 @@ def everything(before_ts=None):
     return render_posts('Everything', posts, older)
 
 
-@views.route('/' + PLURAL_TYPE_RULE)
-@views.route('/' + PLURAL_TYPE_RULE + '/before-<before_ts>')
+@views.route('/' + PLURAL_TYPE_RULE + '/')
+@views.route('/' + PLURAL_TYPE_RULE + '/before-<before_ts>/')
 def posts_by_type(plural_type, before_ts=None):
     post_type, _, title = next(tup for tup in POST_TYPES
                                if tup[1] == plural_type)
@@ -221,7 +221,7 @@ def posts_by_type(plural_type, before_ts=None):
     return render_posts(title, posts, older)
 
 
-@views.route('/tags')
+@views.route('/tags/')
 def tag_cloud():
     query = db.session.query(
         Tag.name, sqlalchemy.func.count(Post.id)
@@ -241,8 +241,8 @@ def tag_cloud():
     return render_tags("Tags", tags)
 
 
-@views.route('/tags/<tag>')
-@views.route('/tags/<tag>/before-<before_ts>')
+@views.route('/tags/<tag>/')
+@views.route('/tags/<tag>/before-<before_ts>/')
 def posts_by_tag(tag, before_ts=None):
     posts, older = collect_posts(
         None, before_ts, int(get_settings().posts_per_page), tag,
@@ -254,8 +254,8 @@ def posts_by_tag(tag, before_ts=None):
     return render_posts(title, posts, older)
 
 
-@views.route('/search')
-@views.route('/search/before-<before_ts>')
+@views.route('/search/')
+@views.route('/search/before-<before_ts>/')
 def search(before_ts=None):
     q = request.args.get('q')
     if not q:

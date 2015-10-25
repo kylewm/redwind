@@ -84,25 +84,21 @@ def new_post(type):
         in_reply_to = request.args.get('url')
         if in_reply_to:
             post.in_reply_to = [in_reply_to]
-            # post.reply_contexts = [contexts.create_context(in_reply_to)]
 
     elif type == 'share':
         repost_of = request.args.get('url')
         if repost_of:
             post.repost_of = [repost_of]
-            # post.repost_contexts = [contexts.create_context(repost_of)]
 
     elif type == 'like':
         like_of = request.args.get('url')
         if like_of:
             post.like_of = [like_of]
-            # post.like_contexts = [contexts.create_context(like_of)]
 
     elif type == 'bookmark':
         bookmark_of = request.args.get('url')
         if bookmark_of:
             post.bookmark_of = [bookmark_of]
-            # post.bookmark_contexts = [contexts.create_context(bookmark_of)]
 
     post.content = request.args.get('content')
     button_text = {

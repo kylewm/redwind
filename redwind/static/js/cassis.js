@@ -1,19 +1,10 @@
-/* <!--
-   cassis.js Copyright 2008-2013 Tantek Çelik http://tantek.com 
-   http://cassisproject.com conceived:2008-254; created:2009-299;
-   license:http://creativecommons.org/licenses/by-sa/3.0/         -->
-if you see this in the browser, you need to wrap your PHP include of cassis.js and use thereof with calls to ob_start and ob_end_clean, e.g.:
-ob_start(); 
-include 'cassis.js'; 
-// your code that calls CASSIS functions goes here
-ob_end_clean(); 
-/* <!-- <?php // CASSIS v0.1 start -->
-// ===================================================================
-// PHP-only block. Processed only by PHP. Use only // comments here.
-// -------------------------------------------------------------------
-function js() {
-  return false;
-}
+<!-- cassis.js Copyright 2008-2015 Tantek Çelik http://tantek.com   -->
+<!-- http://cassisproject.com conceived 2008-254, created 2009-299  -->
+<!-- http://creativecommons.org/licenses/by-sa/3.0/                 -->
+/* if you see this in the browser, you need to wrap your include of cassis.js with calls to ob_start and ob_end_clean, e.g. use the following in your PHP: ob_start(); include 'cassis.js'; ob_end_clean(); <?php 
+// --------------------------------------------------------------------
+// cassis0js.php - processed only by PHP. Use only // comments here.
+
 
 // global configuration
 
@@ -22,65 +13,64 @@ if (php_min_version("5.1.0")) {
 }
 
 function php_min_version($s) {
-  $s = explode(".", $s);
-  $phpv = explode(".", phpversion());
-  for ($i=0; $i < count($s); $i+=1) {
-    if ($s[$i] > $phpv[$i]) {
+  $s = explode(".",$s);
+  $phpv = explode(".",phpversion());
+  for ($i=0;$i<count($s);$i++) {
+    if ($s[$i]>$phpv[$i]) {
       return false; 
     }
   }
   return true;
 }
 
-// -------------------------------------------------------------------
+
 // date time functions
 
 function date_get_full_year($d = "") {
-  if ($d == "") {
-    $d = new DateTime();
-  }
-  return $d->format('Y');
+ if ($d == "") {
+   $d = new DateTime();
+ }
+ return $d->format('Y');
 } 
 
 function date_get_timestamp($d) { 
-  return $d->format('U'); // $d->getTimestamp(); // in PHP 5.3+
+ return $d->format('U'); // $d->getTimestamp(); // in PHP 5.3+
 }
 
-// mixed-case function names are bad for PHP vs JS. Don't do it.
-//function Number($n) {
-//  return $n-0;
-//}
+function date_get_ordinal_days($d) {
+ return 1+$d->format('z');
+}
+
+function date_get_rfc3339($d) {
+ return $d->format('c');
+}
 
 
-// -------------------------------------------------------------------
-// old wrappers. transition code away from these
-// ** do not use these in new code. **
-
+// old wrappers. transition code away from them, do not use them in new code.
 function getFullYear($d = "") {  
   // 2010-020 obsoleted. Use date_get_full_year instead
   return date_get_full_year($d);
 }
 
-// ===================================================================
-/*/ // This comment inverter switches from PHP only to JS only.
-// JS-only block. Processed only by JS. Use only // comments here.
-// -------------------------------------------------------------------
-function js() {
-  return true;
-}
+// end cassis0js.php
+// --------------------------------------------------------------------
+/*/ // this comment inverter switches from PHP only to javascript only
+// --------------------------------------------------------------------
+// cassis0php.js - processed only by javascript. Use only // comments.
 
-// array functions
 
-function array() { // makes an array from arbitrary parameter list.
+// arrays
+
+function array() { // makes an array from as many items as you want to give it.
   return Array.prototype.slice.call(arguments);
 }
 
 function is_array(a) {
-  return (typeof(a) === "object") && (a instanceof Array);
+  return (typeof(a)=="object" && (a instanceof Array));
 }
 
 function count(a) {
-  return a.length;
+ return a.length;
 }
 
 function array_slice(a, b, e) { // slice an array, begin, optional end
@@ -90,7 +80,6 @@ function array_slice(a, b, e) { // slice an array, begin, optional end
   return a.slice(b, e);
 }
 
-// -------------------------------------------------------------------
 // math and numerical functions
 
 function floor(n) {
@@ -98,66 +87,80 @@ function floor(n) {
 }
 
 function intval(n) {
-  return parseInt(n, 10);
+  return parseInt(n);
 }
 
-Array.min = function(a) { 
-// from http://ejohn.org/blog/fast-javascript-maxmin/
+
+
+Array.min = function(a){ // from http://ejohn.org/blog/fast-javascript-maxmin/
   return Math.min.apply(Math, a);
 };
 
 function min() {
-  var m = arguments;
-  if (m.length < 1) {
-    return false;
-  } 
-  if (m.length === 1) {
-    m = m[0];
-    if (!is_array(m)) {
-      return m;
-    }
-  }
-  return Array.min(m);
+ var m = arguments;
+ if (m.length < 1) {
+   return false;
+ } 
+ if (m.length == 1) {
+   m = m[0];
+   if (!is_array(m)) {
+     return m;
+   }
+ }
+ return Array.min(m);
 }
 
 function ctype_digit(s) {
-  return (/^[0-9]+$/).test(s);
+ return /^[0-9]+$/.test(s);
 }
 
 function ctype_space(s) {
  return /\s/.test(s);
 }
 
-// -------------------------------------------------------------------
 // date time functions
 
 function date_create(s) {
-  var d = new Date();
-  d.parse(s);
-  return d;
+ var d = new Date();
+ d.parse(s);
+ return d;
 }
 
 function date_get_full_year(d) {
-  if (arguments.length < 1) {
-    d = new Date();
-  }
-  return d.getFullYear();
+ if (arguments.length < 1) {
+   d = new Date();
+ }
+ return d.getFullYear();
 }
 
-function date_get_timestamp(d) {
-  return floor(d.getTime() / 1000);
+function date_get_timestamp($d) {
+ return floor($d.getTime()/1000);
+}
+
+function date_get_rfc3339($d) {
+  return strcat($d.getFullYear(),'-',
+                str_pad_left(1+$d.getUTCMonth(),2,"0"),'-',
+                str_pad_left($d.getDate(),2,"0"),'T',
+                str_pad_left($d.getUTCHours(),2,"0"),':',
+                str_pad_left($d.getUTCMinutes(),2,"0"),':',
+                str_pad_left($d.getUTCSeconds(),2,"0"),'Z');
+}
+
+// newcal
+
+function date_get_ordinal_days($d) {
+  return ymdp_to_d($d.getFullYear(),1+$d.getMonth(),$d.getDate());
 }
 
 
-// -------------------------------------------------------------------
 // character and string functions 
 
 function ord(s) {
-  return s.charCodeAt(0);
+ return s.charCodeAt(0);
 }
 
 function strlen(s) {
-  return s.length;
+ return s.length;
 } 
 
 function substr(s, o, n) {
@@ -174,91 +177,103 @@ function substr_count(s, n) {
 }
 
 function strpos(h, n, o) {
-  // clients must triple-equal test return for === false for no match!
-  // or use offset(n, h) instead (0 = not found, else 1-based index)
-  if (arguments.length === 2) {
-    o = 0;
-  }
-  o = h.indexOf(n, o);
-  if (o === -1) { return false; }
-  else { return o; }
+ // clients must triple-equal test ===false for no match!
+ // consider using offset(n,h) instead (0 - not found, else 1-based index)
+ if (arguments.length == 2) {
+  o = 0;
+ }
+ o = h.indexOf(n,o);
+ if (o==-1) { return false; }
+ else { return o; }
 }
 
 function strncmp(s1, s2, n) {
-  s1 = substr(String(s1), 0, n);
-  s2 = substr(String(s2), 0, n);
-  return (s1 === s2) ? 0 :
-         ((s1 < s2) ? -1 : 1);
+ s1 = substr(s1+'',0,n);
+ s2 = substr(s2+'',0,n);
+ return (s1==s2) ? 0 :
+        ((s1 < s2) ? -1 : 1);
 }
 
 function explode(d, s, n) {
-  if (arguments.length === 2) {
-    return s.split(d);
-  }
-  return s.split(d, n);
+ if (arguments.length == 2) {
+   return s.split(d);
+ }
+ return s.split(d, n);
 }
 
 function implode(d, a) {
-  return a.join(d);
+ return a.join(d);
 }
 
 function rawurlencode(s) {
-  return encodeURIComponent(s);
+ return encodeURIComponent(s);
 }
 
 function htmlspecialchars(s) {
-  var c, i;
-  c = [["&","&amp;"],  ["<","&lt;"], [">","&gt;"], 
-       ["'","&#039;"], ['"',"&quot;"]];
-  for (i = 0; i < c.length; i+=1) {
-    s = s.replace(new RegExp(c[i][0], "g"), c[i][1]);
-  }
-  return s;
+ var c= [["&","&amp;"],["<","&lt;"],[">","&gt;"],["'","&#039;"],['"',"&quot;"]];
+ for (i=0;i<c.length;i++) {
+  s = s.replace(new RegExp(c[i][0],"g"),c[i][1]); // s.replace(c[i][0],c[i][1]);
+ }
+ return s;
 }
 
-function str_ireplace(a, b, s) {
-  return s.replace(new RegExp(a, "gi"), b);
+function str_ireplace(a,b,s) {
+ var i;
+ if (!is_array(a)) {
+   return s.replace(new RegExp(a, "gi"), is_array(b) ? b[0] : b);
+ }
+ else {
+   for (i=0; i<a.length; i++) {
+     s = s.replace(new RegExp(a[i], "gi"), is_array(b) ? b[i] : b);
+   }
+   return s;
+ }
+}
+
+function preg_match(p, s) {
+  return (s.match(trim_slashes(p)) ? 1 : 0);
+}
+
+function preg_split(p, s) {
+  return s.split(new RegExp(trim_slashes(p),"gi"));
 }
 
 function trim() {
-  var c, i, j, m, s;
-  m = arguments;
-  s = m[0];
-  c = count(m) > 1 ? m[1] : " \t\n\r\f\x00\x0b\xa0";
-  i = 0;
-  j = strlen(s);
-  
-  while (strpos(c,s[i])!==false && i<j) {
-    i+=1;
-  }
-  j-=1;
-  while (j>i && strpos(c,s[j])!==false) {
-    j-=1;
-  }
-  j+=1;
-  if (j>i) {
-    return substr(s,i,j-i);
-  }
-  else {
-    return '';
-  }
+ var m = arguments;
+ var s = m[0];
+ var c = count(m)>1 ? m[1] : " \t\n\r\f\x00\x0b\xa0";
+ var i = 0;
+ var j = strlen(s);
+ while (contains(c,s[i]) && i<j) {
+   i++;
+ }
+ --j;
+ while (j>i && contains(c,s[j])) {
+   --j;
+ }
+ j++;
+ if (j>i) {
+   return substr(s,i,j-i);
+ }
+ else {
+   return '';
+ }
 }
 
 function rtrim() {
-  var c,j,m,s;
-  m = arguments;
-  s = m[0];
-  c = count(m)>1 ? m[1] : " \t\n\r\f\x00\x0b\xa0";
-  j = strlen(s)-1;
-  while (j>=0 && strpos(c,s[j])!==false) {
-    j-=1;
-  }
-  if (j>=0) {
-    return substr(s,0,j+1);
-  }
-  else {
-    return '';
-  }
+ var m = arguments;
+ var s = m[0];
+ var c = count(m)>1 ? m[1] : " \t\n\r\f\x00\x0b\xa0";
+ var j = strlen(s)-1;
+ while (j>=0 && contains(c,s[j])) {
+   --j;
+ }
+ if (j>=0) {
+   return substr(s,0,j+1);
+ }
+ else {
+   return '';
+ }
 }
 
 function strtolower(s) {
@@ -269,41 +284,21 @@ function ucfirst(s) {
   return s.charAt(0).toUpperCase() + substr(s, 1);
 }
 
-// -------------------------------------------------------------------
 // more javascript-only php-equivalent functions here 
 
 
-// -------------------------------------------------------------------
-// pacify jslint/jshint
-// -- define functions and variables only used in PHP flow.
-function func_get_args() { }
-var FALSE = false;
-var PREG_PATTERN_ORDER;
-var STR_PAD_LEFT;
-// -- may eventually define these for JS.
-function date_format() { }
-function preg_match_all() { }
-function str_pad() { }
-function DateTime() { }
-
-// ===================================================================
-/**/ // unconditional comment closer exits PHP comment block.
-// JS+PHP block. Processed by both JS and  PHP. /*...*/ comments ok.
-// -------------------------------------------------------------------
-/* original js/php test - doesn't pass jslint/jshint.
-function js() {
-  return "00"==false;
-}
-*/
-
-/*global document: false, window: false */
-/// ?> <!--   ///
-// -------------------------------------------------------------------
 // javascript-only framework functions
+function targetelement(e) {
+  var t;
+  e = e ? e : window.event;
+  t = e.target ? e.target : e.srcElement;
+  t = (t.nodeType == 3) ? t.parentNode : t; // Safari workaround
+  return t;
+}
 
 function doevent(el, evt) {
-  if (evt==="click" && el.tagName==='A') {
-  // dispatch/fireEvent fails FF3.5+/IE8+ on [a href] w "click" event
+  if (evt=="click" && el.tagName=='A') {
+  // note: dispatch/fireEvent not work FF3.5+/IE8+ on [a href] w "click" event
     window.location = el.href; // workaround
     return true;
   }
@@ -317,30 +312,34 @@ function doevent(el, evt) {
   }
 }
 
-function targetelement(e) {
-  var t;
-  e = e ? e : window.event;
-  t = e.target ? e.target : e.srcElement;
-  t = (t.nodeType == 3) ? t.parentNode : t; // Safari workaround
-  return t;
+
+// old wrappers. transition code away from them, do not use them in new code.
+//function getFullYear(d) {       // use date_get_full_year instead
+//  return date_get_full_year(d);
+//}
+
+
+// end cassis0php.js
+// --------------------------------------------------------------------
+
+/**/ // unconditional comment closer enters PHP+javascript processing
+/* ------------------------------------------------------------------ */
+/* cassis0.js - processed by both PHP and javascript */
+
+function js() {
+ return ("00"==false);
 }
 
-/// --> <?php ///
-
-
-// -------------------------------------------------------------------
 // character and string functions 
 
-// strcat: takes as many strings as you want to give it.
-function strcat() {         /// ?> <!--   ///
-  var $args, $i, $isjs, $r; /// --> <?php ///
-  $r = "";
-  $isjs = js();
-  $args = $isjs ? arguments : func_get_args();
-  for ($i=count($args)-1; $i>=0; $i-=1) {
-    $r = $isjs ? $args[$i] + $r : $args[$i] . $r;
-  }
-  return $r;
+function strcat() { // takes as many strings as you want to give it.
+ $strcatr = "";
+ $isjs = js();
+ $args = $isjs ? arguments : func_get_args();
+ for ($strcati=count($args)-1; $strcati>=0; $strcati--) {
+    $strcatr = $isjs ? $args[$strcati] + $strcatr : $args[$strcati] . $strcatr;
+ }
+ return $strcatr;
 }
 
 function number($s) {
@@ -348,160 +347,126 @@ function number($s) {
 }
 
 function string($n) {
-  if (js()) { 
-    if (typeof($n)==="number") {
-      return Number($n).toString(); 
-    } else if (typeof($n)==="undefined") {
-      return "";
-    } else {
-      return $n.toString();
-    }
-  }
-  else { 
-    return "" . $n; 
-  }
+ if (js()) { 
+   if (typeof($n)=="number")
+     return Number($n).toString(); 
+   else if (typeof($n)=="undefined")
+     return "";
+   else return $n.toString();
+ }
+ else { return "" . $n; }
 }
 
-function str_pad_left($s1, $n, $s2) {
-  $s1 = string($s1);
-  $s2 = string($s2);
-  if (js()) {
-    $n -= strlen($s1);
-    while ($n >= strlen($s2)) { 
-      $s1 = strcat($s2, $s1); 
-      $n -= strlen($s2);
-    }
-    if ($n > 0) {
-      $s1 = strcat(substr($s2, 0, $n), $s1);
-    }
-    return $s1;
-  } else { 
-    return str_pad($s1, $n, $s2, STR_PAD_LEFT); 
-  }
+function str_pad_left($s1,$n,$s2) {
+ $s1 = string($s1);
+ $s2 = string($s2);
+ if (js()) {
+   $n -= strlen($s1);
+   while ($n >= strlen($s2)) { 
+     $s1 = strcat($s2,$s1); 
+     $n -= strlen($s2);
+   }
+   if ($n > 0) {
+     $s1 = strcat(substr($s2,0,$n),$s1);
+   }
+   return $s1;
+ }
+ else { return str_pad($s1,$n,$s2,STR_PAD_LEFT); }
 }
 
 function trim_slashes($s) {
-  if ($s[0]==="/") { // strip unnecessary / delim PHP regex funcs want
-    return substr($s, 1, strlen($s)-2);
+  if ($s[0]=="/") { // strip unnecessary / delimiters that PHP regexp funcs want
+    return substr($s,1,strlen($s)-2);
   }
   return $s;
 }
 
-// define a few JS functions that PHP already has, using CASSIS funcs
-/// ?> <!--   ///
-function preg_match(p, s) {
-  return (s.match(trim_slashes(p)) ? 1 : 0);
-}
-
-function preg_split(p, s) {
-  return s.split(new RegExp(trim_slashes(p), "gi"));
-}
-/// --> <?php ///
-
-function preg_match_1($p, $s) { /// ?> <!--   ///
-  var $m;                       /// --> <?php ///
+function preg_matches($p,$s) {
   if (js()) {
-    return $s.match(new RegExp(trim_slashes($p), "i"));
-  } else {
-    $m = array();
-    if (preg_match($p, $s, $m) !== FALSE) {
-      return $m[0];
-    } else {
-      return null; //array();
-    }
-  }
-}
-
-function preg_replace_1($p, $r, $s) {
-  if (js()) {
-    return $s.replace(new RegExp(trim_slashes($p), "i"), $r);
+    return $s.match(new RegExp(trim_slashes($p),"gi"));
   }
   else {
-    $r = preg_replace($p, $r, $s, 1);
-    if ($r !== null) { return $r; }
-    else             { return $s; }
-  }
-}
-
-function preg_matches($p, $s) { /// ?> <!--   ///
-  var $m;                       /// --> <?php ///
-  if (js()) {
-    return $s.match(new RegExp(trim_slashes($p), "gi"));
-  } else {
     $m = array();
     if (preg_match_all($p, $s, $m, PREG_PATTERN_ORDER) !== FALSE) {
       return $m[0];
-    } else {
-      return null; //array();
+    }
+    else {
+      return array();
     }
   }
 }
 
+
+/* end cassis0.js */
+
+
 function ctype_email_local($s) {
  // close enough. no '.' because this is used for last char of.
- return (preg_match("/^[a-zA-Z0-9_%+-]+$/", $s));
+ return (preg_match("/^[a-zA-Z0-9_%+-]+$/",$s));
 }
 
-// -------------------------------------------------------------------
-// newbase60
+function ctype_uri_scheme($s) {
+ return (preg_match("/^[a-zA-Z][a-zA-Z0-9+.-]*$/", $s));
+}
+/* ------------------------------------------------------------------ */
 
-function num_to_sxg($n) { /// ?> <!--   ///
-  var $d, $m, $p, $s;     /// --> <?php ///
-  $m = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ_abcdefghijkmnopqrstuvwxyz";
-  $p = "";
-  $s = "";
-  if ($n==="" || $n===0) { return "0"; }
-  if ($n<0) {
-    $n = -$n;
-    $p = "-";
-  }
-  while ($n>0) {
-    $d = $n % 60;
-    $s = strcat($m[$d], $s);
-    $n = ($n-$d)/60;
-  }
-  return strcat($p, $s);
+
+/* newbase60 */
+
+function num_to_sxg($n) {
+ $s = "";
+ $p = "";
+ $m = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ_abcdefghijkmnopqrstuvwxyz";
+ if ($n==="" || $n===0) { return "0"; }
+ if ($n<0) {
+   $n = 0-$n;
+   $p = "-";
+ }
+ while ($n>0) {
+   $d = $n % 60;
+   $s = strcat($m[$d],$s);
+   $n = ($n-$d)/60;
+ }
+ return strcat($p,$s);
 }
 
 function num_to_sxgf($n, $f) {
-  if (!$f) { $f=1; }
-  return str_pad_left(num_to_sxg($n), $f, "0");
+ if (!$f) { $f=1; }
+ return str_pad_left(num_to_sxg($n), $f, "0");
 }
 
-function sxg_to_num($s) { /// ?> <!--   ///
-  var $c, $i, $j, $m, $n; /// --> <?php ///
-  $j = strlen($s);
-  $m = 1;
-  $n = 0;
-  if ($s[0]==="-") {
-    $m = -1;
-    $j-=1;
-    $s = substr($s, 1, $j);
-  }
-  for ($i=0; $i<$j; $i+=1) { // iterate from first to last char of $s
-    $c = ord($s[$i]); //  put current ASCII of char into $c  
-    if ($c>=48 && $c<=57) { $c=$c-48; }
-    else if ($c>=65 && $c<=72) { $c-=55; }
-    else if ($c===73 || $c===108) { $c=1; } // typo cap I lower l to 1
-    else if ($c>=74 && $c<=78) { $c-=56; }
-    else if ($c===79) { $c=0; } // error correct typo capital O to 0
-    else if ($c>=80 && $c<=90) { $c-=57; }
-    else if ($c===95 || $c===45) { $c=34; } // _ and dash - to _
-    else if ($c>=97 && $c<=107) { $c-=62; }
-    else if ($c>=109 && $c<=122) { $c-=63; }
-    else { break; } // treat all other noise as end of number
-    $n = 60*$n + $c;
-  }
-  return $n*$m;
+function sxg_to_num($s) {
+ $n = 0;
+ $m = 1;
+ $j = strlen($s);
+ if ($s[0]=="-") {
+   $m= -1;
+   $j--;
+   $s = substr($s,1,$j);
+ }
+ for ($i=0;$i<$j;$i++) { // iterate from first to last char of $s
+   $c = ord($s[$i]); //  put current ASCII of char into $c  
+   if ($c>=48 && $c<=57) { $c=$c-48; }
+   else if ($c>=65 && $c<=72) { $c-=55; }
+   else if ($c==73 || $c==108) { $c=1; } // typo capital I, lowercase l to 1
+   else if ($c>=74 && $c<=78) { $c-=56; }
+   else if ($c==79) { $c=0; } // error correct typo capital O to 0
+   else if ($c>=80 && $c<=90) { $c-=57; }
+   else if ($c==95 || $c==45) { $c=34; } // _ underscore and correct dash - to _
+   else if ($c>=97 && $c<=107) { $c-=62; }
+   else if ($c>=109 && $c<=122) { $c-=63; }
+   else break; // treat all other noise as end of number
+   $n = 60*$n + $c;
+ }
+ return $n*$m;
 }
 
 function sxg_to_numf($s, $f) {
-  if ($f===undefined) { $f=1; }
-  return str_pad_left(sxg_to_num($s), $f, "0");
+ if ($f===undefined) { $f=1; }
+ return str_pad_left(sxg_to_num($s), $f, "0");
 }
 
-// -------------------------------------------------------------------
-// == newbase60 compat functions only == (before 2011-149)
+/* == compat functions only == */
 function numtosxg($n) {
   return num_to_sxg($n);
 }
@@ -517,49 +482,44 @@ function sxgtonum($s) {
 function sxgtonumf($s, $f) {
   return sxg_to_numf($s, $f);
 }
+/* == end compat functions == */
 
-// -------------------------------------------------------------------
-// date and time
+/* end newbase60 */
 
-function date_create_ymd($s) { /// ?> <!--   ///
-  var $d;                      /// --> <?php ///
-  if ($s === 0) {
-    return (js() ? new Date() : new DateTime());
-  }
-  if (js()) { 
-    if (substr($s,4,1)==='-') {
-      $s=strcat(substr($s,0,4), substr($s,5,2), substr($s,8,2));
-    }
-    $d = new Date(substr($s,0,4),substr($s,4,2)-1,substr($s,6,2));
-    $d.setHours(0); // was setUTCHours, avoiding bc JS no default tz
-    return $d;
-  } else { 
-    return date_create(strcat($s, " 00:00:00"));
-  }
+
+
+/* ------------------------------------------------------------------ */
+
+
+/* date and time */
+
+function date_create_ymd($s) {
+ if (!$s) {
+   return (js() ? new Date() : new DateTime());
+ }
+ if (js()) { 
+   if (substr($s,4,1)=='-') {
+      $s=strcat(strcat(substr($s,0,4),substr($s,5,2)),substr($s,8,2));
+   }
+   $d = new Date(substr($s,0,4),substr($s,4,2)-1,substr($s,6,2));
+   $d.setHours(0); // was setUTCHours, avoiding bc JS has no default timezone
+   return $d;
+ }
+ else { return date_create(strcat($s," 00:00:00")); }
 }
 
 function date_create_timestamp($s) {
-  if (js()) {
-    return new Date(1000*$s);
-  } else {
-    return new DateTime(strcat("@", string($s)));
-  }
+ if (js()) {
+   return new Date(1000*$s);
+ }
+ else {
+   return new DateTime(strcat("@",string($s)));
+ }
 }
 
-// function date_get_timestamp($d) // in PHP/JS specific code above.
+// function date_get_timestamp($d) { } // defined in PHP/JS specific code above.
 
-function date_get_rfc3339($d) {
-  if (js()) {
-    return strcat($d.getFullYear(), '-',
-                  str_pad_left(1+$d.getUTCMonth(), 2, "0"), '-',
-                  str_pad_left($d.getDate(), 2, "0"), 'T',
-                  str_pad_left($d.getUTCHours(), 2, "0"), ':',
-                  str_pad_left($d.getUTCMinutes(), 2, "0"), ':',
-                  str_pad_left($d.getUTCSeconds(), 2, "0"), 'Z');
-  } else {
-    return date_format($d, 'c');
-  }
-}
+// function date_get_rfc3339($d) { } // defined in PHP/JS specific code above.
 
 function dt_to_time($dt) {
   $dt = explode("T", $dt);
@@ -577,16 +537,22 @@ function dt_to_date($dt) {
   return $dt[0];
 }
 
+function dt_to_ordinal_date($dt) {
+  return ymd_to_yd(dt_to_date($dt));
+}
+/* end date and time */
 
-// -------------------------------------------------------------------
-// newcal
+
+/* ------------------------------------------------------------------ */
+
+
+/* newcal */
 
 function isleap($y) {
-  return ($y % 4 === 0 && ($y % 100 !== 0 || $y % 400 === 0));
+  return ($y % 4 == 0 && ($y % 100 != 0 || $y % 400 == 0));
 }
 
-function ymdp_to_d($y, $m, $d) { /// ?> <!--   ///
-  var $md;                       /// --> <?php ///
+function ymdp_to_d($y,$m,$d) {
   $md = array(
          array(0,31,59,90,120,151,181,212,243,273,304,334),
          array(0,31,60,91,121,152,182,213,244,274,305,335));
@@ -594,64 +560,60 @@ function ymdp_to_d($y, $m, $d) { /// ?> <!--   ///
 }
 
 function ymd_to_d($d) {
-  if (substr($d, 4, 1)==='-') {
+  if (substr($d,4,1)=='-') {
     return ymdp_to_d(substr($d,0,4),substr($d,5,2),substr($d,8,2));
-  } else {
+  }
+  else {
     return ymdp_to_d(substr($d,0,4),substr($d,4,2),substr($d,6,2));
   }
 }
 
-function ymdp_to_yd($y, $m, $d) {
-  return strcat(str_pad_left($y, 4, "0"), '-',
-                str_pad_left(ymdp_to_d($y, $m, $d), 3, "0"));
+function ymdp_to_yd($y,$m,$d) {
+  return strcat(str_pad_left($y,4,"0"),'-', str_pad_left(ymdp_to_d($y,$m,$d),3,"0"));
 }
 
 function ymd_to_yd($d) {
-  if (substr($d, 4, 1)==='-') {
+  if (substr($d,4,1)=='-') {
     return ymdp_to_yd(substr($d,0,4),substr($d,5,2),substr($d,8,2));
-  } else {
+  }
+  else {
     return ymdp_to_yd(substr($d,0,4),substr($d,4,2),substr($d,6,2));
   }
 }
 
-function date_get_ordinal_days($d) {
-  if (js()) {
-    return ymdp_to_d($d.getFullYear(), 1+$d.getMonth(), $d.getDate());
-  } else {
-    return 1+date_format($d, 'z');
-  }
+// function date_get_ordinal_days($d) {} // defined in PHP/JS specific code.
+
+function date_get_bim() {
+ $args = js() ? arguments : func_get_args();
+
+ return bim_from_od(
+         date_get_ordinal_days(
+          date_create_ymd((count($args) > 0) ? $args[0] : 0)));
+} 
+
+
+function get_nm_str($m) {
+  $a = array("New January", "New February", "New March", "New April", "New May", "New June", "New July", "New August", "New September", "New October", "New November", "New December");
+  return $a[($m-1)];
 }
 
 function bim_from_od($d) {
   return 1+floor(($d-1)/61);
 }
 
-function date_get_bim() { /// ?> <!--   ///
-  var $args;              /// --> <?php ///
-  $args = js() ? arguments : func_get_args();
-  return bim_from_od(
-          date_get_ordinal_days(
-           date_create_ymd((count($args) > 0) ? $args[0] : 0)));
-}
-
-function get_nm_str($m) { /// ?> <!--   ///
-  var $a;                 /// --> <?php ///
-  $a = array("New January", "New February", "New March", "New April", "New May", "New June", "New July", "New August", "New September", "New October", "New November", "New December");
-  return $a[($m-1)];
-}
-
 function nm_from_od($d) {
   return ((($d-1) % 61) > 29) ? 2+2*(bim_from_od($d)-1) : 1+2*(bim_from_od($d)-1);
 }
 
-// date_get_ordinal_date: optional date argument
-function date_get_ordinal_date() { /// ?> <!--   ///
-  var $args, $d;                   /// --> <?php ///
-  $args = js() ? arguments : func_get_args();
-  $d = date_create_ymd((count($args) > 0) ? $args[0] : 0);
-  return strcat(date_get_full_year($d), '-',
-                str_pad_left(date_get_ordinal_days($d), 3, "0"));
+function date_get_ordinal_date(/* $d = "" */) {
+ $args = js() ? arguments : func_get_args();
+ $d = date_create_ymd((count($args) > 0) ? $args[0] : 0);
+ return strcat(date_get_full_year($d), '-',
+               str_pad_left(date_get_ordinal_days($d), 3, "0"));
 }
+
+/* end newcal */
+
 
 // -------------------------------------------------------------------
 // begin epochdays
@@ -672,9 +634,7 @@ function ymd_to_days($d) {
 /* old:
 function ymd_to_days($d) {
   // fails in JS, "2013-03-10" and "2013-03-11" both return 15774 
-  return floor(
-   (date_get_timestamp(date_create_ymd($d)) -
-    date_get_timestamp(date_create_ymd("1970-01-01")))/86400);
+  return floor((date_get_timestamp(date_create_ymd($d))-date_get_timestamp(date_create_ymd("1970-01-01")))/86400);
 }
 */
 
@@ -682,23 +642,23 @@ function ymd_to_sd($d) {
   return num_to_sxg(ymd_to_days($d));
 }
 
-function ymd_to_sdf($d, $f) {
-  return num_to_sxgf(ymd_to_days($d), $f);
+function ymd_to_sdf($d,$f) {
+  return num_to_sxgf(ymd_to_days($d),$f);
 }
 
-// ordinal date (YYYY-DDD) to ymd, epoch days, sexagesimal epoch days
+// convert ordinal date (YYYY-DDD) to 
+// ymd - YYYY-MM-DD, epoch days, and sexagesimal epoch days (sd)
 
-function ydp_to_ymd($y, $d) { /// ?> <!--   ///
-  var $md, $m;                /// --> <?php ///
+function ydp_to_ymd($y,$d) {
   $md = array(
          array(0,31,59,90,120,151,181,212,243,273,304,334,365),
          array(0,31,60,91,121,152,182,213,244,274,305,335,366));
   $d -= 1;
   $m = trunc($d / 29);
-  if ($md[isleap($y) - 0][$m] > $d) $m -= 1;
+  if ($md[isleap($y)-0][$m] > $d) $m -= 1;
   $d = $d - $md[isleap($y)-0][$m] + 1;
   $m += 1;
-  return strcat($y, '-', str_pad_left($m, 2, '0'), 
+  return strcat($y, '-', str_pad_left($m, 2, '0'),
                     '-', str_pad_left($d, 2, '0'));
 }
 
@@ -707,29 +667,25 @@ function yd_to_ymd($d) {
 }
 
 function yd_to_days($d) {
-  return y_to_days(substr($d, 0, 4)) - 1 + number(substr($d, 5, 3));
+  return y_to_days(substr($d, 0, 4)) - 1 + 
+         number(substr($d, 5, 3));
 }
 
 function yd_to_sd($d) {
   return num_to_sxg(yd_to_days($d));
 }
 
-function yd_to_sdf($d, $f) {
-  return num_to_sxgf(yd_to_days($d), $f);
+function yd_to_sdf($d,$f) {
+  return num_to_sxgf(yd_to_days($d),$f);
 }
 
 // convert epoch days or sexagesimal epoch days (sd) to ordinal date
-function days_to_yd($d) { /// ?> <!--   ///
-  var $a, $y;             /// --> <?php ///
-  $d = date_create_timestamp(
-         date_get_timestamp(
-           date_create_ymd("1970-01-01")) + $d*86400);
+
+function days_to_yd($d) {
+  $d = date_create_timestamp(date_get_timestamp(date_create_ymd("1970-01-01")) + $d*86400);
   $y = date_get_full_year($d);
-  $a = date_create_ymd(strcat($y, "-01-01"));
-  return strcat($y, "-",
-           str_pad_left(
-             1 + floor((
-                   date_get_timestamp($d) - date_get_timestamp($a))/86400), 3, "0"));
+  $a = date_create_ymd(strcat($y,"-01-01"));
+  return strcat($y, strcat("-", str_pad_left(1+floor((date_get_timestamp($d)-date_get_timestamp($a))/86400), 3, "0")));
 }
 
 function sd_to_yd($d) {
@@ -738,12 +694,12 @@ function sd_to_yd($d) {
 
 // -------------------------------------------------------------------
 // compat as of 2011-143
-function ymdptod($y,$m,$d) { return ymdp_to_d($y,$m,$d); }
-function ymdptoyd($y,$m,$d) { return ymdp_to_yd($y,$m,$d); }
-function ymdtoyd($d) { return ymd_to_yd($d); }
 function bimfromod($d) { return bim_from_od($d); }
 function getnmstr($m) { return get_nm_str($m); }
 function nmfromod($d) { return nm_from_od($d); }
+function ymdptod($y,$m,$d) { return ymdp_to_d($y,$m,$d); }
+function ymdptoyd($y,$m,$d) { return ymdp_to_yd($y,$m,$d); }
+function ymdtoyd($d) { return ymd_to_yd($d); }
 function ymdtodays($d) { return ymd_to_days($d); }
 function ymdtosd($d) { return ymd_to_sd($d); }
 function ymdtosdf($d,$f) { return ymd_to_sdf($d, $f); }
@@ -753,40 +709,28 @@ function ydtosdf($d,$f) { return yd_to_sdf($d, $f); }
 function daystoyd($d) { return days_to_yd($d); }
 function sdtoyd($d) { return sd_to_yd($d); }
 
-// -------------------------------------------------------------------
-// HTTP
+/* end epochdays */
 
-function is_http_header($s) {
-  return (preg_match_1('/^[a-zA-Z][-\\w]*:/',$s)!==null);
-}
 
-// -------------------------------------------------------------------
-// webaddress
+/* ------------------------------------------------------------------ */
+
+
+/* webaddress */
 
 function web_address_to_uri($wa, $addhttp) {
-  if (!$wa || 
-      (substr($wa, 0, 7) === 'http://') || 
-      (substr($wa, 0, 8) === 'https://') || 
-      (substr($wa, 0, 6) === 'irc://')) {
+  if ($wa=='' || (substr($wa, 0,7) == "http://") || (substr($wa, 0,8) == "https://") || (substr($wa, 0,6) == "irc://")) {
     return $wa;
   }
-  if ((substr($wa, 0, 7) === 'Http://') || 
-      (substr($wa, 0, 8) === 'Https://')) { 
-      // handle iOS4 overcapitalization of input entries
-    return strcat('h', substr($wa, 1, strlen($wa)));
+  if ((substr($wa, 0,7) == "Http://") || (substr($wa, 0,8) == "Https://")) { // handle iPad overcapitalization of input entries
+    return strcat('h', substr($wa,1,strlen($wa)));
   }
-
-  // TBI: may want to handle typos as well like:
-  // missing/extra : or / http:/ http///
-  // missing letter in protocol: ttps htps htts, ttp htp htt, ir ic rc
-  // use strtolower(substr($wa, 0, 6)); // handle capitals in URLs
-
-  if (substr($wa,0,1) === '@') {
-    return strcat('https://twitter.com/', substr($wa, 1, strlen($wa)));
+  
+  if (substr($wa,0,1) == "@") {
+    return strcat("https://twitter.com/",substr($wa,1,strlen($wa)));
   }
 
   if ($addhttp) {
-    $wa = strcat('http://', $wa);
+    $wa = strcat("http://",$wa);
   }
   return $wa;
 }
@@ -800,15 +744,27 @@ function uri_clean($uri) {
     $uri = implode('://', $uri);
   }
   // URL encode
-  return str_ireplace("%3A", ":", 
-                      str_ireplace("%2F", "/", rawurlencode($uri)));
+  return str_ireplace("%3A",":",
+                      str_ireplace("%2F","/",rawurlencode($uri)));
 }
 
+// returns e.g. http:
 function protocol_of_uri($uri) {
+  if (offset(':', $uri) === 0) { return ""; }
   $uri = explode(':', $uri, 2);
+  if (!ctype_uri_scheme($uri[0])) { return ""; }
   return strcat($uri[0], ':');
 }
 
+// returns e.g. //ttk.me/b/4DY1?seriously=yes#ud
+function relative_uri_hash($uri) {
+  if (offset(':', $uri) === 0) { return ""; }
+  $uri = explode(':', $uri, 2);
+  if (!ctype_uri_scheme($uri[0])) { return ""; }
+  return $uri[1];
+}
+
+// returns e.g. ttk.me
 function hostname_of_uri($uri) {
   $uri = explode('/', $uri, 4);
   if (count($uri) > 2) {
@@ -819,7 +775,7 @@ function hostname_of_uri($uri) {
     }
     return $uri;
   }   
-  return '';
+  return "";
 }
 
 function sld_of_uri($uri) {
@@ -832,7 +788,7 @@ function sld_of_uri($uri) {
 }
 
 function path_of_uri($uri) {
-  $uri = explode('/', $uri, 4);
+  $uri = explode('/', $uri);
   if (count($uri) > 3) {
     $uri = array_slice($uri, 3);
     $uri = strcat('/', implode('/', $uri));
@@ -849,9 +805,27 @@ function path_of_uri($uri) {
   return '/';
 }
 
+function prepath_of_uri($uri) {
+  $uri = explode('/', $uri);
+  $uri = array_slice($uri, 0, 3);
+  return implode('/', $uri);
+}
+
 function is_http_uri($uri) {
-  $uri = explode(":", $uri, 2);
-  return !!strncmp($uri[0], "http", 4);
+  $uri = explode(':', $uri, 2);
+  return !!strncmp($uri[0], 'http', 4);
+}
+
+function get_absolute_uri($uri,$base) {
+  if (protocol_of_uri($uri) != "") { return $uri; }
+  if (substr($uri, 0, 2) === '//') { 
+    return strcat(protocol_of_uri($base), $uri);
+  }
+  if (substr($uri, 0, 1) === '/') {
+    return strcat(prepath_of_uri($base), $uri);
+  }
+  // TBI # relative
+  return strcat(prepath_of_uri($base), path_of_uri($base), $uri);
 }
 
 // -------------------------------------------------------------------
@@ -861,204 +835,256 @@ function webaddresstouri($wa, $addhttp) {
 }
 function uriclean($uri) { return uri_clean($uri); }
 
+function vcpdtreadable($d) { return vcp_dt_readable($d); }
 
-// -------------------------------------------------------------------
-// hexatridecimal
+/* end webaddress */
 
-function num_to_hxt($n) { /// ?> <!--   ///
-  var $d, $m, $s;         /// --> <?php ///
-  $m = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  $s = "";
-  if ($n === undefined || $n === 0) { return "0"; }
-  while ($n>0) {
-    $d = $n % 36;
-    $s = strcat($m[$d], $s);
-    $n = ($n-$d)/36;
-  }
-  return $s;
+
+/* HTTP related */
+
+function is_html_type($ct) {
+  $ct = explode(';', $ct, 2);
+  $ct = $ct[0];
+  return ($ct === 'text/html' || $ct === 'application/xhtml+xml');
 }
 
-function num_to_hxtf($n, $f) {
-  if ($f === undefined) { $f=1; }
-  return str_pad_left(num_to_hxt($n), $f, "0");
+/* */
+
+
+/* ------------------------------------------------------------------ */
+
+
+/* hexatridecimal */
+
+function numtohxt($n) {
+ $s = "";
+ $m = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+ if ($n===undefined || $n===0) { return "0"; }
+ while ($n>0) {
+   $d = $n % 36;
+   $s = strcat($m[$d],$s);
+   $n = ($n-$d)/36;
+ }
+ return $s;
 }
 
-function hxt_to_num($h) { /// ?> <!--   ///
-  var $c, $i, $j, $n;     /// --> <?php ///
-  $j = strlen($h);
-  $n = 0;
-  for ($i=0; $i<$j; $i+=1) { // iterate from first to last char of $h
-    $c = ord($h[$i]); //  put current ASCII of char into $c  
-    if ($c>=48 && $c<=57) { $c=$c-48; } // 0-9
-    else if ($c>=65 && $c<=90) { $c-=55; } // A-Z
-    else if ($c>=97 && $c<=122) { $c-=87; } // a-z treat as A-Z
-    else { $c = 0; } // treat all other noise as 0
-    $n = 36*$n + $c;
-  }
-  return $n;
+function numtohxtf($n,$f) {
+ if ($f===undefined) { $f=1; }
+ return str_pad_left(numtohxt($n), $f, "0");
 }
 
-// -------------------------------------------------------------------
-// compat as of 2011-149
-function numtohxt($n) { return num_to_hxt($n); }
-function numtohxtf($n,$f) { return num_to_hxtf($n, $f); }
-function hxttonum($h) { return hxt_to_num($h); }
-
-
-// -------------------------------------------------------------------
-// ISBN-10
-
-function num_to_isbn10($n) { /// ?> <!--   ///
-  var $d, $f, $i;            /// --> <?php ///
-  $n = string($n);
-  $d = 0;
-  $f = 2;
-  for ($i=strlen($n)-1; $i>=0; $i-=1) {
-    $d += $n[$i]*$f;
-    $f += 1;  
-  }
-  $d = 11-($d % 11);
-  if ($d===10) {$d="X";}
-  else if ($d===11) {$d="0";}
-  else {$d=string($d);}
-  return strcat(str_pad_left($n, 9, "0"), $d);
+function hxttonum($h) {
+ $n = 0;
+ $j = strlen($h);
+ for ($i=0;$i<$j;$i++) { // iterate from first to last char of $h
+   $c = ord($h[$i]); //  put current ASCII of char into $c  
+   if ($c>=48 && $c<=57) { $c=$c-48; } // 0-9
+   else if ($c>=65 && $c<=90) { $c-=55; } // A-Z
+   else if ($c>=97 && $c<=122) { $c-=87; } // a-z case-insensitive treat as A-Z
+   else { $c = 0; } // treat all other noise as 0
+   $n = 36*$n + $c;
+ }
+ return $n;
 }
 
-// -------------------------------------------------------------------
-// compat as of 2011-149
-function numtoisbn10($n) { return num_to_isbn10($n); }
+/* end hexatridecimal */
 
 
-// -------------------------------------------------------------------
-// HyperTalk
+/* ------------------------------------------------------------------ */
 
-function trunc($n) { // just an alias from BASIC days
-  return floor($n);
+
+/* ISBN-10 */
+
+function numtoisbn10($n) {
+ $n=string($n);
+ $d=0;
+ $f=2;
+ for ($i=strlen($n)-1;$i>=0;$i--) {
+  $d += $n[$i]*$f;
+  $f++;  
+ }
+ $d = 11-($d % 11);
+ if ($d==10) {$d="X";}
+ else if ($d==11) {$d="0";}
+ else {$d=string($d);}
+ return strcat(str_pad_left($n,9,"0"),$d);
+}
+/* end ISBN-10 */
+
+
+/* ------------------------------------------------------------------ */
+
+
+/* ASIN */
+
+function asintorsxg($a) { // ASIN to reversible sexagesimal; prefix ISBN-10 w ~
+ $a = amazontoasin($a); // extract ASIN from Amazon URL if necessary
+ if ($a[0]=='B') {
+   $a=num_to_sxg(hxttonum(substr($a,1,9)));
+ }
+ else {
+   $a = implode("",explode("-",$a)); // eliminate presentational hyphens
+   if (strlen($a)>10 && substr($a,0,3)=="978") {
+     $a = substr($a,3,9);
+   }
+   else {
+     $a = substr($a,0,9);
+   }
+   $a = strcat("~",num_to_sxg($a));
+ }
+ return $a;
+}
+
+function amazontoasin($a) {
+ // idempotent
+ if (preg_match("/[\.\/]+/",$a)) {
+   $a = explode("/",$a);
+   for ($i=count($a)-1; $i>=0; $i--) {
+     if (preg_match("/^[0-9A-Za-z]{10}$/",$a[$i])) {
+       $a = $a[$i];
+       break;
+     }
+   }
+   if ($i==-1) { // no ASIN was found in URL
+     $a=""; // reset $a to a string (instead of an array)
+   }
+ }
+ return $a;
+}
+
+/* end ASIN */
+
+
+/* ------------------------------------------------------------------ */
+
+
+/* HyperTalk */
+
+function trunc($n) { /* just an alias from BASIC days */
+ return floor($n);
 }
 
 function offset($n, $h) {
-  $n = strpos($h, $n);
-  if ($n === false) { 
-    return 0; 
-  } else { 
-    return $n+1; 
-  }
+ $n = strpos($h, $n);
+ if ($n===false) { return 0; }
+ else            { return $n+1; }
 }
 
 function contains($h, $n) {
-// HyperTalk syntax haystack contains needle: if ("abc" contains "b")
-  return strpos($h, $n)!==false;
+ // actual HT syntax: haystack contains needle, e.g. if ("abc" contains "b")
+ return !(strpos($h, $n)===false);
 }
 
 function last_character_of($s) {
-  return (strlen($s) > 0) ? $s[strlen($s)-1] : '';
+  return strlen($s)>0 ? $s[strlen($s)-1] : '';
 }
+/* end HyperTalk */
 
-function line_1_of($s) { /// ?> <!--   ///
-  var $r;                /// --> <?php ///
-  $r = preg_match_1('/^[\\w\\W]*?[\\n\\r]+?/', $s);
-  if ($r === null) { return $s; }
-  return substr($r, 0, strlen($r)-1);
-}
 
-function delete_line_1_of($s) {
- if (preg_match_1('/^[\\w\\W]*?[\\n\\r]+?/', $s) === null) {
-   return '';
- }
- return preg_replace_1('/^[\\w\\W]*?[\\n\\r]+?/', '', $s); 
-}
+/* ------------------------------------------------------------------ */
 
-// -------------------------------------------------------------------
-// microformats
 
-// xpath expressions to extract microformats
-function xp_has_class($s) {
+/* XPath */
+
+function xphasclass($s) {
   return strcat("//*[contains(concat(' ',@class,' '),' ",$s," ')]");
 }
 
-function xpr_has_class($s) {
+function xprhasclass($s) {
   return strcat(".//*[contains(concat(' ',@class,' '),' ",$s," ')]");
 }
 
-function xp_has_id($s) {
-  return strcat("//*[@id='", $s, "']");
+function xphasid($s) {
+  return strcat("//*[@id='",$s,"']");
 }
 
-function xp_attr_starts_with($a, $s) {
-  return strcat("//*[starts-with(@", $a, ",'", $s, "')]");
+function xpattrstartswith($a,$s) {
+  return strcat("//*[starts-with(@",$a,",'",$s,"')]");
 }
 
-function xp_has_rel($s) {
-  return strcat("//*[contains(concat(' ',@rel,' '),' ", $s, " ')]");
+function xphasrel($s) {
+  return strcat("//*[contains(concat(' ',@rel,' '),' ",$s," ')]");
 }
 
-function xpr_has_rel($s) {
-  return strcat(".//*[contains(concat(' ',@rel,' '),' ", $s, " ')]");
+function xprhasrel($s) {
+  return strcat(".//*[contains(concat(' ',@rel,' '),' ",$s," ')]");
 }
 
-function xpr_attr_starts_with_has_rel($a, $s, $r) {
-  return strcat(".//*[contains(concat(' ',@rel,' '),' ", $r, 
-                " ') and starts-with(@", $a, ",'", $s, "')]");
+function xprattrstartswithhasrel($a,$s,$r) {
+  return strcat(".//*[contains(concat(' ',@rel,' '),' ",$r," ') and starts-with(@",$a,",'",$s,"')]");
 }
 
-// value class pattern readable date time from ISO8601 datetime
-function vcp_dt_readable($d) { /// ?> <!--   ///
-  var $r;                      /// --> <?php ///
-  $d = explode("T", $d);
+function xprattrstartswithhasclass($a,$s,$c) {
+  return strcat(".//*[contains(concat(' ',@class,' '),' ",$c," ') and starts-with(@",$a,",'",$s,"')]");
+}
+
+/* end XPath */
+
+
+/* ------------------------------------------------------------------ */
+
+
+/* microformats */
+
+/* value class pattern readable date time from ISO8601 datetime */
+function vcp_dt_readable($d) {
+  $d = explode("T", $d);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
   $r = "";
   if (count($d)>1) { 
-    $r = strcat('<time class="value">', $d[1], '</time> on ');
+     $r = explode("-", $d[1]);
+     if (count($d)==1) {
+			 $r = explode("+", $d[1]);
+     }
+     if (count($d)>1) {
+       $r = strcat('<time class="value" datetime="',$d[1],'">', 
+                   $r[0],'</time> on ');
+     }
+     else {
+			 $r = strcat('<time class="value">',$d[1],'</time> on ');
+     }
   }
-  return strcat($r, '<time class="value">', $d[0], '</time>');
+  return strcat($r,'<time class="value">',$d[0],'</time>');
 }
 
-
-// -------------------------------------------------------------------
-// compat as of 2011-149
-function xphasclass($s) { return xp_has_class($s); }
-function xprhasclass($s) { return xpr_has_class($s); }
-function xphasid($s) { return xp_has_id($s); }
-function xpattrstartswith($a, $s) { 
-  return xp_attr_starts_with($a, $s); 
-}
-function xphasrel($s) { return xp_has_rel($s); }
-function xprhasrel($s) { return xpr_has_rel($s); }
-function xprattrstartswithhasrel($a, $s, $r) {
-  return xpr_attr_starts_with_has_rel($a, $s, $r);
-}
-function vcpdtreadable($d) { return vcp_dt_readable($d); }
+/* end microformats */
 
 
-// -------------------------------------------------------------------
-// whistle
+/* ------------------------------------------------------------------ */
+
+
+/* Whistle */
+
 // algorithmic URL shortener core
 // YYYY/DDD/tnnn to tdddss 
 // ordinal date, type, decimal #, to sexagesimal epoch days, sexagesimal #
 function whistle_short_path($p) {
-  return strcat(substr($p, 9, 1),
-                ((substr($p, 9, 1)!=='t') ? "/" : ""),
-                yd_to_sdf(substr($p, 0, 8), 3),
-                num_to_sxg(substr($p, 10, 3)));
+  return strcat(substr($p,9,1),
+                ((substr($p,9,1)!='t') ? "/" : ""),
+                yd_to_sdf(substr($p,0,8),3),
+                num_to_sxg(substr($p,10,3)));
 }
+/* end Whistle */
 
-// -------------------------------------------------------------------
-// falcon
+
+/* ------------------------------------------------------------------ */
+
+
+/* Falcon */
 
 function html_unesc_amp_only($s) {
-  return str_ireplace('&amp;', '&', $s);
+  return str_ireplace('&amp;','&',$s);
 }
 
 function html_esc_amper_once($s) {
-  return str_ireplace('&', '&amp;', html_unesc_amp_only($s));
+  return str_ireplace('&','&amp;',html_unesc_amp_only($s));
 }
 
 function html_esc_amp_ang($s) {
-  return str_ireplace('<', '&lt;',
-         str_ireplace('>', '&gt;', html_esc_amper_once($s)));
+  return str_ireplace('<','&lt;',
+          str_ireplace('>','&gt;',html_esc_amper_once($s)));
 }
 
-function ellipsize_to_word($s, $max, $e, $min) { /// ?> <!--   ///
-  var $elen, $i, $slen;                          /// --> <?php ///
+function ellipsize_to_word($s, $max, $e, $min) {
   if (strlen($s)<=$max) {
     return $s; // no need to ellipsize
   }
@@ -1068,10 +1094,10 @@ function ellipsize_to_word($s, $max, $e, $min) { /// ?> <!--   ///
 
   // if last characters before $max+1 are ': ', truncate w/o ellipsis.
   // no need to take length of ellipsis into account
-  if ($e==='...') {
-    for ($i=1; $i<=$elen+1; $i+=1) {
-      if (substr($s, $max-$i, 2)===': ') {
-        return substr($s, 0, $max-$i+1);
+  if ($e=='...') {
+    for ($ii=1;$ii<=$elen+1;$ii++) {
+      if (substr($s,$max-$ii,2)==': ') {
+        return substr($s,0,$max-$ii+1);
       }
     }
   }
@@ -1080,72 +1106,84 @@ function ellipsize_to_word($s, $max, $e, $min) { /// ?> <!--   ///
     // if a non-zero minimum is provided, then
     // find previous space or word punctuation to break at.
     // do not break at %`'"&.!?^ - reasons why to be documented.
-    while ($slen>$min && 
-           !contains('@$ -~*()_+[]{}|;,<>', $s[$slen-1])) {
-      $slen-=1;
+    while ($slen>$min && !contains('@$ -~*()_+[]\{}|;,<>',$s[$slen-1])) {
+      --$slen;
     }
   }
   // at this point we've got a min length string, 
-  // only do minimum trimming necessary to avoid a punctuation error.
+  // only do minimum trimming necessary to avoid punctuation error.
   
   // trim slash after colon or slash
-  if ($s[$slen-1]==='/' && $slen > 2) {
-    if ($s[$slen-2]===':') {
-      $slen-=1;    
+  if ($s[$slen-1]=='/' && $slen > 2) {
+    if ($s[$slen-2]==':') {
+      --$slen;    
     }
-    if ($s[$slen-2]==='/') {
-      $slen-=2;
+    if ($s[$slen-2]=='/') {
+      $slen -= 2;
     }
   }
 
   //if trimmed at a ":" in a URL, trim the whole thing
     //or trimmed at "http", trim the whole URL
-  if ($s[$slen-1]===':' && $slen > 5 && 
-      substr($s, $slen-5, 5)==='http:') {
+  if ($s[$slen-1]==':' && $slen > 5 && substr($s,$slen-5,5)=='http:') {
     $slen -= 5;
-  } else if ($s[$slen-1]==='p' && $slen > 4 &&
-             substr($s, $slen-4, 4)==='http') {
+  }
+  else if ($s[$slen-1]=='p' && $slen > 4 && substr($s,$slen-4,4)=='http') {
     $slen -= 4;
-  } else if ($s[$slen-1]==='t' && $slen > 4 &&
-             (substr($s, $slen-3, 4)==='http' || 
-              substr($s, $slen-3, 4)===' htt')) {
+  }
+  else if ($s[$slen-1]=='t' && $slen > 4 && (substr($s,$slen-3,4)=='http' || substr($s,$slen-3,4)==' htt')) {
     $slen -= 3;
-  } else if ($s[$slen-1]==='h' && $slen > 4 &&
-             substr($s, $slen-1, 4)==='http') {
+  }
+  else if ($s[$slen-1]=='h' && $slen > 4 && substr($s,$slen-1,4)=='http') {
     $slen -= 1;
   }
   
-  //if char immediately before ellipsis would be @$ then trim it
-  if ($slen > 0 && contains('@$', $s[$slen-1])) {
-    $slen-=1;
+  // if char immed before ellipsis would be @$ then trim it as well
+  if ($slen > 0 && contains('@$',$s[$slen-1])) {
+    --$slen;
   }
  
-  //if char before ellipsis would be sentence terminator, trim 2 more
-  while ($slen > 1 && contains('.!?', $s[$slen-1])) {
+  // while char immed before ellipsis would be sentence terminator, trim 2 more
+  while ($slen > 1 && contains('.!?',$s[$slen-1])) {
     $slen-=2;
   }
 
   // trim extra whitespace before ellipsis down to one space
-  if ($slen > 2 && contains("\n ", $s[$slen-1])) {
-    while (contains("\n ", $s[$slen-2]) && $slen > 2) {
+  if ($slen > 2 && contains("\n ",$s[$slen-1])) {
+    while (contains("\n ",$s[$slen-2]) && $slen > 2) {
       --$slen;
     }
   }
 
   if ($slen < 1) { // somehow shortened too much
-    return $e; // or ellipsis by itself exceeded max, return ellipsis.
+    return $e; // or ellipsis by itself filled/exceeded max, return ellipsis.
   }
 
   // if last two chars are ': ', omit ellipsis. 
-  if ($e==='...' && substr($s, $slen-2, 2)===': ') {
-    return substr($s, 0, $slen);
+  if ($e=='...' && substr($s,$slen-2,2)==': ') {
+    return substr($s,0,$slen);
   }
 
-  return strcat(substr($s, 0, $slen), $e);
+  return strcat(substr($s,0,$slen),$e);
+}
+
+function auto_space($s) {
+// replace linebreaks with <br class="auto-break"/>
+//  and one leading space with &nbsp;
+// replace "  " with " &nbsp;"
+// replace leading spaces (on a line or before spaces) with nbsp;
+  if ($s[0] === ' ') {
+    $s = strcat('&#xA0;', substr($s, 1, strlen($s)-1));
+  }
+  return str_ireplace(array("\r\n", "\r", "\n ", "\n", "  "),
+                      array("\n", "\n", '<br class="auto-break"/>&#xA0;',
+                            '<br class="auto-break"/>',
+                            ' &#xA0;'),
+                      $s);
 }
 
 function auto_link_re() {
-  return '/(?:\\@[_a-zA-Z0-9]{1,17})|(?:(?:(?:(?:http|https|irc)?:\\/\\/(?:(?:[!$&-.0-9;=?A-Z_a-z]|(?:\\%[a-fA-F0-9]{2}))+(?:\\:(?:[!$&-.0-9;=?A-Z_a-z]|(?:\\%[a-fA-F0-9]{2}))+)?\\@)?)?(?:(?:(?:[a-zA-Z0-9][-a-zA-Z0-9]*\\.)+(?:(?:aero|arpa|asia|a[cdefgilmnoqrstuwxz])|(?:biz|b[abdefghijmnorstvwyz])|(?:cat|com|coop|c[acdfghiklmnoruvxyz])|d[ejkmoz]|(?:edu|e[cegrstu])|f[ijkmor]|(?:gov|g[abdefghilmnpqrstuwy])|h[kmnrtu]|(?:info|int|i[delmnoqrst])|j[emop]|k[eghimnrwyz]|l[abcikrstuvy]|(?:mil|museum|m[acdeghklmnopqrstuvwxyz])|(?:name|net|n[acefgilopruz])|(?:org|om)|(?:pro|p[aefghklmnrstwy])|qa|r[eouw]|s[abcdeghijklmnortuvyz]|(?:tel|travel|t[cdfghjklmnoprtvwz])|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw]))|(?:(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])))(?:\\:\\d{1,5})?)(?:\\/(?:(?:[!#&-;=?-Z_a-z~])|(?:\\%[a-fA-F0-9]{2}))*)?)(?=\\b|\\s|$)/';
+  return '/(?:\\@[_a-zA-Z0-9]{1,17})|(?:(?:(?:(?:http|https|irc)?:\\/\\/(?:(?:[!$&-.0-9;=?A-Z_a-z]|(?:\\%[a-fA-F0-9]{2}))+(?:\\:(?:[!$&-.0-9;=?A-Z_a-z]|(?:\\%[a-fA-F0-9]{2}))+)?\\@)?)?(?:(?:(?:[a-zA-Z0-9][-a-zA-Z0-9]*\\.)+(?:(?:aero|arpa|asia|a[cdefgilmnoqrstuwxz])|(?:biz|b[abdefghijmnorstvwyz])|(?:cat|com|coop|c[acdfghiklmnoruvxyz])|d[ejkmoz]|(?:edu|e[cegrstu])|f[ijkmor]|(?:gov|g[abdefghilmnpqrstuwy])|h[kmnrtu]|(?:info|int|i[delmnoqrst])|j[emop]|k[eghimnrwyz]|l[abcikrstuvy]|(?:mil|museum|m[acdeghklmnopqrstuvwxyz])|(?:name|net|n[acefgilopruz])|(?:org|om)|(?:pro|p[aefghklmnrstwy])|qa|r[eouw]|(?:space|s[abcdeghijklmnortuvyz])|(?:tel|travel|t[cdfghjklmnoprtvwz])|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw]))|(?:(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])))(?:\\:\\d{1,5})?)(?:\\/(?:(?:[!#&-;=?-Z_a-z~])|(?:\\%[a-fA-F0-9]{2}))*)?)(?=\\b|\\s|$)/';
   // ccTLD compressed regular expression clauses (re)created.
   // .mobi .jobs deliberately excluded to discourage layer violations.
   // see http://flic.kr/p/2kmuSL for more on the problematic new gTLDs
@@ -1156,106 +1194,129 @@ function auto_link_re() {
   // - Tantek 2010-046 (moved to auto_link_re 2012-062)
 }
 
-// auto_link: param 1: text; param 2: do embeds or not
+// auto_link: param 1: text; 
+//  optional: param 2: do embeds or not (false),
+//            param 3: do auto_links or not (true)
+//            param 4: do u-photo upgrade on (1st) image (false)
 // auto_link is idempotent, works on plain text or typical markup.
-function auto_link() { 
-  /// ?> <!--   ///
-  var $args, $afterchar, $afterlink, $do_embed, $fe, $i, $isjs, 
-      $mi, $mlen, $ms, $re, 
-      $sp, $spe, $spliti, $t, $wmi, $yvid; 
-  /// --> <?php ///
-
+function auto_link(/*$t*/) {
   $isjs = js();
   $args = $isjs ? arguments : func_get_args();
-  if (count($args) === 0) {
+  if (count($args) == 0) {
     return '';
   }
   $t = $args[0];
   $do_embed = (count($args) > 1) && ($args[1]!==false);
-
+  $do_link = (count($args) < 3) || ($args[2]!==false);
+  $do_u_photo = (count($args) > 3) && ($args[3]!==false);
+  $did_u_photo = false; // only do first one for now
   $re = auto_link_re();
-  $ms = preg_matches($re, $t);
+  $ms = preg_matches($re,$t);
   if (!$ms) {
     return $t;
   }
 
   $mlen = count($ms);
-  $sp = preg_split($re, $t);
+  $sp = preg_split($re,$t);
   $t = "";
   $sp[0] = string($sp[0]); // force undefined to ""
-  for ($i=0; $i<$mlen; $i+=1) {
+  for ($i=0;$i<$mlen;$i++) {
     $mi = $ms[$i];
     $spliti = $sp[$i];
     $t = strcat($t, $spliti);
     $sp[$i+1] = string($sp[$i+1]); // force undefined to ""
-    if (substr($sp[$i+1], 0, 1)==='/') { //regex omits end/ before </a
-      $sp[$i+1] = substr($sp[$i+1], 1, strlen($sp[$i+1])-1);
-      $mi = strcat($mi, '/'); // include / in the match
+    if (substr($sp[$i+1],0,1)=='/') { // regex omits end slash before </a
+      $sp[$i+1] = substr($sp[$i+1],1,strlen($sp[$i+1])-1);
+      $mi = strcat($mi, '/'); // explicitly include it in the match
     }
-    $spe = substr($spliti, -2, 2);
+    $spe = substr($spliti,-2,2);
     // avoid 2x-linking, don't link CSS @-rules, attr values, asciibet
     if ((!$spe || !preg_match('/(?:\\=[\\"\\\']?|t;)/', $spe)) &&
-        substr(trim($sp[$i+1]), 0, 3)!=='</a' && 
-        (!contains(
-'@charset@font@font-face@import@media@namespace@page@ABCDEFGHIJKLMNOPQ@',
-            strcat($mi, '@')))) {
+        substr(trim($sp[$i+1]), 0, 3)!='</a' && 
+        (!contains('@charset@font@font-face@import@media@namespace@page@ABCDEFGHIJKLMNOPQ@',
+                   strcat($mi, '@'))))
+    {
       $afterlink = '';
       $afterchar = substr($mi, -1, 1);
-      while (contains('.!?,;"\')]}', $afterchar) && // trim punc from
-          ($afterchar!==')' || !contains($mi,'('))) { // 1 () pair
-        $afterlink = strcat($afterchar, $afterlink);
-        $mi = substr($mi, 0, -1);
-        $afterchar = substr($mi, -1, 1);
+      while (contains('.!?,;"\')]}', $afterchar) && // trim punctuation from end
+          ($afterchar!=')' || !contains($mi, '('))) { // allow one paren pair
+          $afterlink = strcat($afterchar, $afterlink);
+          $mi = substr($mi, 0, -1);
+          $afterchar = substr($mi, -1, 1);
       }
       
       $fe = 0;
       if ($do_embed) {
-        $fe = strtolower(
-               (substr($mi, -4, 1)==='.') ? substr($mi, -4, 4) 
-                                          : substr($mi, -5, 5));
+         $fe = strtolower(
+                (substr($mi, -4, 1) === '.') ? substr($mi, -4, 4) 
+                                             : substr($mi, -5, 5));
       }
       $wmi = web_address_to_uri($mi, true);
       $prot = protocol_of_uri($wmi);
       $hn = hostname_of_uri($wmi);
       $pa = path_of_uri($wmi);
       $ih = is_http_uri($wmi);
+
+      $ahref = '<span class="figure" style="text-align:left">';
+      $enda = '</span>';
+			if ($do_link) {
+        $ahref = strcat('<a class="auto-link figure" href="',      
+                        $wmi, '">');
+        $enda = '</a>';
+      }
       if ($fe && 
-          ($fe === '.jpeg' || $fe === '.jpg' || $fe === '.png' || 
-           $fe === '.gif')) {
-        $alt = strcat('a ',
-                      (offset('photo', $mi) != 0) ? 'photo' 
-                                                  : substr($fe, 1));
-        $t = strcat($t, '<a class="auto-link figure" href="',      
-                    $wmi, '"><img alt="', $alt, '" src="', 
-                    $wmi, '"/></a>', 
-                    $afterlink);
-      } else if ($fe && 
-                 ($fe === '.mp4' || $fe === '.mov' || $fe === '.ogv'))
+          ($fe === '.jpeg' || $fe === '.jpg' || $fe === '.png' || $fe === '.gif'))
       {
-        $t = strcat($t, '<a class="auto-link figure" href="',      
-                    $wmi, '"><video controls="controls" src="', 
-                    $wmi, '"></video></a>', 
-                    $afterlink);
-      } else if ($ih && $hn === 'vimeo.com' 
-                     && ctype_digit(substr($pa, 1))) {
-        $t = strcat($t, '<a class="auto-link" href="',
-                    $wmi, '">', $mi, '</a> <iframe class="vimeo-player auto-link figure" width="480" height="385" style="border:0"  src="', $prot, '//player.vimeo.com/video/', 
+        $alt = strcat('a ',
+                      (offset('photo', $mi)!=0) ? 'photo' 
+                                                : substr($fe, 1));
+        $img_class = 'auto-embed';
+        if ($i===0 && // only check first URL for u-photo upgrade
+            $do_u_photo && !$did_u_photo) {
+          $img_class = strcat($img_class, ' u-photo');
+          $did_u_photo = true;
+        }
+        $t = strcat($t, $ahref, '<img class="', $img_class, '" alt="', 
+                    $alt, '" src="', $wmi, '"/>', $enda, $afterlink);
+      } else if ($fe && 
+                 ($fe === '.mp4' || $fe === '.mov' || 
+                  $fe === '.ogv' || $fe === '.webm'))
+      {
+        $t = strcat($t, $ahref, '<video class="auto-embed" ',
+                    'controls="controls" src="', $wmi, '"></video>',
+                    $enda, $afterlink);
+      } else if ($hn === 'vimeo.com' 
+                     && ctype_digit(substr($pa, 1)))
+      {
+				if ($do_link) {
+				  $t = strcat($t, '<a class="auto-link" href="',
+				              'https:', relative_uri_hash($wmi),
+                      '">', $mi, '</a> ');
+				}
+
+        $t = strcat($t, '<iframe class="vimeo-player auto-embed figure" width="480" height="385" style="border:0" src="', 'https://player.vimeo.com/video/', 
                     substr($pa, 1), '"></iframe>', 
                     $afterlink);
       } else if ($hn === 'youtu.be' ||
                 (($hn === 'youtube.com' || $hn === 'www.youtube.com')
-                 && ($yvid = offset('watch?v=', $mi)) !== 0)) {
+                 && ($yvid = offset('watch?v=', $mi)) !== 0))
+      {
         if ($hn === 'youtu.be') {
           $yvid = substr($pa, 1);
-        } else {
+        }
+        else {
           $yvid = explode('&', substr($mi, $yvid+7));
           $yvid = $yvid[0];
         }
-        $t = strcat($t, '<a class="auto-link" href="',
-                    $wmi, '">', $mi, '</a> <iframe class="youtube-player auto-link figure" width="480" height="385" style="border:0" src="', $prot, '//www.youtube.com/embed/', 
+				if ($do_link) {
+  				$t = strcat($t, '<a class="auto-link" href="',
+  				            'https:', relative_uri_hash($wmi),
+                      '">', $mi, '</a> ');
+        }
+        $t = strcat($t, '<iframe class="youtube-player auto-embed figure" width="480" height="385" style="border:0"  src="', 'https://www.youtube.com/embed/', 
                     $yvid, '"></iframe>', 
                     $afterlink);
-      } else if ($mi[0] === '@') {
+      } else if ($mi[0] === '@' && $do_link) {
         if ($sp[$i+1][0] === '.' && 
             $spliti != '' &&
             ctype_email_local(substr($spliti, -1, 1))) {
@@ -1267,11 +1328,13 @@ function auto_link() {
           $t = strcat($t, '<a class="auto-link h-x-username" href="',
                       $wmi, '">', $mi, '</a>', 
                       $afterlink);
-        }
-      } else {
+        }           
+      } else if ($do_link) {
         $t = strcat($t, '<a class="auto-link" href="',
                     $wmi, '">', $mi, '</a>', 
                     $afterlink);
+      } else {
+        $t = strcat($t, $mi, $afterlink);
       }
     } else {
       $t = strcat($t, $mi);
@@ -1281,13 +1344,8 @@ function auto_link() {
 }
 
 
-// returns array of URLs after literal "in-reply-to:" in text
 function get_in_reply_to_urls($s) {
-  /// ?> <!--   ///
-  var $irtn, $r, $re, $i, $j,
-      $ms, $sp, $afterlink, $ac; 
-  /// --> <?php ///
-  
+  // returns array of URLs after literal "in-reply-to:" in text
   $s = explode('in-reply-to: ', $s);
   $irtn = count($s);
   if ($irtn < 2) { return array(); }
@@ -1319,7 +1377,7 @@ function get_in_reply_to_urls($s) {
           if (substr($m, 0, 6) === 'irc://') { 
             // skip it. no known use of in-reply-to an IRC URL
           } else {
-            $r[count($r)] = webaddresstouri($m, true);
+            $r[count($r)] = web_address_to_uri($m, true);
           }
         }
         $j++;
@@ -1329,24 +1387,11 @@ function get_in_reply_to_urls($s) {
   return $r;
 }
 
+/* Twitter POSSE support */
 
-// Twitter POSSE support
-
-// replace URLs with http://j.mp/0011235813 to mimic Twitter's t.co
-function tw_text_proxy() {
-  /// ?> <!--   ///
-  var $args, $afterchar, $afterlink, $i, $isjs,
-      $mlen, $ms, $re, 
-      $sp, $spe, $spliti, $prot, $proxy_url; 
-  /// --> <?php ///
-  
-  $isjs = js();
-  $args = $isjs ? arguments : func_get_args();
-  if (count($args) === 0) {
-    return '';
-  }
-  $t = $args[0];
-
+function tw_text_proxy($t) {
+  // replace URLs with https://j.mp/0011235813 to mimic Twitter's t.co
+  // $t must be plain text
   $re = auto_link_re();
   $ms = preg_matches($re, $t);
   if (!$ms) {
@@ -1357,38 +1402,37 @@ function tw_text_proxy() {
   $sp = preg_split($re, $t);
   $t = "";
   $sp[0] = string($sp[0]); // force undefined to ""
-  for ($i=0; $i<$mlen; $i++) {
+  for ($i=0;$i<$mlen;$i++) {
     $mi = $ms[$i];
     $spliti = $sp[$i];
     $t = strcat($t, $spliti);
     $sp[$i+1] = string($sp[$i+1]); // force undefined to ""
-    if (substr($sp[$i+1], 0, 1)=='/') { // regex omits '/' before </a
-      $sp[$i+1] = substr($sp[$i+1], 1, strlen($sp[$i+1])-1);
-      $mi = strcat($mi, '/'); // explicitly include in match
+    if (substr($sp[$i+1],0,1)=='/') { // regex omits '/' before </a
+      $sp[$i+1] = substr($sp[$i+1],1,strlen($sp[$i+1])-1);
+      $mi = strcat($mi, '/'); // explicitly include it in match
     }
-    $spe = substr($spliti, -2, 2);
+    $spe = substr($spliti,-2,2);
     // don't proxy @-names, plain ccTLDs
-    if ($mi[0]!='@' &&
+    if ($mi[0] !== '@' &&
         (substr($mi, -3, 1) !== '.' || substr_count($mi, '.') > 1)) {
       $afterlink = '';
       $afterchar = substr($mi, -1, 1);
-      while (contains('.!?,;"\')]}', $afterchar) && // trim punc @ end
-          ($afterchar !== ')' || !contains($mi, '('))) { 
+      while (contains('.!?,;"\')]}',$afterchar) && // trim punc @ end
+          ($afterchar!=')' || !contains($mi, '('))) { 
           // allow one paren pair
           // *** not sure twitter is this smart
-          $afterlink = strcat($afterchar, $afterlink);
-          $mi = substr($mi, 0, -1);
-          $afterchar = substr($mi, -1, 1);
+          $afterlink = strcat($afterchar,$afterlink);
+          $mi = substr($mi,0,-1);
+          $afterchar = substr($mi,-1,1);
       }
       
       $prot = protocol_of_uri($mi);
       $proxy_url = '';
-      if ($prot === 'https:') { 
-        $proxy_url = 'https://j.mp/0011235813';
-      } else if ($prot === 'irc:') {
+      if ($prot === 'irc:') {
         $proxy_url = $mi; // Twitter doesn't tco irc: URLs
-      } else { /* 'http:/' or presumed for schemeless URLs */ 
-        $proxy_url = 'http://j.mp/0011235813';
+      }
+      else { /* 'https:', 'http:' or presumed for schemeless URLs */ 
+        $proxy_url = 'https://j.mp/0011235813';
       }
       $t = strcat($t, $proxy_url, $afterlink);
     }
@@ -1400,30 +1444,25 @@ function tw_text_proxy() {
 }
 
 
-// note_length_check:
-// checks if $note fits in $maxlen characters.
-// if $username is non-empty, checks if RT'd $note fits in $maxlen
+function note_length_check($note, $maxlen, $username) {
+// checks to see if $note fits in $maxlen characters.
+// if $username is non-empty, checks to see if a RT'd $note fits in $maxlen
 // 0 - bad params or other precondition failure error
 // 200 - exactly fits max characters with RT if username provided
 // 206 - less than max chars with RT if username provided
 // 207 - more than RT safe length, but less than tweet max
 // 208 - tweet max length but with RT would be over
 // 413 - (entity too large) over max tweet length
-// strlen('RT @: ') === 6.
-function note_length_check($note, $maxlen, $username) {
-  /// ?> <!--   ///
-  var $note_size_chk_u, $note_size_chk_n;
-  /// --> <?php ///
-
-  if ($maxlen < 1) { return 0; }
+// strlen('RT @: ') == 6.
+  if ($maxlen < 1) return 0;
   
-  $note_size_chk_u = $username ? 6 + strlen(string($username)) : 0;
-  $note_size_chk_n = strlen(string($note)) + $note_size_chk_u;
+  $note_size_check_u = $username ? 6 + strlen(string($username)) : 0;
+  $note_size_check_n = strlen(string($note)) + $note_size_check_u;
   
-  if ($note_size_chk_n === $maxlen)                    { return 200; }
-  if ($note_size_chk_n < $maxlen)                      { return 206; }
-  if ($note_size_chk_n - $note_size_chk_u < $maxlen)   { return 207; }
-  if ($note_size_chk_n - $note_size_chk_u === $maxlen) { return 208; }
+  if ($note_size_check_n == $maxlen)                      return 200;
+  if ($note_size_check_n < $maxlen)                       return 206;
+  if ($note_size_check_n - $note_size_check_u < $maxlen)  return 207;
+  if ($note_size_check_n - $note_size_check_u == $maxlen) return 208;
   return 413;
 }
 
@@ -1437,8 +1476,8 @@ function tw_url_to_status_id($u) {
 // returns tweet status id string; 0 if not a tweet permalink.
   if (!$u) return 0;
   $u = explode("/", string($u)); // https:,,twitter.com,t,status,nnn
-  if ($u[2]!="twitter.com" || 
-      $u[4]!="status"      ||
+  if ($u[2] != "twitter.com" || 
+      $u[4] != "status"      ||
       !ctype_digit($u[5])) {
     return 0;
   }
@@ -1458,8 +1497,24 @@ function tw_url_to_username($u) {
   return $u[3];
 }
 
+function fb_url_to_event_id($u) {
+// $u - fb event permalink url
+// returns fb event id string; 0 if not a fb event permalink.
+  if (!$u) return 0;
+  $u = explode("/", string($u)); // https:,,fb.com,events,nnn
+  if (($u[2] != "fb.com" && $u[2] != "facebook.com" && 
+       $u[2] != "www.facebook.com") || 
+      $u[3] != "events"      ||
+      !ctype_digit($u[4])) {
+    return 0;
+  }
+  return $u[4];
+}
+
+/* end Falcon */
 
 
-// ===================================================================
-// end CASSIS v0.1, cassis.js
+/* ------------------------------------------------------------------ */
+
+/* end cassis.js */
 // ?> -->

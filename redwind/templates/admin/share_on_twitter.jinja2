@@ -29,7 +29,7 @@
   <div class="form-group">
     <label>Content:</label>
     <textarea  name="preview" id="preview" class="form-control">{{preview}}</textarea>
-    <span size="8" type="text" name="char_count" id="char_count">&nbsp;</span>
+    <span size="8" type="text" name="character-count" id="character-count">&nbsp;</span>
   </div>
 
   <div class="form-group">
@@ -55,5 +55,18 @@
 
   <script src="{{url_for('static', filename='admin/util.js')}}"></script>
   <script src="{{url_for('static', filename='admin/http.js')}}"></script>
-  <script src="{{url_for('static', filename='admin/twitter.js')}}"></script>
+  <script src="{{url_for('static', filename='js/cassis.js')}}"></script>
+
+  <script>
+
+    function fillCharCount() {
+      var textProxy = tw_text_proxy($('#preview').val());
+      $('#character-count').text(textProxy.length);
+    }
+
+    $('#preview').bind('input propertychange', fillCharCount);
+    fillCharCount();
+
+  </script>
+  
 {% endblock closing %}

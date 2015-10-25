@@ -25,7 +25,7 @@ uWSGI==2.0.4
 psycopg2==2.5.4
 mf2py>=0.2.8
 mf2util>=0.2.1
-brevity>=0.2.0
+brevity>=0.2.1
 Flask-Migrate==1.4.0
 -e git+https://github.com/kylewm/flask-themes2.git#egg=Flask-Themes2
 -e .
