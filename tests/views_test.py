@@ -79,18 +79,19 @@ def silly_posts(client, auth, mocker):
 
 
 def test_tagged_posts(client, silly_posts):
-    text = client.get('/tags/interesting').get_data(as_text=True)
+    text = client.get('/tags/interesting/').get_data(as_text=True)
     assert 'First interesting article' in text
     assert 'Second interesting article' in text
 
+
 def test_posts_by_type(client, silly_posts):
-    text = client.get('/likes').get_data(as_text=True)
+    text = client.get('/likes/').get_data(as_text=True)
     assert re.search('u-like-of.*https://mal\.colm/reynolds', text)
     assert re.search('u-like-of.*https://buf\.fy/summers', text)
 
 
 def test_posts_everything(client, silly_posts):
-    text = client.get('/everything').get_data(as_text=True)
+    text = client.get('/everything/').get_data(as_text=True)
     assert 'https://mal.colm/reynolds' in text
     assert 'https://buf.fy/summers' in text
 
@@ -116,7 +117,7 @@ def test_posts_atom(client, silly_posts):
     assert 'First interesting article' in content
 
     # check the everything feed
-    rv = client.get('/everything', query_string={'feed': 'atom'})
+    rv = client.get('/everything/', query_string={'feed': 'atom'})
     assert 200 == rv.status_code
     assert rv.content_type.startswith('application/atom+xml')
     content = rv.get_data(as_text=True)
@@ -124,7 +125,7 @@ def test_posts_atom(client, silly_posts):
     assert 'First interesting article' in content
 
     # check the notes feed
-    rv = client.get('/notes', query_string={'feed': 'atom'})
+    rv = client.get('/notes/', query_string={'feed': 'atom'})
     assert 200 == rv.status_code
     assert rv.content_type.startswith('application/atom+xml')
     content = rv.get_data(as_text=True)
@@ -134,7 +135,7 @@ def test_posts_atom(client, silly_posts):
 
 def test_tag_cloud(client, silly_posts):
     # check the tag cloud
-    rv = client.get('/tags')
+    rv = client.get('/tags/')
     assert 200 == rv.status_code
     content = rv.get_data(as_text=True)
     print(content)
@@ -145,13 +146,13 @@ def test_tag_cloud(client, silly_posts):
 def test_atom_redirects(client):
     rv = client.get('/all.atom')
     assert 302 == rv.status_code
-    assert rv.location.endswith('/everything?feed=atom')
+    assert rv.location.endswith('/everything/?feed=atom')
     rv = client.get('/updates.atom')
     assert 302 == rv.status_code
     assert rv.location.endswith('/?feed=atom')
     rv = client.get('/articles.atom')
     assert 302 == rv.status_code
-    assert rv.location.endswith('/articles?feed=atom')
+    assert rv.location.endswith('/articles/?feed=atom')
 
 
 def test_upload_image(client, mocker):
