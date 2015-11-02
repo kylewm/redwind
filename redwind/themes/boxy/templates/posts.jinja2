@@ -89,7 +89,9 @@
               {{ post.content_html | proxy_all | safe }}
             </div>
           {% elif post.post_type == 'share' %}
-            {{ repost_content(post) }}
+            <div class="e-content p-name">
+              {{ repost_content(post) }}
+            </div>
           {% elif post.post_type == 'checkin' %}
             <div class="e-content p-name">
               {{ post.content_html | proxy_all | safe }}

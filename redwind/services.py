@@ -94,24 +94,46 @@ def convert_mf2util():
 
     url = request.args.get('url')
     as_feed = request.args.get('as-feed')
+    op = request.args.get('op')
     if url:
         try:
             d = mf2py.parse(url=url)
+            if op == 'post-type-discovery':
+                entry = mf2util.find_first_entry(d, ['h-entry', 'h-event'])
+                return jsonify({'type': mf2util.post_type_discovery(entry)})
+                
             if as_feed == 'true' or mf2util.find_first_entry(d, ['h-feed']):
                 json = mf2util.interpret_feed(d, url)
             else:
                 json = mf2util.interpret(d, url)
             return jsonify(dates_to_string(json))
         except:
+            current_app.logger.exception('running mf2util service')
             return jsonify({'error': str(sys.exc_info()[0])})
 
     return """
 <html><body>
+<style>
+body { max-width: 640px; margin: 0 auto; font-family: sans-serif; }
+label { display: block; font-weight: bold; }
+input[type="text"],textarea { width: 100% }
+</style>
 <h1>mf2util</h1>
-<form><p><label>URL to parse: <input name="url"></label>
-<input type="Submit"/></p>
-<p><label><input type="checkbox" value="true" name="as-feed"/>Parse as h-feed</label></p>
-</form></body></html>"""
+<form><p>
+    <label>Interpret</label>
+    <input type="text" name="url" placeholder="url">
+    <label><input type="checkbox" value="true" name="as-feed"/>Parse as h-feed</label>
+    <input type="Submit"/></p>
+</form>
+<form>
+<p>
+    <label>Post type discovery</label>
+    <input type="text" name="url" placeholder="url">
+    <input type="hidden" name="op" value="post-type-discovery">
+    <input type="Submit">
+    </p>
+</form>
+</body></html>"""
 
 
 @services.route('/services/fetch_profile')
