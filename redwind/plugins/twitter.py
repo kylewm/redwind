@@ -4,10 +4,9 @@ from redwind.models import Post, Context, Setting, get_settings
 from redwind.extensions import db
 
 from flask.ext.login import login_required
-from flask import (
-    request, redirect, url_for, make_response, render_template,
-    flash, abort, has_request_context, Blueprint, current_app
-)
+from flask import request, redirect, url_for, make_response, render_template
+from flask import flash, abort, has_request_context, Blueprint, current_app
+from flask import jsonify
 
 import brevity
 import collections
@@ -30,13 +29,6 @@ ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
 URL_CHAR_LENGTH = 23
 MEDIA_CHAR_LENGTH = 23
 TWEET_CHAR_LENGTH = 140
-
-TweetComponent = collections.namedtuple('TweetComponent', [
-    'length',
-    'can_shorten',
-    'can_drop',
-    'text',
-])
 
 PERMALINK_RE = util.TWITTER_RE
 USERMENTION_RE = util.AT_USERNAME_RE

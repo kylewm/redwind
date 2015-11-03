@@ -1,10 +1,10 @@
-{% extends theme("base.jinja2") %}
-{% from theme("_contexts.jinja2") import
+{% extends "base.jinja2" %}
+{% from "_contexts.jinja2" import
   short_context, full_context %}
-{% from theme("_macros.jinja2") import
+{% from "_macros.jinja2" import
   author_name, author_image, location, tags, actions, photos, checkin,
   repost_content, permalink_from_feed %}
-{% from theme("_macros.jinja2") import
+{% from "_macros.jinja2" import
   admin with context %}
 
 {% block body %}
@@ -59,7 +59,7 @@
         </div>
       {% endif %}
 
-      
+
       {% for post in posts %}
         {% set date = post.published | date(first_only=True) %}
         {% if date %}
@@ -121,7 +121,7 @@
 
     <footer>
       <input type="button" onclick="(function(btn){var z=document.createElement('script');document.subtomeBtn=btn;z.src='https://www.subtome.com/load.js';document.body.appendChild(z);})(this)" value="Subscribe">
-    
+
       <div>
         {{ settings.author_bio }}
       </div>

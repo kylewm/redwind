@@ -1,9 +1,0 @@
-{% if post.post_type == 'photo' %}
-  {% for photo in post.attachments %}
-    <div class="photo">
-      <a href="{{ photo.url }}">
-        <img class="u-photo" src="{{ photo.url | imageproxy(600)}}" />
-      </a>
-    </div>
-  {% endfor %}
-{% endif %}

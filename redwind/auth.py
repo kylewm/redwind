@@ -3,5 +3,5 @@ from .models import User
 
 
 @login_mgr.user_loader
-def load_user(domain):
-    return User(domain)
+def load_user(id):
+    return User.query.get(id)

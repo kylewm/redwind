@@ -1,5 +1,7 @@
 import json
 import urllib
+from urllib.parse import urlencode, urljoin, parse_qs
+from urllib.request import urlopen
 
 from redwind.extensions import db
 from redwind import util, hooks
@@ -8,10 +10,9 @@ from redwind.models import Post, Setting, get_settings
 
 from flask.ext.login import login_required
 from flask import request, redirect, url_for, render_template, flash
-from flask import has_request_context, Blueprint, current_app
+from flask import has_request_context, Blueprint, current_app, jsonify
 import requests
 from bs4 import BeautifulSoup
-
 
 
 facebook = Blueprint('facebook', __name__)
@@ -32,8 +33,6 @@ def inject_settings_variable():
 @facebook.route('/authorize_facebook')
 @login_required
 def authorize_facebook():
-    import urllib.parse
-    import urllib.request
     redirect_uri = url_for('.authorize_facebook', _external=True)
     params = {
         'client_id': get_settings().facebook_app_id,
@@ -46,10 +45,9 @@ def authorize_facebook():
         params['code'] = code
         params['client_secret'] = get_settings().facebook_app_secret
 
-        r = urllib.request.urlopen(
-            'https://graph.facebook.com/oauth/access_token?'
-            + urllib.parse.urlencode(params))
-        payload = urllib.parse.parse_qs(r.read())
+        r = urlopen('https://graph.facebook.com/oauth/access_token?'
+                    + urlencode(params))
+        payload = parse_qs(r.read())
 
         access_token = payload[b'access_token'][0].decode('ascii')
         Setting.query.get('facebook_access_token').value = access_token
@@ -57,7 +55,7 @@ def authorize_facebook():
         return redirect(url_for('admin.edit_settings'))
     else:
         return redirect('https://graph.facebook.com/oauth/authorize?'
-                        + urllib.parse.urlencode(params))
+                        + urlencode(params))
 
 
 def send_to_facebook(post, args):
@@ -102,7 +100,7 @@ def share_on_facebook():
         post = Post.load_by_id(request.args.get('id'))
 
         message, link, name, picture = guess_content(post)
-        imgs = [urllib.parse.urljoin(get_settings().site_url, img)
+        imgs = [urljoin(get_settings().site_url, img)
                 for img in collect_images(post)]
 
         albums = []
