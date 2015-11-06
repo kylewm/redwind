@@ -183,8 +183,8 @@ def create_album(name, msg):
             'access_token': get_settings().facebook_access_token,
             'name': name,
             'message': msg,
-            #'privacy': json.dumps({'value': 'EVERYONE'}),
-            'privacy': json.dumps({'value': 'SELF'}),
+            'privacy': json.dumps({'value': 'EVERYONE'}),
+            #'privacy': json.dumps({'value': 'SELF'}),
         })
     resp.raise_for_status()
     current_app.logger.debug(
@@ -201,8 +201,8 @@ def handle_new_or_edit(post, message, link, name, picture,
     post_args = {
         'access_token': get_settings().facebook_access_token,
         'message': message.strip(),
-        #'privacy': json.dumps({'value': 'EVERYONE'}),
-        'privacy': json.dumps({'value': 'SELF'}),
+        'privacy': json.dumps({'value': 'EVERYONE'}),
+        #'privacy': json.dumps({'value': 'SELF'}),
     }
 
     if is_photo and picture:
