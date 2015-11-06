@@ -334,6 +334,8 @@ def markdown_filter(data, img_path=None):
         data = RELATIVE_PATH_RE.sub('[\g<1>](' + img_path + '/\g<2>)', data)
 
     data = convert_legacy_people_to_at_names(data)
+    if data.startswith('#'):
+        data = '\\' + data
     result = markdown(data, extensions=['codehilite', 'fenced_code'])
     result = smartyPants(result)
     return result
