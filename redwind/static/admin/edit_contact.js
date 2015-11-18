@@ -7,19 +7,13 @@
         Http.send(xhr).then(function(xhr) {
             var data = JSON.parse(xhr.responseText);
             if (data.name) {
-                first('input[name="name"]').value = data.name;
+                first('[name="name"]').value = data.name;
             }
             if (data.image) {
-                first('input[name="image"]').value = data.image;
+                first('[name="image"]').value = data.image;
             }
-            if (data.twitter) {
-                first('input[name="twitter"]').value = data.twitter;
-                if (!first('input[name="nicks"]').value) {
-                    first('input[name="nicks"]').value = data.twitter;
-                }
-            }
-            if (data.facebook) {
-                first('input[name="facebook"]').value = data.facebook;
+            if (data.social) {
+                first('[name="social"]').value = data.social.join('\n');
             }
         });
     }

@@ -2,8 +2,8 @@
 {% from theme("_contexts.jinja2") import
   short_context, full_context %}
 {% from theme("_macros.jinja2") import
-  author_name, author_image, location, tags, actions, photos, checkin,
-  repost_content, permalink_from_feed %}
+  author_name, author_image, location, tags, actions, people, 
+  photos, checkin, repost_content, permalink_from_feed %}
 {% from theme("_macros.jinja2") import
   admin with context %}
 
@@ -105,6 +105,7 @@
           {% endif %}
           {{ location(post) }}
           {{ tags(post) }}
+          {{ people(post) }}
           {{ permalink_from_feed(post) }}
           {{ admin(post) }}
         </article>

@@ -223,8 +223,12 @@ def format_markdown_as_tweet(data):
         """Attempt to replace friendly @name with the official @twitter
         username
         """
-        if contact and contact.social:
-            nick = contact.social.get('twitter') or nick
+        if contact:
+            for url in contact.social:
+                m = util.TWITTER_PROFILE_RE.match(url)
+                if m:
+                    nick = m.group(1)
+                    break
         return '@' + nick
 
     html = util.markdown_filter(data)

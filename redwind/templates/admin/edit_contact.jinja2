@@ -34,13 +34,8 @@
   </div>
 
   <div class="form-group">
-    <label>Twitter</label>
-    <input class="form-control" name="twitter" type="text" value="{{ (contact.social or {}).get('twitter', '') }}" />
-  </div>
-
-  <div class="form-group">
-    <label>Facebook</label>
-    <input class="form-control" name="facebook" type="text" value="{{ (contact.social or {}).get('facebook', '') }}" />
+    <label>Social URLs</label>
+    <textarea class="form-control" name="social" type="text">{{ contact.social | join('\n') }}</textarea>
   </div>
 
   <div class="form-group">

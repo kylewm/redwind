@@ -49,6 +49,22 @@
   {% endif %}
 {% endmacro %}
 
+{% macro people(post) %}
+  {% if post.people %}
+    <div>
+      <code> &#x1f464;</code>
+    {% for person in post.people %}
+      <span class="u-category h-card">
+        <a class="u-url" href="{{person.url}}">{{person.name}}</a>
+        {% for social_url in person.social %}
+          <a class="u-url" href="{{ social_url }}"></a>
+        {% endfor %}
+      </span>
+    {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
 {% macro location(post) %}
   {% if post.location %}
     <div class="meta">

@@ -17,8 +17,8 @@
 
       <a class="u-url" href="{{ contact.url }}"><i class="glyphicon glyphicon-globe"></i> {{ contact.url | prettify_url }}</a><br/>
 
-      {% for silo, nick in contact.social.items() %}
-        <div>{{silo}}: {{nick}}</div>
+      {% for silo_url in contact.social %}
+        <div><a href="{{silo_url}}">{{ silo_url }}</a></div>
       {% endfor %}
 
       {% if current_user.is_authenticated() %}

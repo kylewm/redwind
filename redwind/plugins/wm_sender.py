@@ -87,6 +87,7 @@ def get_target_urls(post):
     target_urls += post.repost_of
     target_urls += post.like_of
     target_urls += post.bookmark_of
+    target_urls += [p.url for p in post.people]
 
     current_app.logger.debug('search post content %s', post.content_html)
 

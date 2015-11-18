@@ -88,6 +88,11 @@ posts_to_tags = db.Table(
     db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), index=True))
 
+posts_to_people = db.Table(
+    'posts_to_people', db.Model.metadata,
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), index=True),
+    db.Column('contact_id', db.Integer, db.ForeignKey('contact.id'), index=True))
+
 
 class User:
     def __init__(self, domain):
@@ -153,6 +158,7 @@ class Post(db.Model):
     hidden = db.Column(db.Boolean)
     redirect = db.Column(db.String(256))
     tags = db.relationship('Tag', secondary=posts_to_tags)
+    people = db.relationship('Contact', secondary=posts_to_people)
     audience = db.Column(JsonType)
 
     in_reply_to = db.Column(JsonType)

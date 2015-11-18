@@ -1,7 +1,7 @@
 {% extends theme("base.jinja2") %}
 {% from theme("_contexts.jinja2") import full_context %}
 {% from theme("_macros.jinja2") import
-  author, location, tags, actions, permalink, photos,
+  author, location, tags, actions, permalink, photos, people,
   checkin, repost_content %}
 {% from theme("_macros.jinja2") import
   admin with context %}
@@ -71,6 +71,7 @@
 
       {{ location(post) }}
       {{ tags(post) }}
+      {{ people(post) }}
       {{ permalink(post) }}
       {{ admin(post) }}
     </article>

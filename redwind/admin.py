@@ -38,6 +38,11 @@ def inject_settings_variable():
 def get_tags():
     return [t.name for t in Tag.query.all()]
 
+def get_contact_nicks():
+    return [n.name 
+            for c in Contact.query.all()
+            for n in c.nicks]
+
 
 def get_top_tags(n=10):
     """
@@ -116,6 +121,7 @@ def new_post(type):
     return render_template('admin/edit_' + type + '.jinja2',
                            edit_type='new', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
+                           people=get_contact_nicks(),
                            button_text=button_text, venues=venues)
 
 
@@ -158,6 +164,7 @@ def edit_by_id():
 
     return render_template(template, edit_type='edit', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
+                           people=get_contact_nicks(),
                            button_text=button_text, venues=venues)
 
 
@@ -282,6 +289,13 @@ def save_post(post):
     post.tags = [Tag.query.filter_by(name=tag).first() or Tag(tag)
                  for tag in tags]
 
+    post.people = []
+    people = request.form.getlist('people')
+    for person in people:
+        nick = Nick.query.filter_by(name=person).first()
+        if nick:
+            post.people.append(nick.contact)
+    
     slug = request.form.get('slug')
     if slug:
         post.slug = util.slugify(slug)
@@ -663,10 +677,8 @@ def save_contact(contact):
                      in request.form.get('nicks', '').split(',')
                      if nick.strip()]
 
-    contact.social = util.filter_empty_keys({
-        'twitter': request.form.get('twitter'),
-        'facebook': request.form.get('facebook'),
-    })
+    contact.social = util.multiline_string_to_list(
+        request.form.get('social'))
 
     if not contact.id:
         db.session.add(contact)

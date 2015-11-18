@@ -67,6 +67,14 @@
       </ul>
     </div>
 
+    <div class="form-group">
+      <ul id="person-list">
+        {% for person in post.people %}
+          <li>{{ person.nicks[0].name }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
     {% block file_upload %}
       <div class="form-group">
         <input type="file" id="image_upload_button" name="files" multiple="multiple" accept="image/*" />
@@ -110,6 +118,18 @@
     $('#tag-list').tagit({
       placeholderText: 'Tags',
       availableTags: {{ tags | json }},
+      autocomplete: {
+        messages: {
+          noResults: '',
+          results: function() {}
+        }
+      }
+    });
+
+   $('#person-list').tagit({
+      placeholderText: 'People',
+      fieldName: 'people',
+      availableTags: {{ people | json }},
       autocomplete: {
         messages: {
           noResults: '',

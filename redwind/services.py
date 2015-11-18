@@ -147,24 +147,13 @@ def fetch_profile():
 <input type="Submit">
 </form></body></html>"""
 
-    from .util import TWITTER_PROFILE_RE, FACEBOOK_PROFILE_RE
     try:
         name = None
-        twitter = None
-        facebook = None
         image = None
 
         d = mf2py.Parser(url=url).to_dict()
 
         relmes = d['rels'].get('me', [])
-        for alt in relmes:
-            m = TWITTER_PROFILE_RE.match(alt)
-            if m:
-                twitter = m.group(1)
-            else:
-                m = FACEBOOK_PROFILE_RE.match(alt)
-                if m:
-                    facebook = m.group(1)
 
         # check for h-feed
         hfeed = next((item for item in d['items']
@@ -192,8 +181,7 @@ def fetch_profile():
         return jsonify({
             'name': name,
             'image': image,
-            'twitter': twitter,
-            'facebook': facebook,
+            'social': relmes,
         })
 
     except BaseException as e:
