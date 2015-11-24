@@ -197,10 +197,11 @@ def test_upload_image(client, mocker):
 def test_indieauth_login(app, client, mocker):
     mock_get = mocker.patch('requests.get')
     mock_post = mocker.patch('requests.post')
-    mock_login = mocker.patch('flask_login.login_user')
-    mock_logout = mocker.patch('flask_login.logout_user')
+    mock_login = mocker.patch('flask.ext.login.login_user')
+    mock_logout = mocker.patch('flask.ext.login.logout_user')
 
-    mock_get.return_value = FakeResponse('<html></html>')
+    mock_get.return_value = FakeResponse(
+        '<html><span class="h-card">Example User</span></html>')
     rv = client.get('/login?me=http://example.com')
 
     assert rv.status_code == 302
@@ -230,6 +231,7 @@ def test_indieauth_login(app, client, mocker):
         'state': None,
     })
 
-    mock_login.assert_called_once_with(User('example.com'), remember=True)
+    mock_login.assert_called_once_with(
+        User(name='Example User'), remember=True)
     client.get('/logout')
     mock_logout.assert_called_once_with()

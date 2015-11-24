@@ -41,8 +41,9 @@ def inject_settings_variable():
 def get_tags():
     return [t.name for t in Tag.query.all()]
 
+
 def get_contact_nicks():
-    return [n.name 
+    return [n.name
             for c in Contact.query.all()
             for n in c.nicks]
 
@@ -298,7 +299,7 @@ def save_post(post):
         nick = Nick.query.filter_by(name=person).first()
         if nick:
             post.people.append(nick.contact)
-    
+
     slug = request.form.get('slug')
     if slug:
         post.slug = util.slugify(slug)
@@ -602,6 +603,7 @@ def do_login(cred, name, next_url='/'):
         cred.user = User(name=name)
         db.session.add(cred)
 
+    import pdb; pdb.set_trace()
     current_app.logger.debug('Logging in user %s', cred.user)
     login_user(cred.user, remember=True)
     flash('Logged in as user %s' % cred.user.name)

@@ -34,7 +34,7 @@ def restart():
             run("pip install --upgrade -r requirements.txt")
             # run("uwsgi --reload /tmp/redwind.pid")
             # run("supervisorctl restart rw:*")
-        sudo("restart redwind")
+        sudo("restart redwind", shell=False)
 
 
 def tail():

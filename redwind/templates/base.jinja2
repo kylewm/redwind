@@ -33,7 +33,7 @@
 
     <link rel="me" href="ni:///sha-256;LXQj307VecrQ7BPxkMhuI-rM14CktmXjy16DjI0MMAE?ct=application/x-x509-user-cert">
 
-    {% set user_img = url_for('static', filename='img/users/' + settings.avatar_prefix + '.' + settings.avatar_suffix) %}
+    {% set user_img = url_for('static', filename=settings.author_image) %}
     <link rel="shortcut icon" href="{{ user_img }}"/>
     <link rel="apple-touch-icon" href="{{ user_img }}"/>
     <link rel="apple-touch-icon" sizes="60x60" href="{{ user_img | imageproxy(60) }}"/>
