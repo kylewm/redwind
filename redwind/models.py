@@ -97,10 +97,8 @@ posts_to_people = db.Table(
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
-    url = db.Column(db.String(256))
-    facebook_id = db.Column(db.String(64))
-    twitter_id = db.Column(db.String(64))
     admin = db.Column(db.Boolean)
+    credentials = db.relationship('Credential', backref='user')
 
     # Flask-Login integration
 
@@ -117,16 +115,20 @@ class User(db.Model):
         return self.id
 
     def __eq__(self, other):
-        if type(other) is type(self):
-            return (self.url == other.url
-                    and self.facebook_id == other.facebook_id
-                    and self.twitter_id == other.twitter_id
-                    and self.admin == other.admin)
-        return False
+        return self.id == other.id
 
     def __repr__(self):
-        return '<User url={}, facebook={}, twitter={}, admin={}>'.format(
-            self.url, self.facebook_id, self.twitter_id, self.admin)
+        return '<User id={}, name={}>'.format(self.id, self.name)
+
+
+class Credential(db.Model):
+    type = db.Column(db.String(256), primary_key=True)
+    value = db.Column(db.String(256), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __repr__(self):
+        return '<Credential type={}, value={}>'.format(
+            self.type, self.value)
 
 
 class Venue(db.Model):
