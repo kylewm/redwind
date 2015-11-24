@@ -1,8 +1,0 @@
-{% if post.syndication %}
-  <div class="meta">
-    <code>+</code>
-    {% for s in post.syndication %}
-      {{ s | format_syndication_url }}
-    {% endfor %}
-  </div>
-{% endif %}

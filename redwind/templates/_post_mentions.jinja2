@@ -1,4 +1,4 @@
-{% from theme("_macros.jinja2") import author %}
+{% from "_macros.jinja2" import author %}
 
 
 {% if post.likes %}
@@ -12,7 +12,7 @@
         <img src="{{ mention.author_image | imageproxy(48) }}" title="{{ mention.author_name }}"/>
       </a>
     </span>
-    
+
   {% endfor %}
   </div>
 {% endif %}

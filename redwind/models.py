@@ -94,15 +94,18 @@ posts_to_people = db.Table(
     db.Column('contact_id', db.Integer, db.ForeignKey('contact.id'), index=True))
 
 
-class User:
-    def __init__(self, domain):
-        self.domain = domain
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256))
+    url = db.Column(db.String(256))
+    facebook_id = db.Column(db.String(64))
+    twitter_id = db.Column(db.String(64))
+    admin = db.Column(db.Boolean)
 
     # Flask-Login integration
 
     def is_authenticated(self):
-        # user matching user.json is authenticated, all others are guests
-        return self.domain == get_settings().author_domain
+        return self.admin
 
     def is_active(self):
         return True
@@ -111,15 +114,19 @@ class User:
         return False
 
     def get_id(self):
-        return self.domain
+        return self.id
 
     def __eq__(self, other):
         if type(other) is type(self):
-            return self.domain == other.domain
+            return (self.url == other.url
+                    and self.facebook_id == other.facebook_id
+                    and self.twitter_id == other.twitter_id
+                    and self.admin == other.admin)
         return False
 
     def __repr__(self):
-        return '<User:{}>'.format(self.domain)
+        return '<User url={}, facebook={}, twitter={}, admin={}>'.format(
+            self.url, self.facebook_id, self.twitter_id, self.admin)
 
 
 class Venue(db.Model):

@@ -1,9 +1,9 @@
-{% extends theme("base.jinja2") %}
-{% from theme("_contexts.jinja2") import full_context %}
-{% from theme("_macros.jinja2") import
-  author, location, tags, actions, permalink, photos, people,
+{% extends "base.jinja2" %}
+{% from "_contexts.jinja2" import full_context %}
+{% from "_macros.jinja2" import
+author, location, tags, actions, permalink, photos, people,
   checkin, repost_content %}
-{% from theme("_macros.jinja2") import
+{% from "_macros.jinja2" import
   admin with context %}
 
 
@@ -76,11 +76,11 @@
       {{ admin(post) }}
     </article>
 
-    {% include theme("_post_mentions.jinja2") %}
+    {% include "_post_mentions.jinja2" %}
   </main>
 
-  <script src="{{ theme_static('indieconfig.js') }}"></script>
-  <script src="{{ theme_static('webaction.js') }}"></script>
+  <script src="{{ url_for('static', filename='indieconfig.js') }}"></script>
+  <script src="{{ url_for('static', filename='webaction.js') }}"></script>
 
 </body>
 {% endblock body %}

@@ -136,8 +136,8 @@ def render_tags(title, tags):
                                (maxcount - mincount))
             else:
                 tag['size'] = MIN_TAG_SIZE
-    return util.render_themed('tags.jinja2', tags=tags, title=title,
-                              max_tag_size=MAX_TAG_SIZE)
+    return render_template('tags.jinja2', tags=tags, title=title,
+                           max_tag_size=MAX_TAG_SIZE)
 
 
 def render_posts(title, posts, older, events=None, template='posts.jinja2'):
@@ -146,9 +146,9 @@ def render_posts(title, posts, older, events=None, template='posts.jinja2'):
     atom_url = url_for(request.endpoint, **atom_args)
     atom_title = title or 'Stream'
     rv = make_response(
-        util.render_themed(template, posts=posts, title=title,
-                           older=older, atom_url=atom_url,
-                           atom_title=atom_title, events=events))
+        render_template(template, posts=posts, title=title,
+                        older=older, atom_url=atom_url,
+                        atom_title=atom_title, events=events))
 
     last_modified = max((p.updated for p in posts if p.updated), default=None)
     if last_modified:
@@ -412,8 +412,8 @@ def render_post(post):
         return redirect(post.redirect)
 
     rv = make_response(
-        util.render_themed('post.jinja2', post=post,
-                           title=post.title_or_fallback))
+        render_template('post.jinja2', post=post,
+                        title=post.title_or_fallback))
     if post.updated:
     #    rv.headers['Last-Modified'] = http_date(post.updated)
         rv.headers['Etag'] = generate_etag(rv.get_data())

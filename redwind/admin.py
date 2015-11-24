@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, current_app, abort
-from flask import flash, redirect, url_for, session, make_response
+from flask import flash, redirect, url_for, session, make_response, jsonify
 from redwind import auth
 from redwind import contexts
 from redwind import hooks
@@ -7,7 +7,8 @@ from redwind import maps
 from redwind import util
 from redwind.extensions import db
 from redwind.models import Post, Attachment, Tag, Contact, Mention, Nick
-from redwind.models import Venue, Setting, get_settings
+from redwind.models import Venue, Setting, User, get_settings
+from requests_oauthlib import OAuth1Session
 from werkzeug import secure_filename
 import bs4
 import collections
@@ -16,6 +17,7 @@ import flask.ext.login as flask_login
 import hashlib
 import itertools
 import json
+import mf2py
 import mf2util
 import mimetypes
 import operator
@@ -24,6 +26,7 @@ import random
 import requests
 import string
 import urllib
+import urllib.parse
 
 admin = Blueprint('admin', __name__)
 
@@ -413,6 +416,74 @@ def discover_endpoints(me):
             micropub_endpoint and micropub_endpoint['href'])
 
 
+@admin.route('/login_twitter')
+def login_twitter():
+    callback_url = url_for('.login_twitter', _external=True)
+    try:
+        oauth_session = OAuth1Session(
+            client_key=get_settings().twitter_api_key,
+            client_secret=get_settings().twitter_api_secret,
+            callback_uri=callback_url)
+
+        if 'oauth_token' not in request.args:
+            oauth_session.fetch_request_token(
+                'https://api.twitter.com/oauth/request_token')
+            return redirect(oauth_session.authorization_url(
+                'https://api.twitter.com/oauth/authenticate'))
+
+        oauth_session.parse_authorization_response(request.url)
+        oauth_session.fetch_access_token(
+            'https://api.twitter.com/oauth/access_token')
+        user_response = oauth_session.get(
+            'https://api.twitter.com/1.1/account/verify_credentials.json')
+        user_json = user_response.json()
+        #import pprint; pprint.pprint(user_json)
+        name = user_json.get('name')
+        twid = user_json.get('id_str')
+        user = User.query.filter_by(twitter_id=twid).first()
+        if not user:
+            user = User(twitter_id=twid)
+        if not user.name:
+            user.name = name
+        return do_login(user)
+
+    except requests.RequestException as e:
+        return make_response(str(e))
+
+
+@admin.route('/login_facebook')
+def login_facebook():
+    redirect_uri = url_for('.login_facebook', _external=True)
+    params = {
+        'client_id': get_settings().facebook_app_id,
+        'redirect_uri': redirect_uri,
+    }
+
+    if 'code' not in request.args:
+        return redirect('https://www.facebook.com/dialog/oauth?'
+                        + urllib.parse.urlencode(params))
+
+    params['code'] = request.args.get('code')
+    params['client_secret'] = get_settings().facebook_app_secret
+
+    r = requests.get('https://graph.facebook.com/v2.3/oauth/access_token',
+                     params=params)
+
+    access_token = r.json().get('access_token')
+    r = requests.get('https://graph.facebook.com/v2.2/me',
+                     params={'access_token': access_token})
+
+    user_json = r.json()
+    name = user_json.get('name')
+    fbid = user_json.get('id')
+    user = User.query.filter_by(facebook_id=fbid).first()
+    if not user:
+        user = User(facebook_id=fbid)
+    if not user.name:
+        user.name = name
+    return do_login(user)
+
+
 @admin.route('/login')
 def login():
     me = request.args.get('me')
@@ -420,13 +491,13 @@ def login():
         return render_template('admin/login.jinja2',
                                next=request.args.get('next'))
 
-    if current_app.config.get('BYPASS_INDIEAUTH'):
-        user = auth.load_user(urllib.parse.urlparse(me).netloc)
-        current_app.logger.debug('Logging in user %s', user)
-        flask_login.login_user(user, remember=True)
-        flash('logged in as {}'.format(me))
-        current_app.logger.debug('Logged in with domain %s', me)
-        return redirect(request.args.get('next') or url_for('views.index'))
+    # if current_app.config.get('BYPASS_INDIEAUTH'):
+    #     user = auth.load_user(urllib.parse.urlparse(me).netloc)
+    #     current_app.logger.debug('Logging in user %s', user)
+    #     flask_login.login_user(user, remember=True)
+    #     flash('logged in as {}'.format(me))
+    #     current_app.logger.debug('Logged in with domain %s', me)
+    #     return redirect(request.args.get('next') or url_for('views.index'))
 
     if not me:
         return make_response('Missing "me" parameter', 400)
@@ -462,6 +533,8 @@ def login_callback():
 
     state = request.args.get('state')
     next_url = state or url_for('views.index')
+    # TODO rediscover these endpoints based on 'me'. Assuming
+    # they are the same is not totally safe.
     auth_url, token_url, micropub_url = session['endpoints']
 
     if not auth_url:
@@ -496,18 +569,34 @@ def login_callback():
 
     me = rdata.get('me')[0]
     scopes = rdata.get('scope')
-    user = auth.load_user(urllib.parse.urlparse(me).netloc)
+
+    user = User.query.filter_by(url=me).first()
     if not user:
-        flash('No user for domain {}'.format(me))
-        return redirect(next_url)
+        user = User(url=me)
+
+    if not user.name:
+        p = mf2py.parse(url=me)
+        author = mf2util.find_author(p)
+        user.name = author and author.get('name')
 
     try_micropub_config(token_url, micropub_url, scopes, code, me,
                         redirect_uri, client_id, state)
+    return do_login(user)
+
+
+def do_login(user, next_url='/'):
+    current_app.logger.debug('currently logged in as %s',
+                             flask_login.current_user)
+    current_app.logger.debug('new user is %s', user)
+
+    if not user.id:
+        db.session.add(user)
+    db.session.commit()
 
     current_app.logger.debug('Logging in user %s', user)
     flask_login.login_user(user, remember=True)
-    flash('Logged in with domain {}'.format(me))
-    current_app.logger.debug('Logged in with domain %s', me)
+    flash('Logged in as user %s' % user)
+    current_app.logger.debug('Logged in as user %s', user)
 
     return redirect(next_url)
 

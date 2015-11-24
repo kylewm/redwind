@@ -1,4 +1,0 @@
-
-{% for context in post.bookmark_contexts %}
-  Bookmarked {{context.title_or_url}}: <a class="u-bookmark" href="{{context.permalink}}">{{context.permalink | prettify_url }}</a>
-{% endfor %}

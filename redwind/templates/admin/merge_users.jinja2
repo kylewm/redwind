@@ -1,5 +1,6 @@
 {% extends "admin/base.jinja2" %}
 {% block content %}
+
   <form class="form-signin" role="form" method="GET" style="max-width: 330px; margin: 0 auto;">
     {% if next %}
       <input type="hidden" name="next" value="{{ next }}" />
@@ -22,9 +23,7 @@
   </form>
 
   <form role="form" method="GET" action="{{ url_for('admin.login_facebook') }}" style="max-width: 330px; margin: 0 auto;">
-
     <div class="form-group">
-
       <button class="btn btn-primary btn-block" type="submit">Sign in with Facebook</button>
     </div>
   </form>
