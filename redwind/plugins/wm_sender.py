@@ -49,8 +49,9 @@ def send_webmentions_on_delete(post, args):
 
 def send_webmentions_on_comment(post):
     try:
-        current_app.logger.debug("queueing webmentions for {}".format(post.id))
-        get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
+        if post:
+            current_app.logger.debug("queueing webmentions for {}".format(post.id))
+            get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
         return True, 'Success'
 
     except Exception as e:

@@ -526,6 +526,7 @@ class Mention(db.Model):
     syndication = db.Column(JsonType)
     reftype = db.Column(db.String(32))
     rsvp = db.Column(db.String(32))
+    person_mention = db.Column(db.Boolean)
     posts = db.relationship('Post', secondary=posts_to_mentions)
 
     def __init__(self):
@@ -541,6 +542,7 @@ class Mention(db.Model):
         self.title = None
         self.reftype = None
         self.rsvp = None
+        self.person_mention = False
         self.syndication = []
         self._children = []
 

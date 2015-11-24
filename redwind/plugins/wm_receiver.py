@@ -24,8 +24,9 @@ class MentionResult:
 
 
 class ProcessResult:
-    def __init__(self, post=None, error=None, delete=False):
+    def __init__(self, post=None, is_person_mention=False, error=None, delete=False):
         self.post = post
+        self.is_person_mention = is_person_mention
         self.error = error
         self.delete = delete
         self.mention_results = []
@@ -122,15 +123,17 @@ def do_process_webmention(source, target, callback, app_config):
             elif result.post:
                 result.post.mentions.extend(result.mentions)
 
+            elif result.is_person_mention:
+                db.session.add_all(result.mentions)
+
             db.session.commit()
-            current_app.logger.debug("saved mentions to %s", result.post.path)
+            current_app.logger.debug("saved mentions to %s", result.post.path if result.post else '/')
 
             hooks.fire('mention-received', post=result.post)
-            if result.post:
-                for mres in result.mention_results:
-                    if mres.create:
-                        send_push_notification(result.post, mres.mention,
-                                               app_config)
+            for mres in result.mention_results:
+                if mres.create:
+                    send_push_notification(result.post, result.is_person_mention,
+                                           mres.mention, app_config)
 
             response = {
                 'source': source,
@@ -160,9 +163,9 @@ def do_process_webmention(source, target, callback, app_config):
             return response
 
 
-def send_push_notification(post, mention, app_config):
+def send_push_notification(post, is_person_mention, mention, app_config):
     # ignore mentions from bridgy
-    if mention.url and mention.url.startswith('https://brid-gy.appspot.com/'):
+    if mention.url and mention.url.startswith('https://brid-gy.appspot.com/') and not is_person_mention:
         return
 
     if 'PUSHOVER_TOKEN' in app_config and 'PUSHOVER_USER' in app_config:
@@ -177,7 +180,7 @@ def send_push_notification(post, mention, app_config):
             'token': token,
             'user': user,
             'message': message,
-            'url': post.permalink,
+            'url': post.permalink if post else mention.permalink,
         })
 
 
@@ -186,15 +189,15 @@ def interpret_mention(source, target):
         'processing webmention from %s to %s', source, target)
     if target and target.strip('/') == get_settings().site_url.strip('/'):
         # received a domain-level mention
+        is_person_mention = True
         current_app.logger.debug(
             'received domain-level webmention from %s', source)
         target_post = None
         target_urls = (target,)
-        # TODO save domain-level webmention somewhere
-        return ProcessResult(
-            error="Receiving domain-level webmentions is not yet implemented")
+        
     else:
         # confirm that target is a valid link to a post
+        is_person_mention = False
         target_post = find_target_post(target)
 
         if not target_post:
@@ -243,13 +246,14 @@ def interpret_mention(source, target):
             post=target_post,
             error="Could not find any links from source to target")
 
-    mentions = create_mentions(target_post, source, source_response)
+    mentions = create_mentions(target_post, source, source_response, is_person_mention)
     if not mentions:
         return ProcessResult(
             post=target_post,
             error="Could not parse a mention from the source")
 
-    result = ProcessResult(post=target_post)
+    result = ProcessResult(
+        post=target_post, is_person_mention=is_person_mention)
     for mention in mentions:
         result.add_mention(mention, create=not mention.id)
     return result
@@ -344,7 +348,7 @@ def find_target_post(target_url):
     return post
 
 
-def create_mentions(post, url, source_response):
+def create_mentions(post, url, source_response, is_person_mention):
     target_urls = []
     if post:
         base_target_urls = [post.permalink]
@@ -389,11 +393,14 @@ def create_mentions(post, url, source_response):
             published = datetime.datetime.utcnow()
 
         # update an existing mention
-        mention = next((m for m in post.mentions if m.url == url), None)
+        mention = next((m for m in post.mentions if m.url == url), None)\
+                  if post else None
+        
         # or create a new one
         if not mention:
             mention = Mention()
         mention.url = url
+        mention.person_mention = is_person_mention
         mention.permalink = entry.get('url') or url
         mention.reftype = comment_type[0] if comment_type else 'reference'
         mention.author_name = entry.get('author', {}).get('name', '')

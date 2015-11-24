@@ -152,7 +152,7 @@ def render_posts(title, posts, older, events=None, template='posts.jinja2'):
 
     last_modified = max((p.updated for p in posts if p.updated), default=None)
     if last_modified:
-        rv.headers['Last-Modified'] = http_date(last_modified)
+        #rv.headers['Last-Modified'] = http_date(last_modified)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
@@ -165,7 +165,7 @@ def render_posts_atom(title, feed_id, posts):
     rv.headers['Content-Type'] = 'application/atom+xml; charset=utf-8'
     last_modified = max((p.updated for p in posts if p.updated), default=None)
     if last_modified:
-        rv.headers['Last-Modified'] = http_date(last_modified)
+        #rv.headers['Last-Modified'] = http_date(last_modified)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
@@ -415,7 +415,7 @@ def render_post(post):
         util.render_themed('post.jinja2', post=post,
                            title=post.title_or_fallback))
     if post.updated:
-        rv.headers['Last-Modified'] = http_date(post.updated)
+    #    rv.headers['Last-Modified'] = http_date(post.updated)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
