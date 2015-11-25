@@ -32,19 +32,15 @@ def app(request):
         return redirect('/')
 
     dburi = 'sqlite:///:memory:'
-
-    cfgfd, cfgname = tempfile.mkstemp(suffix='-redwind.cfg', text=True)
-    with os.fdopen(cfgfd, 'w') as f:
-        f.write("""\
-SECRET_KEY = 'lmnop8765309'
-DEBUG = True
-DEBUG_TB_ENABLED = False
-SQLALCHEMY_DATABASE_URI = '{}'
-TESTING = True
-REDIS_URL = 'redis://localhost:911'
-BYPASS_INDIEAUTH = False""".format(dburi))
-
-    rw_app = create_app(cfgname)
+    rw_app = create_app({
+        'SECRET_KEY': 'lmnop8765309',
+        'DEBUG': True,
+        'DEBUG_TB_ENABLED': False,
+        'SQLALCHEMY_DATABASE_URI': dburi,
+        'TESTING': True,
+        'REDIS_URL': 'redis://localhost:911',
+        'BYPASS_INDIEAUTH': False,
+    })
     rw_app.add_url_rule('/', 'bypass_login', bypass_login)
 
     app_context = rw_app.app_context()
@@ -72,7 +68,6 @@ BYPASS_INDIEAUTH = False""".format(dburi))
     rw_db.session.remove()
     rw_db.drop_all()
     app_context.pop()
-    os.unlink(cfgname)
 
 
 @pytest.fixture

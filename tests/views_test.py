@@ -2,6 +2,8 @@ import re
 import pytest
 import urllib
 import datetime
+import mf2py
+
 from redwind.models import User
 from testutil import FakeResponse, assert_urls_match
 
@@ -86,8 +88,14 @@ def test_tagged_posts(client, silly_posts):
 
 def test_posts_by_type(client, silly_posts):
     text = client.get('/likes/').get_data(as_text=True)
-    assert re.search('u-like-of.*https://mal\.colm/reynolds', text)
-    assert re.search('u-like-of.*https://buf\.fy/summers', text)
+    p = mf2py.parse(doc=text)
+    feed = p['items'][0]['children']
+
+    for item, expected in zip(feed, [
+            'https://buf.fy/summers/',
+            'https://mal.colm/reynolds',
+    ]):
+        assert item['properties']['like-of'][0]['properties']['url'][0] == expected
 
 
 def test_posts_everything(client, silly_posts):
@@ -139,8 +147,8 @@ def test_tag_cloud(client, silly_posts):
     assert 200 == rv.status_code
     content = rv.get_data(as_text=True)
     print(content)
-    assert re.search('<a[^>]*title="2"[^>]*>good', content)
-    assert re.search('<a[^>]*title="3"[^>]*>interesting', content)
+    assert re.search('<a[^>]*title="2"[^>]*>#good', content, re.DOTALL)
+    assert re.search('<a[^>]*title="3"[^>]*>#interesting', content, re.DOTALL)
 
 
 def test_atom_redirects(client):
@@ -200,8 +208,8 @@ def test_indieauth_login(app, client, mocker):
     mock_login = mocker.patch('flask.ext.login.login_user')
     mock_logout = mocker.patch('flask.ext.login.logout_user')
 
-    mock_get.return_value = FakeResponse(
-        '<html><span class="h-card">Example User</span></html>')
+    user_html = '<html><span class="h-card">Example User</span></html>'
+    mock_get.return_value = FakeResponse(user_html)
     rv = client.get('/login?me=http://example.com')
 
     assert rv.status_code == 302
@@ -214,11 +222,11 @@ def test_indieauth_login(app, client, mocker):
             'redirect_uri': 'http://localhost/login_callback',
         }))
     mock_get.assert_called_once_with('http://example.com')
-    mock_get.reset_mock()
 
     mock_post.return_value = FakeResponse(urllib.parse.urlencode({
         'me': 'http://example.com',
     }))
+
     rv = client.get('/login_callback?' + urllib.parse.urlencode({
         'code': 'abc123'
     }))
