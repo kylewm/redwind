@@ -47,7 +47,9 @@ def create_app(config_or_path='../redwind.cfg'):
             sort_by=('cumtime', 'tottime', 'ncalls'))
 
     # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-    if not app.debug:
+    if app.debug:
+        app.logger.setLevel(logging.ERROR)
+    else:
         app.logger.setLevel(logging.DEBUG)
         stream_handler = StreamHandler()
         formatter = logging.Formatter(
@@ -58,7 +60,7 @@ def create_app(config_or_path='../redwind.cfg'):
         recipients = app.config.get('ADMIN_EMAILS')
         if recipients:
             error_handler = SMTPHandler(
-                'localhost', 'Redwind <redwind@kylewm.com>', 
+                'localhost', 'Redwind <redwind@kylewm.com>',
                 recipients, 'redwind error')
             error_handler.setLevel(logging.ERROR)
             error_handler.setFormatter(Formatter(MAIL_FORMAT))

@@ -13,7 +13,7 @@ from werkzeug import secure_filename
 import bs4
 import collections
 import datetime
-from flask.ext.login import login_required, current_user, login_user, logout_user
+import flask.ext.login as flask_login
 import hashlib
 import itertools
 import json
@@ -130,7 +130,7 @@ def new_post(type):
 
 
 @admin.route('/edit')
-@login_required
+@flask_login.login_required
 def edit_by_id():
     id = request.args.get('id')
     if not id:
@@ -178,7 +178,7 @@ def uploads_popup():
 
 
 @admin.route('/save_edit', methods=['POST'])
-@login_required
+@flask_login.login_required
 def save_edit():
     id = request.form.get('post_id')
     current_app.logger.debug('saving post %s', id)
@@ -187,7 +187,7 @@ def save_edit():
 
 
 @admin.route('/save_new', methods=['POST'])
-@login_required
+@flask_login.login_required
 def save_new():
     post_type = request.form.get('post_type', 'note')
     current_app.logger.debug('saving new post of type %s', post_type)
@@ -496,7 +496,7 @@ def login():
     # if current_app.config.get('BYPASS_INDIEAUTH'):
     #     user = auth.load_user(urllib.parse.urlparse(me).netloc)
     #     current_app.logger.debug('Logging in user %s', user)
-    #     flask_login.login_user(user, remember=True)
+    #     flask_login.flask_login.login_user(user, remember=True)
     #     flash('logged in as {}'.format(me))
     #     current_app.logger.debug('Logged in with domain %s', me)
     #     return redirect(request.args.get('next') or url_for('views.index'))
@@ -589,11 +589,11 @@ def login_callback():
 
 
 def do_login(cred, name, next_url='/'):
-    current_app.logger.debug('currently logged in as %s', current_user)
+    current_app.logger.debug('currently logged in as %s', flask_login.current_user)
     current_app.logger.debug('new credential is %s', cred)
 
-    if not current_user.is_anonymous() and (
-            not cred.user or cred.user != current_user):
+    if not flask_login.current_user.is_anonymous() and (
+            not cred.user or cred.user != flask_login.current_user):
         # do you want to associate this credential with the current user?
         session['credential'] = (cred.type, cred.value)
         session['name'] = name
@@ -603,9 +603,8 @@ def do_login(cred, name, next_url='/'):
         cred.user = User(name=name)
         db.session.add(cred)
 
-    import pdb; pdb.set_trace()
     current_app.logger.debug('Logging in user %s', cred.user)
-    login_user(cred.user, remember=True)
+    flask_login.login_user(cred.user, remember=True)
     flash('Logged in as user %s' % cred.user.name)
     return redirect(next_url)
 
@@ -624,7 +623,7 @@ def login_associate():
     next_url = request.args.get('next')
     cred = Credential.query.get(session.pop('credential'))
     session.pop('name')
-    cred.user = current_user
+    cred.user = flask_login.current_user
     db.session.commit()
     return redirect(next_url)
 
@@ -639,7 +638,7 @@ def login_do_not_associate():
         cred.user = User(name=name)
         db.session.commit()
 
-    login_user(cred.user, remember=True)
+    flask_login.login_user(cred.user, remember=True)
     return redirect(next_url)
 
 
@@ -699,7 +698,7 @@ def try_micropub_config(token_url, micropub_url, scopes, code, me,
 
 @admin.route('/logout')
 def logout():
-    logout_user()
+    flask_login.logout_user()
     for key in ('action-handlers', 'endpoints', 'micropub'):
         if key in session:
             del session[key]
@@ -707,7 +706,7 @@ def logout():
 
 
 @admin.route('/settings', methods=['GET', 'POST'])
-@login_required
+@flask_login.login_required
 def edit_settings():
     if request.method == 'GET':
         return render_template('admin/settings.jinja2', raw_settings=sorted(
@@ -720,7 +719,7 @@ def edit_settings():
 
 
 @admin.route('/delete')
-@login_required
+@flask_login.login_required
 def delete_by_id():
     id = request.args.get('id')
     post = Post.load_by_id(id)
@@ -756,7 +755,7 @@ def contact_by_name(name):
 
 
 @admin.route('/delete/contact')
-@login_required
+@flask_login.login_required
 def delete_contact():
     id = request.args.get('id')
     contact = Contact.query.get(id)
@@ -771,7 +770,7 @@ def new_contact():
         contact = Contact()
         return render_template('admin/edit_contact.jinja2', contact=contact)
 
-    if not current_user.is_authenticated():
+    if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
 
     contact = Contact()
@@ -786,7 +785,7 @@ def edit_contact():
         contact = Contact.query.get(id)
         return render_template('admin/edit_contact.jinja2', contact=contact)
 
-    if not current_user.is_authenticated():
+    if not flask_login.current_user.is_authenticated():
         return current_app.login_manager.unauthorized()
 
     id = request.form.get('id')
@@ -872,7 +871,7 @@ def edit_venue():
 
 
 @admin.route('/delete/venue')
-@login_required
+@flask_login.login_required
 def delete_venue():
     id = request.args.get('id')
     venue = Venue.query.get(id)
@@ -898,7 +897,7 @@ def save_venue(venue):
 
 
 @admin.route('/drafts')
-@login_required
+@flask_login.login_required
 def all_drafts():
     posts = Post.query.filter_by(deleted=False, draft=True).all()
     return render_template('admin/drafts.jinja2', posts=posts)
