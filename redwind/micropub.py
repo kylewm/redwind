@@ -204,7 +204,8 @@ def micropub_endpoint():
         current_app.logger.debug(
             'checking for existing post with syndication %s', syndication)
         existing = Post.query.filter(
-            Post.syndication.like(db.literal('%"' + syndication + '"%'))
+            Post.syndication.like(db.literal('%"' + syndication + '"%')),
+            ~Post.deleted
         ).first()
         if existing:
             current_app.logger.debug(

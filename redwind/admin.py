@@ -602,6 +602,7 @@ def do_login(cred, name, next_url='/'):
     if not cred.user:
         cred.user = User(name=name)
         db.session.add(cred)
+    db.session.commit()
 
     current_app.logger.debug('Logging in user %s', cred.user)
     flask_login.login_user(cred.user, remember=True)
