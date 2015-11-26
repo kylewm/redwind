@@ -3,7 +3,7 @@ import urllib
 
 from redwind import auth
 from redwind import util
-from redwind.models import get_settings, Post, Venue
+from redwind.models import get_settings, Post, Venue, Credential
 from redwind.extensions import db
 
 import jwt
@@ -144,8 +144,8 @@ def micropub_endpoint():
 
     me = decoded.get('me')
     client_id = decoded.get('client_id')
-    parsed = urllib.parse.urlparse(me)
-    user = auth.load_user(parsed.netloc)
+    cred = Credential.query.filter_by(type='indieauth', value=me).first()
+    user = cred and cred.user
     if not user or not user.is_authenticated():
         current_app.logger.warn(
             'received valid access token for invalid user: %s', me)
