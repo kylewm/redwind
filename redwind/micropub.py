@@ -154,21 +154,28 @@ def micropub_endpoint():
     h = request.form.get('h')
     in_reply_to = request.form.get('in-reply-to')
     like_of = request.form.get('like-of')
+    photo_url = request.form.get('photo')
     photo_file = request.files.get('photo')
     bookmark = request.form.get('bookmark') or request.form.get('bookmark-of')
     repost_of = request.form.get('repost-of')
 
-    post_type = ('event' if h == 'event' 
+    if photo_url and not photo_file:
+        photo_file = urllib.request.urlopen(photo_url)
+
+    post_type = ('event' if h == 'event'
                  else 'article' if 'name' in request.form
-                 else 'photo' if photo_file else 'reply' if in_reply_to
-                 else 'like' if like_of else 'bookmark' if bookmark
-                 else 'share' if repost_of else 'note')
+                 else 'photo' if photo_file
+                 else 'reply' if in_reply_to
+                 else 'like' if like_of
+                 else 'bookmark' if bookmark
+                 else 'share' if repost_of
+                 else 'note')
 
     latitude = None
     longitude = None
     location_name = None
     venue_id = None
-    
+
     loc_str = request.form.get('location')
     geo_prefix = 'geo:'
     if loc_str:
@@ -188,7 +195,7 @@ def micropub_endpoint():
 
     # url of the venue, e.g. https://kylewm.com/venues/cafe-trieste-berkeley-california
     venue = request.form.get('venue')
-            
+
     syndicate_to = request.form.getlist('syndicate-to[]')
     syndication = request.form.get('syndication')
 
