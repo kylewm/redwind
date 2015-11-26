@@ -159,12 +159,9 @@ def micropub_endpoint():
     bookmark = request.form.get('bookmark') or request.form.get('bookmark-of')
     repost_of = request.form.get('repost-of')
 
-    if photo_url and not photo_file:
-        photo_file = urllib.request.urlopen(photo_url)
-
     post_type = ('event' if h == 'event'
                  else 'article' if 'name' in request.form
-                 else 'photo' if photo_file
+                 else 'photo' if photo_file or photo_url
                  else 'reply' if in_reply_to
                  else 'like' if like_of
                  else 'bookmark' if bookmark
@@ -232,7 +229,7 @@ def micropub_endpoint():
         'like_of': like_of,
         'repost_of': repost_of,
         'bookmark_of': bookmark,
-        'photo': photo_file,
+        'photo': photo_file or photo_url,
         'syndicate-to': [SYNDICATION_TARGETS.get(to) for to in syndicate_to],
         'hidden': 'true' if like_of or bookmark else 'false',
     })
