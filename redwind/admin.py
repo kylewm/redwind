@@ -361,7 +361,8 @@ def save_post(post):
         filename = os.path.basename(urllib.parse.urlparse(photo_url).path)
         attachment = create_attachment(post, filename, mimetype)
         os.makedirs(os.path.dirname(attachment.disk_path), exist_ok=True)
-        shutil.move(temp_filename, attachment.disk_path)
+        shutil.copyfile(temp_filename, attachment.disk_path)
+        urllib.request.urlcleanup()
         post.attachments.append(attachment)
 
     # pre-render the post html

@@ -20,7 +20,6 @@ import urllib.parse
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
-
 imageproxy = Blueprint('imageproxy', __name__)
 
 
@@ -70,7 +69,6 @@ def proxy():
         intpath = os.path.join(intparent, size)
 
     info = {}
-    source = None
 
     # first check if the info file exists
     current_app.logger.debug('checking for saved imageproxy info %s', infopath)
