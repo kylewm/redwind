@@ -22,11 +22,14 @@ import mf2util
 import mimetypes
 import operator
 import os
+import os.path
 import random
 import requests
+import shutil
 import string
 import urllib
 import urllib.parse
+import urllib.request
 
 admin = Blueprint('admin', __name__)
 
@@ -349,6 +352,18 @@ def save_post(post):
             infile.save(attachment.disk_path)
             post.attachments.append(attachment)
 
+    photo_url = request.form.get('photo')
+    if photo_url:
+        current_app.logger.debug('downloading photo from url %s', photo_url)
+        temp_filename, headers = urllib.request.urlretrieve(photo_url)
+        content_type = headers.get('content-type', '')
+        mimetype = content_type and content_type.split(';')[0].strip()
+        filename = os.path.basename(urllib.parse.urlparse(photo_url).path)
+        attachment = create_attachment(post, filename, mimetype)
+        os.makedirs(os.path.dirname(attachment.disk_path), exist_ok=True)
+        shutil.move(temp_filename, attachment.disk_path)
+        post.attachments.append(attachment)
+
     # pre-render the post html
     html = util.markdown_filter(post.content, img_path=post.get_image_path())
     html = util.autolink(html)
@@ -370,11 +385,14 @@ def save_post(post):
 
 
 def create_attachment_from_file(post, f, default_ext=None):
-    filename = secure_filename(f.filename)
+    return create_attachment(post, f.filename, f.mimetype, default_ext)
+
+
+def create_attachment(post, filename, mimetype=None, default_ext=None):
+    filename = secure_filename(filename)
     basename, ext = os.path.splitext(filename)
-    mimetype, _ = mimetypes.guess_type(f.filename)
     if not mimetype:
-        mimetype = f.mimetype
+        mimetype, _ = mimetypes.guess_type(filename)
 
     # special handling for ugly filenames from OwnYourGram
     if basename.startswith('tmp_') and ext.lower() in ('.png', '.jpg'):
@@ -398,7 +416,7 @@ def create_attachment_from_file(post, f, default_ext=None):
         idx += 1
 
     return Attachment(filename=filename,
-                      mimetype=f.mimetype,
+                      mimetype=mimetype,
                       storage_path=storage_path)
 
 
