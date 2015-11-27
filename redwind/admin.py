@@ -602,7 +602,8 @@ def login_callback():
 
     # offer to associate credential with existing user or create a new user
     p = mf2py.parse(url=me)
-    author = mf2util.find_author(p)
+    hcard = mf2util.representative_hcard(p, me)
+    author = hcard and mf2util.parse_author(hcard)
 
     return do_login(cred, author and author.get('name'), next_url)
 

@@ -24,6 +24,6 @@ rq==0.5.1
 uWSGI==2.0.4
 psycopg2==2.5.4
 mf2py>=0.2.8
-mf2util>=0.2.8
+mf2util>=0.2.10
 brevity>=0.2.1
 -e .

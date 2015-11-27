@@ -4,7 +4,7 @@ import urllib
 import datetime
 import mf2py
 
-from redwind.models import User
+from redwind.models import User, Credential
 from testutil import FakeResponse, assert_urls_match
 
 
@@ -208,7 +208,7 @@ def test_indieauth_login(app, client, mocker):
     mock_login = mocker.patch('flask.ext.login.login_user')
     mock_logout = mocker.patch('flask.ext.login.logout_user')
 
-    user_html = '<html><span class="h-card">Example User</span></html>'
+    user_html = '<html><a class="h-card" href="/" rel="me">Example User</a></html>'
     mock_get.return_value = FakeResponse(user_html)
     rv = client.get('/login?me=http://example.com')
 
@@ -222,6 +222,7 @@ def test_indieauth_login(app, client, mocker):
             'redirect_uri': 'http://localhost/login_callback',
         }))
     mock_get.assert_called_once_with('http://example.com')
+    mock_get.reset_mock()
 
     mock_post.return_value = FakeResponse(urllib.parse.urlencode({
         'me': 'http://example.com',
@@ -239,7 +240,15 @@ def test_indieauth_login(app, client, mocker):
         'state': None,
     })
 
+    mock_get.assert_called_once_with('http://example.com')
     mock_login.assert_called_once_with(
-        User(name='Example User'), remember=True)
+        User(id=1, name='Example User'), remember=True)
+
+    cred = Credential.query.filter_by(type='indieauth',
+                                      value='http://example.com').first()
+    assert cred
+    assert cred.user
+    assert cred.user.name == 'Example User'
+
     client.get('/logout')
     mock_logout.assert_called_once_with()
