@@ -138,11 +138,12 @@ class Credential(db.Model):
 class PosseTarget(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    me = db.Column(db.String(256))
     micropub_endpoint = db.Column(db.String(256))
     access_token = db.Column(db.String(1024))
-    name = db.Column(db.String(256))
     style = db.Column(db.String(32))
+    me = db.Column(db.String(256))
+    name = db.Column(db.String(256))
+    photo = db.Column(db.String(256))
 
 
 class Venue(db.Model):

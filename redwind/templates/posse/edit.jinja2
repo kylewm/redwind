@@ -12,12 +12,16 @@
   <form method="POST" action="{{ url_for('.edit') }}">
     <input type="hidden" name="target_id" value="{{ target.id }}" />
     <div class="form-group">
-      <label>Me (URL)</label> The account you want to syndicate to (must support micropub).
-      <input class="form-control" type="url" name="me" value="{{target.me}}" readonly />
+      <label>Me (URL)</label>
+      <input class="form-control" type="url" name="me" value="{{target.me}}"/>
     </div>
     <div class="form-group">
-      <label>Label</label> This wil be the label applied to this syndication target.
+      <label>Name</label> This wil be the label applied to this syndication target.
       <input class="form-control" type="text" name="name" value="{{ target.name }}" />
+    </div>
+    <div class="form-group">
+      <label>Photo</label>
+      <input class="form-control" type="text" name="name" value="{{ target.photo }}" />
     </div>
     <div class="form-group">
       <label>POSSE Style</label> The style influences which fields and content we send to which services.

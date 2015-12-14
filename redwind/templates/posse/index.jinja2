@@ -9,8 +9,9 @@
 
   <ul>
     {% for target in current_user.posse_targets %}
-      <li>
+      <li style="margin-top: 1em;">
         <a href="{{ url_for('.edit', target_id=target.id) }}">
+          <img src="{{ target.photo }}" style="max-height: 2em;">
           {{ target.name }}
         </a>
       </li>

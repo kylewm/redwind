@@ -1,8 +1,12 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import current_app
 from flask.ext.login import current_user, login_required
 from flask.ext.micropub import MicropubClient
 from redwind.models import get_settings, PosseTarget
 from redwind.extensions import db
+
+import mf2py
+import mf2util
 
 posse = Blueprint('posse', __name__, url_prefix='/posse',)
 micropub = MicropubClient(client_id='https://github.com/kylewm/redwind')
@@ -43,8 +47,17 @@ def callback(info):
     else:
         flash('Micropub success! Authorized {}'.format(info.me))
 
+    p = mf2py.parse(url=info.me)
+    hcard = mf2util.representative_hcard(p, source_url=info.me)
+    author = mf2util.parse_author(hcard)
+
+    current_app.logger.debug('found author info %s', author)
+
     target = PosseTarget(
-        me=info.me, name='New Target', style='microblog',
+        me=info.me,
+        name=author.get('name'),
+        photo=author.get('photo'),
+        style='microblog',
         micropub_endpoint=info.micropub_endpoint,
         access_token=info.access_token)
     current_user.posse_targets.append(target)
