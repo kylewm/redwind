@@ -9,6 +9,8 @@ import urllib
 import datetime
 import os
 
+import sqlalchemy.dialects.postgresql as pg_dialect
+
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'
 RETWEET_INTENT_URL = 'https://twitter.com/intent/retweet?tweet_id={}'
@@ -98,6 +100,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
     admin = db.Column(db.Boolean)
+    posse_targets = db.relationship('PosseTarget', backref='user',
+                                    order_by='PosseTarget.id')
     credentials = db.relationship('Credential', backref='user')
 
     # Flask-Login integration
@@ -129,6 +133,16 @@ class Credential(db.Model):
     def __repr__(self):
         return '<Credential type={}, value={}>'.format(
             self.type, self.value)
+
+
+class PosseTarget(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    me = db.Column(db.String(256))
+    micropub_endpoint = db.Column(db.String(256))
+    access_token = db.Column(db.String(1024))
+    name = db.Column(db.String(256))
+    style = db.Column(db.String(32))
 
 
 class Venue(db.Model):
