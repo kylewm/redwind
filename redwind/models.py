@@ -255,7 +255,6 @@ class Post(db.Model):
         self.slug = None
         self.location = None
         self.syndication = []
-        self.tags = []
         self.audience = []  # public
         self.mention_urls = []
         self.content = None
@@ -273,6 +272,13 @@ class Post(db.Model):
             return maps.get_map_image(
                 width, height, 13,
                 [maps.Marker(lat, lng, 'dot-small-blue')])
+
+    def get_location_as_geo_uri(self):
+        location = self.location or (self.venue and self.venue.location)
+        if location:
+            lat = location.get('latitude')
+            lng = location.get('longitude')
+            return 'geo:%f,%f' % (lat, lng)
 
     @property
     def start(self):
