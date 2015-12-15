@@ -81,6 +81,7 @@ def create_app(config_or_path='../redwind.cfg'):
             'wm_receiver',
             'wm_sender',
             'wordpress',
+            'posse',
     ]:
         # app.logger.info('loading plugin module %s', plugin)
         module = importlib.import_module('redwind.plugins.' + plugin)

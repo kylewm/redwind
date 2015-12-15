@@ -1,6 +1,7 @@
 Flask==0.10.1
 Flask-Login==0.2.7
 Flask-SQLAlchemy==2.0
+Flask-Micropub==0.2.4
 Markdown==2.3.1
 Pillow==2.7.0
 PyJWT==1.0.1

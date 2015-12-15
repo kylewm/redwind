@@ -16,6 +16,9 @@
         margin-top: 70px;
         margin-bottom: 20px;
     }
+    .container {
+        max-width: 800px;
+    }
     </style>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -62,6 +65,8 @@
             <li><a href="{{ url_for('admin.contacts') }}"><i class="glyphicon glyphicon-user"></i> Contacts</a></li>
             <li><a href="{{ url_for('admin.all_venues') }}"><i class="glyphicon glyphicon-map-marker"></i> Venues</a></li>
             <li><a href="{{ url_for('admin.edit_settings') }}"><i class="glyphicon glyphicon-wrench"></i> Settings</a></li>
+            <li><a href="{{ url_for('posse.index') }}"><i class="glyphicon glyphicon-share"></i> POSSE</a></li>
+
           </ul>
 
           {% if current_user.is_anonymous() %}
@@ -81,7 +86,7 @@
     <main class="container">
 
       {% for message in get_flashed_messages() %}
-        <div class="alert alert-warning">{{ message | safe }}</div>
+        <div class="alert alert-warning">{{ message }}</div>
       {% endfor %}
 
       {% block content %}

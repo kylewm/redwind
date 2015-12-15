@@ -1,0 +1,46 @@
+{% extends "admin/base.jinja2" %}
+
+{% block content %}
+  <a href="{{ url_for('.index') }}">Back to List</a>
+
+  <h2>Edit POSSE Target</h2>
+
+  {% set styles = [('microblog', 'Microblog'),
+                   ('socialnetwork', 'Social Nework'),
+                   ('photosharing', 'Photo Sharing')] %}
+
+  <form method="POST" action="{{ url_for('.edit') }}">
+    <input type="hidden" name="target_id" value="{{ target.id }}" />
+    <div class="form-group">
+      <label>Me (URL)</label>
+      <input class="form-control" type="url" name="me" value="{{target.me}}"/>
+    </div>
+    <div class="form-group">
+      <label>Name</label> This wil be the label applied to this syndication target.
+      <input class="form-control" type="text" name="name" value="{{ target.name }}" />
+    </div>
+    <div class="form-group">
+      <label>Photo</label>
+      <input class="form-control" type="text" name="name" value="{{ target.photo }}" />
+    </div>
+    <div class="form-group">
+      <label>POSSE Style</label> The style influences which fields and content we send to which services.
+      <select name="style" class="form-control">
+        {% for value, display in styles %}
+          <option value="{{ value }}"{% if target.style == value %} selected{% endif %}>
+            {{ display }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <button class="btn btn-primary" type="submit">Update</button>
+    </div>
+  </form>
+
+  <form method="POST" action="{{ url_for('.delete') }}">
+    <input type="hidden" name="target_id" value="{{ target.id }}" />
+    <button class="btn btn-danger" type="submit">Delete</button>
+  </form>
+
+{% endblock %}
