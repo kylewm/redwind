@@ -3,7 +3,7 @@ import urllib
 
 from redwind import auth
 from redwind import util
-from redwind.models import get_settings, Post, Venue, Credential
+from redwind.models import get_settings, Post, Venue, Credential, PosseTarget
 from redwind.extensions import db
 
 import jwt
@@ -92,39 +92,6 @@ def micropub_endpoint():
         "received micropub request %s, args=%s, form=%s, headers=%s",
         request, request.args, request.form, request.headers)
 
-    if request.method == 'GET':
-        current_app.logger.debug('micropub GET request %s -> %s', request,
-                                 request.args)
-        q = request.args.get('q')
-        if q == 'syndicate-to':
-            current_app.logger.debug('returning syndication targets')
-            response = make_response(urllib.parse.urlencode([
-                ('syndicate-to[]', target) for target in SYNDICATION_TARGETS]))
-            response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-            return response
-
-        elif q in ('actions', 'json_actions'):
-            current_app.logger.debug('returning action handlers')
-            reply_url = url_for('admin.new_post', type='reply', _external=True)
-            repost_url = url_for('admin.new_post', type='share', _external=True)
-            like_url = url_for('admin.new_post', type='like', _external=True)
-            payload = {
-                'reply': reply_url + '?url={url}',
-                'repost': repost_url + '?url={url}',
-                'favorite': like_url + '?url={url}',
-                'like': like_url + '?url={url}',
-            }
-            accept_header = request.headers.get('accept', '')
-            if q == 'json_actions' or 'application/json' in accept_header:
-                return jsonify(payload)
-            else:
-                response = make_response(urllib.parse.urlencode(payload))
-                response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-                return response
-
-        else:
-            abort(404)
-
     bearer_prefix = 'Bearer '
     header_token = request.headers.get('authorization')
     if header_token and header_token.startswith(bearer_prefix):
@@ -150,6 +117,39 @@ def micropub_endpoint():
         current_app.logger.warn(
             'received valid access token for invalid user: %s', me)
         abort(401)
+
+    if request.method == 'GET':
+        current_app.logger.debug('micropub GET request %s -> %s', request,
+                                 request.args)
+        q = request.args.get('q')
+        if q == 'syndicate-to':
+            current_app.logger.debug('returning syndication targets')
+            response = make_response(urllib.parse.urlencode([
+                ('syndicate-to[]', t.me) for t in user.posse_targets]))
+            response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+            return response
+
+        elif q in ('actions', 'json_actions'):
+            current_app.logger.debug('returning action handlers')
+            reply_url = url_for('admin.new_post', type='reply', _external=True)
+            repost_url = url_for('admin.new_post', type='share', _external=True)
+            like_url = url_for('admin.new_post', type='like', _external=True)
+            payload = {
+                'reply': reply_url + '?url={url}',
+                'repost': repost_url + '?url={url}',
+                'favorite': like_url + '?url={url}',
+                'like': like_url + '?url={url}',
+            }
+            accept_header = request.headers.get('accept', '')
+            if q == 'json_actions' or 'application/json' in accept_header:
+                return jsonify(payload)
+            else:
+                response = make_response(urllib.parse.urlencode(payload))
+                response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                return response
+
+        else:
+            abort(404)
 
     h = request.form.get('h')
     in_reply_to = request.form.get('in-reply-to')
