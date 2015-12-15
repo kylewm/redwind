@@ -14,6 +14,7 @@ import urllib
 
 services = Blueprint('services', __name__)
 
+USER_AGENT = 'Red Wind (https://github.com/kylewm/redwind)'
 
 @services.route('/api/mf2')
 def old_convert_mf2():
@@ -28,15 +29,14 @@ def convert_mf2():
     doc = doc and doc.strip()
 
     if url and not doc:
+        r = requests.get(url, headers={'User-Agent': USER_AGENT})
+        r.raise_for_status()
+        doc = r.text if 'charset' in r.headers.get('content-type', '') else r.content
         parsed = urllib.parse.urlparse(url)
         if parsed.fragment:
-            r = requests.get(url)
-            r.raise_for_status()
-            doc = BeautifulSoup(
-                r.text if 'charset' in r.headers.get('content-type', '') 
-                else r.content)
+            doc = BeautifulSoup(doc)
             doc = doc.find(id=parsed.fragment)
-
+            
     if url or doc:
         try:
             json = mf2py.parse(url=url, doc=doc)
@@ -121,14 +121,14 @@ input[type="text"],textarea { width: 100% }
 <h1>mf2util</h1>
 <form><p>
     <label>Interpret</label>
-    <input type="text" name="url" placeholder="url">
+    <input type="text" name="url">
     <label><input type="checkbox" value="true" name="as-feed"/>Parse as h-feed</label>
     <input type="Submit"/></p>
 </form>
 <form>
 <p>
     <label>Post type discovery</label>
-    <input type="text" name="url" placeholder="url">
+    <input type="text" name="url">
     <input type="hidden" name="op" value="post-type-discovery">
     <input type="Submit">
     </p>

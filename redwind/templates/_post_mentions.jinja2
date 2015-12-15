@@ -61,11 +61,19 @@
 {% endif %}
 
 
+{% for tag, rsvps in 
+  ('Going', post.rsvps_yes),
+  ('Might Go', post.rsvps_maybe), 
+  ('Not Going', post.rsvps_no) %}
 
-{% if post.rsvps %}
-  <h3>rsvps</h3>
-  {% for mention in post.rsvps %}
-    <div class="p-comment h-cite">
+
+  {% if rsvps %}
+    <h3>{{ tag }} ({{ rsvps | count }}) </h3>
+  {% endif %}
+
+  {% for mention in rsvps %}
+
+    <div class="p-comment h-cite comment">
       <div>
         <span class="p-author h-card">
           {% if mention.author_image %}<img class="u-photo" src="{{ mention.author_image | imageproxy(24) }}"/>{% endif %}
@@ -74,16 +82,6 @@
           </a>
         </span>
         (<a class="u-url" href="{{ mention.permalink }}">{{mention.permalink | domain_from_url }}</a>)
-
-        <span class="rsvp {{mention.rsvp}}">
-          {% if mention.rsvp == 'yes' %}
-            is going
-          {% elif mention.rsvp == 'maybe' %}
-            might go
-          {% elif mention.rsvp == 'no' %}
-            is not going
-          {% endif %}
-        </span>
       </div>
       {% if mention.content %}
         <div class="e-content">
@@ -91,12 +89,14 @@
         </div>
       {% endif %}
     </div>
-  {% endfor %}
-{% endif %}
+
+
+{% endfor %}
+{% endfor %}
 
 
 {% if post.references %}
-  <h3>other references</h3>
+  <h3>Other References</h3>
   <ul>
   {% for mention in post.references %}
     <li><a href="{{ mention.permalink }}">{{ mention.permalink | prettify_url }}</a> <a href="{{ mention.url }}">#</a></li>

@@ -33,13 +33,12 @@
 
     <link rel="me" href="ni:///sha-256;LXQj307VecrQ7BPxkMhuI-rM14CktmXjy16DjI0MMAE?ct=application/x-x509-user-cert">
 
-    {% set user_img = url_for('static', filename=settings.author_image) %}
-    <link rel="shortcut icon" href="{{ user_img }}"/>
-    <link rel="apple-touch-icon" href="{{ user_img }}"/>
-    <link rel="apple-touch-icon" sizes="60x60" href="{{ user_img | imageproxy(60) }}"/>
-    <link rel="apple-touch-icon" sizes="76x76" href="{{ user_img | imageproxy(76) }}"/>
-    <link rel="apple-touch-icon" sizes="114x114" href="{{ user_img | imageproxy(114) }}"/>
-    <link rel="apple-touch-icon" sizes="152x152" href="{{ user_img | imageproxy(152) }}"/>
+    <link rel="shortcut icon" href="{{ settings.author_image }}"/>
+    <link rel="apple-touch-icon" href="{{ settings.author_image }}"/>
+    <link rel="apple-touch-icon" sizes="60x60" href="{{ settings.author_image | imageproxy(60) }}"/>
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ settings.author_image | imageproxy(76) }}"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="{{ settings.author_image | imageproxy(114) }}"/>
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ settings.author_image | imageproxy(152) }}"/>
 
     {% if settings.pgp_key_url %}
       <link rel="pgpkey" type="application/pgp-keys" href="{{ settings.pgp_key_url }}" />
@@ -50,8 +49,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') + '?version=2015-06-25' }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}"/>
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet"/>
-
   </head>
-  {% block body %}
-  {% endblock body %}
+
+  {% block body %}{% endblock body %}
+
 </html>

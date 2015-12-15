@@ -32,7 +32,6 @@ author, location, tags, actions, permalink, photos, people,
         <div class="e-content">
           {{ post.content_html | proxy_all | safe }}
         </div>
-        {{ actions(post) }}
       {% elif post.post_type == 'share' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
         <div class="e-content p-name">
@@ -58,7 +57,6 @@ author, location, tags, actions, permalink, photos, people,
           {{ post.content_html | proxy_all | safe }}
           {{ photos(post) }}
         </div>
-        {{ actions(post) }}
       {% elif post.post_type == 'note' or post.post_type == 'reply' or post.post_type == 'photo' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image) }}
 
@@ -66,12 +64,12 @@ author, location, tags, actions, permalink, photos, people,
           {{ post.content_html | proxy_all | add_preview | safe }}
           {{ photos(post) }}
         </div>
-        {{ actions(post) }}
       {% endif %}
 
       {{ location(post) }}
       {{ tags(post) }}
       {{ people(post) }}
+      {{ actions(post) }}
       {{ permalink(post) }}
       {{ admin(post) }}
     </article>

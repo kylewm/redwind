@@ -329,6 +329,18 @@ class Post(db.Model):
         return self._dedupe(m for m in self.mentions if m.reftype == 'rsvp')
 
     @property
+    def rsvps_yes(self):
+        return [r for r in self.rsvps if r.rsvp == 'yes']
+
+    @property
+    def rsvps_maybe(self):
+        return [r for r in self.rsvps if r.rsvp == 'maybe']
+        
+    @property
+    def rsvps_no(self):
+        return [r for r in self.rsvps if r.rsvp == 'no']
+        
+    @property
     def references(self):
         return self._dedupe(m for m in self.mentions if m.reftype == 'reference')
 
