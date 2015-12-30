@@ -7,7 +7,8 @@
 
   {% set styles = [('microblog', 'Microblog'),
                    ('socialnetwork', 'Social Nework'),
-                   ('photosharing', 'Photo Sharing')] %}
+                   ('photosharing', 'Photo Sharing'),
+                   ('bookreviews', 'Book Reviews')] %}
 
   <form method="POST" action="{{ url_for('.edit') }}">
     <input type="hidden" name="target_id" value="{{ target.id }}" />

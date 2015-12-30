@@ -8,6 +8,7 @@ import mf2util
 import requests
 
 from redwind import hooks
+from redwind import util
 from redwind.models import get_settings, Post, PosseTarget
 from redwind.extensions import db
 from redwind.tasks import get_queue, async_app_context
@@ -120,8 +121,18 @@ def do_syndicate(post_id, target_id, app_config):
         if post.in_reply_to:
             data['in-reply-to'] = post.in_reply_to[0]
 
-        data['name'] = post.title
-        data['content'] = post.content
+        if post.post_type == 'review':
+            item = post.item or {}
+            data['item[name]'] = data['item'] = item.get('name')
+            data['item[author]'] = item.get('author')
+            data['rating'] = post.rating
+            data['description'] = data['description[value]'] = post.content
+            data['description[html]'] = post.content_html
+        else:
+            data['name'] = post.title
+            data['content'] = data['content[value]'] = post.content
+            data['content[html]'] = post.content_html
+
         data['url'] = (post.shortlink if target.style == 'microblog'
                        else post.permalink)
 
@@ -144,7 +155,8 @@ def do_syndicate(post_id, target_id, app_config):
                 categories += person.social
         data['category[]'] = categories
 
-        resp = requests.post(target.micropub_endpoint, data=data, files=files)
+        resp = requests.post(target.micropub_endpoint,
+                             data=util.filter_empty_keys(data), files=files)
         resp.raise_for_status()
 
         post.add_syndication_url(resp.headers['Location'])

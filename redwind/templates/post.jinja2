@@ -2,7 +2,7 @@
 {% from "_contexts.jinja2" import full_context %}
 {% from "_macros.jinja2" import
 author, location, tags, actions, permalink, photos, people,
-  checkin, repost_content %}
+  checkin, repost_content, review_item %}
 {% from "_macros.jinja2" import
   admin with context %}
 
@@ -17,6 +17,10 @@ author, location, tags, actions, permalink, photos, people,
     {% endfor %}
 
     <article class="prime {{post.post_type}}">
+      {% if post.post_type == 'review' %}
+        {{ review_item(post.item or {}, post.rating) }}
+      {% endif %}
+
       {% if post.post_type == 'event' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
         <h1 class="p-name">{{ post.title }}</h1>
@@ -65,6 +69,8 @@ author, location, tags, actions, permalink, photos, people,
           {{ photos(post) }}
         </div>
       {% endif %}
+
+      <div style="clear: both;"></div>
 
       {{ location(post) }}
       {{ tags(post) }}

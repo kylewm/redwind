@@ -2,8 +2,8 @@
 {% from "_contexts.jinja2" import
   short_context, full_context %}
 {% from "_macros.jinja2" import
-  author_name, author_image, location, tags, actions, people, 
-  photos, checkin, repost_content, permalink_from_feed %}
+  author_name, author_image, location, tags, actions, people,
+  photos, checkin, repost_content, review_item, permalink_from_feed %}
 {% from "_macros.jinja2" import
   admin with context %}
 
@@ -64,7 +64,7 @@
         </div>
       {% endif %}
 
-      
+
       {% for post in posts %}
         {% set date = post.published | date(first_only=True) %}
         {% if date %}
@@ -82,7 +82,9 @@
             {{ short_context(post, bookmark, 'u-bookmark-of', '<i class="fa fa-bookmark"></i>') }}
           {% endfor %}
 
-          {% if post.post_type == 'event' %}
+          {% if post.post_type == 'review' %}
+            {{ review_item(post.item or {}, post.rating) }}
+          {% elif post.post_type == 'event' %}
             <h2 class="p-name"><a href="{{post.permalink}}">{{ post.title }}</a></h2>
             <h3>{{ (post.start, post.end) | datetime_range }}</h3>
             <div class="e-content">
@@ -129,7 +131,7 @@
 
     <footer>
       <input type="button" onclick="(function(btn){var z=document.createElement('script');document.subtomeBtn=btn;z.src='https://www.subtome.com/load.js';document.body.appendChild(z);})(this)" value="Subscribe">
-    
+
       <div>
         {{ settings.author_bio }}
       </div>

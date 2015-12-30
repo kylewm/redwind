@@ -280,6 +280,15 @@ def save_post(post):
     # fetch contexts before generating a slug
     contexts.fetch_contexts(post)
 
+    post.item = util.filter_empty_keys({
+        'name': request.form.get('item-name'),
+        'author': request.form.get('item-author'),
+        'photo': request.form.get('item-photo'),
+    })
+
+    rating = request.form.get('rating')
+    post.rating = int(rating) if rating else None
+
     syndication = request.form.get('syndication')
     if syndication is not None:
         post.syndication = util.multiline_string_to_list(syndication)

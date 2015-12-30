@@ -1,3 +1,4 @@
+
 {% macro author(name, url, image, hidden=False) %}
   {% if url %}
     <a class="p-author h-card{% if hidden %} hidden{% endif %}" href="{{ url }}">
@@ -21,6 +22,30 @@
     </span>
   {% elif name %}
     <span class="p-author">{{ name }}</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro review_item(item, rating) %}
+  <div class="p-item h-card">
+    {% if item.photo %}
+      <img class="u-photo" src="{{ item.photo }}" style="max-height: 3em; margin: 5px; float: left;" />
+    {% endif %}
+    Review:
+    <span class="p-name">{{ item.name }}</span>
+    {% if item.author %}
+      by <span class="p-author">{{ item.author }}</span>
+    {% endif %}
+  </div>
+
+  {% if rating %}
+    <data class="p-rating" value="{{ rating }}">
+      {% for _ in range(1, rating+1) %}
+        <i class="fa fa-star"></i>
+      {% endfor %}
+      {% for _ in range(5 - rating) %}
+        <i class="fa fa-star-o"></i>
+      {% endfor %}
+    </data>
   {% endif %}
 {% endmacro %}
 

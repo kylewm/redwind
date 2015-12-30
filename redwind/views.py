@@ -30,6 +30,7 @@ POST_TYPES = [
     ('photo', 'photos', 'All Photos'),
     ('bookmark', 'bookmarks', 'All Bookmarks'),
     ('event', 'events', 'All Events'),
+    ('review', 'reviews', 'All Reviews'),
 ]
 
 POST_TYPE_RULE = '<any({}):post_type>'.format(

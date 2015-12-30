@@ -1,0 +1,53 @@
+{% extends "admin/edit_post.jinja2" %}
+{% block content_fields %}
+
+  {% set item = post.item or {} %}
+
+  <div class="form-group">
+    <label for="item-name">Item Name</label>
+    <input class="form-control" type="text" name="item-name" id="item-name" value="{{ item.name or '' }}"/>
+  </div>
+
+  <div class="form-group">
+    <label for="item-author">Item Author</label>
+    <input class="form-control" type="text" name="item-author" id="item-author" value="{{ item.author or '' }}"/>
+  </div>
+
+
+  <div class="form-group">
+    <label for="item-photo">Item Photo</label>
+    <input class="form-control" type="text" name="item-photo" id="item-photo" value="{{ item.photo or '' }}"/>
+  </div>
+
+
+  <div class="form-group">
+    <label for="item-name">Rating</label>
+
+    {% for rating in range(5, 0, -1) %}
+      <div class="radio">
+        <label>
+          <input class="" type="radio" name="rating" value="{{ rating }}"{% if post.rating == rating %} checked{% endif %} />
+          {% for s in range(rating) %}
+            <i class="glyphicon glyphicon-star"></i>
+          {% endfor %}
+          {% for s in range(5 - rating) %}
+            <i class="glyphicon glyphicon-star-empty"></i>
+          {% endfor %}
+        </label>
+      </div>
+    {% endfor %}
+
+    <div class="radio">
+      <label>
+        <input class="" type="radio" name="rating" value="" {% if not post.rating %} checked {% endif %}/>
+        No rating
+      </label>
+      </div>
+  </div>
+
+  <div class="form-group">
+    <label for="content">Review</label>
+    <textarea class="form-control" name="content" id="content" rows="4">{{ post.content or '' }}</textarea>
+  </div>
+
+{% endblock content_fields %}

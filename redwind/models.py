@@ -221,6 +221,10 @@ class Post(db.Model):
     content_html = db.Column(db.Text)
     attachments = db.relationship('Attachment', backref='post')
 
+    # reviews
+    item = db.Column(JsonType)
+    rating = db.Column(db.Integer)
+
     @classmethod
     def load_by_id(cls, dbid):
         return cls.query.get(dbid)
@@ -259,6 +263,8 @@ class Post(db.Model):
         self.mention_urls = []
         self.content = None
         self.content_html = None
+        self.rating = None
+        self.item = None
 
     def get_image_path(self):
         site_url = get_settings().site_url or 'http://localhost'
@@ -420,10 +426,11 @@ class Post(db.Model):
 
     @property
     def mf2_type(self):
+        if self.post_type == 'review':
+            return 'h-review'
         if self.post_type == 'event':
             return 'h-event'
-        else:
-            return 'h-entry'
+        return 'h-entry'
 
     @property
     def title_or_fallback(self):
@@ -458,7 +465,14 @@ class Post(db.Model):
         if self.title:
             return util.slugify(self.title)
 
-        content_plain = util.format_as_text(self.content or '', lambda a: a)
+        if self.item:
+            item_name = self.item.get('name')
+            if item_name:
+                if 'author' in self.item:
+                    item_name += ' by ' + self.item.get('author')
+                return util.slugify('review of ' + item_name)
+
+        content_plain = util.format_as_text(self.content or '', None)
         if content_plain:
             return util.slugify(content_plain, 48) or 'untitled'
 
