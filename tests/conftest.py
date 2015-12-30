@@ -40,6 +40,7 @@ def app(request):
         'TESTING': True,
         'REDIS_URL': 'redis://localhost:911',
         'BYPASS_INDIEAUTH': False,
+        'PILBOX_URL': '/imageproxy',
     })
     rw_app.add_url_rule('/', 'bypass_login', bypass_login)
 
@@ -51,7 +52,7 @@ def app(request):
     temp_upload_path = tempfile.mkdtemp()
     temp_imageproxy_path = tempfile.mkdtemp()
     rw_app.config['UPLOAD_PATH'] = temp_upload_path
-    rw_app.config['IMAGEPROXY_PATH'] = temp_imageproxy_path
+    #rw_app.config['IMAGEPROXY_PATH'] = temp_imageproxy_path
 
     set_setting('posts_per_page', '15')
     set_setting('author_domain', 'example.com')

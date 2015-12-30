@@ -26,9 +26,10 @@ def construct_url(url, size=None):
     else:
         query += [('op', 'noop')]
     querystring = urllib.parse.urlencode(query)
-    h = hmac.new(current_app.config['PILBOX_KEY'].encode(),
-                 querystring.encode(), hashlib.sha1)
-    querystring += '&sig=' + h.hexdigest()
+    if 'PILBOX_KEY' in current_app.config:
+        h = hmac.new(current_app.config['PILBOX_KEY'].encode(),
+                     querystring.encode(), hashlib.sha1)
+        querystring += '&sig=' + h.hexdigest()
     return current_app.config['PILBOX_URL'] + '?' + querystring
 
 
@@ -36,4 +37,3 @@ def construct_url(url, size=None):
 def imageproxy_filter(src, side=None):
     return escape(
         construct_url(src, side and str(side)))
-

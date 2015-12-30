@@ -90,7 +90,7 @@ def asdf():
 
 def test_process_at_names(contacts, mocker):
     result = util.process_people_to_microcards("@luke this is @leia tell @obiwan he's our only hope!")
-    assert result == """<a class="microcard h-card" href="http://tatooine.com/moseisley"><img alt="" src="/imageproxy?url=http%3A%2F%2Ftatooine.com%2Fluke.jpg&amp;size=24&amp;sig=97ad9f9406cf09a03a0c5ecc333de3d1" />Luke Skywalker</a> this is <a class="microcard h-card" href="http://aldera.an"><img alt="" src="/imageproxy?url=http%3A%2F%2Faldera.an%2Fleia.png&amp;size=24&amp;sig=f5803c340d2511eac014af8af029de2c" />Princess Leia</a> tell <a class="microcard h-card" href="https://twitter.com/obiwan">@obiwan</a> he's our only hope!"""
+    assert result == """<a class="microcard h-card" href="http://tatooine.com/moseisley"><img alt="" src="/imageproxy?url=http%3A%2F%2Ftatooine.com%2Fluke.jpg&amp;w=24&amp;h=24&amp;mode=clip" />Luke Skywalker</a> this is <a class="microcard h-card" href="http://aldera.an"><img alt="" src="/imageproxy?url=http%3A%2F%2Faldera.an%2Fleia.png&amp;w=24&amp;h=24&amp;mode=clip" />Princess Leia</a> tell <a class="microcard h-card" href="https://twitter.com/obiwan">@obiwan</a> he's our only hope!"""
 
 
 def test_autolink_urls():
