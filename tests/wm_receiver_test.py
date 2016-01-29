@@ -27,7 +27,7 @@ def test_wm_receipt(client, target_url, mocker):
     get_queue = mocker.patch('redwind.plugins.wm_receiver.get_queue')
     source_url = 'http://foreign/permalink/url'
 
-    assert not current_user.is_authenticated()
+    assert not current_user
     rv = client.post('/webmention', data={'source': source_url,
                                           'target': target_url})
     assert 202 == rv.status_code
@@ -56,7 +56,7 @@ def test_process_wm(db, client, target_url, mocker):
     </html>
     """.format(target_url, source_url))
 
-    assert not current_user.is_authenticated()
+    assert not current_user
 
     result = wm_receiver.interpret_mention(source_url, target_url)
 
@@ -77,7 +77,7 @@ def test_process_wm_no_target_post(client, mocker):
     urlopen = mocker.patch('urllib.request.urlopen')
     urlopen.return_value = FakeUrlOpen(target_url)  # follows redirects
 
-    assert not current_user.is_authenticated()
+    assert not current_user
     result = wm_receiver.interpret_mention(source_url, target_url)
 
     assert result.post is None
@@ -95,7 +95,7 @@ def test_process_wm_deleted(client, target_url, mocker):
     urlopen.return_value = FakeUrlOpen(target_url)  # follows redirects
     getter.return_value = FakeResponse(status_code=410)
 
-    assert not current_user.is_authenticated()
+    assert not current_user
     result = wm_receiver.interpret_mention(source_url, target_url)
 
     assert result.post.permalink == target_url
