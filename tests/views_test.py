@@ -240,7 +240,7 @@ def test_indieauth_login(app, client, mocker):
         'state': None,
     })
 
-    mock_get.assert_called_once_with('http://example.com')
+    mock_get.assert_called_once_with('http://example.com', headers={'User-Agent': mf2py.Parser.useragent})
     mock_login.assert_called_once_with(
         User(id=1, name='Example User'), remember=True)
 
