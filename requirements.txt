@@ -15,7 +15,7 @@ fixtures==1.4.0
 html5lib==0.9999999
 oauthlib==1.0.3
 pytest==2.8.7
-pytest-cov==2.2.0
+pytest-cov==2.2.1
 pytest-mock==0.10.1
 python-mimeparse==0.1.4
 pytz==2015.7
