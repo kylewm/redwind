@@ -1,7 +1,7 @@
 Flask==0.10.1
 Flask-Login==0.2.11 # rq.filter: <0.3.0
 Flask-SQLAlchemy==2.1
-Flask-Micropub==0.2.5
+Flask-Micropub==0.2.6
 Markdown==2.6.5
 Pillow==3.1.1
 PyJWT==1.4.0
