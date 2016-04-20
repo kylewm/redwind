@@ -33,7 +33,8 @@
 {% block closing %}
   {{ super() }}
 
-  <script src="{{url_for('static', filename='admin/util.js')}}"></script>
-  <script src="{{url_for('static', filename='admin/http.js')}}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
+  <script src="{{url_for('static', filename='leaflet/leaflet.js')}}"></script>
   <script src="{{url_for('static', filename='admin/edit_venue.js')}}"></script>
+  
 {% endblock closing %}

@@ -463,7 +463,10 @@ class Post(db.Model):
 
     def generate_slug(self):
         if self.title:
-            return util.slugify(self.title)
+            title = self.title
+            if self.post_type == 'event' and self.start:
+                title = self.start.strftime('%b %d') + ' ' + title
+            return util.slugify(title)
 
         if self.item:
             item_name = self.item.get('name')

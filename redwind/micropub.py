@@ -194,7 +194,12 @@ def micropub_endpoint():
     venue = request.form.get('venue')
 
     syndicate_to = request.form.getlist('syndicate-to[]')
-    syndication = request.form.get('syndication')
+
+    syndication = request.form.getlist('syndication[]')
+    if syndication:
+        syndication = '\n'.join(syndication)
+    else:
+        syndication = request.form.get('syndication')
 
     # TODO check client_id
     if client_id == 'https://kylewm-responses.appspot.com/' and syndication:
@@ -219,7 +224,7 @@ def micropub_endpoint():
         'start': request.form.get('start'),
         'end': request.form.get('end'),
         'title': request.form.get('name'),
-        'content': request.form.get('content'),
+        'content': request.form.get('content[html]') or request.form.get('content'),
         'venue': venue_id,
         'latitude': latitude,
         'longitude': longitude,

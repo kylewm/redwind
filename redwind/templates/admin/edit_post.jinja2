@@ -61,6 +61,15 @@
       </ul>
     </div>
 
+    <div class="form-group">
+      <select class="form-control" name="venue" id="venue">
+        <option value="">No Venue</option>
+        {% for venue in venues %}
+          <option value="{{ venue.id }}" {% if post.venue == venue %}selected{% endif %}>{{ venue.name }}: {{ venue.location | geo_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
     {% block file_upload %}
       <div class="form-group">
         <input type="file" id="image_upload_button" name="files" multiple="multiple" accept="image/*" />

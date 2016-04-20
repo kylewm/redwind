@@ -120,11 +120,7 @@ def new_post(type):
         'save_draft': 'Save as Draft',
     }
 
-    if type == 'event':
-        venues = Venue.query.order_by(Venue.name).all()
-    else:
-        venues = []
-
+    venues = Venue.query.order_by(Venue.name).all()
     return render_template('admin/edit_' + type + '.jinja2',
                            edit_type='new', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
@@ -164,11 +160,7 @@ def edit_by_id():
     if request.args.get('full'):
         template = 'admin/edit_post_all.jinja2'
 
-    if type == 'event':
-        venues = Venue.query.order_by(Venue.name).all()
-    else:
-        venues = []
-
+    venues = Venue.query.order_by(Venue.name).all()
     return render_template(template, edit_type='edit', post=post,
                            tags=get_tags(), top_tags=get_top_tags(20),
                            people=get_contact_nicks(),
@@ -207,6 +199,9 @@ def save_post(post):
             post.published = post.published.astimezone(datetime.timezone.utc)\
                                            .replace(tzinfo=None)
 
+    if 'post_type' in request.form:
+        post.post_type = request.form.get('post_type')
+            
     start_str = request.form.get('start')
     if start_str:
         start = mf2util.parse_dt(start_str)
@@ -280,14 +275,15 @@ def save_post(post):
     # fetch contexts before generating a slug
     contexts.fetch_contexts(post)
 
-    post.item = util.filter_empty_keys({
-        'name': request.form.get('item-name'),
-        'author': request.form.get('item-author'),
-        'photo': request.form.get('item-photo'),
-    })
-
-    rating = request.form.get('rating')
-    post.rating = int(rating) if rating else None
+    if 'item-name' in request.form:
+        post.item = util.filter_empty_keys({
+            'name': request.form.get('item-name'),
+            'author': request.form.get('item-author'),
+            'photo': request.form.get('item-photo'),
+        })
+    if 'rating' in request.form:
+        rating = request.form.get('rating')
+        post.rating = int(rating) if rating else None
 
     syndication = request.form.get('syndication')
     if syndication is not None:
@@ -907,7 +903,7 @@ def delete_venue():
     venue = Venue.query.get(id)
     db.session.delete(venue)
     db.session.commit()
-    return redirect(url_for('all_venues'))
+    return redirect(url_for('.all_venues'))
 
 
 def save_venue(venue):
@@ -923,7 +919,7 @@ def save_venue(venue):
     db.session.commit()
 
     hooks.fire('venue-saved', venue, request.form)
-    return redirect(url_for('venue_by_slug', slug=venue.slug))
+    return redirect(url_for('.venue_by_slug', slug=venue.slug))
 
 
 @admin.route('/drafts')

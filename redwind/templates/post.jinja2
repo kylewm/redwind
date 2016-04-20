@@ -19,9 +19,10 @@ author, location, tags, actions, permalink, photos, people,
     <article class="prime {{post.post_type}}">
       {% if post.post_type == 'review' %}
         {{ review_item(post.item or {}, post.rating) }}
-      {% endif %}
-
-      {% if post.post_type == 'event' %}
+        <div class="e-description">
+          {{ post.content_html | proxy_all | safe }}
+        </div>
+      {% elif post.post_type == 'event' %}
         {{ author(settings.author_name, settings.site_url, settings.author_image, hidden=True) }}
         <h1 class="p-name">{{ post.title }}</h1>
         <h2>

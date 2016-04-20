@@ -29,8 +29,21 @@ def convert_mf2():
     doc = doc and doc.strip()
 
     if url and not doc:
-        r = requests.get(url, headers={'User-Agent': USER_AGENT})
-        r.raise_for_status()
+        try:
+            r = requests.get(url, headers={'User-Agent': USER_AGENT})
+        except Exception as e:
+            resp = jsonify({'error': 'Exception fetching url: ' + url,
+                            'message': str(e)})
+            resp.status_code=400
+            return resp
+            
+        if r.status_code // 100 != 2:
+            resp = jsonify({'error': 'Could not fetch url: ' + url,
+                            'upstream-status': r.status_code,
+                            'upstream-error': r.text})
+            resp.status_code=400
+            return resp
+            
         doc = r.text if 'charset' in r.headers.get('content-type', '') else r.content
         parsed = urllib.parse.urlparse(url)
         if parsed.fragment:
@@ -44,7 +57,7 @@ def convert_mf2():
                 json.pop('rel-urls', None)
             return jsonify(json)
         except:
-            return jsonify({'error': str(sys.exc_info()[0])})
+            return jsonify({'error': str(sys.exc_info()[0])}, status_code=400)
 
     return """
 <html><body>
@@ -107,9 +120,11 @@ def convert_mf2util():
             else:
                 json = mf2util.interpret(d, url)
             return jsonify(dates_to_string(json))
-        except:
+        except Exception as e:
             current_app.logger.exception('running mf2util service')
-            return jsonify({'error': str(sys.exc_info()[0])})
+            resp = jsonify({'error': str(e)})
+            resp.status_code = 400
+            return resp
 
     return """
 <html><body>
