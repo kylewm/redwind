@@ -10,27 +10,19 @@
     }
 
     function fillGeocode(lat, lng) {
-        var xhr = Http.get(SITE_ROOT+'/services/geocode?latitude=' + lat + '&longitude=' + lng);
-        Http.send(xhr).then(
-            function (xhr) {
-                var addr = JSON.parse(xhr.responseText);
-                console.log(addr);
-
-                var geocodeField = first('#geocode');
-                if (addr.locality && addr.region) {
-                    geocodeField.value = addr.locality + ', ' + addr.region;
-                } else if (addr.postal_code && addr.region) {
-                    geocodeField.value = addr.postal_code + ', ' + addr.region;
-                } else if (addr.region) {
-                    geocodeField.value = addr.region;
-                }
-            },
-            function (xhr) {
-                console.log('geocode request failed ' + xhr);
+        $.get(SITE_ROOT+'/services/geocode?latitude=' + lat + '&longitude=' + lng, function (addr) {
+            console.log(addr);
+            
+            var geocodeField = first('#geocode');
+            if (addr.locality && addr.region) {
+                geocodeField.value = addr.locality + ', ' + addr.region;
+            } else if (addr.postal_code && addr.region) {
+                geocodeField.value = addr.postal_code + ', ' + addr.region;
+            } else if (addr.region) {
+                geocodeField.value = addr.region;
             }
-        )
+        });
     }
-
 
     function setupMap(element, lat, lon, wheelZoom, zoom) {
         var tileset = L.tileLayer(
@@ -50,38 +42,45 @@
         return map;
     }
 
-    function setupMapClickPosition(map, latField, lonField) {
+    function setupMapClickPosition(map) {
         map.on('click', function (e) {
             placeLocationMarker(map, e.latlng.lat, e.latlng.lng);
             fillGeocode(e.latlng.lat, e.latlng.lng);
-            latField.value = e.latlng.lat;
-            lonField.value = e.latlng.lng;
+            $('#latitude').val(e.latlng.lat);
+            $('#longitude').val(e.latlng.lng);
         });
     }
 
     function setupVenueMap() {
-        var venueMap = first('#venue-map');
-        if (venueMap) {
-            var latField = first('#latitude');
-            var lonField = first('#longitude');
-            venueMap.textContent = 'loading...';
-            loadLeaflet(function () {
-                if (latField.value && lonField.value) {
-                    var map = setupMap(venueMap, latField.value, lonField.value, true);
-                    placeLocationMarker(map, latField.value, lonField.value);
-                    setupMapClickPosition(map, latField, lonField);
-                } else {
-                    navigator.geolocation.getCurrentPosition(function (position) {
+        var $venueMap = $('#venue-map');
+        if ($venueMap) {
+            var latField = $('#latitude');
+            var lonField = $('#longitude');
+            $venueMap.text('loading...');
+
+            if (latField.val() && lonField.val()) {
+                var map = setupMap($venueMap.get(0), latField.val(), lonField.val(), true);
+                placeLocationMarker(map, latField.val(), lonField.val());
+                setupMapClickPosition(map);
+            } else {
+                navigator.geolocation.getCurrentPosition(
+                    function success(position) {
                         var lat, lon;
-                        latField.value = lat = position.coords.latitude;
-                        lonField.value = lon = position.coords.longitude;
-                        var map = setupMap(venueMap, lat, lon, true);
-                        setupMapClickPosition(map, latField, lonField);
+                        latField.val(lat = position.coords.latitude);
+                        lonField.val(lon = position.coords.longitude);
+                        var map = setupMap($venueMap.get(0), lat, lon, true);
+                        setupMapClickPosition(map);
                         placeLocationMarker(map, lat, lon);
                         fillGeocode(lat, lon);
+                    }, function failure(error) {
+                        console.log(error);
+                        var map = setupMap($venueMap.get(0), 0, 0, true);
+                        setupMapClickPosition(map);
+                        placeLocationMarker(map, 0, 0);
+                    }, {
+                        'timeout': 5000,
                     });
-                }
-            });
+            }
         }
     }
 

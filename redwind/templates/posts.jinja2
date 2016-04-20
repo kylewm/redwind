@@ -24,7 +24,7 @@
         <ul>
           <li>new</li>
           {% for type in 'note', 'reply', 'like', 'share',
-            'photo', 'checkin', 'bookmark', 'article': %}
+            'photo', 'checkin', 'bookmark', 'article', 'event', 'review': %}
 
             <li><a href="{{ url_for('admin.new_post', type=type) }}"
                    >{{type}}</a></li>
@@ -84,6 +84,9 @@
 
           {% if post.post_type == 'review' %}
             {{ review_item(post.item or {}, post.rating) }}
+            <div class="e-description">
+              {{ post.content_html | proxy_all | safe }}
+            </div>
           {% elif post.post_type == 'event' %}
             <h2 class="p-name"><a href="{{post.permalink}}">{{ post.title }}</a></h2>
             <h3>{{ (post.start, post.end) | datetime_range }}</h3>

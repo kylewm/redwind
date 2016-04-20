@@ -106,7 +106,9 @@
   {% if post.venue %}
     <div class="meta">
       <code>@</code>
-      <a class="p-location h-card" href="{{ post.venue.permalink }}">{{ post.venue.name }} &ndash; {{ post.venue.location | geo_name }}</a>
+      <a class="p-location h-card" href="{{ post.venue.permalink }}">
+        <span class="p-name">{{ post.venue.name }}</span> &ndash; {{ post.venue.location | geo_name }}
+      </a>
     </div>
   {% endif %}
 {% endmacro %}

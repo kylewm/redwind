@@ -15,7 +15,7 @@ import urllib.parse
 imageproxy = Blueprint('imageproxy', __name__)
 
 
-def construct_url(url, size=None):
+def construct_url(url, size=None, external=False):
     from redwind.models import get_settings
     if not url:
         return
@@ -26,15 +26,16 @@ def construct_url(url, size=None):
     else:
         query += [('op', 'noop')]
     querystring = urllib.parse.urlencode(query)
-    if 'PILBOX_KEY' in current_app.config:
-        h = hmac.new(current_app.config['PILBOX_KEY'].encode(),
-                     querystring.encode(), hashlib.sha1)
-        querystring += '&sig=' + h.hexdigest()
-        return current_app.config['PILBOX_URL'] + '?' + querystring
-    return url
+    h = hmac.new(current_app.config['PILBOX_KEY'].encode(),
+                 querystring.encode(), hashlib.sha1)
+    querystring += '&sig=' + h.hexdigest()
+    proxy_url = current_app.config['PILBOX_URL'] + '?' + querystring
+    if external:
+        proxy_url = urllib.parse.urljoin(get_settings().site_url, proxy_url)
+    return proxy_url
 
 
 @imageproxy.app_template_filter('imageproxy')
-def imageproxy_filter(src, side=None):
+def imageproxy_filter(src, side=None, external=False):
     return escape(
-        construct_url(src, side and str(side)))
+        construct_url(src, side and str(side), external))

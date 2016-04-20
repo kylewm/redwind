@@ -448,13 +448,21 @@ def geo_name(loc):
 
     locality = loc.get('locality')
     region = loc.get('region')
+
+    latitude = loc.get('latitude')
+    longitude = loc.get('longitude')
+
     if locality and region:
-        return "{}, {}".format(locality, region)
+        result = '<span class="p-locality">{}</span>, <span class="p-region">{}</span>'.format(locality, region)
+        if latitude and longitude:
+            result += '<data class="p-latitude" value="{:.2f}"></data><data class="p-longitude" value="{:.2f}"></data>'.format(float(latitude), float(longitude))
+        return result
+
 
     latitude = loc.get('latitude')
     longitude = loc.get('longitude')
     if latitude and longitude:
-        return "{:.2f}, {:.2f}".format(float(latitude), float(longitude))
+        return '<span class="p-latitude">{:.2f}</span>, <span class="p-longitude">{:.2f}</span>'.format(float(latitude), float(longitude))
 
     return "Unknown Location"
 
@@ -601,6 +609,8 @@ def syndication_icon(url):
         return Markup(fmt.format('fa-flickr'))
     if util.INDIENEWS_RE.match(url):
         return Markup(fmt.format('fa-newspaper-o'))
+    if util.GOODREADS_RE.match(url):
+        return Markup(fmt.format('fa-book'))
     return Markup(fmt.format('fa-paper-plane'))
 
 

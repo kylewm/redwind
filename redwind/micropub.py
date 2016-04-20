@@ -194,6 +194,7 @@ def micropub_endpoint():
     venue = request.form.get('venue')
 
     syndicate_to = request.form.getlist('syndicate-to[]')
+
     syndication = request.form.getlist('syndication[]')
     if syndication:
         syndication = '\n'.join(syndication)

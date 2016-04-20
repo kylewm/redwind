@@ -24,8 +24,8 @@
     }
 
     function loadLeaflet(cb) {
-        var leafletJs = '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js';
-        var leafletCss = '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css';
+        var leafletJs = 'http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js';
+        var leafletCss = 'http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css';
         var complete = {};
         loadJsFile(leafletJs, function() {complete.js = true; if (complete.css) { cb(); }});
         loadCssFile(leafletCss, function() {complete.css = true; if (complete.js) { cb(); }});

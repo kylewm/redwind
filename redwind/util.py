@@ -40,6 +40,7 @@ PEOPLE_RE = re.compile(r"\[\[([\w ]+)(?:\|([\w\-'. ]+))?\]\]")
 RELATIVE_PATH_RE = re.compile('\[([^\]]*)\]\(([^/)]+)\)')
 INDIENEWS_RE = re.compile(r'https?://news.indiewebcamp.com/(.*)')
 FLICKR_RE = re.compile(r'https?://(?:www\.)?flickr\.com/photos/([@\w\-]+)/(\d+)/?')
+GOODREADS_RE = re.compile(r'https?://(?:www\.)?goodreads\.com/(.*)')
 
 HASHTAG_RE = re.compile('(?<![\w&])#(\w\w+)', re.I)
 AT_USERNAME_RE = re.compile(r"""(?<![\w&])@(\w+)(?=($|[\s,:;.?!'")&-]))""", re.I)
