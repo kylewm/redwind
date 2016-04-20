@@ -28,6 +28,8 @@ def reverse_geocode_venue(venue, args):
 def do_reverse_geocode_post(postid, app_config):
     with async_app_context(app_config):
         post = Post.load_by_id(postid)
+        if not post:
+            return
         if post.location and 'latitude' in post.location \
            and 'longitude' in post.location:
             adr = do_reverse_geocode(post.location['latitude'],

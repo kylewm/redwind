@@ -30,7 +30,8 @@ def construct_url(url, size=None):
         h = hmac.new(current_app.config['PILBOX_KEY'].encode(),
                      querystring.encode(), hashlib.sha1)
         querystring += '&sig=' + h.hexdigest()
-    return current_app.config['PILBOX_URL'] + '?' + querystring
+        return current_app.config['PILBOX_URL'] + '?' + querystring
+    return url
 
 
 @imageproxy.app_template_filter('imageproxy')

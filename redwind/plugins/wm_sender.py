@@ -59,12 +59,13 @@ def send_webmentions_on_comment(post):
         return False, "Exception while sending webmention: {}"\
             .format(e)
 
-        
+
 def do_send_webmentions(post_id, app_config):
     with async_app_context(app_config):
         current_app.logger.debug("sending mentions for {}".format(post_id))
         post = Post.load_by_id(post_id)
-        return handle_new_or_edit(post)
+        if post:
+            return handle_new_or_edit(post)
 
 
 @wm_sender.route('/send_webmentions', methods=['GET'])
