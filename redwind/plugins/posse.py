@@ -7,6 +7,7 @@ import mf2py
 import mf2util
 import requests
 
+
 from redwind import hooks
 from redwind import util
 from redwind.models import get_settings, Post, PosseTarget
@@ -99,11 +100,10 @@ def delete():
 
 
 def syndicate(post, args):
-    for target_name in args.getlist('syndicate-to'):
-        if target_name.startswith('posse:'):
-            target_id = target_name[len('posse:'):]
-            get_queue().enqueue(do_syndicate, post.id, target_id,
-                                current_app.config)
+    syndto = args.getlist('syndicate-to')
+    for target in PosseTarget.query.filter(PosseTarget.me.in_(syndto)):
+        get_queue().enqueue(do_syndicate, post.id, target.id,
+                            current_app.config)
 
 
 def do_syndicate(post_id, target_id, app_config):
@@ -155,8 +155,9 @@ def do_syndicate(post_id, target_id, app_config):
                 categories += person.social
         data['category[]'] = categories
 
-        resp = requests.post(target.micropub_endpoint,
+        resp = requests.post(target.micropub_endpoint, 
                              data=util.filter_empty_keys(data), files=files)
         resp.raise_for_status()
 
         post.add_syndication_url(resp.headers['Location'])
+        db.session.commit()

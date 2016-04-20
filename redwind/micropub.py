@@ -234,7 +234,7 @@ def micropub_endpoint():
         'repost_of': repost_of,
         'bookmark_of': bookmark,
         'photo': photo_file or photo_url,
-        'syndicate-to': [SYNDICATION_TARGETS.get(to) for to in syndicate_to],
+        'syndicate-to': syndicate_to,
         'hidden': 'true' if like_of or bookmark else 'false',
     })
     with current_app.test_request_context(
