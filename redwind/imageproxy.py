@@ -34,8 +34,8 @@ def construct_url(url, size=None, external=False):
         proxy_url = urllib.parse.urljoin(get_settings().site_url, proxy_url)
     return proxy_url
 
+
 @imageproxy.app_template_filter('imageproxy')
 def imageproxy_filter(src, side=None, external=False):
     return escape(
         construct_url(src, side and str(side), external))
-
