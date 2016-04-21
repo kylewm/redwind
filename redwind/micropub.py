@@ -120,20 +120,22 @@ def micropub_endpoint():
             current_app.logger.debug('returning syndication targets')
 
             if 'application/json' in accept_header:
-                return jsonify(util.trim_nulls([{
-                    'uid': t.uid,
-                    'name': t.name,
-                    'user': {
-                        'name': t.user_name,
-                        'url': t.user_url,
-                        'photo': t.user_photo,
-                    },
-                    'service': {
-                        'name': t.service_name,
-                        'url': t.service_url,
-                        'photo': t.service_photo,
-                    },
-                } for t in user.posse_targets]))
+                return jsonify({
+                    'syndicate-to': util.trim_nulls([{
+                        'uid': t.uid,
+                        'name': t.name,
+                        'user': {
+                            'name': t.user_name,
+                            'url': t.user_url,
+                            'photo': t.user_photo,
+                        },
+                        'service': {
+                            'name': t.service_name,
+                            'url': t.service_url,
+                            'photo': t.service_photo,
+                        },
+                    } for t in user.posse_targets])
+                })
 
             else:
                 response = make_response(urllib.parse.urlencode([
