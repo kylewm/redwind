@@ -105,7 +105,7 @@ def delete():
 
 def syndicate(post, args):
     syndto = args.getlist('syndicate-to')
-    for target in PosseTarget.query.filter(PosseTarget.me.in_(syndto)):
+    for target in PosseTarget.query.filter(PosseTarget.uid.in_(syndto)):
         get_queue().enqueue(do_syndicate, post.id, target.id,
                             current_app.config)
 
