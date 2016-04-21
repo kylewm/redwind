@@ -1,5 +1,3 @@
-**Red Wind is not being actively maintained**
-
 [![Build Status](https://travis-ci.org/kylewm/redwind.svg?branch=master)](https://travis-ci.org/kylewm/redwind)
 [![Coverage Status](https://img.shields.io/coveralls/kylewm/redwind.svg)](https://coveralls.io/r/kylewm/redwind?branch=master)
 
@@ -8,7 +6,7 @@
 Red Wind is a (micro)-blogging engine used on my personal website,
 kylewm.com. I have been using it to screw around with
 [IndieWeb](http://indiewebcamp.com) ideas like POSSE (Twitter and
-Facebook), microformats, and webmentions (sending and receiving).
+Facebook), microformats, webmentions, and micropub.
 
 # IndieWeb Support
 

@@ -17,6 +17,7 @@ class FakeResponse:
         self.content = text and bytes(text, 'utf8')
         self.url = url
         self.headers = {'content-type': 'text/html'}
+        self.links = {}
 
     def __repr__(self):
         return 'FakeResponse(status={}, text={}, url={})'.format(
