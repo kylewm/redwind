@@ -182,28 +182,27 @@ def find_webmention_endpoint(target_url):
     response = get_response(target_url)
     current_app.logger.debug(
         'looking for webmention endpoint in headers and body')
-    endpoint = (find_webmention_endpoint_in_headers(response.headers)
+    endpoint = (find_webmention_endpoint_in_http_links(response.links)
                 or find_webmention_endpoint_in_html(response.text))
     current_app.logger.debug(
         'webmention endpoint %s %s', response.url, endpoint)
-    return endpoint and urllib.parse.urljoin(response.url, endpoint)
+    if endpoint is not None:
+        return urllib.parse.urljoin(response.url, endpoint)
 
 
-def find_webmention_endpoint_in_headers(headers):
-    if 'link' in headers:
-        m = re.search('<(https?://[^>]+)>; rel="webmention"',
-                      headers.get('link')) or \
-            re.search('<(https?://[^>]+)>; rel="http://webmention.org/?"',
-                      headers.get('link'))
-        if m:
-            return m.group(1)
+def find_webmention_endpoint_in_http_links(links):
+    for rel, val in links.items():
+        rels = rel.split()
+        if 'webmention' in rels or 'http://webmention.org/' in rels:
+            return val.get('url')
 
 
 def find_webmention_endpoint_in_html(body):
     soup = BeautifulSoup(body)
-    link = (soup.find('link', attrs={'rel': 'webmention'})
-            or soup.find('link', attrs={'rel': 'http://webmention.org/'})
-            or soup.find('a', attrs={'rel': 'webmention'}))
+    link = soup.find(['a', 'link'], attrs={
+        'href': True,
+        'rel': ['webmention', 'http://webmention.org/'],
+    })
     return link and link.get('href')
 
 
