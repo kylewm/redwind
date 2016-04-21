@@ -2,16 +2,16 @@
 {% macro short_context(post, context, mf2class, heading) %}
   <div class="short-context {{mf2class}} h-cite">
     {{ heading }}
-    <a class="u-url" href="{{context.permalink}}">
+    <a class="u-url" href="{{context.url}}">
       {% if context.author_name %}
         <span class="p-author h-card">{{context.author_name}}</span>'s
       {% endif %}
       {% if context.title %}
         {{ context.title }}
-      {% elif 'twitter.com' in context.permalink %}
+      {% elif 'twitter.com' in context.url %}
         tweet
       {% else %}
-        post on {{ context.permalink | domain_from_url }}
+        post on {{ context.url | domain_from_url }}
       {% endif %}
     </a>
   </div>
@@ -35,7 +35,7 @@
         </div>
       {% endif %}
       <div class="meta">
-        on <a class="u-url" href="{{ context.permalink }}">{{ context.permalink | domain_from_url }}</a>
+        on <a class="u-url" href="{{ context.url }}">{{ context.url | domain_from_url }}</a>
         <time class="dt-published" datetime="{{ context.published | isotime }}"></time>
       </div>
     </div> <!-- .container -->
