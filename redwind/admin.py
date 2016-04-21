@@ -201,7 +201,7 @@ def save_post(post):
 
     if 'post_type' in request.form:
         post.post_type = request.form.get('post_type')
-            
+
     start_str = request.form.get('start')
     if start_str:
         start = mf2util.parse_dt(start_str)
@@ -276,7 +276,7 @@ def save_post(post):
     contexts.fetch_contexts(post)
 
     if 'item-name' in request.form:
-        post.item = util.filter_empty_keys({
+        post.item = util.trim_nulls({
             'name': request.form.get('item-name'),
             'author': request.form.get('item-author'),
             'photo': request.form.get('item-photo'),

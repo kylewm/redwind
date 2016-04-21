@@ -214,7 +214,7 @@ def handle_new_or_edit(post, message, link, name, picture,
                 album_id if album_id else 'me'),
             data=post_args)
     else:
-        post_args.update(util.filter_empty_keys({
+        post_args.update(util.trim_nulls({
             'link': link,
             'name': name,
             'picture': picture,

@@ -12,17 +12,14 @@
 
   <form method="POST" action="{{ url_for('.edit') }}">
     <input type="hidden" name="target_id" value="{{ target.id }}" />
+
     <div class="form-group">
-      <label>Me (URL)</label>
-      <input class="form-control" type="url" name="me" value="{{target.me}}"/>
+      <label>UID</label>
+      <input class="form-control" type="url" name="uid" value="{{target.uid}}"/>
     </div>
     <div class="form-group">
       <label>Name</label> This wil be the label applied to this syndication target.
       <input class="form-control" type="text" name="name" value="{{ target.name }}" />
-    </div>
-    <div class="form-group">
-      <label>Photo</label>
-      <input class="form-control" type="text" name="name" value="{{ target.photo }}" />
     </div>
     <div class="form-group">
       <label>POSSE Style</label> The style influences which fields and content we send to which services.
@@ -34,6 +31,35 @@
         {% endfor %}
       </select>
     </div>
+
+    <h3>User</h3>
+    <div class="form-group">
+      <label>User Name</label>
+      <input class="form-control" type="text" name="user_name" value="{{ target.user_name or '' }}" />
+    </div>
+    <div class="form-group">
+      <label>User URL</label>
+      <input class="form-control" type="text" name="user_url" value="{{ target.user_url or '' }}" />
+    </div>
+    <div class="form-group">
+      <label>User Photo</label>
+      <input class="form-control" type="text" name="user_photo" value="{{ target.user_photo or '' }}" />
+    </div>
+
+    <h3>Service</h3>
+    <div class="form-group">
+      <label>Service Name</label>
+      <input class="form-control" type="text" name="service_name" value="{{ target.service_name or '' }}" />
+    </div>
+    <div class="form-group">
+      <label>Service URL</label>
+      <input class="form-control" type="text" name="service_url" value="{{ target.service_url or '' }}" />
+    </div>
+    <div class="form-group">
+      <label>Service Photo</label>
+      <input class="form-control" type="text" name="service_photo" value="{{ target.service_photo or '' }}" />
+    </div>
+
     <div class="form-group">
       <button class="btn btn-primary" type="submit">Update</button>
     </div>

@@ -13,13 +13,6 @@ from flask import current_app, redirect
 from flask.ext.login import login_user
 
 
-SYNDICATION_TARGETS = {
-    'https://twitter.com/kylewmahan': 'twitter',
-    'https://facebook.com/kyle.mahan': 'facebook',
-    'http://instagram.com/kylewmahan': 'instagram',
-    'https://kylewm.wordpress.com': 'wordpress',
-}
-
 micropub = Blueprint('micropub', __name__)
 
 
@@ -121,13 +114,32 @@ def micropub_endpoint():
     if request.method == 'GET':
         current_app.logger.debug('micropub GET request %s -> %s', request,
                                  request.args)
+        accept_header = request.headers.get('accept', '')
         q = request.args.get('q')
         if q == 'syndicate-to':
             current_app.logger.debug('returning syndication targets')
-            response = make_response(urllib.parse.urlencode([
-                ('syndicate-to[]', t.me) for t in user.posse_targets]))
-            response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-            return response
+
+            if 'application/json' in accept_header:
+                return jsonify(util.trim_nulls([{
+                    'uid': t.uid,
+                    'name': t.name,
+                    'user': {
+                        'name': t.user_name,
+                        'url': t.user_url,
+                        'photo': t.user_photo,
+                    },
+                    'service': {
+                        'name': t.service_name,
+                        'url': t.service_url,
+                        'photo': t.service_photo,
+                    },
+                } for t in user.posse_targets]))
+
+            else:
+                response = make_response(urllib.parse.urlencode([
+                    ('syndicate-to[]', t.uid) for t in user.posse_targets]))
+                response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                return response
 
         elif q in ('actions', 'json_actions'):
             current_app.logger.debug('returning action handlers')
@@ -140,7 +152,6 @@ def micropub_endpoint():
                 'favorite': like_url + '?url={url}',
                 'like': like_url + '?url={url}',
             }
-            accept_header = request.headers.get('accept', '')
             if q == 'json_actions' or 'application/json' in accept_header:
                 return jsonify(payload)
             else:
@@ -218,7 +229,7 @@ def micropub_endpoint():
                 'no post found with syndication %s', syndication)
 
     # translate from micropub's verbage.TODO unify
-    translated = util.filter_empty_keys({
+    translated = util.trim_nulls({
         'post_type': post_type,
         'published': request.form.get('published'),
         'start': request.form.get('start'),

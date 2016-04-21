@@ -141,9 +141,16 @@ class PosseTarget(db.Model):
     micropub_endpoint = db.Column(db.String(256))
     access_token = db.Column(db.String(1024))
     style = db.Column(db.String(32))
-    me = db.Column(db.String(256))
+
+    uid = db.Column(db.String(256))
     name = db.Column(db.String(256))
-    photo = db.Column(db.String(256))
+
+    user_name = db.Column(db.String(256))
+    user_url = db.Column(db.String(256))
+    user_photo = db.Column(db.String(256))
+    service_photo = db.Column(db.String(256))
+    service_url = db.Column(db.String(256))
+    service_name = db.Column(db.String(256))
 
 
 class Venue(db.Model):
@@ -362,11 +369,11 @@ class Post(db.Model):
     @property
     def rsvps_maybe(self):
         return [r for r in self.rsvps if r.rsvp == 'maybe']
-        
+
     @property
     def rsvps_no(self):
         return [r for r in self.rsvps if r.rsvp == 'no']
-        
+
     @property
     def references(self):
         return self._dedupe(m for m in self.mentions if m.reftype == 'reference')

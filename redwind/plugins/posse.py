@@ -56,18 +56,16 @@ def callback(info):
         flash('Micropub success! Authorized {}'.format(info.me))
 
     p = mf2py.parse(url=info.me)
-    hcard = mf2util.representative_hcard(p, source_url=info.me)
-    author = mf2util.parse_author(hcard)
 
     current_app.logger.debug('found author info %s', author)
 
     target = PosseTarget(
-        me=info.me,
-        name=author.get('name'),
-        photo=author.get('photo'),
+        uid=info.me,
+        name=info.me,
         style='microblog',
         micropub_endpoint=info.micropub_endpoint,
         access_token=info.access_token)
+
     current_user.posse_targets.append(target)
     db.session.commit()
     return redirect(url_for('.edit', target_id=target.id))
@@ -83,8 +81,14 @@ def edit():
 
     target_id = request.form.get('target_id')
     target = PosseTarget.query.get(target_id)
-    target.name = request.form.get('name')
-    target.style = request.form.get('style')
+
+    for prop in [
+            'name', 'style',
+            'user_name', 'user_url', 'user_photo',
+            'service_name', 'service_url', 'service_photo',
+    ]:
+        setattr(target, prop, request.form.get(prop))
+
     db.session.commit()
     return redirect(url_for('.edit', target_id=target_id))
 
@@ -155,8 +159,8 @@ def do_syndicate(post_id, target_id, app_config):
                 categories += person.social
         data['category[]'] = categories
 
-        resp = requests.post(target.micropub_endpoint, 
-                             data=util.filter_empty_keys(data), files=files)
+        resp = requests.post(target.micropub_endpoint,
+                             data=util.trim_nulls(data), files=files)
         resp.raise_for_status()
 
         post.add_syndication_url(resp.headers['Location'])

@@ -91,12 +91,12 @@ def normalize_tag(tag):
     return tag
 
 
-def filter_empty_keys(data):
+def trim_nulls(data):
     if isinstance(data, list):
-        return list(filter_empty_keys(v) for v in data if filter_empty_keys(v))
+        return list(trim_nulls(v) for v in data if trim_nulls(v))
     if isinstance(data, dict):
-        return dict((k, filter_empty_keys(v)) for k, v in data.items()
-                    if filter_empty_keys(v))
+        return dict((k, trim_nulls(v)) for k, v in data.items()
+                    if trim_nulls(v))
     return data
 
 
