@@ -57,8 +57,7 @@ def callback(info):
 
     p = mf2py.parse(url=info.me)
 
-    current_app.logger.debug('found author info %s', author)
-
+    current_app.logger.debug('found author info %s', info.me)
     target = PosseTarget(
         uid=info.me,
         name=info.me,
@@ -130,11 +129,11 @@ def do_syndicate(post_id, target_id, app_config):
             data['item[name]'] = data['item'] = item.get('name')
             data['item[author]'] = item.get('author')
             data['rating'] = post.rating
-            data['description'] = data['description[value]'] = post.content
+            data['description'] = data['description[markdown]'] = data['description[value]'] = post.content
             data['description[html]'] = post.content_html
         else:
             data['name'] = post.title
-            data['content'] = data['content[value]'] = post.content
+            data['content'] = data['content[markdown]'] = data['content[value]'] = post.content
             data['content[html]'] = post.content_html
 
         data['url'] = (post.shortlink if target.style == 'microblog'

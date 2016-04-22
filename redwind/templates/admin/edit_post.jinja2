@@ -25,7 +25,7 @@
       <div class="btn-group" data-toggle="buttons">
         {% for target in current_user.posse_targets %}
           <label class="btn btn-default">
-            <input name="syndicate-to" type="checkbox" value="{{target.me}}" />
+            <input name="syndicate-to" type="checkbox" value="{{target.uid}}" />
             {{ target.name }}
           </label>
         {% endfor %}

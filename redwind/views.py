@@ -611,6 +611,8 @@ def syndication_icon(url):
         return Markup(fmt.format('fa-newspaper-o'))
     if util.GOODREADS_RE.match(url):
         return Markup(fmt.format('fa-book'))
+    if util.GITHUB_RE.match(url):
+        return Markup(fmt.format('fa-github'))
     return Markup(fmt.format('fa-paper-plane'))
 
 
