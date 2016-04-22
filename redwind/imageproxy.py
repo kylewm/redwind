@@ -1,5 +1,4 @@
 from redwind import util
-from PIL import Image, ExifTags
 from flask import request, abort, send_file, url_for, make_response, \
     Blueprint, escape, current_app
 from requests.exceptions import HTTPError
