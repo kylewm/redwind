@@ -194,7 +194,7 @@ def interpret_mention(source, target):
             'received domain-level webmention from %s', source)
         target_post = None
         target_urls = (target,)
-        
+
     else:
         # confirm that target is a valid link to a post
         is_person_mention = False
@@ -349,6 +349,16 @@ def find_target_post(target_url):
 
 
 def create_mentions(post, url, source_response, is_person_mention):
+    # utility function for mf2util
+    cached_mf2 = {}
+
+    def fetch_mf2(url):
+        if url in cached_mf2:
+            return cached_mf2[url]
+        p = mf2py.parse(url=url)
+        cached_mf2[url] = p
+        return p
+
     target_urls = []
     if post:
         base_target_urls = [post.permalink]
@@ -360,10 +370,13 @@ def create_mentions(post, url, source_response, is_person_mention):
                                else base_url.replace('http://', 'https://'))
 
     blob = mf2py.parse(doc=source_response.text, url=url)
+    cached_mf2[url] = blob
+
     if not blob:
         current_app.logger.debug('create_mention: no mf2 in source_response')
         return
-    entry = mf2util.interpret_comment(blob, url, target_urls)
+    entry = mf2util.interpret_comment(
+        blob, url, target_urls, fetch_mf2_func=fetch_mf2)
     current_app.logger.debug('interpreted comment: %r', entry)
 
     if not entry:
@@ -395,7 +408,7 @@ def create_mentions(post, url, source_response, is_person_mention):
         # update an existing mention
         mention = next((m for m in post.mentions if m.url == url), None)\
                   if post else None
-        
+
         # or create a new one
         if not mention:
             mention = Mention()
