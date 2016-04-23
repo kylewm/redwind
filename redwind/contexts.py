@@ -72,10 +72,22 @@ def extract_ogp_context(context, doc, url):
 def extract_mf2_context(context, doc, url):
     """ Gets Microformats2 data from the given document
     """
-    blob = mf2py.Parser(doc=doc, url=url).to_dict()
+    cached_mf2 = {}
+
+    # used by authorship algorithm
+    def fetch_mf2(url):
+        if url in cached_mf2:
+            return cached_mf2[url]
+        p = mf2py.parse(url=url)
+        cached_mf2[url] = p
+        return p
+
+    blob = mf2py.parse(doc=doc, url=url)
+    cached_mf2[url] = blob
+
     if blob:
         current_app.logger.debug('parsed successfully by mf2py: %s', url)
-        entry = mf2util.interpret(blob, url)
+        entry = mf2util.interpret(blob, url, fetch_mf2_func=fetch_mf2)
         if entry:
             current_app.logger.debug(
                 'parsed successfully by mf2util: %s', url)
