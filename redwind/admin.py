@@ -88,6 +88,9 @@ def get_top_tags(n=10):
 @admin.route('/new/<type>')
 @admin.route('/new', defaults={'type': 'note'})
 def new_post(type):
+    if type not in util.POST_TYPES:
+        abort(404)
+
     post = Post(type)
     post.published = post.updated = datetime.datetime.utcnow()
     post.content = ''
