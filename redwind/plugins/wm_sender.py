@@ -1,5 +1,6 @@
 from redwind import hooks
 from redwind.models import Post
+from redwind.extensions import db
 from redwind.tasks import get_queue, async_app_context
 from bs4 import BeautifulSoup
 import re
@@ -116,11 +117,22 @@ get_response.cached_responses = {}
 
 def handle_new_or_edit(post):
     target_urls = get_target_urls(post)
+
+    # add any previously sent targets (maybe they have been removed)
+    for target in post.sent_webmentions:
+        if target not in target_urls:
+            target.append(target_urls)
+
     current_app.logger.debug(
         'Sending webmentions to these urls {}'.format(" ; ".join(target_urls)))
+
     results = []
     for target_url in target_urls:
         results.append(send_mention(post, target_url))
+
+    # remember the successful mentions for next time
+    post.sent_webmentions = [r['target_url'] for r in results if r['success']]
+    db.session.commit()
     return results
 
 

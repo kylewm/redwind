@@ -216,6 +216,7 @@ class Post(db.Model):
     slug = db.Column(db.String(256))
 
     syndication = db.Column(JsonType)
+    sent_webmentions = db.Column(JsonType)
 
     location = db.Column(JsonType)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'))
@@ -266,6 +267,7 @@ class Post(db.Model):
         self.slug = None
         self.location = None
         self.syndication = []
+        self.sent_webmentions = []
         self.audience = []  # public
         self.mention_urls = []
         self.content = None
