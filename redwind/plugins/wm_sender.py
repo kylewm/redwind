@@ -117,11 +117,8 @@ get_response.cached_responses = {}
 
 def handle_new_or_edit(post):
     target_urls = get_target_urls(post)
-
     # add any previously sent targets (maybe they have been removed)
-    for target in post.sent_webmentions:
-        if target not in target_urls:
-            target.append(target_urls)
+    target_urls += [t for t in post.sent_webmentions if t not in target_urls]
 
     current_app.logger.debug(
         'Sending webmentions to these urls {}'.format(" ; ".join(target_urls)))
@@ -131,7 +128,7 @@ def handle_new_or_edit(post):
         results.append(send_mention(post, target_url))
 
     # remember the successful mentions for next time
-    post.sent_webmentions = [r['target_url'] for r in results if r['success']]
+    post.sent_webmentions = [r['target'] for r in results if r['success']]
     db.session.commit()
     return results
 
