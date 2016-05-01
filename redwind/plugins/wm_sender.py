@@ -118,7 +118,7 @@ get_response.cached_responses = {}
 def handle_new_or_edit(post):
     target_urls = get_target_urls(post)
     # add any previously sent targets (maybe they have been removed)
-    target_urls += [t for t in post.sent_webmentions if t not in target_urls]
+    target_urls += [t for t in (post.sent_webmentions or []) if t not in target_urls]
 
     current_app.logger.debug(
         'Sending webmentions to these urls {}'.format(" ; ".join(target_urls)))

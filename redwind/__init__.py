@@ -1,6 +1,6 @@
 from flask import Flask
 from logging import StreamHandler, Formatter
-from logging.handlers import SMTPHandler
+from logging.handlers import SMTPHandler, RotatingFileHandler
 import logging
 import importlib
 
@@ -17,7 +17,7 @@ Message:
 '''
 
 
-def create_app(config_or_path='../redwind.cfg'):
+def create_app(config_or_path='../redwind.cfg', is_queue=False):
     from redwind import extensions
     from redwind.views import views
     from redwind.admin import admin
@@ -51,7 +51,9 @@ def create_app(config_or_path='../redwind.cfg'):
         app.logger.setLevel(logging.ERROR)
     else:
         app.logger.setLevel(logging.DEBUG)
-        stream_handler = StreamHandler()
+        stream_handler = RotatingFileHandler(
+            app.config.get('QUEUE_LOG' if is_queue else 'APP_LOG'),
+            maxBytes=10000, backupCount=1)
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         stream_handler.setFormatter(formatter)
