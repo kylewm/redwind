@@ -10,6 +10,7 @@ from werkzeug.exceptions import NotFound
 import datetime
 import mf2py
 import mf2util
+import re
 import requests
 import urllib.parse
 import urllib.request
@@ -237,6 +238,11 @@ def interpret_mention(source, target):
             post=target_post,
             error="Source is very large. Length={}".format(source_length))
 
+    status = find_http_equiv_status(source, source_response)
+    if status and status == 410:
+        current_app.logger.debug("Webmention indicates original was deleted based on http-equiv=status header")
+        return ProcessResult(post=target_post, delete=True)
+
     link_to_target = find_link_to_target(source, source_response, target_urls)
     if not link_to_target:
         current_app.logger.warn(
@@ -257,6 +263,20 @@ def interpret_mention(source, target):
     for mention in mentions:
         result.add_mention(mention, create=not mention.id)
     return result
+
+
+def find_http_equiv_status(source, source_response):
+    soup = BeautifulSoup(source_response.text)
+    meta = soup.find('meta', {
+        'http-equiv': re.compile('status', re.IGNORECASE)})
+    if meta:
+        content = meta.get('content')
+        if content:
+            try:
+                return int(content.split(' ', 1)[0])
+            except:
+                current_app.logger.warn(
+                    'Could not parse http-equiv=status content: %s', content)
 
 
 def find_link_to_target(source_url, source_response, target_urls):
