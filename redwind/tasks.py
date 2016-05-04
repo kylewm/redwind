@@ -25,6 +25,6 @@ def create_queue():
 @contextmanager
 def async_app_context(app_config):
     from redwind import create_app
-    app = create_app(app_config)
+    app = create_app(app_config, is_queue=True)
     with app.app_context():
         yield
