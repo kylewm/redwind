@@ -27,7 +27,7 @@ def send_webmentions_on_save(post, args):
 
     try:
         current_app.logger.debug("queueing webmentions for {}".format(post.id))
-        get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
+        get_queue().enqueue(do_send_webmentions, post.id, current_app.config['CONFIG_FILE'])
         return True, 'Success'
 
     except Exception as e:
@@ -39,7 +39,7 @@ def send_webmentions_on_save(post, args):
 def send_webmentions_on_delete(post, args):
     try:
         current_app.logger.debug("queueing deletion webmentions for %s", post.id)
-        get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
+        get_queue().enqueue(do_send_webmentions, post.id, current_app.config['CONFIG_FILE'])
         return True, 'Success'
 
     except Exception as e:
@@ -52,7 +52,7 @@ def send_webmentions_on_comment(post):
     try:
         if post:
             current_app.logger.debug("queueing webmentions for {}".format(post.id))
-            get_queue().enqueue(do_send_webmentions, post.id, current_app.config)
+            get_queue().enqueue(do_send_webmentions, post.id, current_app.config['CONFIG_FILE'])
         return True, 'Success'
 
     except Exception as e:
@@ -98,6 +98,7 @@ def get_target_urls(post):
     for link in soup.find_all('a'):
         link_target = link.get('href')
         if link_target:
+            link_target = urllib.parse.urljoin(post.permalink, link_target)
             current_app.logger.debug(
                 'found link {} with href {}'.format(link, link_target))
             target_urls.append(link_target.strip())

@@ -118,7 +118,7 @@ def send_to_instagram(post, args):
 
         current_app.logger.debug(
             "queueing post to instagram {}".format(post.id))
-        get_queue().enqueue(do_send_to_instagram, post.id, current_app.config)
+        get_queue().enqueue(do_send_to_instagram, post.id, current_app.config['CONFIG_FILE'])
         return True, 'Success'
 
 

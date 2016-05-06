@@ -1,4 +1,4 @@
-from flask import url_for, current_app
+from flask import url_for, current_app, Config
 from redwind import hooks
 from redwind.tasks import get_queue
 import requests
@@ -15,15 +15,14 @@ def send_notifications(post, args):
             url_for('views.index', _external=True),
             url_for('views.index', feed='atom', _external=True),
         ]
-        get_queue().enqueue(publish, urls, current_app.config)
+        get_queue().enqueue(publish, urls, current_app.config['PUSH_HUB'])
 
 
-def publish(urls, app_config):
-    publish_url = app_config.get('PUSH_HUB')
-    if publish_url:
+def publish(urls, push_hub):
+    if push_hub:
         print('sending PuSH notification to', urls)
         data = {'hub.mode': 'publish', 'hub.url': urls}
-        response = requests.post(publish_url, data)
+        response = requests.post(push_hub, data)
         if response.status_code == 204:
             print('successfully sent PuSH notification.',
                   response, response.text)

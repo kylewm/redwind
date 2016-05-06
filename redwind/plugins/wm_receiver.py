@@ -65,7 +65,7 @@ def receive_webmention():
         "Webmention from %s to %s received", source, target)
 
     job = get_queue().enqueue(
-        do_process_webmention, source, target, callback, current_app.config)
+        do_process_webmention, source, target, callback, current_app.config['CONFIG_FILE'])
     status_url = url_for('.webmention_status', key=job.id, _external=True)
 
     return make_response(

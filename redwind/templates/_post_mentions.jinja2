@@ -53,7 +53,8 @@
               {% endfor %}
             </div>
           {% endif %}
-          <time class="dt-published" datetime="{{ mention.published | isotime }}"></time>
+
+          <time class="dt-published" datetime="{{ mention.published | isotime }}"><!-- {{ mention.published | human_time }} --></time>
         </div> <!-- .meta -->
       </div> <!-- .container -->
     </div>

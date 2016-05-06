@@ -105,14 +105,18 @@ def delete():
 def syndicate(post, args):
     syndto = args.getlist('syndicate-to')
     for target in PosseTarget.query.filter(PosseTarget.uid.in_(syndto)):
+        current_app.logger.debug('enqueuing task to posse to %s', target.uid)
         get_queue().enqueue(do_syndicate, post.id, target.id,
-                            current_app.config)
+                            current_app.config['CONFIG_FILE'])
 
 
 def do_syndicate(post_id, target_id, app_config):
     with async_app_context(app_config):
         post = Post.query.get(post_id)
         target = PosseTarget.query.get(target_id)
+
+        current_app.logger.debug(
+            'posseing %s to target %s', post.path, target.uid)
 
         data = {'access_token': target.access_token}
         files = None
@@ -142,10 +146,10 @@ def do_syndicate(post_id, target_id, app_config):
         if post.post_type == 'photo' and post.attachments:
             if len(post.attachments) == 1:
                 a = post.attachments[0]
-                files = {'photo': (a.filename, open(a.disk_path(), 'rb'),
+                files = {'photo': (a.filename, open(a.disk_path, 'rb'),
                                    a.mimetype)}
             else:
-                files = [('photo[]', (a.filename, open(a.disk_path(), 'rb'),
+                files = [('photo[]', (a.filename, open(a.disk_path, 'rb'),
                                       a.mimetype)) for a in post.attachments]
 
         data['location'] = post.get_location_as_geo_uri()
@@ -161,6 +165,9 @@ def do_syndicate(post_id, target_id, app_config):
         resp = requests.post(target.micropub_endpoint,
                              data=util.trim_nulls(data), files=files)
         resp.raise_for_status()
+        current_app.logger.debug(
+            'received response from posse endpoint: code=%d, headers=%s, body=%s',
+            resp.status_code, resp.headers, resp.text)
 
         post.add_syndication_url(resp.headers['Location'])
         db.session.commit()

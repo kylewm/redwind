@@ -84,7 +84,7 @@ def authorize_wordpress():
 
 def send_to_wordpress(post, args):
     if 'wordpress' in args.getlist('syndicate-to'):
-        get_queue().enqueue(do_send_to_wordpress, post.id, current_app.config)
+        get_queue().enqueue(do_send_to_wordpress, post.id, current_app.config['CONFIG_FILE'])
 
 
 def do_send_to_wordpress(post_id, app_config):

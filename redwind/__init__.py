@@ -17,7 +17,7 @@ Message:
 '''
 
 
-def create_app(config_or_path='../redwind.cfg', is_queue=False):
+def create_app(config_file='../redwind.cfg', is_queue=False):
     from redwind import extensions
     from redwind.views import views
     from redwind.admin import admin
@@ -26,10 +26,8 @@ def create_app(config_or_path='../redwind.cfg', is_queue=False):
     from redwind.imageproxy import imageproxy
 
     app = Flask(__name__)
-    if isinstance(config_or_path, dict):
-        app.config.update(config_or_path)
-    else:
-        app.config.from_pyfile(config_or_path)
+    app.config.from_pyfile(config_file)
+    app.config['CONFIG_FILE'] = config_file
 
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
@@ -51,9 +49,8 @@ def create_app(config_or_path='../redwind.cfg', is_queue=False):
         app.logger.setLevel(logging.ERROR)
     else:
         app.logger.setLevel(logging.DEBUG)
-        stream_handler = RotatingFileHandler(
-            app.config.get('QUEUE_LOG' if is_queue else 'APP_LOG'),
-            maxBytes=10000, backupCount=1)
+        stream_handler = StreamHandler()
+        # stream_handler = RotatingFileHandler(app.config.get('QUEUE_LOG' if is_queue else 'APP_LOG'), maxBytes=10000, backupCount=1)
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         stream_handler.setFormatter(formatter)

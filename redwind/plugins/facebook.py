@@ -68,7 +68,7 @@ def send_to_facebook(post, args):
         try:
             current_app.logger.debug('auto-posting to Facebook %s', post.id)
             get_queue().enqueue(
-                do_send_to_facebook, post.id, current_app.config)
+                do_send_to_facebook, post.id, current_app.config['CONFIG_FILE'])
             return True, 'Success'
 
         except Exception as e:

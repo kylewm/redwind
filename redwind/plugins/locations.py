@@ -18,11 +18,11 @@ def register(app):
 
 
 def reverse_geocode(post, args):
-    get_queue().enqueue(do_reverse_geocode_post, post.id, current_app.config)
+    get_queue().enqueue(do_reverse_geocode_post, post.id, current_app.config['CONFIG_FILE'])
 
 
 def reverse_geocode_venue(venue, args):
-    get_queue().enqueue(do_reverse_geocode_venue, venue.id, current_app.config)
+    get_queue().enqueue(do_reverse_geocode_venue, venue.id, current_app.config['CONFIG_FILE'])
 
 
 def do_reverse_geocode_post(postid, app_config):
