@@ -233,6 +233,9 @@ class Post(db.Model):
     item = db.Column(JsonType)
     rating = db.Column(db.Integer)
 
+    # podcasts
+    enclosure = db.Column(JsonType)
+
     @classmethod
     def load_by_id(cls, dbid):
         return cls.query.get(dbid)
@@ -274,6 +277,7 @@ class Post(db.Model):
         self.content_html = None
         self.rating = None
         self.item = None
+        self.enclosure = None
 
     def get_image_path(self):
         site_url = get_settings().site_url or 'http://localhost'

@@ -5,6 +5,7 @@ from redwind import contexts
 from redwind import hooks
 from redwind import maps
 from redwind import util
+from redwind import views
 from redwind.extensions import db
 from redwind.models import Post, Attachment, Tag, Contact, Mention, Nick
 from redwind.models import Venue, Setting, User, Credential, get_settings
@@ -88,7 +89,7 @@ def get_top_tags(n=10):
 @admin.route('/new/<type>')
 @admin.route('/new', defaults={'type': 'note'})
 def new_post(type):
-    if type not in util.POST_TYPES:
+    if type not in (t[0] for t in views.POST_TYPES):
         abort(404)
 
     post = Post(type)
@@ -287,6 +288,17 @@ def save_post(post):
     if 'rating' in request.form:
         rating = request.form.get('rating')
         post.rating = int(rating) if rating else None
+
+    if post.post_type == 'podcast' and 'audio_file' in request.form:
+        post.enclosure = {}
+        audio_file = request.form.get('audio_file')
+        post.enclosure['url'] = audio_file
+        r = requests.head(audio_file, allow_redirects=True, headers={
+            'User-Agent': util.USER_AGENT,
+        })
+        if r.status_code // 100 == 2:
+            post.enclosure['type'] = r.headers.get('Content-Type')
+            post.enclosure['length'] = r.headers.get('Content-Length')
 
     syndication = request.form.get('syndication')
     if syndication is not None:

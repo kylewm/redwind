@@ -23,8 +23,7 @@
       {% if current_user.is_authenticated() %}
         <ul>
           <li>new</li>
-          {% for type in 'note', 'reply', 'like', 'share',
-            'photo', 'checkin', 'bookmark', 'article', 'event', 'review': %}
+          {% for type in post_types: %}
 
             <li><a href="{{ url_for('admin.new_post', type=type) }}"
                    >{{type}}</a></li>

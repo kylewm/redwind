@@ -7,7 +7,7 @@
 
     <title>{{ settings.site_title }}{% if title %}: {{ title | truncate(50) }}{% endif %}</title>
     <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="{{url_for('static', filename='tag-it/css/jquery.tagit.css')}}"/>
     <link rel="stylesheet" href="{{url_for('static', filename='tag-it/css/tagit.ui-zendesk.css')}}"/>
 
@@ -56,6 +56,7 @@
                 <li><a href="{{ url_for('admin.new_post', type='bookmark') }}" id="new-bookmark"><i class=" glyphicon glyphicon-bookmark"></i> Bookmark</a></li>
                 <li><a href="{{ url_for('admin.new_post', type='checkin') }}" id="new-checkin"><i class="glyphicon glyphicon-map-marker"></i> Check-in</a></li>
                 <li><a href="{{ url_for('admin.new_post', type='event') }}" id="new-event"><i class="glyphicon glyphicon-calendar"></i> Event</a></li>
+                <li><a href="{{ url_for('admin.new_post', type='podcast') }}" id="new-podcast"><i class="glyphicon glyphicon-headphones"></i> Podcast</a></li>
               </ul>
             </li>
 

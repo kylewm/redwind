@@ -49,11 +49,7 @@ AT_USERNAME_RE = re.compile(r"""(?<![\w&])@(\w+)(?=($|[\s,:;.?!'")&-]))""", re.I
 BLACKLIST_TAGS = ('a', 'script', 'pre', 'code', 'embed', 'object',
                   'audio', 'video')
 
-POST_TYPES = ('note', 'reply', 'like', 'share', 'photo', 'checkin', 'bookmark',
-              'article', 'event', 'review')
-
 USER_AGENT = 'Red Wind (https://github.com/kylewm/redwind)'
-
 
 
 def isoparse(s):

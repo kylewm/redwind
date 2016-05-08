@@ -31,6 +31,7 @@ POST_TYPES = [
     ('bookmark', 'bookmarks', 'All Bookmarks'),
     ('event', 'events', 'All Events'),
     ('review', 'reviews', 'All Reviews'),
+    ('podcast', 'podcasts', 'All Podcasts'),
 ]
 
 POST_TYPE_RULE = '<any({}):post_type>'.format(
@@ -49,7 +50,8 @@ views = Blueprint('views', __name__)
 @views.context_processor
 def inject_settings_variable():
     return {
-        'settings': get_settings()
+        'settings': get_settings(),
+        'post_types': [t[0] for t in POST_TYPES],
     }
 
 
@@ -159,14 +161,14 @@ def render_posts(title, posts, older, events=None, template='posts.jinja2'):
     return rv
 
 
-def render_posts_atom(title, feed_id, posts):
+def render_posts_xml(title, feed_id, posts, template='posts.atom.jinja2',
+                     mimetype='application/atom+xml'):
     rv = make_response(
-        render_template('posts.atom', title=title, feed_id=feed_id,
-                        posts=posts))
-    rv.headers['Content-Type'] = 'application/atom+xml; charset=utf-8'
+        render_template(template, title=title, feed_id=feed_id, posts=posts))
+    rv.headers['Content-Type'] = mimetype + '; charset=utf-8'
     last_modified = max((p.updated for p in posts if p.updated), default=None)
     if last_modified:
-        #rv.headers['Last-Modified'] = http_date(last_modified)
+        # rv.headers['Last-Modified'] = http_date(last_modified)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
@@ -181,7 +183,11 @@ def index(before_ts=None):
         None, include_hidden=False)
 
     if request.args.get('feed') == 'atom':
-        return render_posts_atom('Stream', 'index.atom', posts)
+        return render_posts_xml('Stream', 'index.atom', posts)
+
+    if request.args.get('feed') == 'rss':
+        return render_posts_xml('Stream', 'index.atom', posts,
+                                'posts.rss.jinja2', 'application/rss+xml')
 
     resp = make_response(
         render_posts('Stream', posts, older,
@@ -204,7 +210,7 @@ def everything(before_ts=None):
         include_hidden=True)
 
     if request.args.get('feed') == 'atom':
-        return render_posts_atom('Everything', 'everything.atom', posts)
+        return render_posts_xml('Everything', 'everything.atom', posts)
     return render_posts('Everything', posts, older)
 
 
@@ -218,7 +224,10 @@ def posts_by_type(plural_type, before_ts=None):
         include_hidden=True)
 
     if request.args.get('feed') == 'atom':
-        return render_posts_atom(title, plural_type + '.atom', posts)
+        return render_posts_xml(title, plural_type + '.atom', posts)
+    if request.args.get('feed') == 'rss':
+        return render_posts_xml(title, plural_type + '.rss', posts, 'posts.rss.jinja2', 'application/rss+xml')
+
     return render_posts(title, posts, older)
 
 
@@ -251,7 +260,7 @@ def posts_by_tag(tag, before_ts=None):
     title = '#' + tag
 
     if request.args.get('feed') == 'atom':
-        return render_posts_atom(title, 'tag-' + tag + '.atom', posts)
+        return render_posts_xml(title, 'tag-' + tag + '.atom', posts)
     return render_posts(title, posts, older)
 
 
@@ -416,7 +425,7 @@ def render_post(post):
         render_template('post.jinja2', post=post,
                         title=post.title_or_fallback))
     if post.updated:
-    #    rv.headers['Last-Modified'] = http_date(post.updated)
+        # rv.headers['Last-Modified'] = http_date(post.updated)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
@@ -458,7 +467,6 @@ def geo_name(loc):
             result += '<data class="p-latitude" value="{:.2f}"></data><data class="p-longitude" value="{:.2f}"></data>'.format(float(latitude), float(longitude))
         return result
 
-
     latitude = loc.get('latitude')
     longitude = loc.get('longitude')
     if latitude and longitude:
@@ -494,6 +502,12 @@ def human_time(thedate, alternate=None):
     if (isinstance(thedate, datetime.datetime)):
         return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
     return thedate.strftime('%B %-d, %Y')
+
+
+@views.app_template_filter('email_time')
+def email_time(thedate):
+    import email.utils
+    return email.utils.formatdate(thedate.timestamp())
 
 
 @views.app_template_filter('datetime_range')
@@ -586,6 +600,16 @@ def make_absolute(url):
     return urllib.parse.urljoin(get_settings().site_url, url)
 
 
+@views.app_template_filter('remove_query_param')
+def remove_query_param(url, param):
+    p = list(urllib.parse.urlparse(url))
+    params = urllib.parse.parse_qs(p[4])
+    if param in params:
+        del params[param]
+        p[4] = urllib.parse.urlencode(params, doseq=True)
+    return urllib.parse.urlunparse(p)
+
+
 @views.app_template_filter('format_syndication_url')
 def format_syndication_url(url, include_rel=True):
     fmt = '<a class="u-syndication" '
@@ -625,7 +649,6 @@ def syndication_text(url):
     if util.INSTAGRAM_RE.match(url):
         return 'Instagram'
     return domain_from_url(url)
-
 
 IMAGE_TAG_RE = re.compile(r'<img([^>]*) src="(https?://[^">]+)"')
 

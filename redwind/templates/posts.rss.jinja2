@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+  <channel>
+    <title>{{ settings.author_name }}{% if title %}: {{ title }}{% endif %}</title>
+    <language>en</language>
+    <link>{{ request.url | remove_query_param('feed') }}</link>
+    {% for post in posts %}
+      <item>
+	<title>{{ post.title_or_fallback | truncate(140) | atom_sanitize }}</title>
+	<description><![CDATA[{{ post.content_html }}]]></description>
+        <guid>{{ post.permalink }}</guid>
+        <link>{{ post.permalink }}</link>
+        {% if post.enclosure %}
+          <enclosure url="{{ post.enclosure.url }}" length="{{ post.enclosure.length }}" type="{{ post.enclosure.type }}" />
+        {% endif %}
+        <pubDate>{{ post.published | email_time }}</pubDate>
+        {% for tag in post.tags %}
+          <category>{{ tag.name }}</category>
+        {% endfor %}
+      </item>
+    {% endfor %}
+  </channel>
+</rss>
