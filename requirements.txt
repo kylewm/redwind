@@ -21,7 +21,7 @@ pytz==2016.4
 requests==2.10.0
 requests-oauthlib==0.6.1
 rq==0.6.0
-uWSGI==2.0.12
+uWSGI==2.0.13
 psycopg2==2.6.1
 mf2py>=0.2.8
 mf2util>=0.4.1
