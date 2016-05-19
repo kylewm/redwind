@@ -10,7 +10,7 @@ beautifulsoup4==4.4.1
 bleach==1.4.2
 cov-core==1.15.0
 coverage==4.0.3
-fixtures==2.0.0
+fixtures==3.0.0
 html5lib==0.9999999
 oauthlib==1.1.1
 pytest==2.9.1
