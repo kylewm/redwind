@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{{url_for('static', filename='tag-it/css/tagit.ui-zendesk.css')}}"/>
 
     <style>
+    {% block style %}
     body {
         margin-top: 70px;
         margin-bottom: 20px;
@@ -19,6 +20,7 @@
     .container {
         max-width: 800px;
     }
+    {% endblock style %}
     </style>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->

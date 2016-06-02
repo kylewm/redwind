@@ -6,7 +6,7 @@ from flask.ext.micropub import MicropubClient
 import mf2py
 import mf2util
 import requests
-
+import re
 
 from redwind import hooks
 from redwind import util
@@ -57,13 +57,32 @@ def callback(info):
 
     p = mf2py.parse(url=info.me)
 
+    kwargs = {}
+    syntar = mf2util.find_first_entry(p, ['h-x-syndication-target'])
+    if syntar:
+        name = mf2util.get_plain_text(syntar['properties'].get('name'))
+        kwargs['name'] = name and re.sub('\\s+', ' ', name)
+        users = syntar['properties'].get('user', [])
+        if users:
+            user = users[0]
+            kwargs['user_name'] = mf2util.get_plain_text(user['properties'].get('name'))
+            kwargs['user_photo'] = mf2util.get_plain_text(user['properties'].get('photo'))
+            kwargs['user_url'] = mf2util.get_plain_text(user['properties'].get('url'))
+
+        services = syntar['properties'].get('service', [])
+        if services:
+            service = services[0]
+            kwargs['service_name'] = mf2util.get_plain_text(service['properties'].get('name'))
+            kwargs['service_photo'] = mf2util.get_plain_text(service['properties'].get('photo'))
+            kwargs['service_url'] = mf2util.get_plain_text(service['properties'].get('url'))
+
     current_app.logger.debug('found author info %s', info.me)
     target = PosseTarget(
         uid=info.me,
-        name=info.me,
         style='microblog',
         micropub_endpoint=info.micropub_endpoint,
-        access_token=info.access_token)
+        access_token=info.access_token,
+        **kwargs)
 
     current_user.posse_targets.append(target)
     db.session.commit()
@@ -140,8 +159,11 @@ def do_syndicate(post_id, target_id, app_config):
             data['content'] = data['content[markdown]'] = data['content[value]'] = post.content
             data['content[html]'] = post.content_html
 
-        data['url'] = (post.shortlink if target.style == 'microblog'
-                       else post.permalink)
+        if target.style == 'microblog':
+
+            util.process_people(to_twitter_handle)
+
+        data['url'] = post.shortlink
 
         if post.post_type == 'photo' and post.attachments:
             if len(post.attachments) == 1:
@@ -171,3 +193,18 @@ def do_syndicate(post_id, target_id, app_config):
 
         post.add_syndication_url(resp.headers['Location'])
         db.session.commit()
+
+
+def convert_names_to_twitter(content):
+    def process_nick(m):
+        name = m.group(1)
+        nick = Nick.query.filter(
+            db.func.lower(Nick.name) == db.func.lower(name)).first()
+        if nick and nick.contact:
+            for url in nick.contact.social:
+                m = util.TWITTER_PROFILE_RE.match(url)
+                if m:
+                    return '@' + m.group(1)
+        return m.group(0)
+
+    return util.AT_USERNAME_RE.sub(process_nick, content)

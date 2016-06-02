@@ -26,9 +26,8 @@
           {% for type in 'note', 'reply', 'like', 'share',
             'photo', 'checkin', 'bookmark', 'article', 'event', 'review': %}
 
-            <li><a href="{{ url_for('admin.new_post', type=type) }}"
-                   >{{type}}</a></li>
-                 {% endfor %}
+            <li><a href="{{ url_for('admin.new_post', type=type) }}">{{type}}</a></li>
+          {% endfor %}
         </ul>
       {% endif %}
 
@@ -76,7 +75,7 @@
             {{ short_context(post, reply, 'u-in-reply-to', '<i class="fa fa-share"></i>') }}
           {% endfor %}
           {% for like in post.like_contexts %}
-            {{ short_context(post, like, 'u-like-of', '<i class="fa fa-star-o"></i>') }}
+            {{ short_context(post, like, 'u-like-of', '<i class="fa fa-star-o"><span style="display:hidden">Liked</span></i>') }}
           {% endfor %}
           {% for bookmark in post.bookmark_contexts %}
             {{ short_context(post, bookmark, 'u-bookmark-of', '<i class="fa fa-bookmark"></i>') }}

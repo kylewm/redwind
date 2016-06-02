@@ -520,13 +520,13 @@ def login():
         return render_template('admin/login.jinja2',
                                next=request.args.get('next'))
 
-    # if current_app.config.get('BYPASS_INDIEAUTH'):
-    #     user = auth.load_user(urllib.parse.urlparse(me).netloc)
-    #     current_app.logger.debug('Logging in user %s', user)
-    #     flask_login.flask_login.login_user(user, remember=True)
-    #     flash('logged in as {}'.format(me))
-    #     current_app.logger.debug('Logged in with domain %s', me)
-    #     return redirect(request.args.get('next') or url_for('views.index'))
+    if current_app.config.get('BYPASS_INDIEAUTH'):
+        cred = Credential.query.get(('indieauth', me))
+        if not cred:
+            cred = Credential(type='indieauth', value=me)
+            db.session.add(cred)
+            db.session.commit()
+        return do_login(cred, 'Anonymous', request.args.get('next') or url_for('views.index'))
 
     if not me:
         return make_response('Missing "me" parameter', 400)
@@ -620,12 +620,12 @@ def do_login(cred, name, next_url='/'):
     current_app.logger.debug('currently logged in as %s', flask_login.current_user)
     current_app.logger.debug('new credential is %s', cred)
 
-    if not flask_login.current_user.is_anonymous() and (
-            not cred.user or cred.user != flask_login.current_user):
-        # do you want to associate this credential with the current user?
-        session['credential'] = (cred.type, cred.value)
-        session['name'] = name
-        return redirect(url_for('.login_ask_to_associate', next=next_url))
+    # if not flask_login.current_user.is_anonymous() and (
+    #         not cred.user or cred.user != flask_login.current_user):
+    #     # do you want to associate this credential with the current user?
+    #     session['credential'] = (cred.type, cred.value)
+    #     session['name'] = name
+    #     return redirect(url_for('.login_ask_to_associate', next=next_url))
 
     if not cred.user:
         cred.user = User(name=name)

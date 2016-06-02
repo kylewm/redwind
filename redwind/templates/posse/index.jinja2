@@ -1,5 +1,30 @@
 {% extends "admin/base.jinja2" %}
 
+{% block style %}
+
+  {{ super() }}
+
+.syndication-target .user-photo {
+  height: 2em;
+  width: 2em;
+  border-radius:50%;
+}
+.syndication-target .service-photo {
+  height: 1.2em;
+  width: 1.2em;
+  position:relative;
+  top: .9em;
+  left:-.8em;
+  border-radius:50%;
+  border: solid 1px lightgrey;
+  background-color: white;
+}
+.syndication-target {
+  display: flex;
+}
+
+{% endblock style %}
+
 {% block content %}
   {% set styles = [('microblog', 'Microblog'),
                    ('socialnetwork', 'Social Nework'),
@@ -10,7 +35,11 @@
   <ul>
     {% for target in current_user.posse_targets %}
       <li style="margin-top: 1em;">
-        <a href="{{ url_for('.edit', target_id=target.id) }}">
+        <a class="syndication-target" href="{{ url_for('.edit', target_id=target.id) }}">
+          {% if target.user_photo and target.service_photo %}
+            <img class="user-photo" src="{{ target.user_photo }}" />
+            <img class="service-photo" src="{{ target.service_photo }}" />
+          {% endif %}
           {{ target.name }} ({{ target.uid }})
         </a>
       </li>

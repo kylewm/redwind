@@ -10,6 +10,7 @@ import datetime
 import os
 
 import sqlalchemy.dialects.postgresql as pg_dialect
+from sqlalchemy import sql
 
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'
@@ -248,6 +249,13 @@ class Post(db.Model):
     @classmethod
     def load_by_historic_path(cls, path):
         return cls.query.filter_by(historic_path=path).first()
+
+    @classmethod
+    def next_path(cls, prefix):
+        max_path = db.session.query(sql_func.max(cls.path))\
+                             .filter(cls.path.startswith(prefix))\
+                             .first()
+
 
     def __init__(self, post_type):
         self.post_type = post_type

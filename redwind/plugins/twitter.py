@@ -236,23 +236,6 @@ def get_auth():
         resource_owner_secret=get_settings().twitter_oauth_token_secret)
 
 
-def repost_preview(url):
-    if not is_twitter_authorized():
-        current_app.logger.warn('current user is not authorized for twitter')
-        return
-
-    match = PERMALINK_RE.match(url)
-    if match:
-        tweet_id = match.group(2)
-        embed_response = requests.get(
-            'https://api.twitter.com/1.1/statuses/oembed.json',
-            params={'id': tweet_id},
-            auth=get_auth())
-
-        if embed_response.status_code // 2 == 100:
-            return embed_response.json().get('html')
-
-
 def create_context(url):
     match = PERMALINK_RE.match(url)
     if not match:

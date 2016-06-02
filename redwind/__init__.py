@@ -46,7 +46,7 @@ def create_app(config_file='../redwind.cfg', is_queue=False):
 
     # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     if app.debug:
-        app.logger.setLevel(logging.ERROR)
+        app.logger.setLevel(logging.DEBUG)
     else:
         app.logger.setLevel(logging.DEBUG)
         stream_handler = StreamHandler()
@@ -79,7 +79,6 @@ def create_app(config_file='../redwind.cfg', is_queue=False):
             'twitter',
             'wm_receiver',
             'wm_sender',
-            'wordpress',
             'posse',
     ]:
         # app.logger.info('loading plugin module %s', plugin)
