@@ -23,7 +23,7 @@ def test_queue_wm_sender(app, auth, client, mocker):
     })
     post = Post.query.first()
     get_queue().enqueue.assert_called_with(
-        wm_sender.do_send_webmentions, post.id, app.config)
+        wm_sender.do_send_webmentions, post.id, mocker.ANY)
 
 
 def test_send_wms(mocker, source_post):

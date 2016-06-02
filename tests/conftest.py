@@ -8,6 +8,18 @@ from redwind.extensions import db as rw_db
 import pytest
 
 
+CONFIG_FILE_CONTENT = """\
+SECRET_KEY = 'lmnop8765309'
+DEBUG = True
+TESTING = True,
+DEBUG_TB_ENABLED = False
+SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+REDIS_URL = 'redis://localhost:911'
+BYPASS_INDIEAUTH = False
+PILBOX_URL = '/imageproxy'
+"""
+
+
 @pytest.yield_fixture
 def app(request):
     """The redwind flask app, set up with an empty database and
@@ -31,22 +43,16 @@ def app(request):
         login_user(User('example.com'))
         return redirect('/')
 
-    dburi = 'sqlite:///:memory:'
-    rw_app = create_app({
-        'SECRET_KEY': 'lmnop8765309',
-        'DEBUG': True,
-        'DEBUG_TB_ENABLED': False,
-        'SQLALCHEMY_DATABASE_URI': dburi,
-        'TESTING': True,
-        'REDIS_URL': 'redis://localhost:911',
-        'BYPASS_INDIEAUTH': False,
-        'PILBOX_URL': '/imageproxy',
-    })
+    _, cfg_path = tempfile.mkstemp('redwind.cfg')
+    with open(cfg_path, 'w') as f:
+        f.write(CONFIG_FILE_CONTENT)
+
+    rw_app = create_app(cfg_path)
     rw_app.add_url_rule('/', 'bypass_login', bypass_login)
 
     app_context = rw_app.app_context()
     app_context.push()
-    assert str(rw_db.engine.url) == dburi
+    assert str(rw_db.engine.url) == 'sqlite:///:memory:'
 
     rw_db.create_all()
     temp_upload_path = tempfile.mkdtemp()
@@ -62,7 +68,7 @@ def app(request):
 
     yield rw_app
 
-    assert str(rw_db.engine.url) == dburi
+    assert str(rw_db.engine.url) == 'sqlite:///:memory:'
     shutil.rmtree(temp_upload_path)
     shutil.rmtree(temp_imageproxy_path)
 

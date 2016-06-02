@@ -33,7 +33,7 @@ def test_wm_receipt(client, target_url, mocker):
     assert 202 == rv.status_code
     get_queue().enqueue.assert_called_once_with(
         wm_receiver.do_process_webmention, source_url, target_url, None,
-        current_app.config)
+        mocker.ANY)
 
 
 def test_process_wm(db, client, target_url, mocker):

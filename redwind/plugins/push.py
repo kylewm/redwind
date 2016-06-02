@@ -10,7 +10,7 @@ def register(app):
 
 
 def send_notifications(post, args):
-    if not post.hidden and not post.draft:
+    if not post.hidden and not post.draft and 'PUSH_HUB' in current_app.config:
         urls = [
             url_for('views.index', _external=True),
             url_for('views.index', feed='atom', _external=True),
