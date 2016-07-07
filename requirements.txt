@@ -22,7 +22,7 @@ requests==2.10.0
 requests-oauthlib==0.6.1
 rq==0.6.0
 uWSGI==2.0.13.1
-psycopg2==2.6.1
+psycopg2==2.6.2
 mf2py>=0.2.8
 mf2util>=0.4.1
 brevity>=0.2.1
