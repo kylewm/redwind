@@ -19,7 +19,7 @@ pytest-mock==1.1
 python-mimeparse==1.5.2
 pytz==2016.4
 requests==2.10.0
-requests-oauthlib==0.6.1
+requests-oauthlib==0.6.2
 rq==0.6.0
 uWSGI==2.0.13.1
 psycopg2==2.6.2
