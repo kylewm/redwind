@@ -13,7 +13,7 @@ coverage==4.2
 fixtures==3.0.0
 html5lib==0.999999999
 oauthlib==1.1.2
-pytest==3.0.1
+pytest==3.0.2
 pytest-cov==2.3.1
 pytest-mock==1.2
 python-mimeparse==1.5.2
