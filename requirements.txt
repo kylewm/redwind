@@ -12,7 +12,7 @@ cov-core==1.15.0
 coverage==4.2
 fixtures==3.0.0
 html5lib==0.999999999
-oauthlib==1.1.2
+oauthlib==2.0.0
 pytest==3.0.2
 pytest-cov==2.3.1
 pytest-mock==1.2
