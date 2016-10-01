@@ -215,7 +215,7 @@ def micropub_endpoint():
         syndication = request.form.get('syndication')
 
     # TODO check client_id
-    if client_id == 'https://kylewm-responses.appspot.com/' and syndication:
+    if syndication:
         current_app.logger.debug(
             'checking for existing post with syndication %s', syndication)
         existing = Post.query.filter(
