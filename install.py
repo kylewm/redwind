@@ -11,12 +11,13 @@ with app.app_context():
     to initialize a brand new database. Running this script against an existing
     database could destroy your data!''')
 
-    author_domain = input('Domain name (no schema): ').strip()
+    username = input('Your name: ').strip()
     twitter_username = input('Your Twitter username: ').strip()
-    github_username = input('Your GitHub username: ').strip()
+    twitter_client_id = input('Twitter Client Key: ').strip()
+    twitter_client_secret = input('Twitter Client Secret: ').strip()
 
-
-    print('creating database tables for database', current_app.config['SQLALCHEMY_DATABASE_URI'])
+    print('creating database tables for database',
+          current_app.config['SQLALCHEMY_DATABASE_URI'])
     db.create_all()
     print('done creating database tables')
 
@@ -26,27 +27,23 @@ with app.app_context():
     Visit <a href="/settings">Settings</a> to edit your bio.
     <ul>
     <li><a rel="me" href="https://twitter.com/{}">Twitter</a></li>
-    <li><a rel="me" href="https://github.com/{}">GitHub</a></li>
     </ul>
     </div>
-    '''.format(twitter_username.lstrip('@'),
-               github_username)
-
+    '''.format(twitter_username.lstrip('@'))
 
     print('setting default settings')
-
     defaults = [
         ('Author Name',                ''),
         ('Author Image',               ''),
-        ('Author Domain',              author_domain),
+        ('Author Domain',              ''),
         ('Author Bio',                 bio),
         ('Site Title',                 ''),
         ('Site URL',                   ''),
         ('Shortener URL',              None),
         ('Push Hub',                   ''),
         ('Posts Per Page',             15),
-        ('Twitter API Key',            ''),
-        ('Twitter API Secret',         ''),
+        ('Twitter API Key',            twitter_client_id),
+        ('Twitter API Secret',         twitter_client_secret),
         ('Twitter OAuth Token',        ''),
         ('Twitter OAuth Token Secret', ''),
         ('Facebook App ID',            ''),
@@ -73,6 +70,10 @@ with app.app_context():
             s.name = name
             s.value = default
             db.session.add(s)
+
+    user = models.User(name=username, admin=True)
+    user.credentials.append(models.Credential(type='twitter',
+                            value=twitter_username))
     db.session.commit()
 
     print('finished setting default settings')

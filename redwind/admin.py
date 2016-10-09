@@ -523,7 +523,7 @@ def login():
     # if current_app.config.get('BYPASS_INDIEAUTH'):
     #     user = auth.load_user(urllib.parse.urlparse(me).netloc)
     #     current_app.logger.debug('Logging in user %s', user)
-    #     flask_login.flask_login.login_user(user, remember=True)
+    #     flask_login.login_user(user, remember=True)
     #     flash('logged in as {}'.format(me))
     #     current_app.logger.debug('Logged in with domain %s', me)
     #     return redirect(request.args.get('next') or url_for('views.index'))
