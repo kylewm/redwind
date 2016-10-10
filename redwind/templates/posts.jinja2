@@ -73,13 +73,17 @@
 
         <article class="post {{post.post_type}} {{post.mf2_type}}">
           {% for reply in post.reply_contexts %}
-            {{ short_context(post, reply, 'u-in-reply-to', '<i class="fa fa-share"></i>') }}
+            {{ short_context(post, reply, 'u-in-reply-to', '<i class="fa fa-share" aria-hidden="true"></i><span class="sr-only">In reply to</span>') }}
           {% endfor %}
           {% for like in post.like_contexts %}
-            {{ short_context(post, like, 'u-like-of', '<i class="fa fa-star-o"></i>') }}
+            <span class="p-name">
+              {{ short_context(post, like, 'u-like-of', '<i class="fa fa-star-o" aria-hidden="true"></i><span class="sr-only">Liked</span>') }}
+            </span>
           {% endfor %}
           {% for bookmark in post.bookmark_contexts %}
-            {{ short_context(post, bookmark, 'u-bookmark-of', '<i class="fa fa-bookmark"></i>') }}
+            <span class="p-name">
+              {{ short_context(post, bookmark, 'u-bookmark-of', '<i class="fa fa-bookmark" aria-hidden="true"></i><span class="sr-only">Bookmarked</span>') }}
+            </span>
           {% endfor %}
 
           {% if post.post_type == 'review' %}
@@ -123,7 +127,7 @@
 
       {% if older %}
   <div class="pager">
-    <a rel="prevx" class="older" href="{{older}}">
+    <a rel="prev" class="older" href="{{older}}">
       &larr; Older
     </a>
   </div>

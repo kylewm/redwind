@@ -1,10 +1,10 @@
 
 {% macro short_context(post, context, mf2class, heading) %}
-  <div class="short-context {{mf2class}} h-cite">
+  <div class="short-context">
     {{ heading }}
-    <a class="u-url" href="{{context.url}}">
+    <a class="{{mf2class}} h-cite" href="{{context.url}}">
       {% if context.author_name %}
-        <span class="p-author h-card">{{context.author_name}}</span>'s
+        <span class="p-author">{{context.author_name}}</span>'s
       {% endif %}
       {% if context.title %}
         {{ context.title }}

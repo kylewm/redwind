@@ -183,3 +183,8 @@ footer {
     display: inline-box;
     float: left;
 }
+
+/* for screen readers */
+.sr-only {
+    display: none;
+}

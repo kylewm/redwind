@@ -79,6 +79,15 @@
       <textarea class="form-control" name="audience" id="audience" rows="2">{{ post.audience | join('\n') }}</textarea>
     </div>
 
+    <div class="form-group">
+      <select class="form-control" name="venue" id="venue">
+        <option value="">No Venue</option>
+        {% for venue in venues %}
+          <option value="{{ venue.id }}" {% if post.venue == venue %}selected{% endif %}>{{ venue.name }}: {{ venue.location | geo_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
     <data id="post_path" value="{{post.path}}"></data>
     <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
 

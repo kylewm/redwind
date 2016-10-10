@@ -43,6 +43,7 @@ FLICKR_RE = re.compile(r'https?://(?:www\.)?flickr\.com/photos/([@\w\-]+)/(\d+)/
 GOODREADS_RE = re.compile(r'https?://(?:www\.)?goodreads\.com/(.*)')
 GITHUB_RE = re.compile(r'https?://(?:www\.)?github\.com/(.*)')
 YELP_RE = re.compile(r'https?://(?:www\.)?yelp\.com/(.*)')
+MEDIUM_RE = re.compile(r'https?://(?:www\.)?medium.com/([@\w]+)/(.*)')
 
 HASHTAG_RE = re.compile('(?<![\w&])#(\w\w+)', re.I)
 AT_USERNAME_RE = re.compile(r"""(?<![\w&])@(\w+)(?=($|[\s,:;.?!'")&-]))""", re.I)
