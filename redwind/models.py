@@ -9,13 +9,12 @@ import urllib
 import datetime
 import os
 
-import sqlalchemy.dialects.postgresql as pg_dialect
-
 
 TWEET_INTENT_URL = 'https://twitter.com/intent/tweet?in_reply_to={}'
 RETWEET_INTENT_URL = 'https://twitter.com/intent/retweet?tweet_id={}'
 FAVORITE_INTENT_URL = 'https://twitter.com/intent/favorite?tweet_id={}'
-OPEN_STREET_MAP_URL = 'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'
+OPEN_STREET_MAP_URL = \
+    'http://www.openstreetmap.org/?mlat={0}&mlon={1}#map=17/{0}/{1}'
 
 
 class JsonType(db.TypeDecorator):
@@ -100,6 +99,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
     admin = db.Column(db.Boolean)
+    friend = db.Column(db.Boolean)
     posse_targets = db.relationship('PosseTarget', backref='user',
                                     order_by='PosseTarget.id')
     credentials = db.relationship('Credential', backref='user')
@@ -128,6 +128,7 @@ class User(db.Model):
 class Credential(db.Model):
     type = db.Column(db.String(256), primary_key=True)
     value = db.Column(db.String(256), primary_key=True)
+    display = db.Column(db.String(256))  # human-readable name
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __repr__(self):
@@ -190,7 +191,7 @@ class Post(db.Model):
     redirect = db.Column(db.String(256))
     tags = db.relationship('Tag', secondary=posts_to_tags)
     people = db.relationship('Contact', secondary=posts_to_people)
-    audience = db.Column(JsonType)
+    friends_only = db.Column(db.Boolean)
 
     in_reply_to = db.Column(JsonType)
     repost_of = db.Column(JsonType)

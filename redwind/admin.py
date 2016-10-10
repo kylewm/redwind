@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, current_app, abort
-from flask import flash, redirect, url_for, session, make_response, jsonify
-from redwind import auth
+from flask import flash, redirect, url_for, session, make_response
 from redwind import contexts
 from redwind import hooks
 from redwind import maps
@@ -230,6 +229,7 @@ def save_post(post):
     post.content = request.form.get('content')
     post.draft = request.form.get('action') == 'save_draft'
     post.hidden = request.form.get('hidden', 'false') == 'true'
+    post.friends_only = request.form.get('friends_only', 'false') == 'true'
 
     venue_name = request.form.get('new_venue_name')
     venue_lat = request.form.get('new_venue_latitude')
@@ -467,9 +467,10 @@ def login_twitter():
         user_json = user_response.json()
 
         twid = user_json.get('id_str')
+        screen_name = user_json.get('screen_name')
         cred = Credential.query.get(('twitter', twid))
         if not cred:
-            cred = Credential(type='twitter', value=twid)
+            cred = Credential(type='twitter', value=twid, display=screen_name)
             db.session.add(cred)
             db.session.commit()
 
@@ -503,10 +504,11 @@ def login_facebook():
 
     user_json = r.json()
     fbid = user_json.get('id')
+    name = user_json.get('name')
 
     cred = Credential.query.get(('facebook', fbid))
     if not cred:
-        cred = Credential(type='facebook', value=fbid)
+        cred = Credential(type='facebook', value=fbid, display=name)
         db.session.add(cred)
         db.session.commit()
 
@@ -523,7 +525,7 @@ def login():
     # if current_app.config.get('BYPASS_INDIEAUTH'):
     #     user = auth.load_user(urllib.parse.urlparse(me).netloc)
     #     current_app.logger.debug('Logging in user %s', user)
-    #     flask_login.flask_login.login_user(user, remember=True)
+    #     flask_login.login_user(user, remember=True)
     #     flash('logged in as {}'.format(me))
     #     current_app.logger.debug('Logged in with domain %s', me)
     #     return redirect(request.args.get('next') or url_for('views.index'))
@@ -604,7 +606,7 @@ def login_callback():
 
     cred = Credential.query.get(('indieauth', me))
     if not cred:
-        cred = Credential(type='indieauth', value=me)
+        cred = Credential(type='indieauth', value=me, display=me)
         db.session.add(cred)
         db.session.commit()
 
@@ -617,7 +619,8 @@ def login_callback():
 
 
 def do_login(cred, name, next_url='/'):
-    current_app.logger.debug('currently logged in as %s', flask_login.current_user)
+    current_app.logger.debug(
+        'currently logged in as %s', flask_login.current_user)
     current_app.logger.debug('new credential is %s', cred)
 
     if not flask_login.current_user.is_anonymous() and (
@@ -844,7 +847,8 @@ def save_contact(contact):
     db.session.commit()
 
     if contact.nicks:
-        return redirect(url_for('.contact_by_name', name=contact.nicks[0].name))
+        return redirect(
+            url_for('.contact_by_name', name=contact.nicks[0].name))
     else:
         return redirect(url_for('.contacts'))
 
