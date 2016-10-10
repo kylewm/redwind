@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask import make_response, Markup, send_from_directory, current_app
 from flask import request, redirect, url_for, render_template, g, abort
-from werkzeug.http import http_date, generate_etag
+from werkzeug.http import generate_etag
 from redwind import imageproxy
 from redwind import util
 from redwind.extensions import db
@@ -53,6 +53,11 @@ def inject_settings_variable():
     }
 
 
+def is_current_user_a_friend():
+    me = flask_login.current_user
+    return not me.is_anonymous() and (me.admin or me.friend)
+
+
 def collect_posts(post_types, before_ts, per_page, tag, search=None,
                   include_hidden=False):
     query = Post.query
@@ -75,6 +80,9 @@ def collect_posts(post_types, before_ts, per_page, tag, search=None,
             sqlalchemy.func.concat(Post.title, ' ', Post.content)
             .op('@@')(sqlalchemy.func.plainto_tsquery(search)))
 
+    if not is_current_user_a_friend():
+        query = query.filter(~Post.friends_only)
+
     try:
         if before_ts:
             before_dt = datetime.datetime.strptime(before_ts, BEFORE_TS_FORMAT)
@@ -91,7 +99,6 @@ def collect_posts(post_types, before_ts, per_page, tag, search=None,
     query = query.limit(per_page)
     posts = query.all()
 
-    posts = [post for post in posts if check_audience(post)]
     if posts:
         last_ts = posts[-1].published
         last_ts = pytz.utc.localize(last_ts)
@@ -153,7 +160,7 @@ def render_posts(title, posts, older, events=None, template='posts.jinja2'):
 
     last_modified = max((p.updated for p in posts if p.updated), default=None)
     if last_modified:
-        #rv.headers['Last-Modified'] = http_date(last_modified)
+        # rv.headers['Last-Modified'] = http_date(last_modified)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
@@ -166,7 +173,7 @@ def render_posts_atom(title, feed_id, posts):
     rv.headers['Content-Type'] = 'application/atom+xml; charset=utf-8'
     last_modified = max((p.updated for p in posts if p.updated), default=None)
     if last_modified:
-        #rv.headers['Last-Modified'] = http_date(last_modified)
+        # rv.headers['Last-Modified'] = http_date(last_modified)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
@@ -284,26 +291,6 @@ def articles_atom():
         url_for('.posts_by_type', plural_type='articles', feed='atom'))
 
 
-def check_audience(post):
-    if not post.audience:
-        # all posts public by default
-        return True
-
-    if flask_login.current_user.is_authenticated():
-        # admin user can see everything
-        return True
-
-    if flask_login.current_user.is_anonymous():
-        # anonymous users can't see stuff
-        return False
-
-    # check that their username is listed in the post's audience
-    current_app.logger.debug(
-        'checking that logged in user %s is in post audience %s',
-        flask_login.current_user.get_id(), post.audience)
-    return flask_login.current_user.get_id() in post.audience
-
-
 @views.route('/' + POST_TYPE_RULE + '/' + DATE_RULE + '/files/<filename>')
 def post_associated_file_by_historic_path(post_type, year, month, day,
                                           index, filename):
@@ -335,7 +322,7 @@ def render_attachment(post, filename):
         abort(410)  # deleted permanently
 
     if not check_audience(post):
-        abort(401)  # not authorized TODO a nicer page
+        abort(401)
 
     attachment = next(
         (a for a in post.attachments if a.filename == filename), None)
@@ -407,7 +394,7 @@ def render_post(post):
         abort(410)  # deleted permanently
 
     if not check_audience(post):
-        abort(401)  # not authorized TODO a nicer page
+        abort(401)
 
     if post.redirect:
         return redirect(post.redirect)
@@ -416,10 +403,14 @@ def render_post(post):
         render_template('post.jinja2', post=post,
                         title=post.title_or_fallback))
     if post.updated:
-    #    rv.headers['Last-Modified'] = http_date(post.updated)
+        # rv.headers['Last-Modified'] = http_date(post.updated)
         rv.headers['Etag'] = generate_etag(rv.get_data())
         rv.make_conditional(request)
     return rv
+
+
+def check_audience(post):
+    return not post.friends_only or is_current_user_a_friend()
 
 
 @views.app_template_filter('json')
@@ -453,16 +444,28 @@ def geo_name(loc):
     longitude = loc.get('longitude')
 
     if locality and region:
-        result = '<span class="p-locality">{}</span>, <span class="p-region">{}</span>'.format(locality, region)
-        if latitude and longitude:
-            result += '<data class="p-latitude" value="{:.2f}"></data><data class="p-longitude" value="{:.2f}"></data>'.format(float(latitude), float(longitude))
-        return result
+        locality_template = """\
+<span class="p-locality">{}</span>, <span class="p-region">{}</span>\
+"""
+        result = locality_template.format(locality, region)
 
+        if latitude and longitude:
+            latlong_template = """\
+<data class="p-latitude" value="{:.2f}"></data>\
+<data class="p-longitude" value="{:.2f}"></data>
+"""
+            result += latlong_template.format(float(latitude),
+                                              float(longitude))
+        return result
 
     latitude = loc.get('latitude')
     longitude = loc.get('longitude')
     if latitude and longitude:
-        return '<span class="p-latitude">{:.2f}</span>, <span class="p-longitude">{:.2f}</span>'.format(float(latitude), float(longitude))
+        locality_template = """\
+<span class="p-latitude">{:.2f}</span>, \
+<span class="p-longitude">{:.2f}</span>\
+"""
+        return locality_template.format(float(latitude), float(longitude))
 
     return "Unknown Location"
 
@@ -487,9 +490,6 @@ def human_time(thedate, alternate=None):
     if hasattr(thedate, 'tzinfo') and not thedate.tzinfo:
         tz = pytz.timezone(get_settings().timezone)
         thedate = pytz.utc.localize(thedate).astimezone(tz)
-
-    # limit full time to things that happen "today"
-    # and datetime.datetime.now(TIMEZONE) - thedate < datetime.timedelta(days=1)):
 
     if (isinstance(thedate, datetime.datetime)):
         return thedate.strftime('%B %-d, %Y %-I:%M%P %Z')
@@ -657,7 +657,8 @@ def add_preview(content):
 
     instagram_regex = 'https?://instagram\.com/p/[\w\-]+/?'
     vimeo_regex = 'https?://vimeo\.com/(\d+)/?'
-    youtube_regex = 'https?://(?:(?:www\.)youtube\.com/watch\?v=|youtu\.be/)([\w\-]+)'
+    youtube_regex = \
+        'https?://(?:(?:www\.)youtube\.com/watch\?v=|youtu\.be/)([\w\-]+)'
     img_regex = 'https?://[^\s">]*\.(?:gif|png|jpg)'
 
     m = re.search(instagram_regex, content)

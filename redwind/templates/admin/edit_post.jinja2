@@ -85,6 +85,10 @@
     <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
     <input type="hidden" id="post_type" name="post_type" value="{{ post.post_type }}"/>
 
+    <div class="form-group">
+      <label><input type="checkbox" id="friends_only" name="friends_only" value="true" {% if post.friends_only %}checked{% endif %} /> Friends-Only</label>
+    </div>
+
     {% block hidden_check %}
     <div class="form-group">
       <label><input type="checkbox" id="hidden" name="hidden" value="true" {% if post.hidden %}checked{% endif %} /> Hidden from Stream</label>
