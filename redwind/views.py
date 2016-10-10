@@ -432,7 +432,7 @@ def approximate_longitude(loc):
 
 
 @views.app_template_filter('geo_name')
-def geo_name(loc):
+def geo_name(loc, as_html=True):
     name = loc.get('name')
     if name:
         return name
@@ -444,27 +444,34 @@ def geo_name(loc):
     longitude = loc.get('longitude')
 
     if locality and region:
-        locality_template = """\
+        if as_html:
+            locality_template = """\
 <span class="p-locality">{}</span>, <span class="p-region">{}</span>\
 """
+        else:
+            locality_template = '{}, {}'
         result = locality_template.format(locality, region)
 
         if latitude and longitude:
-            latlong_template = """\
+            if as_html:
+                latlong_template = """\
 <data class="p-latitude" value="{:.2f}"></data>\
 <data class="p-longitude" value="{:.2f}"></data>
 """
-            result += latlong_template.format(float(latitude),
-                                              float(longitude))
+                result += latlong_template.format(float(latitude),
+                                                  float(longitude))
         return result
 
     latitude = loc.get('latitude')
     longitude = loc.get('longitude')
     if latitude and longitude:
-        locality_template = """\
+        if as_html:
+            locality_template = """\
 <span class="p-latitude">{:.2f}</span>, \
 <span class="p-longitude">{:.2f}</span>\
 """
+        else:
+            locality_template = '{:.2f}, {:.2f}'
         return locality_template.format(float(latitude), float(longitude))
 
     return "Unknown Location"

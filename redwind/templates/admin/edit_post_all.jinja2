@@ -92,6 +92,10 @@
     <input type="hidden" id="post_id" name="post_id" value="{{ post.id or 'new' }}"/>
 
     <div class="form-group">
+      <input type="checkbox" id="friends_only" name="friends_only" value="false"/>
+      <label for="friends_only">Friends-only</label>
+    </div>
+    <div class="form-group">
       <input type="checkbox" id="hidden" name="hidden" value="false"/>
       <label for="hidden">Hidden from stream</label>
     </div>

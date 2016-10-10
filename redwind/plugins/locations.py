@@ -52,7 +52,7 @@ def do_reverse_geocode_venue(venueid, app_config):
             # that it changed
             venue.location = dict(venue.location)
             venue.location.update(adr)
-            venue.update_slug(views.geo_name(venue.location))
+            venue.update_slug(views.geo_name(venue.location, as_html=False))
             db.session.commit()
 
 

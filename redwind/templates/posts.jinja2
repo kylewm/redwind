@@ -15,9 +15,10 @@
       <ul>
         <li class="p-name">{{settings.site_title}}</li>
         <li><a href="{{ url_for('.index') }}">stream</a></li>
-        <li><a href="{{ url_for('.posts_by_type', plural_type='articles') }}">articles</a></li>
-        <li><a href="{{ url_for('.everything') }}">everything</a></li>
-        <li><a href="{{ url_for('.tag_cloud') }}">tags</a></li>
+        <li><a href="{{ url_for('.posts_by_type', plural_type='photos') }}">photos</a></li>
+        {% if not current_user.is_anonymous() and (current_user.admin or current_user.friend) %}
+            <li><a href="{{ url_for('.everything') }}">everything</a></li>
+        {% endif %}
       </ul>
 
       {% if current_user.is_authenticated() %}
@@ -33,7 +34,9 @@
       {% endif %}
 
       {% if not current_user.is_anonymous() %}
-        <div>logged in as <strong>{{ current_user.name }}</strong></div>
+        <div>logged in as <strong>{{ current_user.name }}</strong> (<a href="{{url_for('admin.logout')}}">logout</a>)</div>
+      {% else %}
+        <div>speak friend and enter here: <a href="{{url_for('admin.login')}}">login</a></div>
       {% endif %}
 
     </header>

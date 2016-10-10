@@ -1,4 +1,5 @@
 {% extends "admin/base.jinja2" %}
+{% include "admin/_nav.jinja2" %}
 {% block content %}
   {% if not current_user.is_authenticated() %}
     <div class="alert alert-danger" role="alert">
