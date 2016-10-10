@@ -657,7 +657,7 @@ def login_associate():
     session.pop('name')
     cred.user = flask_login.current_user
     db.session.commit()
-    return redirect(next_url)
+    return redirect(next_url or '/')
 
 
 @admin.route('/login_do_not_associate')
