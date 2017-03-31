@@ -1,4 +1,4 @@
-Flask==0.12
+Flask==0.12.1
 Flask-Login==0.2.11 # rq.filter: <0.3.0
 Flask-SQLAlchemy==2.2
 Flask-Micropub==0.2.6
