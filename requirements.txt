@@ -6,7 +6,7 @@ Markdown==2.6.8
 PyJWT==1.5.0
 Pygments==2.2.0
 SQLAlchemy==1.1.9
-beautifulsoup4==4.5.3
+beautifulsoup4==4.6.0
 bleach==2.0.0
 cov-core==1.15.0
 coverage==4.3.4
