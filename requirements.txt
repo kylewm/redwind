@@ -18,7 +18,7 @@ pytest-cov==2.5.1
 pytest-mock==1.6.2
 python-mimeparse==1.6.0
 pytz==2017.2
-requests==2.18.3
+requests==2.18.4
 requests-oauthlib==0.8.0
 rq==0.8.1
 uWSGI==2.0.15
