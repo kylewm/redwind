@@ -3,9 +3,9 @@ Flask-Login==0.2.11 # rq.filter: <0.3.0
 Flask-SQLAlchemy==2.2
 Flask-Micropub==0.2.6
 Markdown==2.6.9
-PyJWT==1.5.2
+PyJWT==1.5.3
 Pygments==2.2.0
-SQLAlchemy==1.1.13
+SQLAlchemy==1.1.14
 beautifulsoup4==4.6.0
 bleach==2.0.0
 cov-core==1.15.0
