@@ -20,7 +20,7 @@ python-mimeparse==1.6.0
 pytz==2017.3
 requests==2.18.4
 requests-oauthlib==0.8.0
-rq==0.9.0
+rq==0.9.1
 uWSGI==2.0.15
 psycopg2==2.7.3.2
 mf2py>=0.2.8
