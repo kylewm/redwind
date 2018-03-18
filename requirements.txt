@@ -3,7 +3,7 @@ Flask-Login==0.2.11 # rq.filter: <0.3.0
 Flask-SQLAlchemy==2.3.2
 Flask-Micropub==0.2.8
 Markdown==2.6.11
-PyJWT==1.6.0
+PyJWT==1.6.1
 Pygments==2.2.0
 SQLAlchemy==1.2.5
 beautifulsoup4==4.6.0
