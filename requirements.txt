@@ -15,7 +15,7 @@ html5lib==1.0.1
 oauthlib==2.0.7
 pytest==3.5.0
 pytest-cov==2.5.1
-pytest-mock==1.8.0
+pytest-mock==1.9.0
 python-mimeparse==1.6.0
 pytz==2018.3
 requests==2.18.4
