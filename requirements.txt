@@ -17,7 +17,7 @@ pytest==3.6.2
 pytest-cov==2.5.1
 pytest-mock==1.10.0
 python-mimeparse==1.6.0
-pytz==2018.4
+pytz==2018.5
 requests==2.19.1
 requests-oauthlib==1.0.0
 rq==0.11.0
