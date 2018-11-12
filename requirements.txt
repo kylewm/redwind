@@ -9,7 +9,7 @@ SQLAlchemy==1.2.14
 beautifulsoup4==4.6.3
 bleach==3.0.2
 cov-core==1.15.0
-coverage==4.5.1
+coverage==4.5.2
 fixtures==3.0.0
 html5lib==1.0.1
 oauthlib==2.1.0
