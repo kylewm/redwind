@@ -5,7 +5,7 @@ Flask-Micropub==0.2.8
 Markdown==3.0.1
 PyJWT==1.7.1
 Pygments==2.3.0
-SQLAlchemy==1.2.14
+SQLAlchemy==1.2.15
 beautifulsoup4==4.6.3
 bleach==3.0.2
 cov-core==1.15.0
