@@ -7,7 +7,7 @@ PyJWT==1.7.1
 Pygments==2.3.1
 SQLAlchemy==1.2.15
 beautifulsoup4==4.7.1
-bleach==3.0.2
+bleach==3.1.0
 cov-core==1.15.0
 coverage==4.5.2
 fixtures==3.0.0
@@ -19,7 +19,7 @@ pytest-mock==1.10.0
 python-mimeparse==1.6.0
 pytz==2018.9
 requests==2.21.0
-requests-oauthlib==1.0.0
+requests-oauthlib==1.1.0
 rq==0.13.0
 uWSGI==2.0.17.1
 psycopg2==2.7.6.1
