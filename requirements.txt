@@ -7,7 +7,7 @@ PyJWT==1.4.0
 Pygments==2.1
 SQLAlchemy==1.0.11
 beautifulsoup4==4.4.1
-bleach==1.4.2
+bleach==3.1.4
 cov-core==1.15.0
 coverage==4.0.3
 fixtures==1.4.0
